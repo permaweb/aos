@@ -1,4 +1,13 @@
 import repl from 'repl'
+import yargs from 'yargs/yargs'
+
+// services 
+import { gql } from './services/gql.js'
+import { address } from './services/address.js'
+
+// commands
+import commands from './commands/index.js'
+
 
 console.log(`
 ARbit CLI - 0.1
@@ -9,7 +18,24 @@ ARbit CLI - 0.1
 
 let loggedIn = false
 
-function doCommand(uInput, context, filename, callback) {
+async function doCommand(uInput, context, filename, callback) {
+  const argv = yargs(uInput).argv
+  const command = argv._[0]
+
+  // init business rules
+  const cmds = commands.init({ gql, address })
+
+  if (command === 'register') {
+    const output = await cmds.register(argv)
+    return callback(null, output)
+  }
+
+
+  // if (command === 'login') {
+  //   return callback(null, login(argv))
+  // }
+
+
   // if (!loggedIn) {
   //   callback(null, 'Login is required!')
   //   return
