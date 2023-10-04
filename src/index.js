@@ -6,7 +6,7 @@ import { gql } from './services/gql.js'
 import { address } from './services/address.js'
 
 // commands
-import commands from './commands/index.js'
+import * as commands from './commands/index.js'
 
 
 console.log(`
