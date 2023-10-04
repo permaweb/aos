@@ -9,6 +9,8 @@ import path from 'path'
 import { of, Resolved } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
+const AOS_SRC = process.env.AOS_SRC || "o9734B0gQ4A0qyJ76wIdukSjrlOMXxUkY4lhBunmXUU"
+
 export function register(args, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })

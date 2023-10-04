@@ -369,6 +369,11 @@
     "@ethersproject/properties" "^5.7.0"
     "@ethersproject/strings" "^5.7.0"
 
+"@fastify/busboy@^2.0.0":
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.0.0.tgz#f22824caff3ae506b18207bad4126dbc6ccdb6b8"
+  integrity sha512-JUFJad5lv7jxj926GPgymrWQxxjPYuJNiNjNMzqT+HiuP6Vl3dk5xzG+8sTX96np0ZAluvaMzPsjhHZ5rNuNQQ==
+
 "@near-js/crypto@0.0.3", "@near-js/crypto@^0.0.3":
   version "0.0.3"
   resolved "https://registry.yarnpkg.com/@near-js/crypto/-/crypto-0.0.3.tgz#4a33e526ab5fa75b703427067985694a279ff8bd"
@@ -531,6 +536,18 @@
   version "1.1.5"
   resolved "https://registry.yarnpkg.com/@noble/hashes/-/hashes-1.1.5.tgz#1a0377f3b9020efe2fae03290bd2a12140c95c11"
   integrity sha512-LTMZiiLc+V4v1Yi16TD6aX2gmtKszNye0pQgbaLqkvhIqP7nVsSaJsWloGQjJfJ8offaoP5GtX3yY5swbcJxxQ==
+
+"@permaweb/ao-sdk@^0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.7.tgz#b41fb0a9982cfa6061c9beb7f74070f18d77d06d"
+  integrity sha512-qsCunirOAXnShVFKqHiCtjZo8XH8Ljvl5iF5VrH3i06kmQmmfgbMc8Ib9M6gMQF2lFyVBTVkrJEob4SpQX17Nw==
+  dependencies:
+    buffer "^6.0.3"
+    debug "^4.3.4"
+    hyper-async "^1.1.2"
+    ramda "^0.29.0"
+    warp-arbundles "^1.0.4"
+    zod "^3.22.2"
 
 "@randlabs/communication-bridge@1.0.1":
   version "1.0.1"
@@ -794,7 +811,7 @@ arweave@=1.11.9:
     bignumber.js "^9.0.2"
     util "^0.12.4"
 
-arweave@^1.10.13, arweave@^1.14.4:
+arweave@^1.10.13, arweave@^1.13.7, arweave@^1.14.4:
   version "1.14.4"
   resolved "https://registry.yarnpkg.com/arweave/-/arweave-1.14.4.tgz#5ba22136aa0e7fd9495258a3931fb770c9d6bf21"
   integrity sha512-tmqU9fug8XAmFETYwgUhLaD3WKav5DaM4p1vgJpEj/Px2ORPPMikwnSySlFymmL2qgRh2ZBcZsg11+RXPPGLsA==
@@ -970,7 +987,7 @@ bs58@^4.0.0, bs58@^4.0.1:
   dependencies:
     base-x "^3.0.2"
 
-buffer@6.0.3, buffer@^6.0.2, buffer@~6.0.3:
+buffer@6.0.3, buffer@^6.0.2, buffer@^6.0.3, buffer@~6.0.3:
   version "6.0.3"
   resolved "https://registry.yarnpkg.com/buffer/-/buffer-6.0.3.tgz#2ace578459cc8fbe2a70aaa8f52ee63b6a74c6c6"
   integrity sha512-FTiCpNxtwiZZHEZbcbTIcZjERVICn9yq/pDFkTl95/AxzD1naBctN7YO68riM/gLSDY7sdrMby8hofADYuuqOA==
@@ -1166,6 +1183,13 @@ csv@5.5.3:
     csv-parse "^4.16.3"
     csv-stringify "^5.6.5"
     stream-transform "^2.1.3"
+
+debug@^4.3.4:
+  version "4.3.4"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.4.tgz#1319f6579357f2338d3337d2cdd4914bb5dcc865"
+  integrity sha512-PRWFHuSU3eDtQJPvnNY7Jcket1j0t5OuOsFzPPzsekD52Zl8qUfFIPEiswXqIvHWGVHOgX+7G/vCNNhehwxfkQ==
+  dependencies:
+    ms "2.1.2"
 
 decompress-response@^6.0.0:
   version "6.0.0"
@@ -1722,6 +1746,11 @@ mixme@^0.5.1:
   resolved "https://registry.yarnpkg.com/mixme/-/mixme-0.5.9.tgz#a5a58e17354632179ff3ce5b0fc130899c8ba81c"
   integrity sha512-VC5fg6ySUscaWUpI4gxCBTQMH2RdUpNrk+MsbpCYtIvf9SBJdiUey4qE7BXviJsJR4nDQxCZ+3yaYNW3guz/Pw==
 
+ms@2.1.2:
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.2.tgz#d09d1f357b443f493382a8eb3ccd183872ae6009"
+  integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
+
 ms@^2.0.0:
   version "2.1.3"
   resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
@@ -2100,6 +2129,13 @@ type-fest@^0.21.3:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.21.3.tgz#d260a24b0198436e133fa26a524a6d65fa3b2e37"
   integrity sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==
 
+undici@^5.19.1:
+  version "5.25.4"
+  resolved "https://registry.yarnpkg.com/undici/-/undici-5.25.4.tgz#7d8ef81d94f84cd384986271e5e5599b6dff4296"
+  integrity sha512-450yJxT29qKMf3aoudzFpIciqpx6Pji3hEWaXqXmanbXF58LTAGCKxcJjxMXWu3iG+Mudgo3ZUfDB6YDFd/dAw==
+  dependencies:
+    "@fastify/busboy" "^2.0.0"
+
 utf-8-validate@^5.0.2:
   version "5.0.10"
   resolved "https://registry.yarnpkg.com/utf-8-validate/-/utf-8-validate-5.0.10.tgz#d7d10ea39318171ca982718b6b96a8d2442571a2"
@@ -2132,6 +2168,24 @@ vlq@^2.0.4:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/vlq/-/vlq-2.0.4.tgz#6057b85729245b9829e3cc7755f95b228d4fe041"
   integrity sha512-aodjPa2wPQFkra1G8CzJBTHXhgk3EVSwxSWXNPr1fgdFLUb8kvLV1iEb6rFgasIsjP82HWI6dsb5Io26DDnasA==
+
+warp-arbundles@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/warp-arbundles/-/warp-arbundles-1.0.4.tgz#10c0cd662ab41b0dabad9159c7110f43425cc5cc"
+  integrity sha512-KeRac/EJ7VOK+v5+PSMh2SrzpCKOAFnJICLlqZWt6qPkDCzVwcrNE5wFxOlEk5U170ewMDAB3e86UHUblevXpw==
+  dependencies:
+    arweave "^1.13.7"
+    base64url "^3.0.1"
+    buffer "^6.0.3"
+    warp-isomorphic "^1.0.7"
+
+warp-isomorphic@^1.0.7:
+  version "1.0.7"
+  resolved "https://registry.yarnpkg.com/warp-isomorphic/-/warp-isomorphic-1.0.7.tgz#abf1ee7bce44bec7c6b97547859e614876869aa7"
+  integrity sha512-fXHbUXwdYqPm9fRPz8mjv5ndPco09aMQuTe4kXfymzOq8V6F3DLsg9cIafxvjms9/mc6eijzkLBJ63yjEENEjA==
+  dependencies:
+    buffer "^6.0.3"
+    undici "^5.19.1"
 
 wcwidth@^1.0.1:
   version "1.0.1"
@@ -2224,3 +2278,8 @@ yargs@^17.7.2:
     string-width "^4.2.3"
     y18n "^5.0.5"
     yargs-parser "^21.1.1"
+
+zod@^3.22.2:
+  version "3.22.3"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.22.3.tgz#2fbc96118b174290d94e8896371c95629e87a060"
+  integrity sha512-EjIevzuJRiRPbVH4mGc8nApb/lVLKVpmUhAaR5R5doKGfAnGJ6Gr3CViAVjP+4FWSxCsybeWQdcgCtbX+7oZug==
