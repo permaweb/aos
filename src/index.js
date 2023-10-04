@@ -10,7 +10,7 @@ import * as commands from './commands/index.js'
 
 
 console.log(`
-ARbit CLI - 0.1
+AOS CLI - 0.1
 2023 - [CTRL-D] to exit
 
 
