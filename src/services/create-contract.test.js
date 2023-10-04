@@ -25,7 +25,8 @@ test.skip('create AOS contract', async () => {
   const result = await createContract({
     wallet,
     src,
-    initState
+    initState,
+    tags: [{ name: 'AOS', value: 'true' }]
   }).toPromise()
 
   console.log(result)

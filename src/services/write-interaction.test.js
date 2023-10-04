@@ -1,7 +1,7 @@
 import test from 'node:test'
 import assert from 'assert/strict'
 
-const wallet = JSON.parse({
+const wallet = {
   "kty": "RSA",
   "n": "5kw-7rv8SSVCtIHyP3OFTtoiXB3d7t4Q2oSsi4GihlCupNSlE-LO-J2ooS11az0vO3rOrFD4GedUdakETPOb2CLTiK1oQHp5c5L2k2xxygvwFAThtuYqq6Ay0bh-li7NYwP8OG1GzOEHc8Wll0MNqoHvqGk1Z4zsUB9TZKyYU7Oy-_cK25eZCijjFIqzXsYmHIM6q5eHsXQ--TA4VfGipOWrxyZhi10ALM1kiS8drGYc4s919LpbG6evuxsP-KxPbbefQYysxeMbyvJ8wQrsedyp-I6UHod35iLvv1aa2ovGu893jsv4wSYhNC4-6scmOodJFvAQKazG7iadhpKpQ1nXP2ZrFpxCBooyf1v8gNIpHAEv99VKU_lXuXSM_eJpaaMNjCUQTbqlhTx_xNl5BsxEljHEdEV0wgmtA2mn-asm3xcF1PBiiCFwoqhXobAz8iHtyCMJ7k4DfGyr3taA_0zVlf5TBWusMjTl9vzRboYaFSC05ZWlQqULh-QFTefoATbQH7Xnoeh45fKB3Mtb8IFOmI0RVdALjcVXtAIje8w3g7rDEfu0xvpMdKboPVKqdYoLOEq0GzxXqQXPy3Sv9ukFq_PFZF5eC4coq6z3mDnak6BxTPAwHEsb2J2MNqUbnbC1VP-OnM9dqTgUNS2wxkgHZHEbyn7CoMCKeL5rN1E",
   "e": "AQAB",
@@ -11,12 +11,12 @@ const wallet = JSON.parse({
   "dp": "7xec-VxZcc0uQsk-0qxash5KVo4X9-lX3VZr7rrDtGlVL-hJNxFZw9WWrexKLgoy3F08JUonKqO-VOcfOUyrgdwhBzUJa8mFiIy2oQ6TU4NUzmfx_opeW_oLixidtEdB_z9Z4OFFLIyz9vHxiN4pf_1nx9Q-JPB59ZVOjWvdCw2mXX_NgXYKDCogbE97nDoBO8ui9dA9-ho3im_TzUREpRXkdEX8coYaRrw5JBdZQdWe1VA_-aNYcH5t-KzuYGQ22oFvuxEjsqj01XRCxJ2EYJfMlvQL1EpRiKOgRSfGBbc1pjuipz3hjR-rbPpsWE5FJF4xMtGt6PTwlNS5vam5wQ",
   "dq": "DTqM1Z6nMR6AHTsTbvYyPunMYzehz2KmNHd--83rF51WhlmcTt2htCEn-Ie3mZctAa5MbB7JOBfVyDraETAvhoQmTH2_-XddhCuvVGOukg1QmoNbmXfCzbnZEgSgrr4dNwOiDHenR4h7UaU4rjH7uPjlRUotLv7l5c8uqfc4tE_haHUJ6vXqHoAvwic7-4o-qA2FCVItYm4Dr9coUdiiVRDLd1kEQJVsg-gdTIV7JR5zgBee0wtruGxdByHcrIY5FwOyd8NuSh0IG993oSo-h7dFU7h7RFg3l1R2uy4UhlcJxqPMoMMRdkswCWqP0tXTWiQ-TJDJGXRWyFpWAziyoQ",
   "qi": "kzHglZEmiie3q6uWjHVMrizlAx63TTptflCLAORVWKu_w8spTqosPONk6CkFrdyLb_VGHktxcRezhAu0g9uzBUcJqupM8P8P_A0VJEkxhtoKtd9ED_enEcqpoGoL2D9u_foJO4gNajDNhEdewvNkcFMnEPj4_942UAgy5bByyVh2TLKh0vc2gbCzIaTIZuERWv9Zty2Oug8_LENyRXcyV0B8j2DxfiOucqBXDwleDkbBx0nRi6VtKtv9TI-60_Jy9wHSLn8-2CYxVrj3tZk8_BRpuhKQz6vunSO82mhFpoCU-Ww-aQlFkz9PkJclP7dTWhtrMe1xWgt47romjQixtA"
-})
+}
 
-test.skip('write interaction', async () => {
+test('write interaction', async () => {
   const { writeInteraction } = await import('./write-interaction.js')
-  const result = writeInteraction({
-    contract: '',
+  const result = await writeInteraction({
+    contract: 'K7GRBWNQ12dyAQ41XNmMxnygOlHtfIKNeIICmfKQvTg',
     input: {
       function: 'echo',
       data: 'Hello'

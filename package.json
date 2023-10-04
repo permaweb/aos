@@ -11,7 +11,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "@permaweb/ao-sdk": "^0.0.7",
+    "@permaweb/ao-sdk": "^0.0.8",
     "arweave": "^1.14.4",
     "hyper-async": "^1.1.2",
     "ramda": "^0.29.0",
