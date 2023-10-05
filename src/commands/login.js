@@ -3,17 +3,38 @@
  * 
  * login -w ./wallet.json 
  */
-import fs from 'fs'
-import path from 'path'
-import { of } from 'hyper-async'
+import { of, Resolved, Rejected } from 'hyper-async'
+import * as utils from '../hyper-utils.js'
 
-export function login(args, services) {
-  try {
-    const jwk = JSON.parse(fs.readFileSync(path.resolve(args.w), 'utf-8'))
-    return of(jwk)
-    //   .chain(findProcess)
-    //return "Login Called"
-  } catch (e) {
-    return "ERROR: JWK Wallet File is required!"
-  }
+
+export function login(jwk, services) {
+  const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
+  const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })
+    .map(utils.path(['data', 'transactions', 'edges']))
+    .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
+    .map(utils.path([0, 'node', 'id']))
+
+  return of({ jwk })
+    .chain(getAddress)
+    .chain(findProcess)
+}
+
+// TODO - add this back
+// { name: "Contract-Type", values: ["ao"] },
+function queryForAOS() {
+  return `query ($owners: [String!]!) {
+    transactions(
+      first: 1,
+      owners: $owners,
+      tags: [
+        { name: "AOS", values: ["true"]}
+      ]
+    ) {
+      edges {
+        node {
+          id
+        }
+      }
+    }
+  }`
 }

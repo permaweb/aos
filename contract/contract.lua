@@ -34,6 +34,10 @@ function contract.handle(state, action, SmartWeave)
         }
       end
 
+      if type(o) == 'number' then
+        o = toString(o)
+      end
+
       return {
         state = state,
         result = {

@@ -4,14 +4,14 @@
  * register -w ./wallet.json
  * 
  */
-import fs from 'fs'
-import path from 'path'
+
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || "o9734B0gQ4A0qyJ76wIdukSjrlOMXxUkY4lhBunmXUU"
+const AOS_SRC = process.env.AOS_SRC || "HABpV2gbR0rUevfdzfMxYVePs1Pr-vJHYmPfJ6_epLM"
 
-export function register(args, services) {
+export function register(jwk, services) {
+
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })
     .map(utils.path(['data', 'transactions', 'edges']))
@@ -24,21 +24,17 @@ export function register(args, services) {
       name: 'Personal AOS',
       owner: address
     },
-    tags: [{ name: 'AOS', value: 'true' }]
+    tags: [
+      { name: 'Contract-Type', value: 'ao' },
+      { name: 'AOS', value: 'true' }
+    ]
   })
   const alreadyRegistered = _ => Resolved('Already Registered!')
 
-  try {
-    const jwk = JSON.parse(fs.readFileSync(path.resolve(args.w), 'utf-8'))
-
-    return of({ jwk })
-      .chain(getAddress)
-      .chain(findProcess)
-      .bichain(createProcess, alreadyRegistered)
-
-  } catch (e) {
-    return "ERROR: JWK Wallet File is required!"
-  }
+  return of({ jwk })
+    .chain(getAddress)
+    .chain(findProcess)
+    .bichain(createProcess, alreadyRegistered)
 }
 
 function queryForAOS() {

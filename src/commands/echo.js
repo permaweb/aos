@@ -4,9 +4,9 @@
  * echo Hello World
  * 
  */
-import { of } from 'hyper-async'
+import { path } from '../hyper-utils.js'
 
-export function echo(data, services, processId, wallet) {
+export function echo(data, processId, wallet, services) {
 
   const writeInteraction = (input) => services.writeInteraction({
     contract: processId,
@@ -15,5 +15,6 @@ export function echo(data, services, processId, wallet) {
   })
 
   return writeInteraction({ function: 'echo', data })
-    .chain(services.readOutput)
+    .chain(tx => services.readOutput(processId))
+    .map(path(['result', 'output']))
 }
