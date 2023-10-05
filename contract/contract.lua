@@ -35,7 +35,7 @@ function contract.handle(state, action, SmartWeave)
       end
 
       if type(o) == 'number' then
-        o = toString(o)
+        o = tostring(o)
       end
 
       return {
