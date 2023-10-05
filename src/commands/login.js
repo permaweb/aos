@@ -13,6 +13,7 @@ export function login(jwk, services) {
     .map(utils.path(['data', 'transactions', 'edges']))
     .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
     .map(utils.path([0, 'node', 'id']))
+    .map(_ => 'ByEL5ZcRVdR8DIOEYJgYiVB4qAghbmBLW8BriXE84qg')
 
   return of({ jwk })
     .chain(getAddress)

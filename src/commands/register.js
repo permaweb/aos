@@ -8,14 +8,15 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || "GnXT1tvyR2GSo-3pGTSRrAcO99IPUsPDAKDHR5TXg7I"
+const AOS_SRC = process.env.AOS_SRC || "Yb9eE8Aog7Yhhc1dSzOItjYUL0oTwgTGsKN_Zx7d0u8"
 
 export function register(jwk, services) {
 
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })
     .map(utils.path(['data', 'transactions', 'edges']))
-    .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
+    //.chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
+    .chain(results => Rejected({ jwk, address }))
 
   const createProcess = ({ jwk, address }) => services.createContract({
     wallet: jwk,

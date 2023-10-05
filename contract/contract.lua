@@ -2,6 +2,7 @@
 local contract = { _version = "0.0.1" }
 
 function contract.handle(state, action, SmartWeave) 
+ 
   -- owner only commands
   if (action.caller == state.owner) then
     if (action.input["function"] == "echo") then
@@ -15,7 +16,12 @@ function contract.handle(state, action, SmartWeave)
     end
 
     if (action.input["function"] == "eval") then
-      local func, err = load("return " .. action.input["data"])
+      local env = {}
+      for i,v in ipairs(state.env.logs) do
+        load(v,'memory','t', env)()
+      end
+      
+      local func, err = load(action.input["data"], 'aos', 't', env)
       if not func then 
         return {
           result = {
@@ -26,17 +32,21 @@ function contract.handle(state, action, SmartWeave)
       
       local o, e = func()
       
-      if not o then
+      if e then
         return {
           result = {
             error = e 
           }
         }
       end
-
-      if type(o) == 'number' then
+      
+      if type(o) ~= 'string' then
         o = tostring(o)
       end
+      local logs = state.env.logs
+      
+      table.insert(logs, action.input["data"])
+      state.env = { logs = logs }
 
       return {
         state = state,

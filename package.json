@@ -1,8 +1,9 @@
 {
   "type": "module",
-  "name": "ao-repl",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "@permaweb/aos-cli",
+  "version": "1.0.9",
+  "main": "src/index.js",
+  "bin": "./bin/aos.js",
   "repository": "https://github.com/twilson63/ao-repl.git",
   "author": "Tom Wilson <tom@hyper.io>",
   "license": "MIT",
