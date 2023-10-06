@@ -15,8 +15,8 @@ export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })
     .map(utils.path(['data', 'transactions', 'edges']))
-    //  .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
-    .chain(results => Rejected({ jwk, address }))
+    .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
+  //.chain(results => Rejected({ jwk, address }))
 
   const createProcess = ({ jwk, address }) => services.createContract({
     wallet: jwk,
@@ -24,7 +24,7 @@ export function register(jwk, services) {
     initState: {
       name: 'Personal AOS',
       owner: address,
-      env: {}
+      env: { logs: [] }
     },
     tags: [
       { name: 'Contract-Type', value: 'ao' },
