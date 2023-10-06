@@ -8,14 +8,14 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || "Yb9eE8Aog7Yhhc1dSzOItjYUL0oTwgTGsKN_Zx7d0u8"
+const AOS_SRC = process.env.AOS_SRC || "5f_ys199hwZiEFDShgQ08EpAYHT33A8xuxTQVvNjwaA"
 
 export function register(jwk, services) {
 
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })
     .map(utils.path(['data', 'transactions', 'edges']))
-    //.chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
+    //  .chain(results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address }))
     .chain(results => Rejected({ jwk, address }))
 
   const createProcess = ({ jwk, address }) => services.createContract({
@@ -23,14 +23,15 @@ export function register(jwk, services) {
     src: AOS_SRC,
     initState: {
       name: 'Personal AOS',
-      owner: address
+      owner: address,
+      env: {}
     },
     tags: [
       { name: 'Contract-Type', value: 'ao' },
       { name: 'AOS', value: 'true' }
     ]
   })
-  const alreadyRegistered = _ => Resolved('Already Registered!')
+  const alreadyRegistered = results => Resolved(results[0].node.id)
 
   return of({ jwk })
     .chain(getAddress)
@@ -41,10 +42,12 @@ export function register(jwk, services) {
 function queryForAOS() {
   return `query ($owners: [String!]!) {
     transactions(
+      first: 1,
       owners: $owners,
       tags: [
         { name: "Contract-Type", values: ["ao"] },
-        { name: "AOS", values: ["true"]}
+        { name: "AOS", values: ["true"]},
+        { name: "Contract-Src", values: ["${AOS_SRC}"]}
       ]
     ) {
       edges {

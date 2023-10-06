@@ -5,16 +5,7 @@ function contract.handle(state, action, SmartWeave)
  
   -- owner only commands
   if (action.caller == state.owner) then
-    if (action.input["function"] == "echo") then
-      return {
-        state = state,
-        result = {
-          output = action.input.data,
-          messages = {}
-        }
-      }
-    end
-
+    
     if (action.input["function"] == "eval") then
       local env = {}
       for i,v in ipairs(state.env.logs) do
