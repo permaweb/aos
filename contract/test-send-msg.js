@@ -13,10 +13,8 @@ async function main() {
     },
     {
       caller: "tom", input: {
-        function: "handleMessage", message: {
-          function: "receiveMsg",
-          body: "hello World"
-        }
+        function: "eval",
+        data: "return sendMsg('tom', 'this is your message')"
       }
     },
     {

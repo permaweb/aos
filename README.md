@@ -4,12 +4,15 @@ The repl is a thin client to access and execute ao contracts on the permaweb.
 
 ## Getting Started
 
-```
+```sh
+# create new project add arweave
 yarn init -y
 yarn add arweave
+
 # Generate Wallet
 node -e "require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))" > wallet.json
-# AOS
+
+# Boot up AOS
 npx @permaweb/aos-cli wallet.json
 ```
 

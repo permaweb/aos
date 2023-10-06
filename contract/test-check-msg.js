@@ -9,14 +9,12 @@ async function main() {
   console.time('aos2')
   const result = await handle(
     {
-      name: "AOS", owner: "tom", env: { logs: [] }, inbox: []
+      name: "AOS", owner: "tom", env: { logs: [] }, inbox: ["This is msg1", "this is msg2"]
     },
     {
       caller: "tom", input: {
-        function: "handleMessage", message: {
-          function: "receiveMsg",
-          body: "hello World"
-        }
+        function: "eval",
+        data: "return \"messages: \" .. checkMsgs()"
       }
     },
     {
