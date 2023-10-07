@@ -32,6 +32,29 @@ async function main() {
   console.timeEnd('aos2')
   console.log(JSON.stringify(result))
 
+  const result2 = await handle(
+    {
+      name: "AOS", owner: "tom", env: { logs: [] }, inbox: []
+    },
+    {
+      caller: "tom", input: {
+        function: "eval",
+        data: "return sendMsg('tom', 'this is your message')"
+      }
+    },
+    {
+      contract: {
+        id: "bob"
+      },
+      transaction: {
+
+        tags: {
+          Caller: "tom"
+        }
+      }
+    }
+  )
+  console.log(result2)
 }
 
 main()

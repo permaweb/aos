@@ -2,44 +2,39 @@
 local contract = { _version = "0.0.1" }
 
 function contract.handle(state, action, SmartWeave) 
+  if (action.input["function"] == "handleMessage") then
+    action = {
+      -- caller = SmartWeave.transaction.tags["Caller"],
+      caller = "todo",
+      input = action.input.message
+    }
+  end
   
+  if (action.input["function"] == "receiveMsg") then
+    table.insert(state.inbox, action.input.body)
+    return {
+      state = state,
+      result = {
+        messages = {},
+        output = "received message"
+      }
+    }
+  end
+
   -- owner only commands
   if (action.caller == state.owner) then
-    if (action.input["function"] == "handleMessage") then
-      action = {
-        -- caller = SmartWeave.transaction.tags["Caller"],
-        caller = action.input.message.caller,
-        input = action.input.message
-      }
-    end
-    
-    if (action.input["function"] == "receiveMsg") then
-      table.insert(state.inbox, action.input.body)
-      return {
-        state = state,
-        result = {
-          messages = {},
-          output = "received message"
-        }
-      }
-    end
     
     if (action.input["function"] == "eval") then
       local env = {}
       local messages = {}
-      for i,v in ipairs(state.env.logs) do
-        load(v,'memory','t', env)()
-      end
-      env._caller = SmartWeave.contract.id
-
+      
       function env.sendMsg(process, msg)
         
         table.insert(messages, {
           target = process,
           message = {
             ["function"] = "receiveMsg",
-            body = msg,
-            caller = _caller
+            body = msg
           }
         })
         return "message queued to send"
@@ -56,8 +51,15 @@ function contract.handle(state, action, SmartWeave)
       function env.reset() 
         return "reset"
       end
-    
+
+      -- load env
+      for i,v in ipairs(state.env.logs) do
+        load(v,'memory','t', env)()
+      end
+
+      messages = {}
       
+      -- run expr
       local func, err = load(action.input["data"], 'aos', 't', env)
       if not func then 
         return {
