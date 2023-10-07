@@ -15,11 +15,15 @@ async function main() {
       caller: "tom", input: {
         function: "handleMessage", message: {
           function: "receiveMsg",
-          body: "hello World"
+          body: "hello World",
+          caller: "bob"
         }
       }
     },
     {
+      contract: {
+        id: 'bob'
+      },
       transaction: {
         tags: {
           Caller: "tom"

@@ -18,6 +18,9 @@ async function main() {
       }
     },
     {
+      contract: {
+        id: "bob"
+      },
       transaction: {
         tags: {
           Caller: "tom"

@@ -7,7 +7,8 @@ function contract.handle(state, action, SmartWeave)
   if (action.caller == state.owner) then
     if (action.input["function"] == "handleMessage") then
       action = {
-        caller = SmartWeave.transaction.tags["Caller"],
+        -- caller = SmartWeave.transaction.tags["Caller"],
+        caller = action.input.message.caller,
         input = action.input.message
       }
     end
@@ -29,6 +30,7 @@ function contract.handle(state, action, SmartWeave)
       for i,v in ipairs(state.env.logs) do
         load(v,'memory','t', env)()
       end
+      env._caller = SmartWeave.contract.id
 
       function env.sendMsg(process, msg)
         
@@ -36,7 +38,8 @@ function contract.handle(state, action, SmartWeave)
           target = process,
           message = {
             ["function"] = "receiveMsg",
-            body = msg
+            body = msg,
+            caller = _caller
           }
         })
         return "message queued to send"

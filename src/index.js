@@ -51,7 +51,7 @@ cmds.register(jwk)
     console.log(x)
 
     console.log(`
-AOS CLI - 0.1
+AOS CLI - 0.2
 2023 - [CTRL-D] to exit
 
 `)
