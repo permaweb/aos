@@ -24,7 +24,8 @@ export function register(jwk, services) {
     initState: {
       name: 'Personal AOS',
       owner: address,
-      env: { logs: [] }
+      env: { logs: [] },
+      inbox: []
     },
     tags: [
       { name: 'Contract-Type', value: 'ao' },
