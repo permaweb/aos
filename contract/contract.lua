@@ -1,4 +1,5 @@
 
+local JSON = require("json")
 local contract = { _version = "0.0.1" }
 
 function contract.handle(state, action, SmartWeave) 
@@ -11,7 +12,7 @@ function contract.handle(state, action, SmartWeave)
   end
   
   if (action.input["function"] == "receiveMsg") then
-    table.insert(state.inbox, action.input.body)
+    table.insert(state.inbox, { from = action.input.from, body = action.input.body })
     return {
       state = state,
       result = {
@@ -34,18 +35,20 @@ function contract.handle(state, action, SmartWeave)
           target = process,
           message = {
             ["function"] = "receiveMsg",
-            body = msg
+            body = msg,
+            from = SmartWeave.contract.id
           }
         })
         return "message queued to send"
       end
 
       function env.checkMsgs() 
-        local msgoutput = ""
-        for i,v in ipairs(state.inbox) do
-          msgoutput = msgoutput .. ", " .. v
-        end
-        return msgoutput
+        -- local msgoutput = ""
+        -- for i,v in ipairs(state.inbox) do
+        --   msgoutput = msgoutput .. ", " .. v
+        -- end
+        -- return msgoutput
+        return JSON.encode(state.inbox)
       end
 
       function env.reset() 
@@ -63,8 +66,10 @@ function contract.handle(state, action, SmartWeave)
       local func, err = load(action.input["data"], 'aos', 't', env)
       if not func then 
         return {
+          state = state,
           result = {
-            error = err
+            output = err,
+            messages = {}
           }
         }
       end
@@ -72,11 +77,7 @@ function contract.handle(state, action, SmartWeave)
       local o, e = func()
       
       if e then
-        return {
-          result = {
-            error = e 
-          }
-        }
+        o = e
       end
       
       if type(o) ~= 'string' then

@@ -16,7 +16,7 @@ async function main() {
         function: "handleMessage", message: {
           function: "receiveMsg",
           body: "hello World",
-          caller: "bob"
+          from: "bob"
         }
       }
     },

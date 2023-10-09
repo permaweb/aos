@@ -8,7 +8,7 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || "BDjN50R7v0X3wBDz8wXXTZgrVpPW_Me_XEeaGWi7N7o"
+const AOS_SRC = process.env.AOS_SRC || "wBFj9IOhawfM2I5A2S4ns23NOVjeCHuFZRNpWa_XmAQ"
 
 export function register(jwk, services) {
 

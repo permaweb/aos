@@ -9,7 +9,7 @@ async function main() {
   console.time('aos2')
   const result = await handle(
     {
-      name: "AOS", owner: "tom", env: { logs: [] }, inbox: ["one", "two"]
+      name: "AOS", owner: "tom", env: { logs: [] }, inbox: [{ body: "one", from: "beep" }, { body: "two", from: "boop" }]
     },
     {
       caller: "tom", input: {
