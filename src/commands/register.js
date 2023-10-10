@@ -8,9 +8,10 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from '../hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || "wBFj9IOhawfM2I5A2S4ns23NOVjeCHuFZRNpWa_XmAQ"
+const AOS_SRC = process.env.AOS_SRC || "fUBEi8ajM-uJ-wx7K8Nxs6-uLGO1L1XwB52OrULDVfQ"
 
 export function register(jwk, services) {
+  // TODO: validate with zod
 
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address }) => services.gql(queryForAOS(), { owners: [address] })

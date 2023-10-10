@@ -51,14 +51,18 @@ cmds.register(jwk)
     console.log(x)
 
     console.log(`
-AOS CLI - 0.3
+AOS CLI - 0.5
 2023 - [CTRL-D] to exit
 
 `)
-    let { context } = repl.start({ prompt: 'aos> ', eval: doCommand })
+    let { context } = repl.start({ prompt: 'aos> ', eval: doCommand, writer: myWriter })
     context.jwk = jwk
     context.contract = contract
   })
 
+
+function myWriter(output) {
+  return output
+}
 
 

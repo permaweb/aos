@@ -4,9 +4,9 @@
  * 
  */
 import { path } from '../hyper-utils.js'
-import { Resolved } from 'hyper-async'
 
 export function evaluate(data, processId, wallet, services) {
+  // TODO: validate with zod
 
   const writeInteraction = (input) => services.writeInteraction({
     contract: processId,

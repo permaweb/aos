@@ -2,6 +2,7 @@
 local JSON = require("json")
 local contract = { _version = "0.0.1" }
 
+-- TODO: break contract is several modules
 function contract.handle(state, action, SmartWeave) 
   if (action.input["function"] == "handleMessage") then
     action = {
@@ -13,6 +14,18 @@ function contract.handle(state, action, SmartWeave)
   
   if (action.input["function"] == "receiveMsg") then
     table.insert(state.inbox, { from = action.input.from, body = action.input.body })
+    if state.receiveFn then
+      local fn, err = load(state.receiveFn, 'receivefn', 't', {_global = _G, state = state, SmartWeave = SmartWeave }) 
+      local msg = fn()
+      return {
+        state = state,
+        result = {
+          messages = {msg},
+          output = "processed message"
+        }
+      }
+    end
+
     return {
       state = state,
       result = {
@@ -26,7 +39,7 @@ function contract.handle(state, action, SmartWeave)
   if (action.caller == state.owner) then
     
     if (action.input["function"] == "eval") then
-      local env = {}
+      local env = { inbox = state.inbox, _global = _G }
       local messages = {}
       
       function env.sendMsg(process, msg)
@@ -55,9 +68,17 @@ function contract.handle(state, action, SmartWeave)
         return "reset"
       end
 
+      function env.setReceiveFn(code)
+        state.receiveFn = code
+        return "set receive function"
+      end
+
       -- load env
       for i,v in ipairs(state.env.logs) do
-        load(v,'memory','t', env)()
+        local fn, err = load(v,'memory','t', env)
+        if fn then
+          fn()
+        end
       end
 
       messages = {}
