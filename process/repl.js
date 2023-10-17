@@ -31,12 +31,14 @@ function repl(state) {
       response = await handle(state, message, AO);
       //console.log(response)
       console.log(response.result.output);
+      // Continue the REPL
+      repl(response.state);
     } catch (err) {
       console.log("Error:", err);
+      process.exit(0)
     }
 
-    // Continue the REPL
-    repl(response.state);
+
   });
 }
 
