@@ -29,7 +29,7 @@ function repl(state) {
     try {
       const message = createMessage(line)
       response = await handle(state, message, AO);
-      //console.log(response)
+      console.log(JSON.stringify(response))
       console.log(response.result.output);
       // Continue the REPL
       repl(response.state);

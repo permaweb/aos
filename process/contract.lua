@@ -15,8 +15,24 @@ function ao.send(input, target, AO)
     table.insert(message.tags, { name = k, value = v })
   end
 
-  -- table.insert(messages, message)
   return message
+end
+
+function ao.spawn(data, tags, AO) 
+  local spawn = {
+    data = data,
+    tags = {
+      { name = "Data-Protocol", value = "ao" },
+      { name = "ao-type", value = "process" },
+      { name = "Forwarded-For", value = AO.process.id }
+    }
+  }
+
+  for k,v in pairs(input) do
+    table.insert(spawn.tags, { name = k, value = v })
+  end
+
+  return spawn
 end
 
 local contract = { _version = "0.0.6" }
@@ -25,6 +41,7 @@ function contract.handle(state, message, AO)
 
   if message.tags["function"] == "eval" and state.owner == message.owner then
     local messages = {}
+    local spawns = {}
     local env = {
       _global = _G,
       state = state
@@ -35,7 +52,7 @@ function contract.handle(state, message, AO)
     end
     -- load session
     for i,v in ipairs(state["_session"]) do
-      load(v,'memory','t', env)()
+      pcall(function() load(v,'session','t', env)() end)
     end
 
     function env.send(target, input) 
@@ -44,23 +61,27 @@ function contract.handle(state, message, AO)
       return 'message added to outbox'
     end
 
+    function env.spawn(data, input) 
+      local spawn = ao.spawn(data, input, AO)
+      table.insert(spawns, spawn)
+      return 'spawn process request'
+    end
+
     -- load fns into env
     -- exec expression
     local func, err = load(message.tags.expression, 'aos', 't', env)
     local output = "" 
     if func then
       output, e = func()
+      -- TODO: Need to ignore `send` and `spawn` expressions
+      table.insert(state["_session"], message.tags.expression)
     else 
       output = err
     end 
     if e then output = e end
     
-    local result = JSON.encode(messages)
-    
-    -- insert message to session
-    table.insert(state["_session"], message.tags.expression)
-
-    return { state = state, result = { output = output, messages = env.messages, spawns = {} }}
+    -- local result = JSON.encode(messages)
+    return { state = state, result = { output = output, messages = messages, spawns = spawns }}
   end
 
   table.insert(state.inbox, message.tags.expression)
