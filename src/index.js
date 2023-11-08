@@ -1,29 +1,9 @@
-import repl from 'repl'
 import yargs from 'yargs/yargs'
 import { hideBin } from 'yargs/helpers'
-
-import fs from 'fs'
+import readline from 'readline'
 import path from 'path'
-
-// services 
-import { gql } from './services/gql.js'
-import { address } from './services/address.js'
-import { createContract } from './services/create-contract.js'
-import { writeInteraction } from './services/write-interaction.js'
-import { readOutput } from './services/read-output.js'
-
-// commands
-import * as commands from './commands/index.js'
-
-// init business rules
-const cmds = commands.init({ gql, address, createContract, writeInteraction, readOutput })
-
-async function doCommand(uInput, context, filename, callback) {
-
-  const output = await cmds.evaluate(uInput, context.contract, context.jwk)
-    .toPromise()
-  callback(null, output)
-}
+import fs from 'fs'
+import { evaluate } from './evaluate.js'
 
 let args = yargs(hideBin(process.argv)).argv
 
@@ -40,29 +20,83 @@ try {
   process.exit(0)
 }
 
-let contract = "";
+const rl = readline.createInterface({
+  input: process.stdin,
+  output: process.stdout
+});
 
-cmds.register(jwk)
-  .map(contractId => {
-    contract = contractId
-    return `Personal AOS Process: ${contractId}`
-  }).toPromise()
-  .then(x => {
-    console.log(x)
+let prompt = 'aos> '
 
-    console.log(`
-AOS CLI - 0.5
-2023 - [CTRL-D] to exit
-
-`)
-    let { context } = repl.start({ prompt: 'aos> ', eval: doCommand, writer: myWriter })
-    context.jwk = jwk
-    context.contract = contract
+async function repl() {
+  rl.question(prompt, async function (line) {
+    if (line === ".exit") {
+      console.log("Exiting...");
+      rl.close();
+      return;
+    }
+    // create message and publish to ao
+    const result = await evaluate(line)
+    // capture output and prompt 
+    // log output
+    console.log(result.output)
+    // set prompt
+    prompt = result.prompt ? result.prompt : prompt
+    repl()
   })
+}
+
+console.log('\nWelcome to AOS\nversion: v0.0.10\n')
+repl()
+
+/*
 
 
-function myWriter(output) {
-  return output
+
+
+async function repl(state) {
+  const handle = await AoLoader(wasm)
+
+  rl.question(prompt + "> ", async function (line) {
+    // Exit the REPL if the user types "exit"
+    if (line === ".exit") {
+      console.log("Exiting...");
+      rl.close();
+      return;
+    }
+    let response = {}
+    // Evaluate the JavaScript code and print the result
+    try {
+      const message = createMessage(line)
+      response = handle(state, message, env);
+      console.log(response.output.data.output)
+      if (response.output.data.prompt) {
+        prompt = response.output.data.prompt
+      }
+      // Continue the REPL
+      await repl(response.buffer);
+    } catch (err) {
+      console.log("Error:", err);
+      process.exit(0)
+    }
+
+
+  });
 }
 
 
+repl(null);
+
+
+function createMessage(expr) {
+  return {
+    owner: 'TOM',
+    target: 'PROCESS',
+    tags: [
+      { name: "Data-Protocol", value: "ao" },
+      { name: "ao-type", value: "message" },
+      { name: "function", value: "eval" },
+      { name: "expression", value: expr }
+    ]
+  }
+}
+*/
