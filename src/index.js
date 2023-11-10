@@ -1,29 +1,16 @@
-import repl from 'repl'
 import yargs from 'yargs/yargs'
 import { hideBin } from 'yargs/helpers'
-
-import fs from 'fs'
+import readline from 'readline'
 import path from 'path'
-
-// services 
-import { gql } from './services/gql.js'
+import fs from 'fs'
+import { evaluate } from './evaluate.js'
+import { register } from './register.js'
 import { address } from './services/address.js'
-import { createContract } from './services/create-contract.js'
-import { writeInteraction } from './services/write-interaction.js'
-import { readOutput } from './services/read-output.js'
+import { spawnProcess } from './services/spawn-process.js'
+import { gql } from './services/gql.js'
+import { sendMessage } from './services/send-message.js'
+import { readResult } from './services/read-result.js'
 
-// commands
-import * as commands from './commands/index.js'
-
-// init business rules
-const cmds = commands.init({ gql, address, createContract, writeInteraction, readOutput })
-
-async function doCommand(uInput, context, filename, callback) {
-
-  const output = await cmds.evaluate(uInput, context.contract, context.jwk)
-    .toPromise()
-  callback(null, output)
-}
 
 let args = yargs(hideBin(process.argv)).argv
 
@@ -40,29 +27,104 @@ try {
   process.exit(0)
 }
 
-let contract = "";
+let aosProcess = null
 
-cmds.register(jwk)
-  .map(contractId => {
-    contract = contractId
-    return `Personal AOS Process: ${contractId}`
+register(jwk, { address, spawnProcess, gql })
+  .map(processId => {
+    aosProcess = processId
+    return `Personal AOS Process: ${processId}`
   }).toPromise()
   .then(x => {
     console.log(x)
 
     console.log(`
-AOS CLI - 0.5
-2023 - [CTRL-D] to exit
+AOS CLI - 0.1.0
+2023 - Type ".exit" to exit
 
 `)
-    let { context } = repl.start({ prompt: 'aos> ', eval: doCommand, writer: myWriter })
-    context.jwk = jwk
-    context.contract = contract
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // need to check if a process is registered or create a process
+
+    let prompt = 'aos> '
+
+    async function repl() {
+      rl.question(prompt, async function (line) {
+        if (line === ".exit") {
+          console.log("Exiting...");
+          rl.close();
+          return;
+        }
+
+        // create message and publish to ao
+        const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult })
+        const output = JSON.parse(result.output)
+        // log output
+        console.log(output.data.output)
+        // set prompt
+        prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
+        repl()
+      })
+    }
+
+    repl()
+
   })
 
+/*
 
-function myWriter(output) {
-  return output
+
+
+
+
+async function repl(state) {
+  const handle = await AoLoader(wasm)
+
+  rl.question(prompt + "> ", async function (line) {
+    // Exit the REPL if the user types "exit"
+    if (line === ".exit") {
+      console.log("Exiting...");
+      rl.close();
+      return;
+    }
+    let response = {}
+    // Evaluate the JavaScript code and print the result
+    try {
+      const message = createMessage(line)
+      response = handle(state, message, env);
+      console.log(response.output.data.output)
+      if (response.output.data.prompt) {
+        prompt = response.output.data.prompt
+      }
+      // Continue the REPL
+      await repl(response.buffer);
+    } catch (err) {
+      console.log("Error:", err);
+      process.exit(0)
+    }
+
+
+  });
 }
 
 
+repl(null);
+
+
+function createMessage(expr) {
+  return {
+    owner: 'TOM',
+    target: 'PROCESS',
+    tags: [
+      { name: "Data-Protocol", value: "ao" },
+      { name: "ao-type", value: "message" },
+      { name: "function", value: "eval" },
+      { name: "expression", value: expr }
+    ]
+  }
+}
+*/
