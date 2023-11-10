@@ -68,16 +68,20 @@ function process.handle(msg, env)
       table.insert(spawns, spawn)
       return 'spawn process request'
     end
-
+  
     -- exec expression
     local expr = findObject(msg.tags, "name", "expression")
-    local func, err = load(expr.value, 'aos', 't', _G)
+    
+    local func, err = load("return " .. expr.value, 'aos', 't', _G)
     local output = "" 
+    if err then
+      func, err = load(expr.value, 'aos', 't', _G)
+    end
     if func then
       output, e = func()
     else 
       output = err
-    end 
+    end   
     if e then output = e end
     
     return { output = { data = { output = output, prompt = prompt } }, messages = messages, spawns = spawns }
