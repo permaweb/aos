@@ -64,6 +64,7 @@ Check out the getting started page to learn more.
 man("getting_started")
 ```
 
+(scroll up to see full page.)
     ]]
   end
 end
@@ -76,19 +77,15 @@ function process.handle(msg, env)
   if fn.value == "eval" and owner == msg.owner then
     local messages = {}
     local spawns = {}
-    local env = {
-      _global = _G,
-      state = state
-    }
-
+    
     function send(target, input) 
-      local message = ao.send(input, target, AO)
+      local message = ao.send(input, target, env)
       table.insert(messages, message)     
       return 'message added to outbox'
     end
 
     function spawn(data, input) 
-      local spawn = ao.spawn(data, input, AO)
+      local spawn = ao.spawn(data, input, env)
       table.insert(spawns, spawn)
       return 'spawn process request'
     end

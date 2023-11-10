@@ -4,6 +4,13 @@ import readline from 'readline'
 import path from 'path'
 import fs from 'fs'
 import { evaluate } from './evaluate.js'
+import { register } from './register.js'
+import { address } from './services/address.js'
+import { spawnProcess } from './services/spawn-process.js'
+import { gql } from './services/gql.js'
+import { sendMessage } from './services/send-message.js'
+import { readResult } from './services/read-result.js'
+
 
 let args = yargs(hideBin(process.argv)).argv
 
@@ -20,37 +27,57 @@ try {
   process.exit(0)
 }
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
+let aosProcess = null
 
-let prompt = 'aos> '
+register(jwk, { address, spawnProcess, gql })
+  .map(processId => {
+    aosProcess = processId
+    return `Personal AOS Process: ${processId}`
+  }).toPromise()
+  .then(x => {
+    console.log(x)
 
-async function repl() {
-  rl.question(prompt, async function (line) {
-    if (line === ".exit") {
-      console.log("Exiting...");
-      rl.close();
-      return;
+    console.log(`
+AOS CLI - 0.1.0
+2023 - Type ".exit" to exit
+
+`)
+
+    const rl = readline.createInterface({
+      input: process.stdin,
+      output: process.stdout
+    });
+
+    // need to check if a process is registered or create a process
+
+    let prompt = 'aos> '
+
+    async function repl() {
+      rl.question(prompt, async function (line) {
+        if (line === ".exit") {
+          console.log("Exiting...");
+          rl.close();
+          return;
+        }
+
+        // create message and publish to ao
+        const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult })
+        // capture output and prompt 
+        console.log(JSON.stringify(result))
+        // log output
+        console.log(result.output)
+        // set prompt
+        prompt = result.prompt ? result.prompt : prompt
+        repl()
+      })
     }
-    // check if process exists, if not register
 
-    // create message and publish to ao
-    const result = await evaluate(line)
-    // capture output and prompt 
-    // log output
-    console.log(result.output)
-    // set prompt
-    prompt = result.prompt ? result.prompt : prompt
     repl()
-  })
-}
 
-console.log('\nWelcome to AOS\nversion: v0.0.10\n')
-repl()
+  })
 
 /*
+
 
 
 

@@ -37,6 +37,7 @@ async function repl(state) {
       if (response.output.data.prompt) {
         prompt = response.output.data.prompt
       }
+
       // Continue the REPL
       await repl(response.buffer);
     } catch (err) {
