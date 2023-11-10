@@ -44,6 +44,30 @@ function version()
   print("version: " .. process._version)
 end
 
+function man(page) 
+  if not page then
+    return [[
+# aos man page
+
+Welcome to aos, this is your personal process on the aos network. 
+
+What can you do with aos?
+
+* send and receive messages from other processes
+* create/spawn new processes
+* write programmable logic to customize your aos environment
+* add handlers to your process that can be invoked when your process recieves messages
+
+Check out the getting started page to learn more.
+
+```lua
+man("getting_started")
+```
+
+    ]]
+  end
+end
+
 function process.handle(msg, env) 
   initializeState(msg, env)
 
@@ -57,13 +81,13 @@ function process.handle(msg, env)
       state = state
     }
 
-    function env.send(target, input) 
+    function send(target, input) 
       local message = ao.send(input, target, AO)
       table.insert(messages, message)     
       return 'message added to outbox'
     end
 
-    function env.spawn(data, input) 
+    function spawn(data, input) 
       local spawn = ao.spawn(data, input, AO)
       table.insert(spawns, spawn)
       return 'spawn process request'

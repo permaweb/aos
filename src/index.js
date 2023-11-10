@@ -34,6 +34,8 @@ async function repl() {
       rl.close();
       return;
     }
+    // check if process exists, if not register
+
     // create message and publish to ao
     const result = await evaluate(line)
     // capture output and prompt 
