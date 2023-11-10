@@ -31,7 +31,7 @@ When you boot up the OS, you can use https://lua.org to run expressions on your 
 First try "Hello AOS" - the return keyword sets the output variable that is passed to the output on the screen.
 
 ```lua
-return "Hello AOS"
+"Hello AOS"
 ```
 
 You should get `Hello AOS`
@@ -41,7 +41,7 @@ You should get `Hello AOS`
 Lets try another expression:
 
 ```lua
-return 1 + 41
+1 + 41
 ```
 
 You should get `42` the answer to the universe :P

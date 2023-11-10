@@ -62,12 +62,11 @@ AOS CLI - 0.1.0
 
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult })
-        // capture output and prompt 
-        console.log(JSON.stringify(result))
+        const output = JSON.parse(result.output)
         // log output
-        console.log(result.output)
+        console.log(output.data.output)
         // set prompt
-        prompt = result.prompt ? result.prompt : prompt
+        prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
         repl()
       })
     }
