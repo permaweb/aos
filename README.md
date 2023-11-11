@@ -70,42 +70,17 @@ Woohoo!
 We can also pass messages to other AOS Processes!
 
 ```lua
-return sendMsg("9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c", "Hi Tom!")
+return send("9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c", { body = "Hi Tom!" })
 ```
 
-Or you can check your messages
+Or you can check your messages ( by creating a message check function)
 
 ```lua
-return checkMsgs()
+function checkInbox() local o = ""; for i,v in ipairs(inbox) do o = o .. v.body .. '\n' end; return o; end
+checkInbox()
 ```
 
 `[{"from":"9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c","body":"Hi"}]`
 
-Now if you don't like that formater, you can access the inbox table and format it a different way.
-
-> NOTE: you can use `.editor` to write you code in multiple lines, then use `ctrl-d` to send.
-
-```lua
-.editor
-// Entering editor mode (Ctrl+D to finish, Ctrl+C to cancel)
-printMsgs = function() 
-  local o = ""
-  for i,v in _global.ipairs(inbox) do
-    o = o .. v.body .. '\n'
-  end
-  return o
-end
-```
-
-```lua
-return printMsgs()
-```
-
-
-You can also tap into the `receiveMsg` by setting an expression to handle a reply.
-
-```lua
-return setReceiveFn("if state.inbox[#state.inbox].from ~= SmartWeave.contract.id then return { target = state.inbox[#state.inbox].from, message = { ['function'] = 'receiveMsg', body = 'Thank you for sending message', from = SmartWeave.contract.id }} end");
-```
 
 
