@@ -10,7 +10,8 @@ import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
 import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
-
+import ora from 'ora'
+import chalk from 'chalk'
 
 let args = yargs(hideBin(process.argv)).argv
 
@@ -43,30 +44,44 @@ AOS CLI - 0.1.0
 
 `)
 
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout
-    });
+
 
     // need to check if a process is registered or create a process
 
     let prompt = 'aos> '
 
+
+
     async function repl() {
+
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+      });
+
+      const spinner = ora({
+        spinner: 'binary',
+        suffixText: `Cranking... ${chalk.red('ao')}`
+      })
+
       rl.question(prompt, async function (line) {
         if (line === ".exit") {
           console.log("Exiting...");
           rl.close();
           return;
         }
-
+        spinner.start();
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult })
+
         const output = JSON.parse(result.output)
+
         // log output
+        spinner.stop()
         console.log(output.data.output)
         // set prompt
         prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
+        rl.close()
         repl()
       })
     }

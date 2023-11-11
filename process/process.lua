@@ -1,7 +1,7 @@
 local JSON = require("json")
 local ao = require('.src.ao')
 
-local process = { _version = "0.0.6" }
+local process = { _version = "0.1.0" }
 
 local function findObject(array, key, value)
   for i, object in ipairs(array) do
@@ -74,7 +74,7 @@ function process.handle(msg, env)
 
   local fn = findObject(msg.tags, "name", "function")
   
-  if fn.value == "eval" and owner == msg.owner then
+  if fn and fn.value == "eval" and owner == msg.owner then
     local messages = {}
     local spawns = {}
     
@@ -106,9 +106,10 @@ function process.handle(msg, env)
     if e then output = e end
     
     return { output = { data = { output = output, prompt = prompt } }, messages = messages, spawns = spawns }
-  else
-    -- Add Message to Inbox
   end
+  
+  -- Add Message to Inbox
+  table.insert(inbox, msg)
 
 
   local response = {
