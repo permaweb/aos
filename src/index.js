@@ -38,7 +38,7 @@ register(jwk, { address, spawnProcess, gql })
   .then(x => {
 
     console.log(`
-AOS CLI - 0.2.4
+AOS CLI - 0.2.5
 2023 - Type ".exit" to exit`)
     console.log(x)
     console.log('')
