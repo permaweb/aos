@@ -33,13 +33,13 @@ let aosProcess = null
 register(jwk, { address, spawnProcess, gql })
   .map(processId => {
     aosProcess = processId
-    return `Personal AOS Process: ${processId}`
+    return `${chalk.gray("Personal aos process: ")} ${chalk.green(processId)}`
   }).toPromise()
   .then(x => {
 
-    console.log(`
-AOS CLI - 0.2.5
-2023 - Type ".exit" to exit`)
+    console.log(chalk.gray(`
+aos cli - 0.2.7 
+2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
 
@@ -70,7 +70,7 @@ AOS CLI - 0.2.5
           return;
         }
         spinner.start();
-        spinner.suffixText = "Signing Message and Sequencing..."
+        spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
 

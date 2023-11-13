@@ -1,5 +1,6 @@
 local JSON = require("json")
 local ao = require('.src.ao')
+local pretty = require('.src.pretty')
 
 local process = { _version = "0.1.0" }
 
@@ -79,6 +80,9 @@ function process.handle(msg, env)
     local spawns = {}
     
     function send(target, input) 
+      if type(input) == "string" then
+        input = { body = input }
+      end
       local message = ao.send(input, target, env)
       table.insert(messages, message)     
       return 'message added to outbox'
@@ -88,6 +92,10 @@ function process.handle(msg, env)
       local spawn = ao.spawn(data, input, env)
       table.insert(spawns, spawn)
       return 'spawn process request'
+    end
+
+    function list() 
+      return pretty.tprint(inbox)
     end
   
     -- exec expression
