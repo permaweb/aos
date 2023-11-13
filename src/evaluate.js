@@ -10,7 +10,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
     ]
   })
     .map(x => {
-      spinner.suffixText = `Computing ${chalk.green(x)} State Transformations`
+      spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)} ${chalk.gray("state transformations]")}`
       return x
     })
     //.chain(_ => fromPromise(() => new Promise((res) => setTimeout(() => res(_), 1000)))())

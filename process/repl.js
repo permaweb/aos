@@ -34,6 +34,7 @@ async function repl(state) {
       if (response.output.data.output) {
         console.log(response.output.data.output)
       }
+      //console.log(response.messages)
       if (response.output.data.prompt) {
         prompt = response.output.data.prompt
       }

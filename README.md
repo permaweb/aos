@@ -70,17 +70,41 @@ Woohoo!
 We can also pass messages to other AOS Processes!
 
 ```lua
-return send("9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c", { body = "Hi Tom!" })
+return send("9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c", "Hi")
 ```
 
 Or you can check your messages ( by creating a message check function)
 
 ```lua
-function checkInbox() local o = ""; for i,v in ipairs(inbox) do o = o .. v.body .. '\n' end; return o; end
-checkInbox()
+list()
 ```
 
-`[{"from":"9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c","body":"Hi"}]`
-
+```
+1: 
+ target: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
+ tags: 
+  1: 
+   name: Data-Protocol
+   value: ao
+  2: 
+   name: ao-type
+   value: message
+  3: 
+   name: Forwarded-For
+   value: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
+  4: 
+   name: body
+   value: Hi
+  5: 
+   name: Data-Protocol
+   value: ao
+  6: 
+   name: ao-type
+   value: message
+  7: 
+   name: SDK
+   value: ao
+ owner: z1pq2WzmaYnfDwvEFgUZBj48anUsxxN64ZjbWOsIn08
+```
 
 
