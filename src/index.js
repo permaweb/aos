@@ -36,13 +36,12 @@ register(jwk, { address, spawnProcess, gql })
     return `Personal AOS Process: ${processId}`
   }).toPromise()
   .then(x => {
-    console.log(x)
 
     console.log(`
-AOS CLI - 0.1.0
-2023 - Type ".exit" to exit
-
-`)
+AOS CLI - 0.2.5
+2023 - Type ".exit" to exit`)
+    console.log(x)
+    console.log('')
 
 
 
@@ -60,8 +59,8 @@ AOS CLI - 0.1.0
       });
 
       const spinner = ora({
-        spinner: 'binary',
-        suffixText: `Cranking... ${chalk.red('ao')}`
+        spinner: 'dots',
+        suffixText: ``
       })
 
       rl.question(prompt, async function (line) {
@@ -71,8 +70,9 @@ AOS CLI - 0.1.0
           return;
         }
         spinner.start();
+        spinner.suffixText = "Signing Message and Sequencing..."
         // create message and publish to ao
-        const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult })
+        const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
 
         const output = JSON.parse(result.output)
 
