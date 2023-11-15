@@ -1,9 +1,0 @@
-{
-  "name": "contract",
-  "version": "1.0.0",
-  "main": "index.js",
-  "license": "MIT",
-  "dependencies": {
-    "@permaweb/ao-loader": "^0.0.4"
-  }
-}

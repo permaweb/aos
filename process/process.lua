@@ -1,8 +1,38 @@
 local JSON = require("json")
 local ao = require('.src.ao')
 local pretty = require('.src.pretty')
+local base64 = require('.src.base64')
 
 local process = { _version = "0.1.0" }
+
+manpages = {
+  default = [[
+    # aos man page
+    
+    Welcome to aos, this is your personal computer on the ao network. 
+    
+    What can you do with aos?
+    
+    * send and receive messages from other processes
+    * create/spawn new processes
+    * write programmable logic to customize your aos environment
+    * add handlers to your process that can be invoked when your process recieves messages
+    
+    Installing manpages
+
+    ```lua
+    installManpage(TX_ID)
+    ```
+
+    Once installed then you can print them:
+    
+    ```lua
+    man("tutorial")
+    ```
+    
+    (scroll up to see full page.)
+  ]]
+}
 
 local function findObject(array, key, value)
   for i, object in ipairs(array) do
@@ -11,6 +41,11 @@ local function findObject(array, key, value)
     end
   end
   return nil
+end
+
+function prompt() 
+  -- return "inbox: [" .. #inbox .. "] aos"
+  return "aos"
 end
 
 function initializeState(msg, env) 
@@ -30,15 +65,6 @@ function initializeState(msg, env)
       name = 'aos'
     end
   end
-
-  if not prompt then
-    local promptObject = findObject(msg.tags, "name", "prompt")
-    if promptObject then
-      prompt = promptObject.value
-    else
-      prompt = 'aos'
-    end
-  end
 end
 
 function version() 
@@ -47,26 +73,9 @@ end
 
 function man(page) 
   if not page then
-    return [[
-# aos man page
-
-Welcome to aos, this is your personal process on the aos network. 
-
-What can you do with aos?
-
-* send and receive messages from other processes
-* create/spawn new processes
-* write programmable logic to customize your aos environment
-* add handlers to your process that can be invoked when your process recieves messages
-
-Check out the getting started page to learn more.
-
-```lua
-man("getting_started")
-```
-
-(scroll up to see full page.)
-    ]]
+    return manpages.default
+  else
+    return manpages[page]
   end
 end
 
@@ -94,6 +103,20 @@ function process.handle(msg, env)
       return 'spawn process request'
     end
 
+    function installManpage(tx) 
+      if not tx then 
+        return
+      end
+
+      local message = ao.send({
+        ['ao-load'] = tx, 
+        ['function'] = 'install-manpage'}, env.process.id, env
+      )
+      table.insert(messages, message)
+      return 'installing manpage'
+    end
+    
+
     function list() 
       return pretty.tprint(inbox)
     end
@@ -113,9 +136,16 @@ function process.handle(msg, env)
     end   
     if e then output = e end
     
-    return { output = { data = { output = output, prompt = prompt } }, messages = messages, spawns = spawns }
+    return { output = { data = { output = output, prompt = prompt() } }, messages = messages, spawns = spawns }
   end
-  
+
+  if fn and fn.value == "install-manpage" then
+    if msg.data and findObject(msg.data.tags, "name", "ao-manpage") then
+      page = findObject(msg.data.tags, "name", "ao-manpage").value
+      manpages[page] = base64.decode(msg.data.data)
+      return { output = { data = "installed manpage" }, messages = {}, spawns = {} }
+    end
+  end
   -- Add Message to Inbox
   table.insert(inbox, msg)
 
