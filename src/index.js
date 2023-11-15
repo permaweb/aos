@@ -24,7 +24,7 @@ let jwk = null
 try {
   jwk = JSON.parse(fs.readFileSync(path.resolve(args._[0]), 'utf-8'))
 } catch (e) {
-  console.log('AOS ERROR: could not parse file!')
+  console.log('aos ERROR: could not parse file!')
   process.exit(0)
 }
 
@@ -33,12 +33,12 @@ let aosProcess = null
 register(jwk, { address, spawnProcess, gql })
   .map(processId => {
     aosProcess = processId
-    return `${chalk.gray("Personal aos process: ")} ${chalk.green(processId)}`
+    return `${chalk.gray("aos computer: ")} ${chalk.green(processId)}`
   }).toPromise()
   .then(x => {
 
     console.log(chalk.gray(`
-aos cli - 0.2.7 
+aos - 0.2.8 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -50,6 +50,8 @@ aos cli - 0.2.7
     let prompt = 'aos> '
 
 
+    let editorMode = false
+    let editorData = ""
 
     async function repl() {
 
@@ -63,7 +65,42 @@ aos cli - 0.2.7
         suffixText: ``
       })
 
-      rl.question(prompt, async function (line) {
+      rl.question(editorMode ? "" : prompt, async function (line) {
+        if (line === ".editor") {
+          console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+          editorMode = true;
+
+          rl.close()
+          repl()
+
+          return;
+        }
+
+        if (editorMode && line === ".done") {
+          line = editorData
+          editorData = ""
+          editorMode = false;
+        }
+
+        if (editorMode && line === ".cancel") {
+          editorData = ""
+          editorMode = false;
+
+          rl.close()
+          repl()
+
+          return;
+        }
+
+        if (editorMode) {
+          editorData += line + '\n'
+
+          rl.close()
+          repl()
+
+          return;
+        }
+
         if (line === ".exit") {
           console.log("Exiting...");
           rl.close();
