@@ -3,6 +3,8 @@ local ao = require('.src.ao')
 local pretty = require('.src.pretty')
 local base64 = require('.src.base64')
 
+handlers = require('.src.handlers')
+
 local process = { _version = "0.1.0" }
 
 manpages = {
@@ -144,6 +146,13 @@ function process.handle(msg, env)
       page = findObject(msg.data.tags, "name", "ao-manpage").value
       manpages[page] = base64.decode(msg.data.data)
       return { output = { data = "installed manpage" }, messages = {}, spawns = {} }
+    end
+  end
+
+  if #handlers.list > 0 then
+    local res = handlers.evaluate(msg)
+    if res.output then
+      return res
     end
   end
   -- Add Message to Inbox

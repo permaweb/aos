@@ -1,0 +1,10 @@
+{
+  "name": "echo",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "@permaweb/ao-loader": "^0.0.10",
+    "@permaweb/ao-sdk": "^0.0.18"
+  }
+}
