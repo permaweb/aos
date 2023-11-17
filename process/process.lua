@@ -1,8 +1,8 @@
 local JSON = require("json")
-local ao = require('.src.ao')
 local pretty = require('.src.pretty')
 local base64 = require('.src.base64')
 
+ao = require('.src.ao')
 handlers = require('.src.handlers')
 
 local process = { _version = "0.1.0" }
@@ -23,7 +23,7 @@ manpages = {
     Installing manpages
 
     ```lua
-    installManpage(TX_ID)
+    installManpage("Xn2AX1W7synUTw7kSDqDAQPL7kVP7xu8g5WizkwiAYo")
     ```
 
     Once installed then you can print them:

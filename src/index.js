@@ -38,7 +38,7 @@ register(jwk, { address, spawnProcess, gql })
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.2.8 
+aos - 0.2.9 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -110,12 +110,14 @@ aos - 0.2.8
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
+          .catch(err => ({ output: { data: { output: err.message } } }))
 
-        const output = JSON.parse(result.output)
+        const output = JSON.parse(result.output ? result.output : '{"data": { "output": "error: could not parse result."}}')
 
         // log output
         spinner.stop()
         console.log(output.data.output)
+
         // set prompt
         prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
         rl.close()
