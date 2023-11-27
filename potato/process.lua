@@ -28,7 +28,7 @@ function process.handle(msg, env)
     handlers.append(register.pattern, register.handle, 'register')
   end
 
-  return handlers.evaluate(msg, { output = "function not found"})
+  return handlers.evaluate(msg, env)
 end
 
 return process

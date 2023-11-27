@@ -67,6 +67,8 @@ function initializeState(msg, env)
       name = 'aos'
     end
   end
+
+  ao.id = env.process.id
 end
 
 function version() 
@@ -150,6 +152,7 @@ function process.handle(msg, env)
   end
 
   if #handlers.list > 0 then
+    -- call evaluate from handlers passing env
     local res = handlers.evaluate(msg)
     if res.output then
       return res

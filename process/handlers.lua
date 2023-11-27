@@ -65,26 +65,35 @@ end
 
 function handlers.remove(name)
   assert(type(handleName) == 'string', 'name MUST be string')
+  if #handlers.list == 1 and handlers.list[1].name == name then
+    handlers.list = {}
+    return
+  end
+
   local idx = findIndexByProp(handlers.list, "name", name)
   table.remove(handlers.list, idx)
 end
 
 --- return 0 to not call handler, -1 to break after handler is called, 1 to continue
-function handlers.evaluate(msg, response)
+function handlers.evaluate(msg)
   assert(type(msg) == 'table', 'msg is not valid')
-  if not response then
-    response = {}
-  end
+  assert(type(env) == 'table', 'env is not valid')
+  local response = nil
 
   for i, o in ipairs(handlers.list) do
     local match = o.pattern(msg)
     if match ~= 0 then
+      -- each handle function can accept, the msg, env, and optional response to concat messages, output, etc
       response = o.handle(msg, response)
     end
     if match < 0 then
       return response
     end
   end
+  if response == nil then
+    return { output = "no match found!" }
+  end
+
   return response
 end
 
