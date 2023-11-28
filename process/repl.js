@@ -31,6 +31,7 @@ async function repl(state) {
     try {
       const message = createMessage(line)
       response = handle(state, message, env);
+      console.log(response.output)
       if (response.output.data.output) {
         console.log(response.output.data.output)
       }

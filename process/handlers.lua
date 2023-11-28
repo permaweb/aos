@@ -1,4 +1,4 @@
-local handlers = { _version = "0.0.1" }
+local handlers = { _version = "0.0.2" }
 
 handlers.list = {}
 
@@ -47,7 +47,7 @@ end
 
 function handlers.after(handleName)
   assert(type(handleName) == 'string', 'name MUST be string')
-  local idx = findIndexByProp(handlers.list, "name", name)
+  local idx = findIndexByProp(handlers.list, "name", handleName)
   return { 
     add = function (pattern, handle, name)
       assert(type(pattern) == 'function', 'pattern MUST be function')
@@ -64,7 +64,7 @@ function handlers.after(handleName)
 end
 
 function handlers.remove(name)
-  assert(type(handleName) == 'string', 'name MUST be string')
+  assert(type(name) == 'string', 'name MUST be string')
   if #handlers.list == 1 and handlers.list[1].name == name then
     handlers.list = {}
     return
@@ -75,7 +75,7 @@ function handlers.remove(name)
 end
 
 --- return 0 to not call handler, -1 to break after handler is called, 1 to continue
-function handlers.evaluate(msg)
+function handlers.evaluate(msg, env)
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
   local response = nil
@@ -84,7 +84,7 @@ function handlers.evaluate(msg)
     local match = o.pattern(msg)
     if match ~= 0 then
       -- each handle function can accept, the msg, env, and optional response to concat messages, output, etc
-      response = o.handle(msg, response)
+      response = o.handle(msg, env, response)
     end
     if match < 0 then
       return response

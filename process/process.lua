@@ -5,7 +5,7 @@ local base64 = require('.src.base64')
 ao = require('.src.ao')
 handlers = require('.src.handlers')
 
-local process = { _version = "0.1.0" }
+local process = { _version = "0.1.1" }
 
 manpages = {
   default = [[
@@ -153,7 +153,7 @@ function process.handle(msg, env)
 
   if #handlers.list > 0 then
     -- call evaluate from handlers passing env
-    local res = handlers.evaluate(msg)
+    local res = handlers.evaluate(msg, env)
     if res.output then
       return res
     end

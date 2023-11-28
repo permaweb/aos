@@ -1,16 +1,17 @@
-local ao = { _version = "0.0.1", id = "" }
+local ao = { _version = "0.0.2", id = "" }
 
 function ao.send(input, target) 
-  -- assert(typeof(input) == 'table', 'input should be a table')
-  -- assert(typeof(target) == 'string', 'target should be a string')
-  -- assert(typeof(AO) == 'table', 'env should be a table')
-
+  assert(type(input) == 'table', 'input should be a table')
+  assert(type(target) == 'string', 'target should be a string')
+  
+  local me = ao.id
+  
   local message = {
     target = target,
     tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "ao-type", value = "message" },
-      { name = "Forwarded-For", value = ao.id }
+      { name = "Forwarded-For", value = me }
     }
   }
   
@@ -21,17 +22,18 @@ function ao.send(input, target)
   return message
 end
 
-function ao.spawn(data, tags, AO) 
+function ao.spawn(data, tags) 
   assert(data ~= nil, 'data should have a value')
-  assert(typeof(tags) == 'table', 'tags should be a table')
-  assert(typeof(AO) == 'table', 'env should be a table')
+  assert(type(tags) == 'table', 'tags should be a table')
+  
+  local me = ao.id
 
   local spawn = {
     data = data,
     tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "ao-type", value = "process" },
-      { name = "Forwarded-For", value = AO.process.id }
+      { name = "Forwarded-For", value = me }
     }
   }
 
