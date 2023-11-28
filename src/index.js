@@ -38,7 +38,7 @@ register(jwk, { address, spawnProcess, gql })
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.2.10 [alpha] 
+aos - 0.2.11 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
