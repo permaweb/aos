@@ -1,4 +1,4 @@
-# Lua Library: Process (Version 0.1.1)
+# Lua Library: Process (Version 0.1.2)
 
 ## Overview
 The Process library provides an environment for managing and executing processes on the AO network. It includes capabilities for handling messages, spawning processes, and customizing the environment with programmable logic and handlers.

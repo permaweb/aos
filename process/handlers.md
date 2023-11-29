@@ -1,6 +1,7 @@
-# Lua Library: Handlers (Version 0.0.2)
+# Lua Library: Handlers (Version 0.0.3)
 
 ## Overview
+
 The Handlers library provides a flexible way to manage and execute a series of handlers based on patterns. Each handler consists of a pattern function, a handle function, and a name. This library is suitable for scenarios where different actions need to be taken based on varying input criteria.
 
 ## Module Structure

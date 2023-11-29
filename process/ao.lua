@@ -1,4 +1,9 @@
-local ao = { _version = "0.0.2", id = "" }
+local ao = { _version = "0.0.3", id = "", outbox = { messages = {}, spawns = {} } }
+
+-- clears outbox
+function ao.clearOutbox()
+  ao.outbox = { messages = {}, spawns = {} }
+end
 
 function ao.send(input, target) 
   assert(type(input) == 'table', 'input should be a table')
@@ -18,7 +23,8 @@ function ao.send(input, target)
   for k,v in pairs(input) do
     table.insert(message.tags, { name = k, value = v })
   end
-
+  -- add message to outbox
+  table.insert(ao.outbox.messages, message)
   return message
 end
 
@@ -40,6 +46,9 @@ function ao.spawn(data, tags)
   for k,v in pairs(input) do
     table.insert(spawn.tags, { name = k, value = v })
   end
+
+   -- add spawn to outbox
+   table.insert(ao.outbox.spawns, spawn)
 
   return spawn
 end

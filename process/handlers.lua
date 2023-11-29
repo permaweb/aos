@@ -1,4 +1,4 @@
-local handlers = { _version = "0.0.2" }
+local handlers = { _version = "0.0.3" }
 
 handlers.list = {}
 
@@ -78,23 +78,17 @@ end
 function handlers.evaluate(msg, env)
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
-  local response = nil
-
+  
   for i, o in ipairs(handlers.list) do
     local match = o.pattern(msg)
     if match ~= 0 then
-      -- each handle function can accept, the msg, env, and optional response to concat messages, output, etc
-      response = o.handle(msg, env, response)
+      -- each handle function can accept, the msg, env
+      o.handle(msg, env)
     end
     if match < 0 then
-      return response
+      return 
     end
   end
-  if response == nil then
-    return { output = "no match found!" }
-  end
-
-  return response
 end
 
 return handlers

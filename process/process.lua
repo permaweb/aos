@@ -5,7 +5,7 @@ local base64 = require('.src.base64')
 ao = require('.src.ao')
 handlers = require('.src.handlers')
 
-local process = { _version = "0.1.1" }
+local process = { _version = "0.1.2" }
 
 manpages = {
   default = [[
@@ -152,10 +152,19 @@ function process.handle(msg, env)
   end
 
   if #handlers.list > 0 then
+    if #ao.outbox.messages > 0 or #ao.outbox.spawns > 0 then
+      ao.clearOutbox()
+    end
     -- call evaluate from handlers passing env
-    local res = handlers.evaluate(msg, env)
-    if res.output then
-      return res
+    handlers.evaluate(msg, env)
+    if #ao.outbox.messages > 0 or #ao.outbox.spawns > 0 then
+      local response = {
+        output = "cranking",
+        messages = ao.outbox.messages,
+        spawns = ao.outbox.spawns
+      }
+      
+      return response
     end
   end
   -- Add Message to Inbox
