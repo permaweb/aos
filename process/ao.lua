@@ -28,10 +28,14 @@ function ao.send(input, target)
   return message
 end
 
-function ao.spawn(data, tags) 
-  assert(data ~= nil, 'data should have a value')
+function ao.spawn(module, tags, data)
+  assert(type(module) == "string", "module source id is required!") 
   assert(type(tags) == 'table', 'tags should be a table')
   
+  if not data then
+    data = "NODATA"
+  end
+
   local me = ao.id
 
   local spawn = {
@@ -39,11 +43,12 @@ function ao.spawn(data, tags)
     tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "ao-type", value = "process" },
-      { name = "Forwarded-For", value = me }
+      { name = "Forwarded-For", value = me },
+      { name = "Contract-Src", value = module }
     }
   }
 
-  for k,v in pairs(input) do
+  for k,v in pairs(tags) do
     table.insert(spawn.tags, { name = k, value = v })
   end
 

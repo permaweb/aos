@@ -33,19 +33,20 @@ Sends a message to a specified target, adding the message to the outbox.
 local message = ao.send({ key1 = "value1", key2 = "value2" }, "target_system")
 ```
 
-### `ao.spawn(data, tags)`
-Creates a spawn request with the given data and tags, adding the spawn to the outbox.
+### `ao.spawn(module, tags, data)`
+Creates a spawn request with the given module source, tags and optionally data, adding the spawn to the outbox.
 
 #### Parameters
-- `data`: Data associated with the spawn request.
+- `module` (string):  module source associated with the spawn request.
 - `tags` (table): A table of key-value pairs representing tags for the spawn.
+- `[data]` (binary or string): Optional data for creating Atomic Assets
 
 #### Returns
 - `spawn` (table): A table representing the spawn request added to the outbox.
 
 #### Usage
 ```lua
-local spawnRequest = ao.spawn("process_data", { tag1 = "value1", tag2 = "value2" })
+local spawnRequest = ao.spawn("MODULE", { name = "Foo Coin", ticker = "FOO" })
 ```
 
 ## Usage Example

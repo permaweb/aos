@@ -96,13 +96,13 @@ function process.handle(msg, env)
       if type(input) == "string" then
         input = { body = input }
       end
-      local message = ao.send(input, target, env)
+      local message = ao.send(input, target)
       table.insert(messages, message)     
       return 'message added to outbox'
     end
 
-    function spawn(data, input) 
-      local spawn = ao.spawn(data, input, env)
+    function spawn(module, input, data) 
+      local spawn = ao.spawn(module, input, data)
       table.insert(spawns, spawn)
       return 'spawn process request'
     end
