@@ -101,6 +101,12 @@ function process.handle(msg, env)
       return 'message added to outbox'
     end
 
+    function sendraw(target, input)
+      local message = ao.sendraw(input, target)
+      table.insert(messages, message)     
+      return 'message added to outbox'
+    end
+
     function spawn(module, input, data) 
       local spawn = ao.spawn(module, input, data)
       table.insert(spawns, spawn)
