@@ -93,6 +93,9 @@ function process.handle(msg, env)
     local spawns = {}
     
     function send(target, input) 
+      if not input then
+        input = {}
+      end
       if type(input) == "string" then
         input = { body = input }
       end
@@ -102,12 +105,20 @@ function process.handle(msg, env)
     end
 
     function sendraw(target, input)
+      if not input then
+        input = {}
+      end
+
       local message = ao.sendraw(input, target)
       table.insert(messages, message)     
       return 'message added to outbox'
     end
 
     function spawn(module, input, data) 
+      if not input then
+        input = {}
+      end
+      
       local spawn = ao.spawn(module, input, data)
       table.insert(spawns, spawn)
       return 'spawn process request'
