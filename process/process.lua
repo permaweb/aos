@@ -2,6 +2,7 @@ local JSON = require("json")
 local pretty = require('.src.pretty')
 local base64 = require('.src.base64')
 
+utils = require('.src.utils')
 ao = require('.src.ao')
 handlers = require('.src.handlers')
 
