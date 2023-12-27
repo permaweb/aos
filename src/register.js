@@ -8,7 +8,7 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || 'GX5k-GNx_Fw0aAkMIa74w2TiAsLmaclGbQ1kDLAjpe4'
+const AOS_SRC = process.env.AOS_SRC || 'eCTiNS0ac3ATecpBU7LIWp8SE0fCtziy-18HtQspr04'
 
 export function register(jwk, services) {
   // TODO: validate with zod
@@ -27,7 +27,9 @@ export function register(jwk, services) {
     src: AOS_SRC,
     tags: [
       { name: 'Data-Protocol', value: 'ao' },
-      { name: 'ao-type', value: 'process' },
+      { name: 'Type', value: 'Process' },
+      { name: 'Variant', value: 'ao.TN.1' },
+
       { name: 'name', value: 'Personal AOS' }
     ]
   })

@@ -7,11 +7,20 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.0.0.tgz#f22824caff3ae506b18207bad4126dbc6ccdb6b8"
   integrity sha512-JUFJad5lv7jxj926GPgymrWQxxjPYuJNiNjNMzqT+HiuP6Vl3dk5xzG+8sTX96np0ZAluvaMzPsjhHZ5rNuNQQ==
 
-"@permaweb/ao-sdk@^0.0.18":
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.18.tgz#2a6c75bfbbcfca80f1ab900047e194d767ebbcc5"
-  integrity sha512-VrEvZQXERb3qCEpoRzwC4XrLe5eQq41Aqt1wOjd+2CI7uzTxE2w5v3WLENO+ewSmFJWgQK9JoZY3w0qrOxYFeQ==
+"@permaweb/ao-scheduler-utils@~0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.7.tgz#7401c4a6fe3e2973adfb4e5437aa424efe7882cc"
+  integrity sha512-N3pAin4FC+p9WF8WwSR4K6uSyEXTVMFuFiijscwf70MlY03egxeVy91FdXqF4kGOtx1matcXEzseOUjqypkXlQ==
   dependencies:
+    lru-cache "^10.1.0"
+    ramda "^0.29.1"
+
+"@permaweb/ao-sdk@^0.0.21":
+  version "0.0.21"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.21.tgz#acde2898bfdddb41f17c27e1b6a4916695e477d4"
+  integrity sha512-tTG9vMHZe4jMuRzOiRTVD72qYqdU/x5RzLtc3G7dQ+35FW4sOCo2Ed8mnp16FiY8CufPr3kaw2BrwjistLdlxA==
+  dependencies:
+    "@permaweb/ao-scheduler-utils" "~0.0.7"
     buffer "^6.0.3"
     debug "^4.3.4"
     hyper-async "^1.1.2"
@@ -207,6 +216,11 @@ log-symbols@^5.1.0:
   dependencies:
     chalk "^5.0.0"
     is-unicode-supported "^1.1.0"
+
+lru-cache@^10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.1.0.tgz#2098d41c2dc56500e6c88584aa656c84de7d0484"
+  integrity sha512-/1clY/ui8CzjKFyjdvwPWJUYKiFVXG2I2cY0ssG7h4+hwk+XOIX7ZSG9Q7TW8TW3Kp3BUSqgFWBLgL4PJ+Blag==
 
 mimic-fn@^2.1.0:
   version "2.1.0"

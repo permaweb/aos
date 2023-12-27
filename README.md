@@ -15,7 +15,7 @@ yarn add arweave
 node -e "require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))" > wallet.json
 
 # Boot up AOS
-npx @permaweb/aos-cli@latest wallet.json
+npx @permaweb/aos@latest wallet.json
 ```
 
 The wallet creates a personal process that allows you to use as a repl, you can send it commands and it will evaluate and return output.
