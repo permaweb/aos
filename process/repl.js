@@ -9,9 +9,9 @@ const rl = readline.createInterface({
 });
 
 const env = {
-  process: {
-    id: 'PROCESS_TEST',
-    owner: 'TOM'
+  Process: {
+    Id: 'PROCESS_TEST',
+    Owner: 'TOM'
   }
 }
 let prompt = 'aos'
@@ -31,13 +31,13 @@ async function repl(state) {
     try {
       const message = createMessage(line)
       response = handle(state, message, env);
-      console.log(response.output)
-      if (response.output.data.output) {
-        console.log(response.output.data.output)
+      console.log(response.Output)
+      if (response.Output.data.output) {
+        console.log(response.Output.data.output)
       }
       //console.log(response.messages)
-      if (response.output.data.prompt) {
-        prompt = response.output.data.prompt
+      if (response.Output.data.prompt) {
+        prompt = response.Output.data.prompt
       }
 
       // Continue the REPL
@@ -57,11 +57,12 @@ repl(null);
 
 function createMessage(expr) {
   return {
-    owner: 'TOM',
-    target: 'PROCESS',
-    tags: [
+    Owner: 'TOM',
+    Target: 'PROCESS',
+    Tags: [
       { name: "Data-Protocol", value: "ao" },
-      { name: "ao-type", value: "message" },
+      { name: "Variant", value: 'ao.TN.1' },
+      { name: "Type", value: "message" },
       { name: "function", value: "eval" },
       { name: "expression", value: expr }
     ]

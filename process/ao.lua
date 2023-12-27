@@ -1,8 +1,8 @@
-local ao = { _version = "0.0.3", id = "", outbox = { messages = {}, spawns = {} } }
+local ao = { _version = "0.0.3", id = "", outbox = { Messages = {}, Spawns = {} } }
 
 -- clears outbox
 function ao.clearOutbox()
-  ao.outbox = { messages = {}, spawns = {} }
+  ao.outbox = { Messages = {}, Spawns = {} }
 end
 
 -- raw send - input is in name,value objects as an array
@@ -16,8 +16,9 @@ function ao.sendraw(input, target)
     target = target,
     tags = {
       { name = "Data-Protocol", value = "ao" },
-      { name = "ao-type", value = "message" },
-      { name = "Forwarded-For", value = me }
+      { name = "Variant", value = "ao.TN.1"},
+      { name = "Type", value = "Message" },
+      { name = "From-Process", value = me }
     }
   }
   
@@ -25,7 +26,7 @@ function ao.sendraw(input, target)
     table.insert(message.tags, v)
   end
   -- add message to outbox
-  table.insert(ao.outbox.messages, message)
+  table.insert(ao.outbox.Messages, message)
   return message
 end
 
@@ -40,8 +41,9 @@ function ao.send(input, target)
     target = target,
     tags = {
       { name = "Data-Protocol", value = "ao" },
-      { name = "ao-type", value = "message" },
-      { name = "Forwarded-For", value = me }
+      { name = "Variant", value = "ao.TN.1"},
+      { name = "Type", value = "Message" },
+      { name = "From-Process", value = me }
     }
   }
   
@@ -49,7 +51,7 @@ function ao.send(input, target)
     table.insert(message.tags, { name = k, value = v })
   end
   -- add message to outbox
-  table.insert(ao.outbox.messages, message)
+  table.insert(ao.outbox.Messages, message)
   return message
 end
 
@@ -67,9 +69,10 @@ function ao.spawn(module, tags, data)
     data = data,
     tags = {
       { name = "Data-Protocol", value = "ao" },
-      { name = "ao-type", value = "process" },
-      { name = "Forwarded-For", value = me },
-      { name = "Contract-Src", value = module }
+      { name = "Variant", value = "ao.TN.1"},
+      { name = "Type", value = "Process" },
+      { name = "From-Process", value = me },
+      { name = "Module", value = module }
     }
   }
 
@@ -78,7 +81,7 @@ function ao.spawn(module, tags, data)
   end
 
    -- add spawn to outbox
-   table.insert(ao.outbox.spawns, spawn)
+   table.insert(ao.outbox.Spawns, spawn)
 
   return spawn
 end
@@ -98,9 +101,10 @@ function ao.spawnraw(module, tags, data)
     data = data,
     tags = {
       { name = "Data-Protocol", value = "ao" },
-      { name = "ao-type", value = "process" },
-      { name = "Forwarded-For", value = me },
-      { name = "Contract-Src", value = module }
+      { name = "Variant", value = "ao.TN.1" },
+      { name = "Type", value = "Process" },
+      { name = "From-Process", value = me },
+      { name = "Module", value = module }
     }
   }
 
@@ -109,7 +113,7 @@ function ao.spawnraw(module, tags, data)
   end
 
    -- add spawn to outbox
-   table.insert(ao.outbox.spawns, spawn)
+   table.insert(ao.outbox.Spawns, spawn)
 
   return spawn
 end

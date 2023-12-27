@@ -1,10 +1,10 @@
 local JSON = require("json")
-local pretty = require('.src.pretty')
-local base64 = require('.src.base64')
+local pretty = require('.pretty')
+local base64 = require('.base64')
 
-utils = require('.src.utils')
-ao = require('.src.ao')
-handlers = require('.src.handlers')
+utils = require('.utils')
+ao = require('.ao')
+handlers = require('.handlers')
 
 local process = { _version = "0.1.2" }
 
@@ -53,7 +53,7 @@ end
 
 function initializeState(msg, env) 
   if not owner then
-    owner = env.process.owner
+    owner = env.Process.Owner
   end 
 
   if not inbox then
@@ -61,7 +61,7 @@ function initializeState(msg, env)
   end
 
   if not name then
-    local aosName = findObject(msg.tags, "name", "name")
+    local aosName = findObject(msg.Tags, "name", "Name")
     if aosName then
       name = aosName.value
     else 
@@ -69,7 +69,7 @@ function initializeState(msg, env)
     end
   end
 
-  ao.id = env.process.id
+  ao.id = env.Process.Id
 end
 
 function version() 
@@ -87,9 +87,9 @@ end
 function process.handle(msg, env) 
   initializeState(msg, env)
 
-  local fn = findObject(msg.tags, "name", "function")
+  local fn = findObject(msg.Tags, "name", "function")
   
-  if fn and fn.value == "eval" and owner == msg.owner then
+  if fn and fn.value == "eval" and owner == msg.Owner then
     local messages = {}
     local spawns = {}
     
@@ -132,7 +132,7 @@ function process.handle(msg, env)
 
       local message = ao.send({
         ['ao-load'] = tx, 
-        ['function'] = 'install-manpage'}, env.process.id, env
+        ['function'] = 'install-manpage'}, env.Process.Id, env
       )
       table.insert(messages, message)
       return 'installing manpage'
@@ -144,7 +144,7 @@ function process.handle(msg, env)
     end
   
     -- exec expression
-    local expr = findObject(msg.tags, "name", "expression")
+    local expr = findObject(msg.Tags, "name", "expression")
     
     local func, err = load("return " .. expr.value, 'aos', 't', _G)
     local output = "" 
@@ -158,28 +158,28 @@ function process.handle(msg, env)
     end   
     if e then output = e end
     
-    return { output = { data = { output = output, prompt = prompt() } }, messages = messages, spawns = spawns }
+    return { Output = { data = { output = output, prompt = prompt() } }, Messages = messages, Spawns = spawns }
   end
 
   if fn and fn.value == "install-manpage" then
     if msg.data and findObject(msg.data.tags, "name", "ao-manpage") then
       page = findObject(msg.data.tags, "name", "ao-manpage").value
       manpages[page] = base64.decode(msg.data.data)
-      return { output = { data = "installed manpage" }, messages = {}, spawns = {} }
+      return { Output = { data = "installed manpage" }, Messages = {}, Spawns = {} }
     end
   end
 
   if #handlers.list > 0 then
-    if #ao.outbox.messages > 0 or #ao.outbox.spawns > 0 then
+    if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       ao.clearOutbox()
     end
     -- call evaluate from handlers passing env
     handlers.evaluate(msg, env)
-    if #ao.outbox.messages > 0 or #ao.outbox.spawns > 0 then
+    if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       local response = {
-        output = "cranking",
-        messages = ao.outbox.messages,
-        spawns = ao.outbox.spawns
+        Output = "cranking",
+        Messages = ao.outbox.Messages,
+        Spawns = ao.outbox.Spawns
       }
       
       return response
@@ -190,7 +190,7 @@ function process.handle(msg, env)
 
 
   local response = {
-    result = { error = "could not find action" }
+    result = { Error = "could not find action" }
   }
   return response
 end

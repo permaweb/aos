@@ -110,9 +110,9 @@ aos - 0.2.16 [alpha]
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
-          .catch(err => ({ output: { data: { output: err.message } } }))
+          .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
 
-        const output = JSON.parse(result.output ? result.output : '{"data": { "output": "error: could not parse result."}}')
+        const output = JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
 
         // log output
         spinner.stop()

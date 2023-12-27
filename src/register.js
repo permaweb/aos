@@ -8,7 +8,7 @@
 import { of, Resolved, Rejected } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || 'eCTiNS0ac3ATecpBU7LIWp8SE0fCtziy-18HtQspr04'
+const AOS_SRC = process.env.AOS_SRC || 'UvGVK5RT6wO9187KxbIwU6xmzXvZOmxj3gIubU8RKbc'
 
 export function register(jwk, services) {
   // TODO: validate with zod
@@ -26,11 +26,7 @@ export function register(jwk, services) {
     wallet: jwk,
     src: AOS_SRC,
     tags: [
-      { name: 'Data-Protocol', value: 'ao' },
-      { name: 'Type', value: 'Process' },
-      { name: 'Variant', value: 'ao.TN.1' },
-
-      { name: 'name', value: 'Personal AOS' }
+      { name: 'Name', value: 'Personal AOS' }
     ]
   })
   const alreadyRegistered = results => Resolved(results[0].node.id)
@@ -48,8 +44,8 @@ function queryForAOS() {
       owners: $owners,
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
-        { name: "ao-type", values: ["process"]},
-        { name: "Contract-Src", values: ["${AOS_SRC}"]}
+        { name: "Type", values: ["Process"]},
+        { name: "Module", values: ["${AOS_SRC}"]}
       ]
     ) {
       edges {
