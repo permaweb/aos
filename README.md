@@ -70,7 +70,7 @@ Woohoo!
 We can also pass messages to other AOS Processes!
 
 ```lua
-return send("9ps7pnC7hpdCYJGJujAg_QY-cyKbQ1GoaE5h-4elI9c", "Hi")
+return send("ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU", "ping")
 ```
 
 Or you can check your messages ( by creating a message check function)
