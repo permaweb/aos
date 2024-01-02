@@ -1,8 +1,10 @@
-# AOS REPL
+# AOS 
 
 > NOTE: This is very experimental, use for research and development purposes only.
 
-The repl is a thin client to access and execute ao contracts on the permaweb.
+## Requirements
+
+* [NodeJS](https://nodejs.org) version 20+
 
 ## Getting Started
 
@@ -22,7 +24,7 @@ The wallet creates a personal process that allows you to use as a repl, you can 
 
 ## About
 
-AOS-CLI is a simple REPL that connects to a Personal AOS Process in the AO network. The AO network is a messaging passing process architecture. A Personal AOS Process is like a CPU on the Arweave Network. This repl will allow you to pass LUA expressions to your process, and those expressions get evaluated and return output to your screen.  
+AOS is a REPL that connects to a Personal AOS Process in the AO network. The AO network is a messaging passing process architecture. A Personal AOS Process is like a CPU on the Arweave Network. This repl will allow you to pass LUA expressions to your process, and those expressions get evaluated and return output to your screen.  
 
 ## Examples
 
