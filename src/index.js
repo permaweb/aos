@@ -112,7 +112,7 @@ aos - 0.2.16 [alpha]
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
 
-        const output = JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+        const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
 
         // log output
         spinner.stop()

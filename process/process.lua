@@ -131,7 +131,7 @@ function process.handle(msg, env)
       end
 
       local message = ao.send({
-        ['ao-load'] = tx, 
+        ['Load'] = tx, 
         ['function'] = 'install-manpage'}, env.Process.Id, env
       )
       table.insert(messages, message)

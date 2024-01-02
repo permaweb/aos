@@ -15,10 +15,10 @@
     lru-cache "^10.1.0"
     ramda "^0.29.1"
 
-"@permaweb/ao-sdk@^0.0.21":
-  version "0.0.21"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.21.tgz#acde2898bfdddb41f17c27e1b6a4916695e477d4"
-  integrity sha512-tTG9vMHZe4jMuRzOiRTVD72qYqdU/x5RzLtc3G7dQ+35FW4sOCo2Ed8mnp16FiY8CufPr3kaw2BrwjistLdlxA==
+"@permaweb/ao-sdk@^0.0.22":
+  version "0.0.22"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.22.tgz#f0835d47809bbedc77355c549a585cedbaaf78aa"
+  integrity sha512-CQ+pPgLQwi9o94rwgEbBWVSFUg5F3WZLJW2CbshH6Zu0y25ExTU1je/lBp0SfZ8CxL5HF0uE7H2WaQPr+cNnIw==
   dependencies:
     "@permaweb/ao-scheduler-utils" "~0.0.7"
     buffer "^6.0.3"
