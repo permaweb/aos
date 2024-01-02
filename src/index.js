@@ -111,12 +111,15 @@ aos - 0.2.16 [alpha]
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
 
         // log output
         spinner.stop()
-        console.log(output.data.output)
+        if (result.Error) {
+          console.log(result.Error)
+        } else {
+          console.log(output.data?.output)
+        }
 
         // set prompt
         prompt = output.data.prompt ? output.data.prompt + '> ' : prompt

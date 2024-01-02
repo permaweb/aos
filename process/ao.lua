@@ -13,8 +13,8 @@ function ao.sendraw(input, target)
   local me = ao.id
   
   local message = {
-    target = target,
-    tags = {
+    Target = target,
+    Tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "Variant", value = "ao.TN.1"},
       { name = "Type", value = "Message" },
@@ -23,7 +23,7 @@ function ao.sendraw(input, target)
   }
   
   for k,v in pairs(input) do
-    table.insert(message.tags, v)
+    table.insert(message.Tags, v)
   end
   -- add message to outbox
   table.insert(ao.outbox.Messages, message)
@@ -38,8 +38,8 @@ function ao.send(input, target)
   local me = ao.id
   
   local message = {
-    target = target,
-    tags = {
+    Target = target,
+    Tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "Variant", value = "ao.TN.1"},
       { name = "Type", value = "Message" },
@@ -48,7 +48,7 @@ function ao.send(input, target)
   }
   
   for k,v in pairs(input) do
-    table.insert(message.tags, { name = k, value = v })
+    table.insert(message.Tags, { name = k, value = v })
   end
   -- add message to outbox
   table.insert(ao.outbox.Messages, message)
@@ -66,8 +66,8 @@ function ao.spawn(module, tags, data)
   local me = ao.id
 
   local spawn = {
-    data = data,
-    tags = {
+    Data = data,
+    Tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "Variant", value = "ao.TN.1"},
       { name = "Type", value = "Process" },
@@ -77,7 +77,7 @@ function ao.spawn(module, tags, data)
   }
 
   for k,v in pairs(tags) do
-    table.insert(spawn.tags, { name = k, value = v })
+    table.insert(spawn.Tags, { name = k, value = v })
   end
 
    -- add spawn to outbox
@@ -98,8 +98,8 @@ function ao.spawnraw(module, tags, data)
   local me = ao.id
 
   local spawn = {
-    data = data,
-    tags = {
+    Data = data,
+    Tags = {
       { name = "Data-Protocol", value = "ao" },
       { name = "Variant", value = "ao.TN.1" },
       { name = "Type", value = "Process" },
@@ -109,7 +109,7 @@ function ao.spawnraw(module, tags, data)
   }
 
   for k,v in pairs(tags) do
-    table.insert(spawn.tags, v)
+    table.insert(spawn.Tags, v)
   end
 
    -- add spawn to outbox
