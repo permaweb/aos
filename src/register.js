@@ -5,7 +5,7 @@
  * 
  */
 
-import { of, Resolved, Rejected } from 'hyper-async'
+import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
 const AOS_SRC = process.env.AOS_SRC || 'TOtfuOXnrG_sQL8qUuQs9denYZ-lsdkmnYzmUYNFmhg'
@@ -29,6 +29,9 @@ export function register(jwk, services) {
       { name: 'Name', value: 'Personal AOS' }
     ]
   })
+  //.chain(_ => fromPromise(() => new Promise((res) => setTimeout(() => res(_), 1000)))())
+
+
   const alreadyRegistered = results => Resolved(results[0].node.id)
 
   return of({ jwk })

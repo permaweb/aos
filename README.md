@@ -81,16 +81,16 @@ list()
 
 ```
 1: 
- target: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
- tags: 
+ Target: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
+ Tags: 
   1: 
    name: Data-Protocol
    value: ao
   2: 
-   name: ao-type
+   name: Type
    value: message
   3: 
-   name: Forwarded-For
+   name: From
    value: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
   4: 
    name: body
@@ -98,13 +98,49 @@ list()
   5: 
    name: Data-Protocol
    value: ao
-  6: 
-   name: ao-type
-   value: message
   7: 
    name: SDK
    value: ao
  owner: z1pq2WzmaYnfDwvEFgUZBj48anUsxxN64ZjbWOsIn08
 ```
 
+### handlers
 
+With `aos` you can add handlers to handle incoming messages, in this example, we will create a handler for "ping" - "pong".
+
+In the `aos` repl, type `.editor`
+
+```lua
+handlers.append(
+  function (msg)
+    for i, o in ipairs(msg.Tags) do
+      if o.name == "body" and o.value == "ping" then
+        return -1
+      end
+    end
+    return 0
+  end,
+  function (msg)
+    ao.send({body = "pong"}, msg.From)
+  end,
+  "pingpong"
+)
+```
+
+Then type `.done`
+
+>  This will submit a handler to listen for messages that have a `body` tag with a value of `ping` then send back a message `pong`.
+
+Once added you can ping yourself!
+
+```lua
+send(ao.id, "ping")
+```
+
+And check your inbox, you should have gotten a `pong` message.
+
+this utility function finds the `body` Tag of the last message in the inbox and returns the `value`
+
+```lua
+utils.find(utils.propEq("name")("body"))(inbox[#inbox]).value
+```
