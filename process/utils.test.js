@@ -7,8 +7,8 @@ async function test() {
   const handle = await AoLoader(wasm)
   // find tags
   let response = await handle(null, {
-    target: "PROCESS",
-    tags: [
+    Target: "PROCESS",
+    Tags: [
       { name: 'function', value: 'eval' },
       {
         name: 'expression', value: `
@@ -17,13 +17,13 @@ utils.find(
 )({{name="expression", value = "beep"}})
       `}
     ]
-  }, { process: { id: 'FOO' } })
+  }, { Process: { Id: 'FOO' } })
   //console.log(response.output)
-  assert.equal(response.output.data.output.value, 'beep')
+  assert.equal(response.Output.data.output.value, 'beep')
 
   let response2 = await handle(null, {
-    target: "PROCESS",
-    tags: [
+    Target: "PROCESS",
+    Tags: [
       { name: 'function', value: 'eval' },
       {
         name: 'expression', value: `
@@ -38,9 +38,34 @@ utils.map(
   })
       `}
     ]
-  }, { process: { id: 'FOO' } })
-  console.log(response2.output.data.output)
-  //assert.equal(response2.output.data.output.value, 'beep')
+  }, { Process: { Id: 'FOO' } })
+  assert.deepStrictEqual(response2.Output.data.output, [
+    { name: 'expression', value: 'boom' },
+    { name: 'what', value: 'boom' },
+    { name: 'right', value: 'boom' }
+  ])
+
+  let response3 = await handle(null, {
+    Target: "PROCESS",
+    Tags: [
+      { name: 'function', value: 'eval' },
+      {
+        name: 'expression', value: `
+utils.filter(
+  function (v)
+    return v.value == 'beep'
+  end)({
+    {name="expression", value = "beep"}, 
+    {name="what", value = "boop"}, 
+    {name="right", value = "beep"}
+  })
+      `}
+    ]
+  }, { Process: { Id: 'FOO' } })
+  assert.deepStrictEqual(response3.Output.data.output, [
+    { name: 'expression', value: 'beep' },
+    { name: 'right', value: 'beep' }
+  ])
 }
 
 test()
