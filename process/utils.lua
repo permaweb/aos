@@ -18,7 +18,7 @@ end
 utils.reduce = function (fn)
   return function (initial)
     return function (t) 
-      assert(type(fn) == "function", "first argument should be a unary function")
+      assert(type(fn) == "function", "first argument should be a function that accepts (result, value, key)")
       assert(type(t) == "table", "second argument should be a table that is an array")
       local result = initial
       for k, v in pairs(t) do
@@ -34,6 +34,8 @@ utils.reduce = function (fn)
 end
 
 utils.map = function (fn)
+  assert(type(fn) == "function", "first argument should be a unary function")
+
   local function map (result, v, k)
     result[k] = fn(v)
     return result
@@ -43,6 +45,8 @@ utils.map = function (fn)
 end
 
 utils.filter = function (fn)
+  assert(type(fn) == "function", "first argument should be a unary function")
+
   local function filter (result, v, _k)
     if fn(v) then
       table.insert(result, v)
