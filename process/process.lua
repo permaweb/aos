@@ -46,6 +46,16 @@ local function findObject(array, key, value)
   return nil
 end
 
+function tab(msg)
+  local inputs = {}
+  for _, o in ipairs(msg.Tags) do
+    if not inputs[o.name] then
+      inputs[o.name] = o.value
+    end
+  end
+  return inputs
+end
+
 function prompt() 
   -- return "inbox: [" .. #inbox .. "] aos"
   return "aos"
@@ -86,7 +96,8 @@ end
 
 function process.handle(msg, env) 
   initializeState(msg, env)
-
+  msg.Inputs = tab(msg)
+  
   local fn = findObject(msg.Tags, "name", "function")
   
   if fn and fn.value == "eval" and owner == msg.Owner then

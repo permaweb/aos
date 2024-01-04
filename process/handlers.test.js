@@ -7,50 +7,44 @@ async function test() {
   const handle = await AoLoader(wasm)
   // add handler
   let response = await handle(null, {
-    target: "PROCESS",
-    tags: [
+    Target: "PROCESS",
+    Tags: [
       { name: 'function', value: 'eval' },
       {
         name: 'expression', value: `
+  _ = handlers.utils
   handlers.append(
-    function (msg)
-      for i, o in ipairs(msg.tags) do
-        if o.name == "body" and o.value == "ping" then
-          return -1
-        end
-      end
-      return 0
-    end,
-    function (msg)
-      table.insert(inbox, msg)
-      ao.send({body = "pong"}, msg.from)
-    end,
+    _.hasMatchingTag("body", "ping"),
+    _.reply({body = "pong"}),
     "pingpong"
   )
         `}
     ]
-  }, { process: { id: 'FOO' } })
-  //   // send message
-  let response2 = await handle(response.buffer, {
-    target: 'PROCESS',
-    from: 'FOO',
-    tags: [
+  }, { Process: { Id: 'FOO' } })
+
+  // send message
+  let response2 = await handle(response.Memory, {
+    Target: 'PROCESS',
+    From: 'FOO',
+    Tags: [
       { name: 'body', value: 'ping' }
     ]
-  }, { process: { id: 'FOO' } })
+  }, { Process: { Id: 'FOO' } })
+
   // confirm response
-  console.log(response2.output)
-  console.log(response2.messages)
-  let response3 = await handle(response2.buffer, {
-    target: 'PROCESS',
-    from: 'FOO',
-    tags: [
+  console.log(response2.Output)
+  console.log(JSON.stringify(response2.Messages))
+  let response3 = await handle(response2.Memory, {
+    Target: 'PROCESS',
+    From: 'FOO',
+    Tags: [
       { name: 'body', value: 'ping' }
     ]
-  }, { process: { id: 'FOO' } })
+  }, { Process: { Id: 'FOO' } })
   // confirm response
-  console.log(response3.output)
-  console.log(response3.messages)
+  console.log(response3.Output)
+  console.log(response3.Messages)
+  console.log(JSON.stringify(response3.Messages))
 
 }
 

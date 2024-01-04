@@ -80,4 +80,16 @@ utils.propEq = function (propName)
   end
 end
 
+utils.compose = function(a,b) 
+  return function (v) 
+    return a(b(v))
+  end
+end
+
+utils.prop = function (propName) 
+  return function (object)
+    return object[propName]
+  end
+end
+
 return utils

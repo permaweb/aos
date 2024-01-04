@@ -1,5 +1,6 @@
 local handlers = { _version = "0.0.3" }
 
+handlers.utils = require('.handlers-utils')
 handlers.list = {}
 
 local function findIndexByProp(array, prop, value)
