@@ -78,7 +78,7 @@ list()
 
 ```
 1: 
- Target: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
+ Target: ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU
  Tags: 
   1: 
    name: Data-Protocol
@@ -108,18 +108,10 @@ With `aos` you can add handlers to handle incoming messages, in this example, we
 In the `aos` repl, type `.editor`
 
 ```lua
+_ = handlers.utils
 handlers.append(
-  function (msg)
-    for i, o in ipairs(msg.Tags) do
-      if o.name == "body" and o.value == "ping" then
-        return -1
-      end
-    end
-    return 0
-  end,
-  function (msg)
-    ao.send({body = "pong"}, msg.From)
-  end,
+  _.hasMatchingTag("body", "ping"),
+  _.reply({body = "pong"}),
   "pingpong"
 )
 ```
@@ -139,5 +131,11 @@ And check your inbox, you should have gotten a `pong` message.
 this utility function finds the `body` Tag of the last message in the inbox and returns the `value`
 
 ```lua
-utils.find(utils.propEq("name")("body"))(inbox[#inbox]).value
+inbox[#inbox].Inputs.body
 ```
+
+You should get `pong` 
+
+:tada:
+
+For more information about `handlers` check out the handlers [docs](process/handlers.md) 
