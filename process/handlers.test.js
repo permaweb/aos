@@ -33,7 +33,7 @@ async function test() {
 
   // confirm response
   console.log(response2.Output)
-  console.log(response2.Messages)
+  console.log(JSON.stringify(response2.Messages))
   let response3 = await handle(response2.Memory, {
     Target: 'PROCESS',
     From: 'FOO',
@@ -44,6 +44,7 @@ async function test() {
   // confirm response
   console.log(response3.Output)
   console.log(response3.Messages)
+  console.log(JSON.stringify(response3.Messages))
 
 }
 

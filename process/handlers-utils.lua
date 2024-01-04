@@ -4,21 +4,15 @@ local _ = require('.utils')
 
 function _utils.hasMatchingTag(name, value)
   return function (msg) 
-    local tagValue = _.compose(
-      _.prop("value"),
-      _.find(_.propEq("name", nane))
-    )(msg.Tags)
-    if value == tagValue then
-      return -1 -- invoke and break
+    if msg.Inputs[name] == value then
+      return -1
     end
-
-    return 0 -- skip
+    return 0
   end
 end
 
 function _utils.reply(tags) 
   return function (msg)
-    -- ao MUST be available
     ao.send(tags, msg.From)
   end
 end
