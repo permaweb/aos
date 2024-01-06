@@ -156,13 +156,13 @@ aos - 0.3.1 [alpha]
         // log output
         spinner.stop()
         if (result.Error) {
-          console.log(result.Error)
+          console.log(chalk.red(result.Error))
         } else {
           console.log(output.data?.output)
         }
 
         // set prompt
-        prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
+        prompt = output.data?.prompt ? output.data?.prompt + '> ' : prompt
         rl.close()
         repl()
       })
