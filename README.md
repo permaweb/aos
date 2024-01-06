@@ -110,9 +110,9 @@ In the `aOS`, type `.editor`
 ```lua
 _ = handlers.utils
 handlers.append(
+  "pingpong",
   _.hasMatchingData("ping"),
-  _.reply("pong"),
-  "pingpong"
+  _.reply("pong")
 )
 ```
 
