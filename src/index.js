@@ -3,8 +3,10 @@ import { hideBin } from 'yargs/helpers'
 import readline from 'readline'
 import path from 'path'
 import fs from 'fs'
+import { of, fromPromise, Resolved } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
+import { createWallet } from './services/create-wallet.js'
 import { address } from './services/address.js'
 import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
@@ -12,33 +14,50 @@ import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import ora from 'ora'
 import chalk from 'chalk'
+import figlet from 'figlet'
+
+figlet("aOS", {
+  font: "Alpha",
+  horizontalLayout: "full",
+  verticalLayout: "full",
+  width: 80,
+  whitespaceBreak: true,
+}, (e, d) => {
+  console.log(chalk.gray(d))
+  console.log(chalk.green('ao Operating System'))
+})
 
 let args = yargs(hideBin(process.argv)).argv
 
-if (!args._[0]) {
-  console.log('AOS ERROR: arweave wallet file is required!')
-  process.exit(0)
-}
 let jwk = null
 
-try {
-  jwk = JSON.parse(fs.readFileSync(path.resolve(args._[0]), 'utf-8'))
-} catch (e) {
-  console.log('aos ERROR: could not parse file!')
-  process.exit(0)
+if (args._[0]) {
+  try {
+    jwk = JSON.parse(fs.readFileSync(path.resolve(args._[0]), 'utf-8'))
+  } catch (e) {
+    console.log('aos ERROR: could not parse file!')
+    process.exit(0)
+  }
+} else {
+  if (fs.existsSync(path.resolve(process.cwd() + '/aos.json'))) {
+    jwk = JSON.parse(fs.readFileSync(path.resolve(process.cwd() + '/aos.json'), 'utf-8'))
+  }
 }
 
-let aosProcess = null
 
-register(jwk, { address, spawnProcess, gql })
+
+let aosProcess = null
+of(jwk)
+  .chain(jwk => jwk ? Resolved(jwk) : fromPromise(createWallet)())
+  .chain(jwk => register(jwk, { address, spawnProcess, gql }))
   .map(processId => {
     aosProcess = processId
-    return `${chalk.gray("aos computer: ")} ${chalk.green(processId)}`
+    return `${chalk.gray("aos process: ")} ${chalk.green(processId)}`
   }).toPromise()
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.2.18 [alpha] 
+aos - 0.2.19 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -66,6 +85,21 @@ aos - 0.2.18 [alpha]
       })
 
       rl.question(editorMode ? "" : prompt, async function (line) {
+        if (/^\.load/.test(line)) {
+          // get filename
+          let fn = line.split(' ')[1]
+          if (/\.lua$/.test(fn)) {
+            console.log(chalk.green('Loading... ', fn));
+            line = fs.readFileSync(path.resolve(process.cwd() + '/' + fn), 'utf-8');
+          } else {
+            console.log(chalk.red('ERROR: .load function requires a *.lua file'))
+            rl.close()
+            repl()
+            return;
+          }
+
+        }
+
         if (line === ".editor") {
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
