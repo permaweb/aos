@@ -3,10 +3,9 @@ local pretty = require('.pretty')
 local base64 = require('.base64')
 
 utils = require('.utils')
-ao = require('.ao')
 handlers = require('.handlers')
 
-local process = { _version = "0.1.2" }
+local process = { _version = "0.1.3" }
 
 manpages = {
   default = [[
@@ -94,45 +93,29 @@ function man(page)
   end
 end
 
-function process.handle(msg, env) 
-  initializeState(msg, env)
-  msg.Inputs = tab(msg)
+function process.handle(msg, ao) 
+  initializeState(msg, ao.env)
+  msg.TagArray = msg.Tags
+  msg.Tags = tab(msg)
   
   local fn = findObject(msg.Tags, "name", "function")
   
   if fn and fn.value == "eval" and owner == msg.Owner then
-    local messages = {}
-    local spawns = {}
     
-    function send(target, input) 
-      if not input then
-        input = {}
-      end
-      if type(input) == "string" then
-        input = { body = input }
-      end
-      local message = ao.send(input, target)
-      table.insert(messages, message)     
+    function send(msg) 
+      local message = ao.send(msg)
+
       return 'message added to outbox'
     end
 
-    function sendraw(target, input)
-      if not input then
-        input = {}
-      end
+    
 
-      local message = ao.sendraw(input, target)
-      table.insert(messages, message)     
-      return 'message added to outbox'
-    end
-
-    function spawn(module, input, data) 
-      if not input then
-        input = {}
+    function spawn(module, msg) 
+      if not msg then
+        msg = {}
       end
       
-      local spawn = ao.spawn(module, input, data)
-      table.insert(spawns, spawn)
+      local spawn = ao.spawn(module, msg)
       return 'spawn process request'
     end
 
@@ -142,10 +125,12 @@ function process.handle(msg, env)
       end
 
       local message = ao.send({
-        ['Load'] = tx, 
-        ['function'] = 'install-manpage'}, env.Process.Id, env
-      )
-      table.insert(messages, message)
+        Target = ao.id,
+        Tags = {
+          Load = tx,
+          ['function'] = 'install-manpage'
+        }
+      })
       return 'installing manpage'
     end
     
@@ -168,15 +153,15 @@ function process.handle(msg, env)
       output = err
     end   
     if e then output = e end
-    
-    return { Output = { data = { output = output, prompt = prompt() } }, Messages = messages, Spawns = spawns }
+    return ao.result({ Output = { data = { output = output, prompt = prompt() }}})
+    -- return { Output = { data = { output = output, prompt = prompt() } }, Messages = messages, Spawns = spawns }
   end
 
   if fn and fn.value == "install-manpage" then
     if msg.data and findObject(msg.data.tags, "name", "ao-manpage") then
       page = findObject(msg.data.tags, "name", "ao-manpage").value
       manpages[page] = base64.decode(msg.data.data)
-      return { Output = { data = "installed manpage" }, Messages = {}, Spawns = {} }
+      return ao.result({ Output = { data = "installed manpage" } })
     end
   end
 
@@ -187,11 +172,9 @@ function process.handle(msg, env)
     -- call evaluate from handlers passing env
     handlers.evaluate(msg, env)
     if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
-      local response = {
-        Output = "cranking",
-        Messages = ao.outbox.Messages,
-        Spawns = ao.outbox.Spawns
-      }
+      local response = ao.result({
+        Output = "cranking"
+      })
       
       return response
     end
@@ -199,11 +182,7 @@ function process.handle(msg, env)
   -- Add Message to Inbox
   table.insert(inbox, msg)
 
-
-  local response = {
-    result = { Error = "could not find action" }
-  }
-  return response
+  return ao.result({ Error = "could not find action" })
 end
 
 return process
