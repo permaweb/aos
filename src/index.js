@@ -62,7 +62,7 @@ of(jwk)
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.3.1 [alpha] 
+aos - 0.3.2 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -156,13 +156,13 @@ aos - 0.3.1 [alpha]
         // log output
         spinner.stop()
         if (result.Error) {
-          console.log(result.Error)
+          console.log(chalk.red(result.Error))
         } else {
           console.log(output.data?.output)
         }
 
         // set prompt
-        prompt = output.data.prompt ? output.data.prompt + '> ' : prompt
+        prompt = output.data?.prompt ? output.data?.prompt + '> ' : prompt
         rl.close()
         repl()
       })
