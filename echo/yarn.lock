@@ -7,16 +7,25 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.0.tgz#0709e9f4cb252351c609c6e6d8d6779a8d25edff"
   integrity sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==
 
-"@permaweb/ao-loader@^0.0.10":
-  version "0.0.10"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-loader/-/ao-loader-0.0.10.tgz#bb10d14261737a22e321d8e3c7dba2aefeb2b9ec"
-  integrity sha512-2sTi6lnvBr87LPRqk0+1N/Y2SJmNoeQeUCNhyrf5qK7x4/Xv0drwLf1jR05WZQ6AoUICDis+MrGeMBXdoTp8mw==
+"@permaweb/ao-loader@^0.0.12":
+  version "0.0.12"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-loader/-/ao-loader-0.0.12.tgz#0b635e190a8391e8db9f47f2da25f30d918e59ab"
+  integrity sha512-ttYTYds0bxf4JDV4kwg/lJWBOaR5x6Mibm0KBXrOL5b8KOlqBwQhZhQE8lFKkzRp8iY/bXZLeb82DUDBn88AHA==
 
-"@permaweb/ao-sdk@^0.0.18":
-  version "0.0.18"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.18.tgz#2a6c75bfbbcfca80f1ab900047e194d767ebbcc5"
-  integrity sha512-VrEvZQXERb3qCEpoRzwC4XrLe5eQq41Aqt1wOjd+2CI7uzTxE2w5v3WLENO+ewSmFJWgQK9JoZY3w0qrOxYFeQ==
+"@permaweb/ao-scheduler-utils@~0.0.7":
+  version "0.0.7"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.7.tgz#7401c4a6fe3e2973adfb4e5437aa424efe7882cc"
+  integrity sha512-N3pAin4FC+p9WF8WwSR4K6uSyEXTVMFuFiijscwf70MlY03egxeVy91FdXqF4kGOtx1matcXEzseOUjqypkXlQ==
   dependencies:
+    lru-cache "^10.1.0"
+    ramda "^0.29.1"
+
+"@permaweb/ao-sdk@^0.0.22":
+  version "0.0.22"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-sdk/-/ao-sdk-0.0.22.tgz#f0835d47809bbedc77355c549a585cedbaaf78aa"
+  integrity sha512-CQ+pPgLQwi9o94rwgEbBWVSFUg5F3WZLJW2CbshH6Zu0y25ExTU1je/lBp0SfZ8CxL5HF0uE7H2WaQPr+cNnIw==
+  dependencies:
+    "@permaweb/ao-scheduler-utils" "~0.0.7"
     buffer "^6.0.3"
     debug "^4.3.4"
     hyper-async "^1.1.2"
@@ -100,6 +109,11 @@ inherits@^2.0.1:
   version "2.0.4"
   resolved "https://registry.yarnpkg.com/inherits/-/inherits-2.0.4.tgz#0fa2c64f932917c3433a0ded55363aae37416b7c"
   integrity sha512-k/vGaX4/Yla3WzyMCvTQOXYeIHvqOKtnqBduzTHpzpQZzAskKMhZ2K+EnBiSM9zGSoIFeMpXKxa4dYeZIQqewQ==
+
+lru-cache@^10.1.0:
+  version "10.1.0"
+  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.1.0.tgz#2098d41c2dc56500e6c88584aa656c84de7d0484"
+  integrity sha512-/1clY/ui8CzjKFyjdvwPWJUYKiFVXG2I2cY0ssG7h4+hwk+XOIX7ZSG9Q7TW8TW3Kp3BUSqgFWBLgL4PJ+Blag==
 
 minimalistic-assert@^1.0.0:
   version "1.0.1"

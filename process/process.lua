@@ -97,18 +97,13 @@ function process.handle(msg, ao)
   initializeState(msg, ao.env)
   msg.TagArray = msg.Tags
   msg.Tags = tab(msg)
-  
-  local fn = findObject(msg.Tags, "name", "function")
-  
-  if fn and fn.value == "eval" and owner == msg.Owner then
+   
+  if msg.Tags['function'] == "eval" and owner == msg.Owner then
     
     function send(msg) 
       local message = ao.send(msg)
-
       return 'message added to outbox'
     end
-
-    
 
     function spawn(module, msg) 
       if not msg then
@@ -140,12 +135,12 @@ function process.handle(msg, ao)
     end
   
     -- exec expression
-    local expr = findObject(msg.Tags, "name", "expression")
+    local expr = msg.Tags.expression
     
-    local func, err = load("return " .. expr.value, 'aos', 't', _G)
+    local func, err = load("return " .. expr, 'aos', 't', _G)
     local output = "" 
     if err then
-      func, err = load(expr.value, 'aos', 't', _G)
+      func, err = load(expr, 'aos', 't', _G)
     end
     if func then
       output, e = func()
@@ -153,14 +148,14 @@ function process.handle(msg, ao)
       output = err
     end   
     if e then output = e end
+    
     return ao.result({ Output = { data = { output = output, prompt = prompt() }}})
-    -- return { Output = { data = { output = output, prompt = prompt() } }, Messages = messages, Spawns = spawns }
   end
 
-  if fn and fn.value == "install-manpage" then
-    if msg.data and findObject(msg.data.tags, "name", "ao-manpage") then
-      page = findObject(msg.data.tags, "name", "ao-manpage").value
-      manpages[page] = base64.decode(msg.data.data)
+  if msg.Tags['function'] ==  "install-manpage" then
+    if msg.Data and msg.Tags['ao-manpage'] then
+      page = msg.Tags['ao-manpage']
+      manpages[page] = base64.decode(msg.Data.Data)
       return ao.result({ Output = { data = "installed manpage" } })
     end
   end
@@ -170,7 +165,7 @@ function process.handle(msg, ao)
       ao.clearOutbox()
     end
     -- call evaluate from handlers passing env
-    handlers.evaluate(msg, env)
+    handlers.evaluate(msg, ao.env)
     if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       local response = ao.result({
         Output = "cranking"

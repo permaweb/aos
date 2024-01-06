@@ -20,7 +20,7 @@ async function test() {
   )
         `}
     ]
-  }, { Process: { Id: 'FOO' } })
+  }, { Process: { Id: 'FOO', Tags: [] } })
 
   // send message
   let response2 = await handle(response.Memory, {
@@ -29,7 +29,7 @@ async function test() {
     Tags: [
       { name: 'body', value: 'ping' }
     ]
-  }, { Process: { Id: 'FOO' } })
+  }, { Process: { Id: 'FOO', Tags: [] } })
 
   // confirm response
   console.log(response2.Output)
@@ -40,7 +40,7 @@ async function test() {
     Tags: [
       { name: 'body', value: 'ping' }
     ]
-  }, { Process: { Id: 'FOO' } })
+  }, { Process: { Id: 'FOO', Tags: [] } })
   // confirm response
   console.log(response3.Output)
   console.log(response3.Messages)

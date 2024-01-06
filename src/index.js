@@ -3,6 +3,7 @@ import { hideBin } from 'yargs/helpers'
 import readline from 'readline'
 import path from 'path'
 import fs from 'fs'
+import os from 'os'
 import { of, fromPromise, Resolved } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
@@ -39,8 +40,8 @@ if (args._[0]) {
     process.exit(0)
   }
 } else {
-  if (fs.existsSync(path.resolve(process.cwd() + '/aos.json'))) {
-    jwk = JSON.parse(fs.readFileSync(path.resolve(process.cwd() + '/aos.json'), 'utf-8'))
+  if (fs.existsSync(path.resolve(os.homedir() + '/.aos.json'))) {
+    jwk = JSON.parse(fs.readFileSync(path.resolve(os.homedir() + '/.aos.json'), 'utf-8'))
   }
 }
 
@@ -49,6 +50,10 @@ if (args._[0]) {
 let aosProcess = null
 of(jwk)
   .chain(jwk => jwk ? Resolved(jwk) : fromPromise(createWallet)())
+  .map(w => {
+    jwk = w
+    return w
+  })
   .chain(jwk => register(jwk, { address, spawnProcess, gql }))
   .map(processId => {
     aosProcess = processId
@@ -57,7 +62,7 @@ of(jwk)
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.2.19 [alpha] 
+aos - 0.3.1 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -142,6 +147,7 @@ aos - 0.2.19 [alpha]
         }
         spinner.start();
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+
         // create message and publish to ao
         const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))

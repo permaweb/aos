@@ -1,6 +1,6 @@
-# AOS 
+# aOS
 
-> NOTE: This is very experimental, use for research and development purposes only.
+> NOTE: This project experimental, not recommended for production use.
 
 ## Requirements
 
@@ -9,31 +9,30 @@
 ## Getting Started
 
 ```sh
-# Generate arweave Wallet
-npx -y @peramweb/wallet > wallet.json
-# Boot up AOS
-npx -y @permaweb/aos@latest wallet.json
+npm i -g https://sh_ao.g8way.io && aos
 ```
 
-The wallet creates a personal process that allows you to use as a repl, you can send it commands and it will evaluate and return output.
+> NOTE: after the first time you run `aos` it installs it to your local machine, so the next time you want to run `aos`, just type `aos` + [enter]
 
 ## About
 
-AOS is a REPL that connects to a Personal AOS Process in the AO network. The AO network is a messaging passing process architecture. A Personal AOS Process is like a CPU on the Arweave Network. This repl will allow you to pass LUA expressions to your process, and those expressions get evaluated and return output to your screen.  
+aos is a command-line app that connects to your `aOS` Process on the ao Permaweb Computer Grid. The ao Computer Grid, is like the internet, but for compute. Each Process on the Grid can receive messages and send messages. This cli will allow you to pass LUA expressions to your Process, and those expressions get evaluated and return output to your system.  
 
 ## Examples
 
-When you boot up the OS, you can use https://lua.org to run expressions on your AOS Process.
+When you boot up the aOS, you can use https://lua.org to run expressions on your `aOS` Process.
 
-First try "Hello AOS" - the return keyword sets the output variable that is passed to the output on the screen.
+First try "Hello aOS" - the return keyword sets the output variable that is passed to the output on the screen.
 
 ```lua
-"Hello AOS"
+"Hello aOS"
 ```
 
-You should get `Hello AOS`
+You should get `Hello aOS`
 
-> What is happening here? You input, is getting wrapped in an signed AO message and submitted to a `mu` or messenger unit, which then forwards it to a `su` or Sequencer Unit, then the REPL app, calls the `cu` compute unit to evaluate the AO Message with your Personal Process. This generates output to be returned for display.
+> What is happening here? Your input, is getting wrapped in an signed `ao` message and submitted to a messenger unit, which then forwards it to a Scheduler Unit, then the app, calls a compute unit to evaluate the `ao` Message with your Process. This generates output to be returned for display.
+
+![Workflow](aos-workflow.png)
 
 Lets try another expression:
 
@@ -41,17 +40,17 @@ Lets try another expression:
 1 + 41
 ```
 
-You should get `42` the answer to the universe :P
+You should get `42` the answer to the universe 😛
 
-So, thats cool, you can send expressions to the AO network and get them evaluated and get a response.
+So, thats cool, you can send expressions to the `ao` Permaweb Computer to your Process, and you get returned a response.
 
-You can also set variables:
+You `aOS` process also has memory, so you can set `variables`
 
 ```lua
-a = "Hello AOS"
+a = "Hello aOS"
 ```
 
-Then type `return a` and you should get `Hello AOS`, neat
+Then type `return a` and you should get `Hello aOS`, neat
 
 You can also create functions:
 
@@ -62,15 +61,29 @@ return sayHi("Sam")
 
 You should get `Hello Sam`
 
-Woohoo!
+Woohoo! 🚀
 
-We can also pass messages to other AOS Processes!
+We can also pass messages to other `aOS` Processes!
 
 ```lua
-return send("ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU", "ping")
+send({ Target = "ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU", Tags = { body = "ping" } })
 ```
 
-Or you can check your messages ( by creating a message check function)
+Check the number of items in your `inbox`:
+
+```
+#inbox
+```
+
+Check the body Tag of the last message in your inbox:
+
+```
+inbox[#inbox].Tags.body
+```
+
+> Should be `pong` 
+
+Or you can check your messages ( by a `list()`)
 
 ```lua
 list()
@@ -79,33 +92,20 @@ list()
 ```
 1: 
  Target: ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU
+ ...
  Tags: 
-  1: 
-   name: Data-Protocol
-   value: ao
-  2: 
-   name: Type
-   value: message
-  3: 
-   name: From
-   value: 9iqfaJv0XtOzs4yZml0araVLhr_uXKB1_3Rq9U82PoE
-  4: 
-   name: body
-   value: Hi
-  5: 
-   name: Data-Protocol
-   value: ao
-  7: 
-   name: SDK
-   value: ao
- owner: z1pq2WzmaYnfDwvEFgUZBj48anUsxxN64ZjbWOsIn08
+  From-Process: ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU
+  Type: Message
+  body: pong
+  Variant: ao.TN.1
+  Data-Protocol: ao
 ```
 
 ### handlers
 
-With `aos` you can add handlers to handle incoming messages, in this example, we will create a handler for "ping" - "pong".
+With `aOS` you can add handlers to handle incoming messages, in this example, we will create a handler for "ping" - "pong".
 
-In the `aos` repl, type `.editor`
+In the `aOS`, type `.editor`
 
 ```lua
 _ = handlers.utils
@@ -123,7 +123,7 @@ Then type `.done`
 Once added you can ping yourself!
 
 ```lua
-send(ao.id, "ping")
+send({Target = ao.id, Tags = { body = "ping" }})
 ```
 
 And check your inbox, you should have gotten a `pong` message.
@@ -131,11 +131,17 @@ And check your inbox, you should have gotten a `pong` message.
 this utility function finds the `body` Tag of the last message in the inbox and returns the `value`
 
 ```lua
-inbox[#inbox].Inputs.body
+inbox[#inbox].Tags.body
 ```
 
-You should get `pong` 
+You should see `pong` 
 
 :tada:
 
 For more information about `handlers` check out the handlers [docs](process/handlers.md) 
+
+## Summary
+
+Hopefully, you are able to see the power of aOS in this demo, access to compute from anywhere in the world. 
+
+Welcome to the `ao` Permaweb Computer Grid! We are just getting started! 🐰

@@ -8,7 +8,7 @@
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || 'Q7lJFOhOa984ywTu6a9xhJlBXowqJDL5_9yNnr9L13Q'
+const AOS_SRC = process.env.AOS_SRC || 'S23cIWHmK-vBwsWQFDarQ2E3cFQ2I-6Vb0xJxlS3dNk'
 
 export function register(jwk, services) {
   // TODO: validate with zod
@@ -29,7 +29,11 @@ export function register(jwk, services) {
       { name: 'Name', value: 'Personal AOS' }
     ]
   })
-  //.chain(_ => fromPromise(() => new Promise((res) => setTimeout(() => res(_), 1000)))())
+  // .map(_ => {
+  //   console.log('booting...')
+  //   return _
+  // })
+  //.chain(_ => fromPromise(() => new Promise((res) => setTimeout(() => res(_), 30000)))())
 
 
   const alreadyRegistered = results => Resolved(results[0].node.id)
