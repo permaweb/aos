@@ -14,9 +14,9 @@ async function test() {
         name: 'expression', value: `
   _ = handlers.utils
   handlers.append(
+    "pingpong",
     _.hasMatchingTag("body", "ping"),
-    _.reply({body = "pong"}),
-    "pingpong"
+    _.reply({body = "pong"})
   )
         `}
     ]

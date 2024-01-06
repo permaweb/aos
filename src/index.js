@@ -62,7 +62,7 @@ of(jwk)
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.3.2 [alpha] 
+aos - 0.3.3 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')

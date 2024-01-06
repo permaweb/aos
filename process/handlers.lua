@@ -12,31 +12,37 @@ local function findIndexByProp(array, prop, value)
   return nil
 end
 
-function handlers.append(pattern, handle, name) 
+function handlers.append(name, pattern, handle)
+  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.append(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+  assert(type(name) == 'string', 'name MUST be string')
   assert(type(pattern) == 'function', 'pattern MUST be function')
   assert(type(handle) == 'function', 'handle MUST be function')
-  assert(type(name) == 'string', 'name MUST be string')
   
   table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
 end
 
-function handlers.prepend(pattern, handle, name) 
+function handlers.prepend(name, pattern, handle) 
+  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.prepend(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+  assert(type(name) == 'string', 'name MUST be string')
   assert(type(pattern) == 'function', 'pattern MUST be function')
   assert(type(handle) == 'function', 'handle MUST be function')
-  assert(type(name) == 'string', 'name MUST be string')
+  
 
   table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name })
 end
 
 function handlers.before(handleName)
+  assert(handleName ~= nil, 'invalid arguments: handlers.before(name : string) : { add = function(name, pattern, handler)}')
   assert(type(handleName) == 'string', 'name MUST be string')
 
   local idx = findIndexByProp(handlers.list, "name", handleName)
   return {
-    add = function (pattern, handle, name) 
+    add = function (name, pattern, handle) 
+      assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.before("foo").add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+      assert(type(name) == 'string', 'name MUST be string')
+      
       assert(type(pattern) == 'function', 'pattern MUST be function')
       assert(type(handle) == 'function', 'handle MUST be function')
-      assert(type(name) == 'string', 'name MUST be string')
       
       if idx then
         table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name })
@@ -47,14 +53,17 @@ function handlers.before(handleName)
 end
 
 function handlers.after(handleName)
+  assert(handleName ~= nil, 'invalid arguments: handlers.after(name : string) : { add = function(name, pattern, handler)}')
   assert(type(handleName) == 'string', 'name MUST be string')
   local idx = findIndexByProp(handlers.list, "name", handleName)
   return { 
-    add = function (pattern, handle, name)
+    add = function (name, pattern, handle)
+      assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.after("foo").add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+
+      assert(type(name) == 'string', 'name MUST be string')
       assert(type(pattern) == 'function', 'pattern MUST be function')
       assert(type(handle) == 'function', 'handle MUST be function')
-      assert(type(name) == 'string', 'name MUST be string')
-
+      
       if idx then
         table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name })
       end

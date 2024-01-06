@@ -10,7 +10,7 @@ The Handlers library provides a flexible way to manage and execute a series of h
 
 ## Functions
 
-### `handlers.append(pattern, handle, name)`
+### `handlers.append(name, pattern, handle)`
 Appends a new handler to the end of the handlers list.
 
 #### Parameters
@@ -18,7 +18,7 @@ Appends a new handler to the end of the handlers list.
 - `handle` (function): The handler function to execute.
 - `name` (string): A unique name for the handler.
 
-### `handlers.prepend(pattern, handle, name)`
+### `handlers.prepend(name, pattern, handle)`
 Prepends a new handler to the beginning of the handlers list.
 
 #### Parameters
@@ -72,7 +72,7 @@ local function myHandle(msg, env, response)
 end
 
 -- Append a new handler
-handlers.append(myPattern, myHandle, "myHandler")
+handlers.append("myHandler", myPattern, myHandle)
 
 -- Evaluate a message
 local response = handlers.evaluate({ key = "value" }, { envKey = "envValue" })
