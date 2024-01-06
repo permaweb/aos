@@ -110,8 +110,8 @@ In the `aOS`, type `.editor`
 ```lua
 _ = handlers.utils
 handlers.append(
-  _.hasMatchingTag("body", "ping"),
-  _.reply({body = "pong"}),
+  _.hasMatchingData("ping"),
+  _.reply("pong"),
   "pingpong"
 )
 ```
@@ -123,7 +123,7 @@ Then type `.done`
 Once added you can ping yourself!
 
 ```lua
-send({Target = ao.id, Tags = { body = "ping" }})
+send({Target = ao.id, Data = "ping" })
 ```
 
 And check your inbox, you should have gotten a `pong` message.
