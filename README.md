@@ -131,7 +131,7 @@ And check your inbox, you should have gotten a `pong` message.
 this utility function finds the `body` Tag of the last message in the inbox and returns the `value`
 
 ```lua
-inbox[#inbox].Tags.body
+inbox[#inbox].Data
 ```
 
 You should see `pong` 
