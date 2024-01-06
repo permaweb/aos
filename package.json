@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.2.18",
+  "version": "1.2.19",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/twilson63/ao-repl.git",
@@ -16,6 +16,7 @@
     "@permaweb/ao-sdk": "^0.0.22",
     "arweave": "^1.14.4",
     "chalk": "^5.3.0",
+    "figlet": "^1.7.0",
     "hyper-async": "^1.1.2",
     "ora": "^7.0.1",
     "yargs": "^17.7.2"
