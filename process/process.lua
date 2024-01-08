@@ -57,7 +57,7 @@ end
 
 function prompt() 
   -- return "inbox: [" .. #inbox .. "] aos"
-  return "aos"
+  return "aos> "
 end
 
 function initializeState(msg, env) 
