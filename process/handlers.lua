@@ -12,6 +12,25 @@ local function findIndexByProp(array, prop, value)
   return nil
 end
 
+function handlers.add(name, pattern, handle)
+  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+  assert(type(name) == 'string', 'name MUST be string')
+  assert(type(pattern) == 'function', 'pattern MUST be function')
+  assert(type(handle) == 'function', 'handle MUST be function')
+  
+  local idx = findIndexByProp(handlers.list, "name", name)
+  if idx ~= nil and idx > 0 then
+    -- found update
+    handlers.list[idx].pattern = pattern
+    handlers.list[idx].handle = handle
+  else
+    -- not found then add    
+    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
+
+  end
+end
+
+
 function handlers.append(name, pattern, handle)
   assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.append(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
   assert(type(name) == 'string', 'name MUST be string')
