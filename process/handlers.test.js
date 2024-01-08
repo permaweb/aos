@@ -9,17 +9,16 @@ async function test() {
   let response = await handle(null, {
     Target: "PROCESS",
     Tags: [
-      { name: 'function', value: 'eval' },
-      {
-        name: 'expression', value: `
-  _ = handlers.utils
-  handlers.append(
-    "pingpong",
-    _.hasMatchingTag("body", "ping"),
-    _.reply({body = "pong"})
-  )
-        `}
-    ]
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: `
+    _ = handlers.utils
+    handlers.append(
+      "pingpong",
+      _.hasMatchingTag("body", "ping"),
+      _.reply({body = "pong"})
+    )
+          `
   }, { Process: { Id: 'FOO', Tags: [] } })
 
   // send message

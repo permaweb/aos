@@ -9,11 +9,9 @@ async function test() {
   let response = await handle(null, {
     Target: "PROCESS",
     Tags: [
-      { name: 'function', value: 'eval' },
-      {
-        name: 'expression', value: `1 + 1`
-      }
-    ]
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: "1 + 1"
   }, { Process: { Id: 'FOO', Tags: [] } })
   console.log(response)
   //console.log(JSON.stringify(response.Output))
