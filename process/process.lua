@@ -1,7 +1,7 @@
-local JSON = require("json")
 local pretty = require('.pretty')
 local base64 = require('.base64')
 
+dump = require('.dump')
 utils = require('.utils')
 handlers = require('.handlers')
 
