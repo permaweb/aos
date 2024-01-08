@@ -13,7 +13,7 @@ async function test() {
       {
         name: 'expression', value: `
   _ = handlers.utils
-  handlers.append(
+  handlers.add(
     "pingpong",
     _.hasMatchingTag("body", "ping"),
     _.reply({body = "pong"})
@@ -22,8 +22,24 @@ async function test() {
     ]
   }, { Process: { Id: 'FOO', Tags: [] } })
 
+  let response15 = await handle(null, {
+    Target: "PROCESS",
+    Tags: [
+      { name: 'function', value: 'eval' },
+      {
+        name: 'expression', value: `
+  _ = handlers.utils
+  handlers.add(
+    "pingpong",
+    _.hasMatchingTag("body", "ping"),
+    _.reply({body = "pong2"})
+  )
+        `}
+    ]
+  }, { Process: { Id: 'FOO', Tags: [] } })
+
   // send message
-  let response2 = await handle(response.Memory, {
+  let response2 = await handle(response15.Memory, {
     Target: 'PROCESS',
     From: 'FOO',
     Tags: [
