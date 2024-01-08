@@ -78,7 +78,7 @@ Check the number of items in your `inbox`:
 Check the body Tag of the last message in your inbox:
 
 ```
-inbox[#inbox].Tags.body
+inbox[#inbox].Data
 ```
 
 > Should be `pong` 
@@ -108,11 +108,10 @@ With `aOS` you can add handlers to handle incoming messages, in this example, we
 In the `aOS`, type `.editor`
 
 ```lua
-_ = handlers.utils
 handlers.append(
   "pingpong",
-  _.hasMatchingData("ping"),
-  _.reply("pong")
+  handlers.utils.hasMatchingData("ping"),
+  handlers.utils.reply("pong")
 )
 ```
 
@@ -145,3 +144,12 @@ For more information about `handlers` check out the handlers [docs](process/hand
 Hopefully, you are able to see the power of aOS in this demo, access to compute from anywhere in the world. 
 
 Welcome to the `ao` Permaweb Computer Grid! We are just getting started! 🐰
+
+## notes
+
+* intro
+* console
+* messages
+* handlers
+* chatroom
+* token

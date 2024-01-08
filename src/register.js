@@ -8,7 +8,7 @@
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_SRC = process.env.AOS_SRC || 'VsiQCYO3hwwSAJk43TQtgjjV9jP3ChOsuYjOCUfGoHg'
+const AOS_SRC = process.env.AOS_SRC || 'Eatry6PVWRVIvvgn9tHdMKaEPhOWUVicxYrdvGb6-KI'
 
 export function register(jwk, services) {
   // TODO: validate with zod
