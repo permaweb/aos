@@ -14,8 +14,8 @@ async function test() {
     Data: `
     handlers.add(
       "pingpong",
-      _.hasMatchingTag("body", "ping"),
-      _.reply({body = "pong"})
+      handlers.utils.hasMatchingTag("body", "ping"),
+      handlers.utils.reply("pong")
     )`
   }, { Process: { Id: 'FOO', Tags: [] } })
 
@@ -25,11 +25,10 @@ async function test() {
       { name: 'Action', value: 'Eval' },
     ],
     Data: `
-  _ = handlers.utils
   handlers.add(
     "pingpong",
-    _.hasMatchingTag("body", "ping"),
-    _.reply({body = "pong2"})
+    handlers.utils.hasMatchingTag("body", "ping"),
+    handlers.utils.reply("pong")
   )`
   }, { Process: { Id: 'FOO', Tags: [] } })
 
