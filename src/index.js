@@ -162,7 +162,7 @@ aos - 0.3.4 [alpha]
         }
 
         // set prompt
-        prompt = output.data?.prompt ? output.data?.prompt + '> ' : prompt
+        prompt = output.data?.prompt ? output.data?.prompt : prompt
         rl.close()
         repl()
       })
