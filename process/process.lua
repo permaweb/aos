@@ -98,7 +98,7 @@ function process.handle(msg, ao)
   msg.TagArray = msg.Tags
   msg.Tags = tab(msg)
    
-  if msg.Tags['function'] == "eval" and owner == msg.Owner then
+  if msg.Tags['Action'] == "Eval" and owner == msg.Owner then
     
     function send(msg) 
       local message = ao.send(msg)
@@ -135,7 +135,7 @@ function process.handle(msg, ao)
     end
   
     -- exec expression
-    local expr = msg.Tags.expression
+    local expr = msg.Data
     
     local func, err = load("return " .. expr, 'aos', 't', _G)
     local output = "" 

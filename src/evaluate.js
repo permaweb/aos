@@ -5,9 +5,9 @@ export async function evaluate(line, processId, wallet, services, spinner) {
   return services.sendMessage({
     processId: processId,
     wallet: wallet, tags: [
-      { name: 'function', value: 'eval' },
-      { name: 'expression', value: line }
-    ]
+      { name: 'Action', value: 'Eval' }
+    ],
+    data: line
   })
     .map(x => {
       spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)} ${chalk.gray("state transformations]")}`

@@ -29,7 +29,6 @@ function handlers.add(name, pattern, handle)
     table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
 
   end
-  return handlers
 end
 
 
@@ -49,7 +48,7 @@ function handlers.append(name, pattern, handle)
     table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
   end
 
-  return handlers
+  
 end
 
 function handlers.prepend(name, pattern, handle) 
@@ -69,7 +68,7 @@ function handlers.prepend(name, pattern, handle)
     table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name })
   end
 
-  return handlers
+  
 end
 
 function handlers.before(handleName)
@@ -88,7 +87,7 @@ function handlers.before(handleName)
       if idx then
         table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name })
       end
-      return handlers
+      
     end
   }
 end
@@ -108,7 +107,7 @@ function handlers.after(handleName)
       if idx then
         table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name })
       end
-      return handlers
+      
     end
   }
 
@@ -118,12 +117,12 @@ function handlers.remove(name)
   assert(type(name) == 'string', 'name MUST be string')
   if #handlers.list == 1 and handlers.list[1].name == name then
     handlers.list = {}
-    return handlers
+    
   end
 
   local idx = findIndexByProp(handlers.list, "name", name)
   table.remove(handlers.list, idx)
-  return handlers
+  
 end
 
 --- return 0 to not call handler, -1 to break after handler is called, 1 to continue
