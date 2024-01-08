@@ -15,7 +15,7 @@ async function test() {
       }
     ]
   }, { Process: { Id: 'FOO', Tags: [] } })
-  console.log(response)
+  console.log(response.Output)
   //console.log(JSON.stringify(response.Output))
 }
 
