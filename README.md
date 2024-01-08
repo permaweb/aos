@@ -108,7 +108,7 @@ With `aOS` you can add handlers to handle incoming messages, in this example, we
 In the `aOS`, type `.editor`
 
 ```lua
-handlers.append(
+handlers.add(
   "pingpong",
   handlers.utils.hasMatchingData("ping"),
   handlers.utils.reply("pong")
