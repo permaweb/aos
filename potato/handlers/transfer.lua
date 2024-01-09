@@ -1,1 +1,0 @@
--- transfer qty from qty owner to target

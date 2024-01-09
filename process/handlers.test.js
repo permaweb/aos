@@ -13,10 +13,9 @@ async function test() {
     ],
     Data: `
     handlers.add(
-      "pingpong",
-      handlers.utils.hasMatchingTag("body", "ping"),
+      "info",
+      handlers.utils.hasMatchingTag("Action", "Info"),
       function (msg)
-        ao.Output = "Beep Boop"
         handlers.utils.reply("pong")(msg)
       end
     )`
@@ -28,7 +27,7 @@ async function test() {
     Target: 'PROCESS',
     From: 'FOO',
     Tags: [
-      { name: 'body', value: 'ping' }
+      { name: 'Action', value: 'Info' }
     ]
   }, { Process: { Id: 'FOO', Tags: [] } })
 
@@ -39,7 +38,7 @@ async function test() {
     Target: 'PROCESS',
     From: 'FOO',
     Tags: [
-      { name: 'body', value: 'ping' }
+      { name: 'Action', value: 'Info' }
     ]
   }, { Process: { Id: 'FOO', Tags: [] } })
   // confirm response

@@ -62,7 +62,7 @@ of(jwk)
   .then(x => {
 
     console.log(chalk.gray(`
-aos - 0.3.7 [alpha] 
+aos - 0.3.8 [alpha] 
 2023 - Type ".exit" to exit`))
     console.log(x)
     console.log('')
@@ -94,6 +94,12 @@ aos - 0.3.7 [alpha]
           // get filename
           let fn = line.split(' ')[1]
           if (/\.lua$/.test(fn)) {
+            if (!fs.existsSync(path.resolve(process.cwd() + '/' + fn))) {
+              console.log(chalk.red('ERROR: file not found.'))
+              rl.close()
+              repl()
+              return;
+            }
             console.log(chalk.green('Loading... ', fn));
             line = fs.readFileSync(path.resolve(process.cwd() + '/' + fn), 'utf-8');
           } else {
