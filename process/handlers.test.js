@@ -15,25 +15,16 @@ async function test() {
     handlers.add(
       "pingpong",
       handlers.utils.hasMatchingTag("body", "ping"),
-      handlers.utils.reply("pong")
+      function (msg)
+        ao.Output = "Beep Boop"
+        handlers.utils.reply("pong")(msg)
+      end
     )`
   }, { Process: { Id: 'FOO', Tags: [] } })
 
-  let response15 = await handle(null, {
-    Target: "PROCESS",
-    Tags: [
-      { name: 'Action', value: 'Eval' },
-    ],
-    Data: `
-  handlers.add(
-    "pingpong",
-    handlers.utils.hasMatchingTag("body", "ping"),
-    handlers.utils.reply("pong")
-  )`
-  }, { Process: { Id: 'FOO', Tags: [] } })
 
   // send message
-  let response2 = await handle(response15.Memory, {
+  let response2 = await handle(response.Memory, {
     Target: 'PROCESS',
     From: 'FOO',
     Tags: [

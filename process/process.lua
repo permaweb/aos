@@ -94,6 +94,7 @@ function man(page)
 end
 
 function process.handle(msg, ao) 
+  ao.Output = ""
   initializeState(msg, ao.env)
   msg.TagArray = msg.Tags
   msg.Tags = tab(msg)
@@ -168,7 +169,7 @@ function process.handle(msg, ao)
     handlers.evaluate(msg, ao.env)
     if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       local response = ao.result({
-        Output = "cranking"
+        Output = ao.Output == "" and "cranking" or ao.Output
       })
       
       return response
