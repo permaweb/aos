@@ -139,17 +139,197 @@ You should see `pong`
 
 For more information about `handlers` check out the handlers [docs](process/handlers.md) 
 
+## Chatroom 
+
+Let's create a chatroom Process, with this chatroom, we want processes to be able to `Register` and `Broadcast` Actions. In order to create this Process, we will use an external editor to create a `chatroom.lua` file. Then use the `.load` feature to update our Process.
+
+chatroom.lua
+
+```lua
+if not weavers then
+  weavers = {}
+end
+
+handlers.add(
+  "register", 
+  handlers.utils.hasMatchingTag("Action", "Register"),
+  function (msg) 
+    table.insert(weavers, msg.From)
+    -- reply letting process know they are registered
+    handlers.utils.reply("registered")(msg)
+  end
+)
+
+handlers.add(
+  "broadcast",
+  handlers.utils.hasMatchingTag("Action", "Broadcast"),
+  function (msg)
+    for index, recipient in ipairs(weavers) do
+      ao.send({Target = recipient, Data = msg.Data})
+    end
+    handlers.utils.reply("Broadcasted.")(msg)
+  end
+
+)
+```
+
+Now, that we have our handlers, let's load them into our process:
+
+```lua
+.load chatroom.lua
+```
+
+Sweet! You can test on `aos`
+
+```lua
+send({Target = ao.id, Tags = { Action = "Register" }})
+```
+
+```lua
+weavers[#weavers]
+```
+
+You should see your address
+
+Now, lets broadcast!
+
+```lua
+send({Target = ao.id, Tags = { Action = "Broadcast" }, Data = "gm"})
+```
+
+lets dump the inbox to see all the data.
+
+```lua
+dump(inbox)
+```
+
+Ok, now get some friends to send some messages to your process.
+
+Once we have confirmed it is working, maybe we do not want to broadcast a message to ourself? 
+
+Lets edit the `chatroom.lua` file in the `Broadcast` function to skip the sender.
+
+```lua
+handlers.add(
+  "broadcast",
+  handlers.utils.hasMatchingTag("Action", "Broadcast"),
+  function (msg)
+    for index, recipient in ipairs(weavers) do
+      -- skip message sender
+      if recipient ~= msg.From then
+       ao.send({Target = recipient, Data = msg.Data})
+      end
+    end
+    handlers.utils.reply("Broadcasted.")(msg)
+  end
+
+)
+```
+
+## Token
+
+Let's also make our Process a token, create a `token.lua` file and add this lua expression:
+
+```lua
+if not balances then
+  balances = {}
+end
+
+if not name then
+  name = "[your handle] Coin"
+end
+
+if not token then
+  token = "[symbol]"
+end
+
+if not logo then
+  logo = "[TXID of your logo]"
+end
+
+if not denomination then
+  denomination = 6
+end
+
+handlers.add(
+  "info",
+  handlers.utils.hasMatchingTag("Action", "Info"),
+  function (msg) 
+    ao.Output = {
+      Name = name,
+      Token = token,
+      Denomination = denomination
+    }
+  end
+)
+
+handlers.add(
+  "balance",
+  handlers.utils.hasMatchingTag("Action", "Balance"),
+  balance
+)
+
+handlers.add(
+  "balances",
+  handlers.utils.hasMatchingTag("Action", "Balances"),
+  function (msg)
+    ao.Output = balances
+  end
+)
+
+handlers.add(
+  "transfer",
+  handlers.utils.hasMatchingTag("Action", "Transfer"),
+  transfer
+)
+
+function transfer(msg) 
+  assert(msg.Tags.Target, 'Target is required!')
+  assert(msg.Tags.Quantity, 'Quantity is required!')
+  local qty = tonumber(msg.Tags.Quantity)
+  if balances[msg.From] > qty then
+    balances[msg.From] = balances[msg.From] - qty
+    balances[msg.Tags.Target] = balances[msg.Tags.Target] + qty
+    -- How will the mu know the difference from a wallet and a process?
+    ao.send({
+      Target = msg.Tags.Target,
+      Tags = {
+        Action = "Credit-Notice",
+        Quantity = msg.Tags.Quantity
+      }
+    })
+    if not msg.Tags.Cast then
+      ao.send({
+        Target = msg.From,
+        Tags = {
+          Action = "Debit-Notice",
+          Quantity = msg.Tags.Quantity
+        }
+      })
+    end
+  end
+end
+
+function balance(msg)
+  local bal = balances[msg.Tags.Target]
+  if not bal then
+    bal = 0
+  end
+  ao.Output = {
+    Balance = bal,
+    Target = msg.Tags.Target
+  }
+end
+```
+
+```lua
+.load token.lua
+```
+
+BAM! We just converted our Process to a Token on aOS... 🤯
+
 ## Summary
 
 Hopefully, you are able to see the power of aOS in this demo, access to compute from anywhere in the world. 
 
 Welcome to the `ao` Permaweb Computer Grid! We are just getting started! 🐰
-
-## notes
-
-* intro
-* console
-* messages
-* handlers
-* chatroom
-* token
