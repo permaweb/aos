@@ -1,13 +1,10 @@
-import yargs from 'yargs/yargs'
-import { hideBin } from 'yargs/helpers'
 import readline from 'readline'
 import path from 'path'
 import fs from 'fs'
-import os from 'os'
-import { of, fromPromise, Resolved } from 'hyper-async'
+import { of, fromPromise } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
-import { createWallet } from './services/create-wallet.js'
+import { getWallet } from './services/wallets.js'
 import { address } from './services/address.js'
 import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
@@ -15,64 +12,21 @@ import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import ora from 'ora'
 import chalk from 'chalk'
-import figlet from 'figlet'
+import { splash } from './services/splash.js'
+import { version } from './services/version.js'
+import { load } from './commands/load.js'
 
-figlet("aOS", {
-  font: "Alpha",
-  horizontalLayout: "full",
-  verticalLayout: "full",
-  width: 80,
-  whitespaceBreak: true,
-}, (e, d) => {
-  console.log(chalk.gray(d))
-  console.log(chalk.green('ao Operating System'))
-})
+splash()
 
-let args = yargs(hideBin(process.argv)).argv
-
-let jwk = null
-
-if (args._[0]) {
-  try {
-    jwk = JSON.parse(fs.readFileSync(path.resolve(args._[0]), 'utf-8'))
-  } catch (e) {
-    console.log('aos ERROR: could not parse file!')
-    process.exit(0)
-  }
-} else {
-  if (fs.existsSync(path.resolve(os.homedir() + '/.aos.json'))) {
-    jwk = JSON.parse(fs.readFileSync(path.resolve(os.homedir() + '/.aos.json'), 'utf-8'))
-  }
-}
-
-
-
-let aosProcess = null
-of(jwk)
-  .chain(jwk => jwk ? Resolved(jwk) : fromPromise(createWallet)())
-  .map(w => {
-    jwk = w
-    return w
-  })
-  .chain(jwk => register(jwk, { address, spawnProcess, gql }))
-  .map(processId => {
-    aosProcess = processId
-    return `${chalk.gray("aos process: ")} ${chalk.green(processId)}`
-  }).toPromise()
-  .then(x => {
-
-    console.log(chalk.gray(`
-aos - 0.3.8 [alpha] 
-2023 - Type ".exit" to exit`))
-    console.log(x)
-    console.log('')
-
-
-
-    // need to check if a process is registered or create a process
-
-    let prompt = 'aos> '
-
+of()
+  .chain(fromPromise(getWallet))
+  .chain(jwk => register(jwk, { address, spawnProcess, gql })
+    .map(id => ({ jwk, id }))
+  )
+  .toPromise()
+  .then(async ({ jwk, id }) => {
+    version(id)
+    let prompt = await connect(jwk, id)
 
     let editorMode = false
     let editorData = ""
@@ -84,31 +38,17 @@ aos - 0.3.8 [alpha]
         output: process.stdout
       });
 
-      const spinner = ora({
-        spinner: 'dots',
-        suffixText: ``
-      })
+
 
       rl.question(editorMode ? "" : prompt, async function (line) {
         if (/^\.load/.test(line)) {
-          // get filename
-          let fn = line.split(' ')[1]
-          if (/\.lua$/.test(fn)) {
-            if (!fs.existsSync(path.resolve(process.cwd() + '/' + fn))) {
-              console.log(chalk.red('ERROR: file not found.'))
-              rl.close()
-              repl()
-              return;
-            }
-            console.log(chalk.green('Loading... ', fn));
-            line = fs.readFileSync(path.resolve(process.cwd() + '/' + fn), 'utf-8');
-          } else {
-            console.log(chalk.red('ERROR: .load function requires a *.lua file'))
+          try { line = load(line) }
+          catch (e) {
+            console.log(e.message)
             rl.close()
             repl()
             return;
           }
-
         }
 
         if (line === ".editor") {
@@ -151,11 +91,17 @@ aos - 0.3.8 [alpha]
           rl.close();
           return;
         }
+
+        const spinner = ora({
+          spinner: 'dots',
+          suffixText: ``
+        })
+
         spinner.start();
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
 
         // create message and publish to ao
-        const result = await evaluate(line, aosProcess, jwk, { sendMessage, readResult }, spinner)
+        const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
 
@@ -177,3 +123,19 @@ aos - 0.3.8 [alpha]
     repl()
 
   })
+
+async function connect(jwk, id) {
+  const spinner = ora({
+    spinner: 'dots',
+    suffixText: ``
+  })
+
+  spinner.start();
+  spinner.suffixText = chalk.gray("[Connecting to Process...]")
+
+  // need to check if a process is registered or create a process
+  let promptResult = await evaluate('"Loading..."', id, jwk, { sendMessage, readResult }, spinner)
+
+  spinner.stop();
+  return promptResult.Output.data.prompt
+}

@@ -1,4 +1,4 @@
-import { connect } from "@permaweb/ao-sdk"
+import { connect } from "@permaweb/ao-connect"
 import { fromPromise } from 'hyper-async'
 
 export function readResult(params) {

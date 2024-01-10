@@ -1,5 +1,5 @@
 import { fromPromise } from 'hyper-async'
-import { connect, createDataItemSigner } from '@permaweb/ao-sdk'
+import { connect, createDataItemSigner } from '@permaweb/ao-connect'
 
 
 export function spawnProcess({ wallet, src, tags }) {

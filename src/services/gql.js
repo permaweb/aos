@@ -13,15 +13,7 @@ import { of, fromPromise } from 'hyper-async'
 
 export function gql(query, variables) {
   return of({ query, variables })
-    .chain(
-      // TODO: Implement a merge function that composes bundlr, arweave.net and goldsky.
-      //all(
-      //queryBundlr,
-      queryArweave,
-      //queryGoldsky
-      //)
-      // .chain(mergeAll)
-    )
+    .chain(queryArweave)
 }
 
 const ARWEAVE_GRAPHQL = process.env.ARWEAVE_GRAPHQL || 'https://arweave.net/graphql'
@@ -33,5 +25,6 @@ function queryArweave(body) {
     },
     body: JSON.stringify(body)
   }).then(res => res.json())
+
   )()
 }

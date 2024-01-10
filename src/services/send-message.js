@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from "@permaweb/ao-sdk"
+import { connect, createDataItemSigner } from "@permaweb/ao-connect"
 import { fromPromise } from 'hyper-async'
 
 export function sendMessage({ processId, wallet, tags, data }) {
