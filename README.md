@@ -330,3 +330,33 @@ BAM! We just converted our Process to a Token on aos... 🤯
 Hopefully, you are able to see the power of aos in this demo, access to compute from anywhere in the world. 
 
 Welcome to the `ao` Permaweb Computer Grid! We are just getting started! 🐰
+
+## Reference
+
+### Managing Multiple processes
+
+When you run `aos` command with no arguments it will default the process you are connected to as `default`, if you want to run or access a different process that you manage, you simply add a name.
+
+```
+aos chatroom
+```
+
+These names are unique to your wallet.
+
+### Loading lua source files
+
+Using the command-line you can load one or more lua source files into your process
+
+```
+aos --load token.lua --load dao.lua
+```
+
+### .load lua source in aos
+
+You can also load lua sources files in aos
+
+```
+aos> .load luafile.lua
+```
+
+

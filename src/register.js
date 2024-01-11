@@ -31,7 +31,10 @@ export function register(jwk, services) {
     const argv = minimist(process.argv.slice(2))
     if (argv.cron) {
       if (/^\d+\-(seconds|minutes|hours|days|months|years|blocks)$/.test(argv.cron)) {
-        tags = [...tags, { name: 'Cron-Interval', value: argv.cron }]
+        tags = [...tags,
+        { name: 'Cron-Interval', value: argv.cron },
+        { name: 'Cron-Tag-Action', value: 'Cron' }
+        ]
       } else {
         throw Error('Invalid cron flag!')
       }
