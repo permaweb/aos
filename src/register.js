@@ -13,19 +13,20 @@ const AOS_MODULE = process.env.AOS_MODULE || 'EtqW9PTyv3_ir6op9iOPu8TA0G7y6ZYC0o
 
 export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
-  const findProcess = ({ jwk, address }) => {
-    return services.gql(queryForAOS(), { owners: [address] })
+  const findProcess = ({ jwk, address, name }) => {
+    return services.gql(queryForAOS(name), { owners: [address] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
-        _ => Rejected({ jwk, address }),
-        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address })
+        _ => Rejected({ jwk, address, name }),
+        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address, name })
       )
   }
 
-  const createProcess = ({ jwk, address }) => {
+  const createProcess = ({ jwk, address, name }) => {
 
     let tags = [
-      { name: 'App-Name', value: 'aos' }
+      { name: 'App-Name', value: 'aos' },
+      { name: 'Name', value: name }
     ]
     const argv = minimist(process.argv.slice(2))
     if (argv.cron) {
@@ -44,15 +45,17 @@ export function register(jwk, services) {
   }
 
   const alreadyRegistered = results => Resolved(results[0].node.id)
+  const argv = minimist(process.argv.slice(2))
+  const name = argv._[0] || 'default'
 
-  return of({ jwk })
+  return of({ jwk, name })
     .chain(getAddress)
     .chain(findProcess)
 
     .bichain(createProcess, alreadyRegistered)
 }
 
-function queryForAOS() {
+function queryForAOS(name) {
   return `query ($owners: [String!]!) {
     transactions(
       first: 1,
@@ -60,7 +63,8 @@ function queryForAOS() {
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
         { name: "Type", values: ["Process"]},
-        { name: "Module", values: ["${AOS_MODULE}"]}
+        { name: "Module", values: ["${AOS_MODULE}"]},
+        { name: "Name", values: ["${name}"]}
       ]
     ) {
       edges {
