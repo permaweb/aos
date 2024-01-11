@@ -1,6 +1,4 @@
-# aOS
-
-> NOTE: This project experimental, not recommended for production use.
+# aos
 
 ## Requirements
 
@@ -9,26 +7,26 @@
 ## Getting Started
 
 ```sh
-npm i -g https://sh_ao.g8way.io && aos
+npm i -g https://get_ao.g8way.io && aos
 ```
 
 > NOTE: after the first time you run `aos` it installs it to your local machine, so the next time you want to run `aos`, just type `aos` + [enter]
 
 ## About
 
-aos is a command-line app that connects to your `aOS` Process on the ao Permaweb Computer Grid. The ao Computer Grid, is like the internet, but for compute. Each Process on the Grid can receive messages and send messages. This cli will allow you to pass LUA expressions to your Process, and those expressions get evaluated and return output to your system.  
+aos is a command-line app that connects to your `aos` Process on the ao Permaweb Computer Grid. The ao Computer Grid, is like the internet, but for compute. Each Process on the Grid can receive messages and send messages. This cli will allow you to pass LUA expressions to your Process, and those expressions get evaluated and return output to your system.  
 
 ## Examples
 
-When you boot up the aOS, you can use https://lua.org to run expressions on your `aOS` Process.
+When you boot up the aos, you can use https://lua.org to run expressions on your `aos` Process.
 
-First try "Hello aOS" - the return keyword sets the output variable that is passed to the output on the screen.
+First try "Hello aos" - the return keyword sets the output variable that is passed to the output on the screen.
 
 ```lua
-"Hello aOS"
+"Hello aos"
 ```
 
-You should get `Hello aOS`
+You should get `Hello aos`
 
 > What is happening here? Your input, is getting wrapped in an signed `ao` message and submitted to a messenger unit, which then forwards it to a Scheduler Unit, then the app, calls a compute unit to evaluate the `ao` Message with your Process. This generates output to be returned for display.
 
@@ -47,10 +45,10 @@ So, thats cool, you can send expressions to the `ao` Permaweb Computer to your P
 You `aOS` process also has memory, so you can set `variables`
 
 ```lua
-a = "Hello aOS"
+a = "Hello aos"
 ```
 
-Then type `return a` and you should get `Hello aOS`, neat
+Then type `return a` and you should get `Hello aos`, neat
 
 You can also create functions:
 
@@ -63,7 +61,7 @@ You should get `Hello Sam`
 
 Woohoo! 🚀
 
-We can also pass messages to other `aOS` Processes!
+We can also pass messages to other `aos` Processes!
 
 ```lua
 send({ Target = "ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU", Tags = { body = "ping" } })
@@ -83,29 +81,28 @@ inbox[#inbox].Data
 
 > Should be `pong` 
 
-Or you can check your messages ( by a `list()`)
+Or you can check your messages by typing `inbox`
 
 ```lua
-list()
+inbox
 ```
 
+### Prompt
+
+Want to customize your `prompt`, all you have to do is to overwrite the `prompt` function
+
+```lua
+function prompt() return "🐶> " end
 ```
-1: 
- Target: ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU
- ...
- Tags: 
-  From-Process: ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU
-  Type: Message
-  body: pong
-  Variant: ao.TN.1
-  Data-Protocol: ao
-```
+
+Nice, you should see your new prompt.
+
 
 ### handlers
 
-With `aOS` you can add handlers to handle incoming messages, in this example, we will create a handler for "ping" - "pong".
+With `aos` you can add handlers to handle incoming messages, in this example, we will create a handler for "ping" - "pong".
 
-In the `aOS`, type `.editor`
+In the `aos`, type `.editor`
 
 ```lua
 handlers.add(
@@ -326,10 +323,10 @@ end
 .load token.lua
 ```
 
-BAM! We just converted our Process to a Token on aOS... 🤯
+BAM! We just converted our Process to a Token on aos... 🤯
 
 ## Summary
 
-Hopefully, you are able to see the power of aOS in this demo, access to compute from anywhere in the world. 
+Hopefully, you are able to see the power of aos in this demo, access to compute from anywhere in the world. 
 
 Welcome to the `ao` Permaweb Computer Grid! We are just getting started! 🐰

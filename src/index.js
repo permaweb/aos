@@ -44,6 +44,13 @@ of()
 
 
       rl.question(editorMode ? "" : prompt, async function (line) {
+        if (line === "") {
+          console.log(chalk.green("lua expression is required!"))
+          rl.close()
+          repl()
+          return;
+        }
+
         if (/^\.load/.test(line)) {
           try { line = load(line) }
           catch (e) {
