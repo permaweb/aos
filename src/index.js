@@ -15,6 +15,7 @@ import chalk from 'chalk'
 import { splash } from './services/splash.js'
 import { version } from './services/version.js'
 import { load } from './commands/load.js'
+import { checkLoadArgs } from './services/loading-files.js'
 
 splash()
 
@@ -27,6 +28,8 @@ of()
   .then(async ({ jwk, id }) => {
     version(id)
     let prompt = await connect(jwk, id)
+    // check loading files flag
+    await handleLoadArgs(jwk, id)
 
     let editorMode = false
     let editorData = ""
@@ -138,4 +141,19 @@ async function connect(jwk, id) {
 
   spinner.stop();
   return promptResult.Output.data.prompt
+}
+
+async function handleLoadArgs(jwk, id) {
+  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(load).join('\n')
+  if (loadCode) {
+    const spinner = ora({
+      spinner: 'dots',
+      suffixText: ``
+    })
+    spinner.start()
+    spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+    spinner.stop()
+  }
 }
