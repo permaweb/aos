@@ -21,7 +21,6 @@ async function test() {
     )`
   }, { Process: { Id: 'FOO', Tags: [] } })
 
-
   // send message
   let response2 = await handle(response.Memory, {
     Target: 'PROCESS',
@@ -31,6 +30,7 @@ async function test() {
     ]
   }, { Process: { Id: 'FOO', Tags: [] } })
 
+  console.log(response2.Output)
   // confirm response
   console.log(response2.Output)
   console.log(JSON.stringify(response2.Messages))

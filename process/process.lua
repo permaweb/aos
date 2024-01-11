@@ -61,6 +61,8 @@ function prompt()
 end
 
 function initializeState(msg, env) 
+  errors = errors or {}
+
   if not owner then
     owner = env.Process.Owner
   end 
@@ -165,13 +167,21 @@ function process.handle(msg, ao)
       ao.clearOutbox()
     end
     -- call evaluate from handlers passing env
-    handlers.evaluate(msg, ao.env)
-    if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
-      local response = ao.result({
-        Output = "Cranking"
-      })
-      
-      return response
+    errors = {}
+    local status, result = pcall(function () 
+      handlers.evaluate(msg, ao.env)
+    end)
+    if status then
+      if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+        local response = ao.result({
+          Output = "Cranking"
+        })
+        
+        return response
+      end
+    else 
+      table.insert(errors, 'An Error occured in your handlers')
+      return ao.result({Output = 'An Error occured in your handlers'})
     end
   end
   -- Add Message to Inbox
