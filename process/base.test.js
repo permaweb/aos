@@ -11,7 +11,7 @@ async function test() {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: `dump(handlers)`
+    Data: `Dump(Handlers)`
   }, { Process: { Id: 'FOO', Tags: [] } })
   console.log(JSON.stringify(response.Output.data.output))
   //console.log(JSON.stringify(response.Output))
