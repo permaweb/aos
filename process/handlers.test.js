@@ -12,11 +12,11 @@ async function test() {
       { name: 'Action', value: 'Eval' }
     ],
     Data: `
-    handlers.add(
+    Handlers.add(
       "info",
-      handlers.utils.hasMatchingTag("Action", "Info"),
+      Handlers.utils.hasMatchingTag("Action", "Info"),
       function (msg)
-        handlers.utils.reply("pong")(msg)
+        Handlers.utils.reply("pong")(msg)
       end
     )`
   }, { Process: { Id: 'FOO', Tags: [] } })

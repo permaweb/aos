@@ -4,7 +4,7 @@ function pretty.tprint (tbl, indent)
   if not indent then indent = 0 end
   local output = ""
   for k, v in pairs(tbl) do
-    formatting = string.rep(" ", indent) .. k .. ": "
+    local formatting = string.rep(" ", indent) .. k .. ": "
     if type(v) == "table" then
       output = output .. formatting .. "\n"
       output = output .. pretty.tprint(v, indent+1)

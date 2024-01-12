@@ -64,19 +64,19 @@ Woohoo! 🚀
 We can also pass messages to other `aos` Processes!
 
 ```lua
-send({ Target = "ohc9mIsNs3CFmMu7luiazRDLCFpiFJCfGVomJNMNHdU", Tags = { body = "ping" } })
+Send({ Target = "Nhm2K5O87Gf6wZCK9u8gWUOqpc6IGgj7QSksGryt8-g", Data = "ping" })
 ```
 
-Check the number of items in your `inbox`:
+Check the number of items in your `Inbox`:
 
 ```
-#inbox
+#Inbox
 ```
 
 Check the body Tag of the last message in your inbox:
 
 ```
-inbox[#inbox].Data
+Inbox[#Inbox].Data
 ```
 
 > Should be `pong` 
@@ -84,15 +84,15 @@ inbox[#inbox].Data
 Or you can check your messages by typing `inbox`
 
 ```lua
-inbox
+Inbox
 ```
 
 ### Prompt
 
-Want to customize your `prompt`, all you have to do is to overwrite the `prompt` function
+Want to customize your `Prompt`, all you have to do is to overwrite the `Prompt` function
 
 ```lua
-function prompt() return "🐶> " end
+function Prompt() return "🐶> " end
 ```
 
 Nice, you should see your new prompt.
@@ -105,10 +105,10 @@ With `aos` you can add handlers to handle incoming messages, in this example, we
 In the `aos`, type `.editor`
 
 ```lua
-handlers.add(
+Handlers.add(
   "pingpong",
-  handlers.utils.hasMatchingData("ping"),
-  handlers.utils.reply("pong")
+  Handlers.utils.hasMatchingData("ping"),
+  Handlers.utils.reply("pong")
 )
 ```
 
@@ -119,7 +119,7 @@ Then type `.done`
 Once added you can ping yourself!
 
 ```lua
-send({Target = ao.id, Data = "ping" })
+Send({Target = ao.id, Data = "ping" })
 ```
 
 And check your inbox, you should have gotten a `pong` message.
@@ -127,14 +127,14 @@ And check your inbox, you should have gotten a `pong` message.
 this utility function finds the `body` Tag of the last message in the inbox and returns the `value`
 
 ```lua
-inbox[#inbox].Data
+Inbox[#Inbox].Data
 ```
 
 You should see `pong` 
 
 :tada:
 
-For more information about `handlers` check out the handlers [docs](process/handlers.md) 
+For more information about `Handlers` check out the handlers [docs](process/handlers.md) 
 
 ## Chatroom 
 
@@ -143,28 +143,27 @@ Let's create a chatroom Process, with this chatroom, we want processes to be abl
 chatroom.lua
 
 ```lua
-if not weavers then
-  weavers = {}
-end
+Weavers = Weavers = {}
 
-handlers.add(
+Handlers.add(
   "register", 
   handlers.utils.hasMatchingTag("Action", "Register"),
   function (msg) 
-    table.insert(weavers, msg.From)
+    table.insert(Weavers, msg.From)
     -- reply letting process know they are registered
-    handlers.utils.reply("registered")(msg)
+    Handlers.utils.reply("registered")(msg)
   end
 )
 
-handlers.add(
+
+Handlers.add(
   "broadcast",
-  handlers.utils.hasMatchingTag("Action", "Broadcast"),
+  Handlers.utils.hasMatchingTag("Action", "Broadcast"),
   function (msg)
-    for index, recipient in ipairs(weavers) do
+    for index, recipient in ipairs(Weavers) do
       ao.send({Target = recipient, Data = msg.Data})
     end
-    handlers.utils.reply("Broadcasted.")(msg)
+    Handlers.utils.reply("Broadcasted.")(msg)
   end
 
 )
@@ -179,11 +178,11 @@ Now, that we have our handlers, let's load them into our process:
 Sweet! You can test on `aos`
 
 ```lua
-send({Target = ao.id, Tags = { Action = "Register" }})
+Send({Target = ao.id, Tags = { Action = "Register" }})
 ```
 
 ```lua
-weavers[#weavers]
+Weavers[#Weavers]
 ```
 
 You should see your address
@@ -191,13 +190,13 @@ You should see your address
 Now, lets broadcast!
 
 ```lua
-send({Target = ao.id, Tags = { Action = "Broadcast" }, Data = "gm"})
+Send({Target = ao.id, Tags = { Action = "Broadcast" }, Data = "gm"})
 ```
 
 lets dump the inbox to see all the data.
 
 ```lua
-dump(inbox)
+dump(Inbox)
 ```
 
 Ok, now get some friends to send some messages to your process.
@@ -207,17 +206,17 @@ Once we have confirmed it is working, maybe we do not want to broadcast a messag
 Lets edit the `chatroom.lua` file in the `Broadcast` function to skip the sender.
 
 ```lua
-handlers.add(
+Handlers.add(
   "broadcast",
   handlers.utils.hasMatchingTag("Action", "Broadcast"),
   function (msg)
-    for index, recipient in ipairs(weavers) do
+    for index, recipient in ipairs(Weavers) do
       -- skip message sender
       if recipient ~= msg.From then
        ao.send({Target = recipient, Data = msg.Data})
       end
     end
-    handlers.utils.reply("Broadcasted.")(msg)
+    Handlers.utils.reply("Broadcasted.")(msg)
   end
 
 )
@@ -228,95 +227,112 @@ handlers.add(
 Let's also make our Process a token, create a `token.lua` file and add this lua expression:
 
 ```lua
-if not balances then
-  balances = {}
-end
+Balances = Balances or {}
+Name = Name or "[your token name]"
+Ticker = Ticker or "[symbol]"
+Logo = Logo or "Your Logo TXID"
+Denomination = Denomination or 6
 
-if not name then
-  name = "[your handle] Coin"
-end
+--[[
+  Info
+]] --
+Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(msg)
+  ao.send({ Target = msg.From, Tags = { 
+    Name = Name, 
+    Ticker = Ticker, 
+    Logo = Logo, 
+    Denomination = tostring(Denomination) 
+  }})
+end)
 
-if not token then
-  token = "[symbol]"
-end
+--[[
+  Balance
+]] --
+Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), function(msg)
+  local bal = '0'
 
-if not logo then
-  logo = "[TXID of your logo]"
-end
-
-if not denomination then
-  denomination = 6
-end
-
-handlers.add(
-  "info",
-  handlers.utils.hasMatchingTag("Action", "Info"),
-  function (msg) 
-    ao.Output = {
-      Name = name,
-      Token = token,
-      Denomination = denomination
-    }
+  -- If not Target is provided, then return the Senders balance
+  if (msg.Tags.Target and Balances[msg.Tags.Target]) then
+    bal = tostring(Balances[msg.Tags.Target])
+  elseif Balances[msg.From] then
+    bal = tostring(Balances[msg.From])
   end
-)
 
-handlers.add(
-  "balance",
-  handlers.utils.hasMatchingTag("Action", "Balance"),
-  balance
-)
+  ao.send({
+    Target = msg.From,
+    Tags = { Target = msg.From, Balance = bal, Ticker = Ticker, Data = json.encode(tonumber(bal)) }
+  })
+end)
 
-handlers.add(
-  "balances",
-  handlers.utils.hasMatchingTag("Action", "Balances"),
-  function (msg)
-    ao.Output = balances
-  end
-)
+--[[
+  Balances
+]] --
+Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Balances'),
+             function(msg) ao.send({ Target = msg.From, Data = json.encode(Balances) }) end)
 
-handlers.add(
-  "transfer",
-  handlers.utils.hasMatchingTag("Action", "Transfer"),
-  transfer
-)
+--[[
+  Transfer
+]] --
+Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
+  assert(type(msg.Tags.Recipient) == 'string', 'Recipient is required!')
+  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
 
-function transfer(msg) 
-  assert(msg.Tags.Target, 'Target is required!')
-  assert(msg.Tags.Quantity, 'Quantity is required!')
+  if not Balances[msg.From] then Balances[msg.From] = 0 end
+
+  if not Balances[msg.Tags.Recipient] then Balances[msg.Tags.Recipient] = 0 end
+
   local qty = tonumber(msg.Tags.Quantity)
-  if balances[msg.From] > qty then
-    balances[msg.From] = balances[msg.From] - qty
-    balances[msg.Tags.Target] = balances[msg.Tags.Target] + qty
-    -- How will the mu know the difference from a wallet and a process?
-    ao.send({
-      Target = msg.Tags.Target,
-      Tags = {
-        Action = "Credit-Notice",
-        Quantity = msg.Tags.Quantity
-      }
-    })
+  assert(type(qty) == 'number', 'qty must be number')
+
+  if Balances[msg.From] >= qty then
+    Balances[msg.From] = Balances[msg.From] - qty
+    Balances[msg.Tags.Recipient] = Balances[msg.Tags.Recipient] + qty
+
+    --[[
+      Only send the notifications to the Sender and Recipient
+      if the Cast tag is not set on the Transfer message
+    ]] --
     if not msg.Tags.Cast then
+      -- Send Debit-Notice to the Sender
       ao.send({
         Target = msg.From,
-        Tags = {
-          Action = "Debit-Notice",
-          Quantity = msg.Tags.Quantity
-        }
+        Tags = { Action = 'Debit-Notice', Recipient = msg.Tags.Recipient, Quantity = tostring(qty) }
+      })
+      -- Send Credit-Notice to the Recipient
+      ao.send({
+        Target = msg.Tags.Recipient,
+        Tags = { Action = 'Credit-Notice', Sender = msg.From, Quantity = tostring(qty) }
       })
     end
+  else
+    ao.send({
+      Target = msg.Tags.From,
+      Tags = { Action = 'Transfer-Error', ['Message-Id'] = msg.Id, Error = 'Insufficient Balance!' }
+    })
   end
-end
+end)
 
-function balance(msg)
-  local bal = balances[msg.Tags.Target]
-  if not bal then
-    bal = 0
+--[[
+ Mint
+]] --
+Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(msg, env)
+  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
+
+  if msg.From == env.Process.Id then
+    -- Add tokens to the token pool, according to Quantity
+    local qty = tonumber(msg.Tags.Quantity)
+    Balances[env.Process.Id] = Balances[env.Process.Id] + qty
+  else
+    ao.send({
+      Target = msg.Tags.From,
+      Tags = {
+        Action = 'Mint-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Only the Process Owner can mint new ' .. Ticker .. ' tokens!'
+      }
+    })
   end
-  ao.Output = {
-    Balance = bal,
-    Target = msg.Tags.Target
-  }
-end
+end)
 ```
 
 ```lua

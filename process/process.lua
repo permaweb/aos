@@ -1,29 +1,24 @@
 local pretty = require('.pretty')
 local base64 = require('.base64')
 
-dump = require('.dump')
-utils = require('.utils')
-handlers = require('.handlers')
+Dump = require('.dump')
+Utils = require('.utils')
+Handlers = require('.handlers')
 
-local process = { _version = "0.1.3" }
+local process = { _version = "0.2.0" }
 
-manpages = {
+Manpages = {
   default = [[
     # aos man page
     
     Welcome to aos, this is your personal computer on the ao network. 
     
-    What can you do with aos?
-    
-    * send and receive messages from other processes
-    * create/spawn new processes
-    * write programmable logic to customize your aos environment
-    * add handlers to your process that can be invoked when your process recieves messages
+    Check out the Developer Cookbook - https://cookbook_ao.g8way.io
     
     Installing manpages
 
     ```lua
-    installManpage("Xn2AX1W7synUTw7kSDqDAQPL7kVP7xu8g5WizkwiAYo")
+    InstallManpage("Xn2AX1W7synUTw7kSDqDAQPL7kVP7xu8g5WizkwiAYo")
     ```
 
     Once installed then you can print them:
@@ -31,8 +26,6 @@ manpages = {
     ```lua
     man("tutorial")
     ```
-    
-    (scroll up to see full page.)
   ]]
 }
 
@@ -45,7 +38,7 @@ local function findObject(array, key, value)
   return nil
 end
 
-function tab(msg)
+function Tab(msg)
   local inputs = {}
   for _, o in ipairs(msg.Tags) do
     if not inputs[o.name] then
@@ -55,92 +48,86 @@ function tab(msg)
   return inputs
 end
 
-function prompt() 
+function Prompt() 
   -- return "inbox: [" .. #inbox .. "] aos"
   return "aos> "
 end
 
-function initializeState(msg, env) 
-  errors = errors or {}
+local function initializeState(msg, env) 
+  Errors = Errors or {}
+  Inbox = Inbox or {}
 
-  if not owner then
-    owner = env.Process.Owner
+  if not Owner then
+    Owner = env.Process.Owner
   end 
 
-  if not inbox then
-    inbox = {}
-  end
-
-  if not name then
+  if not Name then
     local aosName = findObject(msg.Tags, "name", "Name")
     if aosName then
-      name = aosName.value
+      Name = aosName.value
     else 
-      name = 'aos'
+      Name = 'aos'
     end
   end
-
-  ao.id = env.Process.Id
 end
 
-function version() 
+function Version() 
   print("version: " .. process._version)
 end
 
-function man(page) 
+function Man(page) 
   if not page then
-    return manpages.default
+    return Manpages.default
   else
-    return manpages[page]
+    return Manpages[page]
   end
 end
 
 function process.handle(msg, ao) 
+  ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
   msg.TagArray = msg.Tags
-  msg.Tags = tab(msg)
+  msg.Tags = Tab(msg)
    
-  if msg.Tags['Action'] == "Eval" and owner == msg.Owner then
+  if msg.Tags['Action'] == "Eval" and Owner == msg.Owner then
     
-    function send(msg) 
-      local message = ao.send(msg)
+    function Send(msg) 
+      ao.send(msg)
       return 'message added to outbox'
     end
 
-    function spawn(module, msg) 
+    function Spawn(module, msg) 
       if not msg then
         msg = {}
       end
       
-      local spawn = ao.spawn(module, msg)
+      ao.spawn(module, msg)
       return 'spawn process request'
     end
 
-    function installManpage(tx) 
+    function InstallManpage(tx) 
       if not tx then 
         return
       end
 
-      local message = ao.send({
+      ao.send({
         Target = ao.id,
         Tags = {
           Load = tx,
-          ['function'] = 'install-manpage'
+          Action = 'Install-Manpage'
         }
       })
       return 'installing manpage'
     end
-    
-
-    function list() 
-      return pretty.tprint(inbox)
-    end
-  
+      
     -- exec expression
     local expr = msg.Data
     
     local func, err = load("return " .. expr, 'aos', 't', _G)
+    
     local output = "" 
+    local e = nil
+
     if err then
       func, err = load(expr, 'aos', 't', _G)
     end
@@ -151,25 +138,25 @@ function process.handle(msg, ao)
     end   
     if e then output = e end
     
-    return ao.result({ Output = { data = { output = output, prompt = prompt() }}})
+    return ao.result({ Output = { data = { output = output, prompt = Prompt() }}})
   end
 
-  if msg.Tags['function'] ==  "install-manpage" then
+  if msg.Tags['function'] ==  "Install-Manpage" then
     if msg.Data and msg.Tags['ao-manpage'] then
-      page = msg.Tags['ao-manpage']
-      manpages[page] = base64.decode(msg.Data.Data)
+      local page = msg.Tags['ao-manpage']
+      Manpages[page] = base64.decode(msg.Data.Data)
       return ao.result({ Output = { data = "installed manpage" } })
     end
   end
 
-  if #handlers.list > 0 then
+  if #Handlers.list > 0 then
     if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       ao.clearOutbox()
     end
     -- call evaluate from handlers passing env
-    errors = {}
+    Errors = {}
     local status, result = pcall(function () 
-      handlers.evaluate(msg, ao.env)
+      Handlers.evaluate(msg, ao.env)
     end)
     if status then
       if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
@@ -180,12 +167,12 @@ function process.handle(msg, ao)
         return response
       end
     else 
-      table.insert(errors, 'An Error occured in your handlers')
+      table.insert(Errors, 'An Error occured in your handlers')
       return ao.result({Output = 'An Error occured in your handlers'})
     end
   end
   -- Add Message to Inbox
-  table.insert(inbox, msg)
+  table.insert(Inbox, msg)
 
   return ao.result({ Error = "could not find action" })
 end
