@@ -7,10 +7,18 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.0.tgz#0709e9f4cb252351c609c6e6d8d6779a8d25edff"
   integrity sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==
 
-"@permaweb/ao-connect@^0.0.27":
-  version "0.0.27"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-connect/-/ao-connect-0.0.27.tgz#7890685ca611629705f71ea4eb8efeb7b027421e"
-  integrity sha512-Ho7G8CGcjwY+lFdpRwG+9vtGlNA+Wak+Eoi1nnH3wdxVfpZjW6naWvKRro094u2P++PWcGhX+kKJZb/SuW0N+w==
+"@permaweb/ao-scheduler-utils@~0.0.7":
+  version "0.0.8"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.8.tgz#fad5b3c4a0d26c8d166b09310cd3a369438b893e"
+  integrity sha512-RD0cxai/O4dV/tXmaL/98UsltxHjGENlr7g1QooEWzxwaWsX+BrTPZr7o4btdleimi9N79CWSH3nqo2f3fhaAQ==
+  dependencies:
+    lru-cache "^10.1.0"
+    ramda "^0.29.1"
+
+"@permaweb/aoconnect@^0.0.31":
+  version "0.0.31"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.31.tgz#a9847bc1b95a3d967afa1b218f3e7a546a5f109a"
+  integrity sha512-lIA4yM9xjQue+cIaialT8fosra2XjbrJfJnF/DzbgoqI8Y9Q8Cy+9DZcNRBZ02VvtVYpP80p5BEym5PfhYxVUQ==
   dependencies:
     "@permaweb/ao-scheduler-utils" "~0.0.7"
     buffer "^6.0.3"
@@ -19,14 +27,6 @@
     ramda "^0.29.1"
     warp-arbundles "^1.0.4"
     zod "^3.22.4"
-
-"@permaweb/ao-scheduler-utils@~0.0.7":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.8.tgz#fad5b3c4a0d26c8d166b09310cd3a369438b893e"
-  integrity sha512-RD0cxai/O4dV/tXmaL/98UsltxHjGENlr7g1QooEWzxwaWsX+BrTPZr7o4btdleimi9N79CWSH3nqo2f3fhaAQ==
-  dependencies:
-    lru-cache "^10.1.0"
-    ramda "^0.29.1"
 
 ansi-regex@^5.0.1:
   version "5.0.1"
