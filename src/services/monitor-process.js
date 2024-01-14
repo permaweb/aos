@@ -1,9 +1,9 @@
 import { connect, createDataItemSigner } from "@permaweb/aoconnect"
 import { fromPromise } from 'hyper-async'
 
-export function sendMessage({ processId, wallet, tags, data }) {
+export function monitorProcess({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect().message({ process: processId, signer, tags, data }))()
+  return fromPromise(() => connect().monitor({ process: id, signer }))()
   //.map(result => (console.log(result), result))
 
 }

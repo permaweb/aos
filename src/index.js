@@ -10,11 +10,14 @@ import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
 import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
+import { monitorProcess } from './services/monitor-process.js'
+
 import ora from 'ora'
 import chalk from 'chalk'
 import { splash } from './services/splash.js'
 import { version } from './services/version.js'
 import { load } from './commands/load.js'
+import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 
 splash()
@@ -46,6 +49,14 @@ of()
       rl.question(editorMode ? "" : prompt, async function (line) {
         if (line === "" && !editorMode) {
           console.log(chalk.green("lua expression is required!"))
+          rl.close()
+          repl()
+          return;
+        }
+
+        if (!editorMode && line == ".monitor") {
+          const result = await monitor(jwk, id, { monitorProcess })
+          console.log(result)
           rl.close()
           repl()
           return;
