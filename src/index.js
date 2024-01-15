@@ -1,6 +1,4 @@
 import readline from 'readline'
-import path from 'path'
-import fs from 'fs'
 import { of, fromPromise } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
@@ -11,6 +9,7 @@ import { gql } from './services/gql.js'
 import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import { monitorProcess } from './services/monitor-process.js'
+import { unmonitorProcess } from './services/unmonitor-process.js'
 
 import ora from 'ora'
 import chalk from 'chalk'
@@ -19,6 +18,9 @@ import { version } from './services/version.js'
 import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
+import { unmonitor } from './commands/unmonitor.js'
+
+let history = []
 
 splash()
 
@@ -41,12 +43,18 @@ of()
 
       const rl = readline.createInterface({
         input: process.stdin,
-        output: process.stdout
+        output: process.stdout,
+        terminal: true,
+        history: history,
+        historySize: 100
       });
 
-
+      rl.on('history', e => {
+        history.concat(e)
+      })
 
       rl.question(editorMode ? "" : prompt, async function (line) {
+
         if (line === "" && !editorMode) {
           console.log(chalk.green("lua expression is required!"))
           rl.close()
@@ -56,6 +64,14 @@ of()
 
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
+          console.log(result)
+          rl.close()
+          repl()
+          return;
+        }
+
+        if (!editorMode && line == ".unmonitor") {
+          const result = await unmonitor(jwk, id, { unmonitorProcess })
           console.log(result)
           rl.close()
           repl()
@@ -158,7 +174,7 @@ async function connect(jwk, id) {
   let promptResult = await evaluate('"Loading..."', id, jwk, { sendMessage, readResult }, spinner)
 
   spinner.stop();
-  return promptResult.Output.data.prompt
+  return promptResult?.Output?.data?.prompt
 }
 
 async function handleLoadArgs(jwk, id) {
