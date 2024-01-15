@@ -9,5 +9,5 @@ export function splash() {
     width: 80,
     whitespaceBreak: true,
   }))
-  console.log(chalk.green('ao Operating System'))
+  console.log(chalk.green('Welcome to the ao Operating System.'))
 }
