@@ -24,7 +24,7 @@ utils.curry = function (fn, argc)
   end
 end
 
-utils.concat = function (a)
+utils.concat = utils.curry(function (a)
   return function (b) 
     assert(type(a) == "table", "first argument should be a table that is an array")
     assert(type(b) == "table", "second argument should be a table that is an array")
@@ -37,9 +37,9 @@ utils.concat = function (a)
     end
     return result
   end
-end
+end, { 1, 1 })
 
-utils.reduce = function (fn)
+utils.reduce = utils.curry(function (fn)
   return function (initial)
     return function (t) 
       assert(type(fn) == "function", "first argument should be a function that accepts (result, value, key)")
@@ -55,9 +55,9 @@ utils.reduce = function (fn)
       return result
     end
   end
-end
+end, { 1, 1, 1 })
 
-utils.map = function (fn)
+utils.map = utils.curry(function (fn)
   assert(type(fn) == "function", "first argument should be a unary function")
 
   local function map (result, v, k)
@@ -66,9 +66,9 @@ utils.map = function (fn)
   end
 
   return utils.reduce(map)({})
-end
+end, { 1, 1 })
 
-utils.filter = function (fn)
+utils.filter = utils.curry(function (fn)
   assert(type(fn) == "function", "first argument should be a unary function")
 
   local function filter (result, v, _k)
@@ -79,9 +79,9 @@ utils.filter = function (fn)
   end
 
   return utils.reduce(filter)({})
-end
+end, { 1, 1 })
 
-utils.find = function (fn)
+utils.find = utils.curry(function (fn)
   return function (t)
     assert(type(fn) == "function", "first argument should be a unary function")
     assert(type(t) == "table", "second argument should be a table that is an array")
@@ -91,9 +91,9 @@ utils.find = function (fn)
       end
     end
   end
-end
+end, { 1, 1 })
 
-utils.propEq = function (propName)
+utils.propEq = utils.curry(function (propName)
   return function (value)
     return function (object)
       assert(type(propName) == "string", "first argument should be a string")
@@ -102,7 +102,7 @@ utils.propEq = function (propName)
       return object[propName] == value
     end
   end
-end
+end, { 1, 1, 1 })
 
 utils.compose = function(a,b) 
   return function (v) 
@@ -110,10 +110,10 @@ utils.compose = function(a,b)
   end
 end
 
-utils.prop = function (propName) 
+utils.prop = utils.curry(function (propName) 
   return function (object)
     return object[propName]
   end
-end
+end, { 1, 1 })
 
 return utils
