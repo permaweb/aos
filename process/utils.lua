@@ -1,5 +1,27 @@
 local utils = { _version = "0.0.1" }
 
+utils.curry = function (fn, argc)
+  argc = argc or debug.getinfo(fn, "u").nparams
+
+  return function (...)
+    local args = {...}
+
+    if #args > argc then
+      local res = fn
+      local i = 1
+
+      while type(res) == "function" do
+        res = res(args[i])
+        i = i + 1
+      end
+
+      return res
+    end
+
+    return fn(table.unpack(args))
+  end
+end
+
 utils.concat = function (a)
   return function (b) 
     assert(type(a) == "table", "first argument should be a table that is an array")
