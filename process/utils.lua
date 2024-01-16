@@ -1,18 +1,20 @@
 local utils = { _version = "0.0.1" }
 
 utils.curry = function (fn, argc)
-  argc = argc or debug.getinfo(fn, "u").nparams
+  argc = argc or {}
+  local currArgc = argc[1] or debug.getinfo(fn, "u").nparams
 
   return function (...)
     local args = {...}
 
-    if #args > argc then
+    if #args > currArgc then
       local res = fn
       local i = 1
 
       while type(res) == "function" do
-        res = res(args[i])
-        i = i + 1
+        currArgc = argc[i] or debug.getinfo(res, "u").nparams
+        res = res(table.unpack(args, i, i + currArgc))
+        i = i + currArgc
       end
 
       return res
