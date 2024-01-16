@@ -86,9 +86,13 @@ end
 function process.handle(msg, ao) 
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
+  -- tagify msg
   msg.TagArray = msg.Tags
   msg.Tags = Tab(msg)
-   
+  -- tagify Process 
+  ao.env.Process.TagArray = ao.env.Process.Tags 
+  ao.env.Process.Tags = Tab(ao.env.Process) 
+
   if msg.Tags['Action'] == "Eval" and Owner == msg.Owner then
     
     function Send(msg) 
