@@ -1,8 +1,9 @@
 import readline from 'readline'
+import minimist from 'minimist'
 import { of, fromPromise } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
-import { getWallet } from './services/wallets.js'
+import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address } from './services/address.js'
 import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
@@ -20,12 +21,14 @@ import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
 
+const argv = minimist(process.argv.slice(2))
+
 let history = []
 
 splash()
 
 of()
-  .chain(fromPromise(getWallet))
+  .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
   .chain(jwk => register(jwk, { address, spawnProcess, gql })
     .map(id => ({ jwk, id }))
   )
