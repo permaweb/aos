@@ -1,9 +1,9 @@
 import readline from 'readline'
-import fs from 'fs/promises';
+import minimist from 'minimist'
 import { of, fromPromise } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
-import { getWallet } from './services/wallets.js'
+import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address } from './services/address.js'
 import { spawnProcess } from './services/spawn-process.js'
 import { gql } from './services/gql.js'
@@ -21,16 +21,14 @@ import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
 
-const args = process.argv.slice(2);
-const walletIndex = args.indexOf('--wallet');
-const walletFile = walletIndex > -1 ? args[walletIndex + 1] : null;
+const argv = minimist(process.argv.slice(2))
 
 let history = []
 
 splash()
 
 of()
-  .chain(fromPromise(() => walletFile ? getWalletFromFile(walletFile) : getWallet()))
+  .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
   .chain(jwk => register(jwk, { address, spawnProcess, gql })
     .map(id => ({ jwk, id }))
   )
@@ -194,15 +192,5 @@ async function handleLoadArgs(jwk, id) {
     await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
       .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
     spinner.stop()
-  }
-}
-
-async function getWalletFromFile(walletFile) {
-  try {
-    const fileContent = await fs.readFile(walletFile, 'utf8');
-    return JSON.parse(fileContent);
-  } catch (error) {
-    console.error(`Error reading wallet file: ${error.message}`);
-    throw error;
   }
 }
