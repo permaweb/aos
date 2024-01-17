@@ -15,3 +15,13 @@ export async function getWallet() {
   fs.writeFileSync(path.resolve(os.homedir() + '/.aos.json'), JSON.stringify(wallet))
   return wallet
 }
+
+export async function getWalletFromArgs(walletPath) {
+  try {
+    const jwk = await fs.readFileSync(walletPath, 'utf8');
+    return JSON.parse(jwk);
+  } catch (error) {
+    console.error(`Error reading wallet file: ${error.message}`);
+    throw error;
+  }
+}
