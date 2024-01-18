@@ -147,7 +147,7 @@ Weavers = Weavers = {}
 
 Handlers.add(
   "register", 
-  handlers.utils.hasMatchingTag("Action", "Register"),
+  Handlers.utils.hasMatchingTag("Action", "Register"),
   function (msg) 
     table.insert(Weavers, msg.From)
     -- reply letting process know they are registered
