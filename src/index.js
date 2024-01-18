@@ -58,13 +58,6 @@ of()
 
       rl.question(editorMode ? "" : prompt, async function (line) {
 
-        if (line === "" && !editorMode) {
-          console.log(chalk.green("lua expression is required!"))
-          rl.close()
-          repl()
-          return;
-        }
-
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
           console.log(result)
