@@ -13,20 +13,20 @@ const AOS_MODULE = process.env.AOS_MODULE || 'vDpx4W_ieojkBoUY8MTSCel7-KSkmEYwWv
 
 export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
-  const findProcess = ({ jwk, address, name }) => {
+  const findProcess = ({ jwk, address, name, spawnTags }) => {
     return services.gql(queryForAOS(name), { owners: [address] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
-        _ => Rejected({ jwk, address, name }),
-        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address, name })
+        _ => Rejected({ jwk, address, name, spawnTags }),
+        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address, name, spawnTags })
       )
   }
 
-  const createProcess = ({ jwk, address, name }) => {
-
+  const createProcess = ({ jwk, address, name, spawnTags }) => {
     let tags = [
       { name: 'App-Name', value: 'aos' },
-      { name: 'Name', value: name }
+      { name: 'Name', value: name },
+      ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))
     if (argv.cron) {
@@ -50,8 +50,13 @@ export function register(jwk, services) {
   const alreadyRegistered = results => Resolved(results[0].node.id)
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
+  const spawnTags = Array.isArray(argv["tag-name"]) ? 
+    argv["tag-name"].map((name, i) => ({
+      name,
+      value: argv["tag-value"][i]
+    })) : [{ name: argv["tag-name"] , value: argv["tag-value"] }];
 
-  return of({ jwk, name })
+  return of({ jwk, name, spawnTags })
     .chain(getAddress)
     .chain(findProcess)
 
