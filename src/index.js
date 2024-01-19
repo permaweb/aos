@@ -24,8 +24,8 @@ import { blueprints } from './services/blueprints.js'
 
 const argv = minimist(process.argv.slice(2))
 
-if (argv['blueprints']) {
-  blueprints()
+if (argv['get-blueprints']) {
+  blueprints(argv['get-blueprints'])
   process.exit(0)
 }
 

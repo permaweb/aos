@@ -1,7 +1,5 @@
-Balances = Balances or {}
 Stakers = Stakers or {}
 Unstaking = Unstaking or {}
-Votes = Votes or {}
 
 -- Stake Action Handler
 Handlers.stake = function(msg)
@@ -27,17 +25,6 @@ Handlers.unstake = function(msg)
   }
 end
 
--- Vote Action Handler
-Handlers.vote = function(msg)
-  local quantity = Stakers[msg.From].amount
-  local target = msg.Tags.Target
-  local side = msg.Tags.Side
-  local deadline = tonumber(msg['Block-Height']) + tonumber(msg.Tags.Deadline)
-  assert(quantity > 0, "No staked tokens to vote")
-  Votes[target] = Votes[target] or { yay = 0, nay = 0, deadline = deadline }
-  Votes[target][side] = Votes[target][side] + quantity
-end
-
 -- Finalization Handler
 local finalizationHandler = function(msg)
   local currentHeight = tonumber(msg['Block-Height'])
@@ -48,18 +35,7 @@ local finalizationHandler = function(msg)
           Unstaking[address] = nil
       end
   end
-  -- Process voting
-  for target, voteInfo in pairs(Votes) do
-      if currentHeight >= voteInfo.deadline then
-          if voteInfo.nay > voteInfo.yay then
-              -- Slash the target's stake
-              local slashedAmount = Stakers[target] and Stakers[target].amount or 0
-              Stakers[target].amount = 0
-          end
-          -- Clear the vote record after processing
-          Votes[target] = nil
-      end
-  end
+  
 end
 
 -- wrap function to continue handler flow
@@ -78,7 +54,5 @@ Handlers.add("stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)
 Handlers.add("unstake",
   continue(Handlers.utils.hasMatchingTag("Action", "Unstake")), Handlers.unstake)
-Handlers.add("vote",
-  continue(Handlers.utils.hasMatchingTag("Action", "Vote")), Handlers.vote)
 -- Finalization handler should be called for every message
 Handlers.add("finalize", function (msg) return -1 end, finalizationHandler)
