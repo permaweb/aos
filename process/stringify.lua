@@ -1,6 +1,12 @@
--- stringify is a function that converts a lua table to a string representation
+local stringify = { _version = "0.0.2" }
 
-local stringify = { _version = "0.0.1" }
+-- ANSI color codes
+local colors = {
+  red = "\27[31m",
+  green = "\27[32m",
+  blue = "\27[34m",
+  reset = "\27[0m"
+}
 
 function stringify.format(tbl, indent)
   indent = indent or 0
@@ -18,9 +24,9 @@ function stringify.format(tbl, indent)
         if type(v) == "table" then
           v = stringify.format(v, indent + 2)
         elseif type(v) == "string" then
-          v = '"' .. v .. '"'
+          v = colors.green .. '"' .. v .. '"' .. colors.reset
         else
-          v = tostring(v)
+          v = colors.blue .. tostring(v) .. colors.reset
         end
         table.insert(result, toIndentChild .. v)
       else
@@ -32,10 +38,11 @@ function stringify.format(tbl, indent)
       if type(v) == "table" then
         v = stringify.format(v, indent + 2)
       elseif type(v) == "string" then
-        v = '"' .. v .. '"'
+        v = colors.green .. '"' .. v .. '"' .. colors.reset
       else
-        v = tostring(v)
+        v = colors.blue .. tostring(v) .. colors.reset
       end
+      k = colors.red .. k .. colors.reset
       table.insert(result, toIndentChild .. k .. " = " .. v)
     end
   end
