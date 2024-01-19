@@ -50,11 +50,15 @@ export function register(jwk, services) {
   const alreadyRegistered = results => Resolved(results[0].node.id)
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
-  const spawnTags = Array.isArray(argv["tag-name"]) ? 
+
+  let spawnTags = Array.isArray(argv["tag-name"]) ?
     argv["tag-name"].map((name, i) => ({
       name,
       value: argv["tag-value"][i]
-    })) : [{ name: argv["tag-name"] , value: argv["tag-value"] }];
+    })) : [];
+  if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
+    spawnTags = [{ name: argv["tag-name"], value: argv["tag-value"] || "" }]
+  }
 
   return of({ jwk, name, spawnTags })
     .chain(getAddress)
