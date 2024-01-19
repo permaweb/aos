@@ -148,10 +148,12 @@ function process.handle(msg, ao)
       output = err
     end
     if e then output = e end
+
     -- stringify output to represent a lua like format not a JSON format
     if type(output) == "table" then
       output = stringify.format(output)
     end
+
     return ao.result({ Output = { data = { output = output, prompt = Prompt() } } })
   end
 

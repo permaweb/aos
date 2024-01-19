@@ -9,24 +9,24 @@ import minimist from 'minimist'
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_MODULE = process.env.AOS_MODULE || 'hiOzRyTJfPX0NVLgCmVLdS4JcW2dH2iwgDLSo7PYhW0'
+const AOS_MODULE = process.env.AOS_MODULE || 'mMzM0I2pjYzAR63mGPjhboRsYd3Ced5_0ylt1iEDQFY'
 
 export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
-  const findProcess = ({ jwk, address, name }) => {
+  const findProcess = ({ jwk, address, name, spawnTags }) => {
     return services.gql(queryForAOS(name), { owners: [address] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
-        _ => Rejected({ jwk, address, name }),
-        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address, name })
+        _ => Rejected({ jwk, address, name, spawnTags }),
+        results => results.length > 0 ? Resolved(results) : Rejected({ jwk, address, name, spawnTags })
       )
   }
 
-  const createProcess = ({ jwk, address, name }) => {
-
+  const createProcess = ({ jwk, address, name, spawnTags }) => {
     let tags = [
       { name: 'App-Name', value: 'aos' },
-      { name: 'Name', value: name }
+      { name: 'Name', value: name },
+      ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))
     if (argv.cron) {
@@ -51,7 +51,16 @@ export function register(jwk, services) {
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
 
-  return of({ jwk, name })
+  let spawnTags = Array.isArray(argv["tag-name"]) ?
+    argv["tag-name"].map((name, i) => ({
+      name,
+      value: argv["tag-value"][i]
+    })) : [];
+  if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
+    spawnTags = [{ name: argv["tag-name"], value: argv["tag-value"] || "" }]
+  }
+
+  return of({ jwk, name, spawnTags })
     .chain(getAddress)
     .chain(findProcess)
 
