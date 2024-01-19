@@ -1,4 +1,4 @@
-local stringify = { _version = "0.0.2" }
+local stringify = { _version = "0.0.1" }
 
 -- ANSI color codes
 local colors = {
@@ -8,6 +8,17 @@ local colors = {
   reset = "\27[0m"
 }
 
+function stringify.isSimpleArray(tbl)
+  local arrayIndex = 1
+  for k, v in pairs(tbl) do
+    if k ~= arrayIndex or (type(v) ~= "number" and type(v) ~= "string") then
+      return false
+    end
+    arrayIndex = arrayIndex + 1
+  end
+  return true
+end
+
 function stringify.format(tbl, indent)
   indent = indent or 0
   local toIndent = string.rep(" ", indent)
@@ -16,6 +27,18 @@ function stringify.format(tbl, indent)
   local result = {}
   local isArray = true
   local arrayIndex = 1
+
+  if stringify.isSimpleArray(tbl) then
+    for _, v in ipairs(tbl) do
+      if type(v) == "string" then
+        v = colors.green .. '"' .. v .. '"' .. colors.reset
+      else
+        v = colors.blue .. tostring(v) .. colors.reset
+      end
+      table.insert(result, v)
+    end
+    return "{ " .. table.concat(result, ", ") .. " }"
+  end
 
   for k, v in pairs(tbl) do
     if isArray then
