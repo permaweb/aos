@@ -8,6 +8,13 @@ local stringify = require(".stringify")
 
 local process = { _version = "0.2.0" }
 
+function print(a)
+  if type(a) == "table" then
+    return stringify.format(a)
+  end
+  return tostring(a)
+end
+
 Manpages = {
   default = [[
     # aos man page

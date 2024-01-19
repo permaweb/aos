@@ -20,8 +20,14 @@ import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
+import { blueprints } from './services/blueprints.js'
 
 const argv = minimist(process.argv.slice(2))
+
+if (argv['blueprints']) {
+  blueprints()
+  process.exit(0)
+}
 
 let history = []
 
