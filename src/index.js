@@ -67,6 +67,12 @@ of()
       })
 
       rl.question(editorMode ? "" : prompt, async function (line) {
+        if (line.trim() == '') {
+          console.log(undefined)
+          rl.close()
+          repl()
+          return;
+        }
 
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
