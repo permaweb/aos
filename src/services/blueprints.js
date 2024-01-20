@@ -7,10 +7,20 @@ import chalk from 'chalk'
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 
-export function blueprints() {
-  const token = fs.readFileSync(path.resolve(__dirname + '../../blueprints/token.lua'), 'utf-8')
-  const dao = fs.readFileSync(path.resolve(__dirname + '../../blueprints/dao.lua'), 'utf-8')
-  // const bot = fs.readFileSync(path.resolve(__dirname + '../../blueprints/bot.lua'), 'utf-8')
-  const chatroom = fs.readFileSync(path.resolve(__dirname + '../../blueprints/chatroom.lua'), 'utf-8')
-  fs.writeFileSync(path.resolve(process.cwd() + '/token.lua'), token)
+export function blueprints(dir) {
+  try {
+    if (dir === true) {
+      dir = __dirname + "../../blueprints"
+    }
+    let prints = fs.readdirSync(path.resolve(dir))
+
+    prints.map(n => {
+      return [n, fs.readFileSync(path.resolve(dir + '/' + n), 'utf-8')]
+    }).map(([n, lua]) => {
+      fs.writeFileSync(path.resolve(process.cwd() + '/' + n), lua)
+    })
+  } catch (e) {
+    console.error(chalk.red('BLUEPRINT ERROR: Having trouble finding directory or reading files!'))
+  }
+
 }
