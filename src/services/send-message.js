@@ -3,7 +3,11 @@ import { fromPromise } from 'hyper-async'
 
 export function sendMessage({ processId, wallet, tags, data }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect().message({ process: processId, signer, tags, data }))()
+  const info = {}
+  if (process.env.CU_URL) {
+    info['CU_URL'] = process.env.CU_URL
+  }
+  return fromPromise(() => connect(info).message({ process: processId, signer, tags, data }))()
   //.map(result => (console.log(result), result))
 
 }
