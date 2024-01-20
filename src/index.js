@@ -21,6 +21,7 @@ import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
 import { blueprints } from './services/blueprints.js'
+import { loadBlueprint } from './commands/blueprints.js'
 
 const argv = minimist(process.argv.slice(2))
 
@@ -78,6 +79,16 @@ of()
           rl.close()
           repl()
           return;
+        }
+
+        if (/^\.load-blueprint/.test(line)) {
+          try { line = loadBlueprint(line) }
+          catch (e) {
+            console.log(e.message)
+            rl.close()
+            repl()
+            return;
+          }
         }
 
         if (/^\.load/.test(line)) {
