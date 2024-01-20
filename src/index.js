@@ -41,6 +41,10 @@ of()
   )
   .toPromise()
   .then(async ({ jwk, id }) => {
+    if (!id) {
+      console.error(chalk.red("Error! Could not find Process ID"))
+      process.exit(0)
+    }
     version(id)
     let prompt = await connect(jwk, id)
     // check loading files flag
@@ -64,6 +68,12 @@ of()
       })
 
       rl.question(editorMode ? "" : prompt, async function (line) {
+        if (line.trim() == '') {
+          console.log(undefined)
+          rl.close()
+          repl()
+          return;
+        }
 
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
@@ -154,7 +164,10 @@ of()
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-
+        if (process.env.DEBUG) {
+          console.log({id})
+          console.log({result})
+        }
         // log output
         spinner.stop()
         if (result.Error) {
