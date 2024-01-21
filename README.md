@@ -1,6 +1,6 @@
 # aos
 
-Version: 1.5.4
+Version: 1.5.4      
 Module: `rr856ucbPZegI5z5MzugOX86KfPdFmAiAgSb9v0Y4qI`
 
 ## Requirements
