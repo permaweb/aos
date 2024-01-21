@@ -1,5 +1,8 @@
 # aos
 
+Version: 1.5.4
+Module: `rr856ucbPZegI5z5MzugOX86KfPdFmAiAgSb9v0Y4qI`
+
 ## Requirements
 
 * [NodeJS](https://nodejs.org) version 20+
