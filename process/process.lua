@@ -149,12 +149,11 @@ function process.handle(msg, ao)
     end
     if e then output = e end
 
-    -- stringify output to represent a lua like format not a JSON format
-    if type(output) == "table" then
-      output = stringify.format(output)
-    end
-
-    return ao.result({ Output = { data = { output = output, prompt = Prompt() } } })
+    return ao.result({ Output = { data = { 
+      json = output,
+      output = type(output) == "table" and stringify.format(output) or output, 
+      prompt = Prompt() 
+    } } })
   end
 
   if msg.Tags['function'] == "Install-Manpage" then
@@ -176,15 +175,13 @@ function process.handle(msg, ao)
     end)
     if status then
       if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
-        local response = ao.result({
-          Output = "Cranking"
-        })
+        local response = ao.result({})
 
         return response
       end
     else
-      table.insert(Errors, 'An Error occured in your handlers')
-      return ao.result({ Output = 'An Error occured in your handlers' })
+      table.insert(Errors, (result and result.message) and result.message or 'Error: ' .. msg.Tags.Action())
+      return ao.result({ Output = 'An Error occured in your handlers see Errors' })
     end
   end
   -- Add Message to Inbox
