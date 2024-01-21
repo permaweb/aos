@@ -17,10 +17,13 @@ async function test() {
       Handlers.utils.hasMatchingTag("Action", "Info"),
       function (msg)
         Handlers.utils.reply("pong")(msg)
+        ao.log('Called info')
       end
-    )`
+    )
+    return {1,2,3}
+    `
   }, { Process: { Id: 'FOO', Tags: [] } })
-
+  console.log(response.Output.data)
   // send message
   let response2 = await handle(response.Memory, {
     Target: 'PROCESS',
