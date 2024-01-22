@@ -165,8 +165,8 @@ of()
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
         if (process.env.DEBUG) {
-          console.log({id})
-          console.log({result})
+          console.log({ id })
+          console.log({ result })
         }
         // log output
         spinner.stop()
