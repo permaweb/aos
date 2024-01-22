@@ -1,5 +1,6 @@
 local pretty = require('.pretty')
 local base64 = require('.base64')
+local json = require('json')
 
 Dump = require('.dump')
 Utils = require('.utils')
@@ -148,9 +149,9 @@ function process.handle(msg, ao)
       output = err
     end
     if e then output = e end
-
+    
     return ao.result({ Output = { data = { 
-      json = output,
+      json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",
       output = type(output) == "table" and stringify.format(output) or output, 
       prompt = Prompt() 
     } } })

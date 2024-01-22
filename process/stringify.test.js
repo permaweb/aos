@@ -11,18 +11,22 @@ async function test() {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: `ao.send({Target = ao.id, Data = "Hello World"})`
+    Data: `
+Handlers.add("foo", Handlers.utils.hasMatchingData("foo"), Handlers.utils.reply("bar"))
+--return { a = "foo", b = "bar" }
+return Handlers.list
+    `
   }, { Process: { Id: 'FOO', Tags: [] } })
-  console.log(response.Output.data.output)
+  console.log(response.Output)
 
-  let res2 = await handle(null, {
-    Target: "PROCESS",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
-    Data: `{1,2,3}`
-  }, { Process: { Id: 'FOO', Tags: [] } })
-  console.log(res2.Output.data.output)
+  // let res2 = await handle(null, {
+  //   Target: "PROCESS",
+  //   Tags: [
+  //     { name: 'Action', value: 'Eval' }
+  //   ],
+  //   Data: `{1,2,3}`
+  // }, { Process: { Id: 'FOO', Tags: [] } })
+  // console.log(res2.Output.data.output)
 }
 
 test()

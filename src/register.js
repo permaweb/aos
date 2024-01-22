@@ -9,7 +9,7 @@ import minimist from 'minimist'
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 
-const AOS_MODULE = process.env.AOS_MODULE || 'rr856ucbPZegI5z5MzugOX86KfPdFmAiAgSb9v0Y4qI'
+const AOS_MODULE = process.env.AOS_MODULE || 'hHmknU3KQ-9J7XxExtnbVkLMHV-N2YeYcH3u-53SGR0'
 
 export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
