@@ -1,7 +1,7 @@
 # aos
 
 Version: 1.5.5      
-Module: `hHmknU3KQ-9J7XxExtnbVkLMHV-N2YeYcH3u-53SGR0`
+Module: `Pcc8Ubm6x8nIEi6pGxBGXj-r0MOn0SaB5lFYCEBwbq4`
 
 ## Requirements
 

@@ -12,8 +12,9 @@ async function test() {
       { name: 'Action', value: 'Eval' }
     ],
     Data: `
-    ao.log("Beep Boop")
-    return ao.outbox.Output
+    local json = require('json')
+    ao.send({Target = "foo", Action = "bar" })
+    return json.encode(ao.outbox.Messages[1])
     `
   }, { Process: { Id: 'FOO', Tags: [] } })
   console.log(JSON.stringify(response.Output.data.output))
