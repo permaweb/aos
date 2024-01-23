@@ -11,6 +11,7 @@ import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import { monitorProcess } from './services/monitor-process.js'
 import { unmonitorProcess } from './services/unmonitor-process.js'
+import { live } from './services/live.js'
 
 import ora from 'ora'
 import chalk from 'chalk'
@@ -30,6 +31,7 @@ if (argv['get-blueprints']) {
   process.exit(0)
 }
 
+let cron = null
 let history = []
 
 splash()
@@ -46,6 +48,8 @@ of()
       process.exit(0)
     }
     version(id)
+    cron = await live(id)
+
     let prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
@@ -112,6 +116,7 @@ of()
         }
 
         if (line === ".editor") {
+          cron.stop()
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
 
@@ -125,6 +130,7 @@ of()
           line = editorData
           editorData = ""
           editorMode = false;
+          cron.start()
         }
 
         if (editorMode && line === ".cancel") {
@@ -132,6 +138,7 @@ of()
           editorMode = false;
 
           rl.close()
+          cron.start()
           repl()
 
           return;
@@ -147,6 +154,7 @@ of()
         }
 
         if (line === ".exit") {
+          cron.stop();
           console.log("Exiting...");
           rl.close();
           return;
