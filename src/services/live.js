@@ -13,17 +13,18 @@ export async function live(id) {
     //console.log('running every second')
     const results = await connect().results(params)
     const edges = results.edges.filter(function (e) {
-      if (e.node.Output?.data === undefined) {
+      if (e.node.Output?.print === true) {
         return true
       }
       return false
     })
+
     if (count !== null && edges.length > 0) {
       //console.log(chalk.green(`\n(${edges.length}) new messages...`))
       edges.map(e => {
         console.log("")
-        console.log(chalk.green(e.node?.Output))
-        console.log("")
+        console.log(e.node?.Output?.data)
+        process.stdout.write(e.node?.Output?.prompt || "aos> ")
       })
     }
     count = edges.length

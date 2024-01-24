@@ -2,22 +2,19 @@ local pretty = require('.pretty')
 local base64 = require('.base64')
 local json = require('json')
 
+local colors = {
+  red = "\27[31m",
+  green = "\27[32m",
+  blue = "\27[34m",
+  reset = "\27[0m"
+}
+
 Dump = require('.dump')
 Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
-
+local _ao = require('ao')
 local process = { _version = "0.2.0" }
-
-function print(a)
-  if type(a) == "table" then
-    return stringify.format(a)
-  end
-  pcall(function() 
-    ao.log(a)
-  end)
-  return tostring(a)
-end
 
 Manpages = {
   default = [[
@@ -61,9 +58,20 @@ function Tab(msg)
 end
 
 function Prompt()
-  -- return "inbox: [" .. #inbox .. "] aos"
   return "aos> "
 end
+
+function print(a)
+  if type(a) == "table" then
+    a = stringify.format(a)
+  end
+  pcall(function() 
+    _ao.outbox.Output = { data = a, prompt = Prompt(), print = true }
+  end)
+
+  return tostring(a)
+end
+
 
 local function initializeState(msg, env)
   Errors = Errors or {}
@@ -174,22 +182,27 @@ function process.handle(msg, ao)
     end
     -- call evaluate from handlers passing env
     Errors = {}
-    local status, result = pcall(function()
-      Handlers.evaluate(msg, ao.env)
-    end)
+    local status, result = pcall(Handlers.evaluate, msg, ao.env)
+     
     if status then
-      if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+      --if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+      if result then
         local response = ao.result({})
-
         return response
       end
     else
-      table.insert(Errors, (result and result.message) and result.message or 'Error: ' .. msg.Tags.Action())
-      return ao.result({ Output = 'An Error occured in your handlers see Errors' })
+      table.insert(Errors, result)
+      return ao.result({ })
     end
   end
   -- Print to Output
-  print((msg.From or "unknown") .. ": " .. (msg.Data or "") .. " " .. (msg.Action and ("Action: " .. msg.Action) or ""))
+  print(colors.green .. 
+    (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. ": " .. 
+    colors.red ..  (msg.Action and ("Action: " .. msg.Action:sub(1,20)) or "") .. " " .. 
+    colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. " " .. 
+    colors.reset
+  )
+
   -- Add Message to Inbox
   table.insert(Inbox, msg)
 
