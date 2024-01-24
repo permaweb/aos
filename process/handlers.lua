@@ -130,8 +130,27 @@ function handlers.evaluate(msg, env)
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
   
-  for i, o in ipairs(handlers.list) do
+  for _, o in ipairs(handlers.list) do
     local match = o.pattern(msg)
+    if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
+      error({message = "pattern result is not valid, it MUST be string, number, or boolean"})
+    end
+    
+    -- handle boolean returns
+    if type(match) == "boolean" then
+      match = match and 1 or 0
+    end
+    -- handle string returns
+    if type(match) == "string" then
+      if match == "continue" then
+        match = 1
+      elseif match == "break" then
+        match = -1
+      else
+        match = 0
+      end
+    end
+
     if match ~= 0 then
       -- each handle function can accept, the msg, env
       o.handle(msg, env)
