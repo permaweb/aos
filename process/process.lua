@@ -182,18 +182,17 @@ function process.handle(msg, ao)
     end
     -- call evaluate from handlers passing env
     Errors = {}
-    local status, result = pcall(function()
-      Handlers.evaluate(msg, ao.env)
-    end)
+    local status, result = pcall(Handlers.evaluate, msg, ao.env)
+     
     if status then
-      if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+      --if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+      if result then
         local response = ao.result({})
-
         return response
       end
     else
-      table.insert(Errors, (result and result.message) and result.message or 'Error: ' .. msg.Tags.Action())
-      return ao.result({ Output = 'An Error occured in your handlers see Errors' })
+      table.insert(Errors, result)
+      return ao.result({ })
     end
   end
   -- Print to Output

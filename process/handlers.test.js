@@ -16,8 +16,9 @@ async function test() {
       "info",
       Handlers.utils.hasMatchingTag("Action", "Info"),
       function (msg)
+        local x = 10 / 0
         Handlers.utils.reply("pong")(msg)
-        ao.log('Called info')
+        print('Called info')
       end
     )
     return {1,2,3}

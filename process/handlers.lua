@@ -127,6 +127,7 @@ end
 
 --- return 0 to not call handler, -1 to break after handler is called, 1 to continue
 function handlers.evaluate(msg, env)
+  local handled = false
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
   
@@ -152,13 +153,18 @@ function handlers.evaluate(msg, env)
     end
 
     if match ~= 0 then
+      handled = true
       -- each handle function can accept, the msg, env
-      o.handle(msg, env)
+      local status, err = pcall(o.handle, msg, env) 
+      if not status then
+        error(err)
+      end
     end
     if match < 0 then
-      return 
+      return handled
     end
   end
+
 end
 
 return handlers
