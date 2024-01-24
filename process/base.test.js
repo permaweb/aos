@@ -8,11 +8,11 @@ async function test() {
   // add handler
   let response = await handle(null, {
     Target: "PROCESS",
-    From: "Foo",
+    From: "MTTgc7nUwSfRpUH4p4F0q43n_-igr5Ki8OCPtjNGfhM",
     Tags: [
       { name: 'Action', value: 'Cron' }
     ],
-    Data: "Foo"
+    Data: "Foo Bar Baz Beep Boop FoobarBeepBoop simple string over 20 characters"
     // Data: `
     // local json = require('json')
     // ao.send({Target = "foo", Action = "bar" })

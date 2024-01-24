@@ -1,7 +1,7 @@
 # aos
 
-Version: 1.5.9.            
-Module: `3q_uFVdtzLEX3tzDWfqzmy8oCjHHNFYyVV9V7ND4cHk`
+Version: 1.5.10.            
+Module: `tGYjPqBUsNjJABuM9dsUqqLJ8trYU7huyrSZBLlxzrA`
 
 ## Requirements
 
