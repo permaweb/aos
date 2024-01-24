@@ -8,16 +8,19 @@ async function test() {
   // add handler
   let response = await handle(null, {
     Target: "PROCESS",
+    From: "Foo",
     Tags: [
-      { name: 'Action', value: 'Eval' }
+      { name: 'Action', value: 'Cron' }
     ],
-    Data: `
-    local json = require('json')
-    ao.send({Target = "foo", Action = "bar" })
-    return json.encode(ao.outbox.Messages[1])
-    `
+    Data: "Foo"
+    // Data: `
+    // local json = require('json')
+    // ao.send({Target = "foo", Action = "bar" })
+    // print("Sent a Message")
+    // return json.encode(ao.outbox.Output)
+    //`
   }, { Process: { Id: 'FOO', Tags: [] } })
-  console.log(JSON.stringify(response.Output.data.output))
+  console.log(JSON.stringify(response.Output))
   //console.log(JSON.stringify(response.Output))
 }
 

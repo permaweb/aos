@@ -13,6 +13,9 @@ function print(a)
   if type(a) == "table" then
     return stringify.format(a)
   end
+  pcall(function() 
+    ao.log(a)
+  end)
   return tostring(a)
 end
 
@@ -185,10 +188,12 @@ function process.handle(msg, ao)
       return ao.result({ Output = 'An Error occured in your handlers see Errors' })
     end
   end
+  -- Print to Output
+  print((msg.From or "unknown") .. ": " .. (msg.Data or "") .. " " .. (msg.Action and ("Action: " .. msg.Action) or ""))
   -- Add Message to Inbox
   table.insert(Inbox, msg)
 
-  return ao.result({ Error = "could not find action" })
+  return ao.result({ })
 end
 
 return process
