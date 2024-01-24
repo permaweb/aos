@@ -19,8 +19,12 @@ export async function live(id) {
       return false
     })
     if (count !== null && edges.length > 0) {
-      console.log(chalk.green(`\n(${edges.length}) new messages...`))
-      console.log('[press enter] to reset cursor...')
+      //console.log(chalk.green(`\n(${edges.length}) new messages...`))
+      edges.map(e => {
+        console.log("")
+        console.log(chalk.green(e.node?.Output))
+        console.log("")
+      })
     }
     count = edges.length
     cursor = edges[edges.length - 1].cursor
