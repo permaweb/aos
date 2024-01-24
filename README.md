@@ -1,12 +1,7 @@
 # aos
 
-<<<<<<< HEAD
-Version: 1.5.8      
-Module: `tqSnEZ1DNlFMqzFUVDBPf9UnAsh_PT4-CGcyhn3Zk-o`
-=======
-Version: 1.5.7.            
-Module: `Pcc8Ubm6x8nIEi6pGxBGXj-r0MOn0SaB5lFYCEBwbq4`
->>>>>>> c030c7d84cfda1d34e89f3d24b1cd136185c1957
+Version: 1.5.9.            
+Module: `3q_uFVdtzLEX3tzDWfqzmy8oCjHHNFYyVV9V7ND4cHk`
 
 ## Requirements
 
