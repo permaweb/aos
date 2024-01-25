@@ -24,12 +24,13 @@ export function checkLoadArgs() {
  * @returns {string}
  */
 export function createExecutableFromProject(project) {
-  const emptyRequires = project.map(
-    (mod) => `_G.package.loaded["${mod.name}"] = {}`
-  ).reduce((acc, req) => acc + req, '')
   const moduleContents = project.map(
-    (mod) => ``
-  )
+    (mod, i) => `function _loaded_mod_${i}()\n${mod.content}\nend`
+  ).reduce((acc, con) => acc + '\n' + con, '')
+
+  return moduleContents + '\n' + project.map(
+    (mod, i) => `_G.package.loaded["${mod.name}"] = _loaded_mod_${i}()`
+  ).reduce((acc, req) => acc + '\n' + req, '')
 }
 
 /**
@@ -47,15 +48,21 @@ export function createProjectStructure(mainFile) {
 
     const requiresInMod = findRequires(modules[i].content)
     requiresInMod.forEach((mod) => {
-      if (modules.find((m) => m.name === mod.name)) return
-      modules.push(mod)
+      const existingMod = modules.find((m) => m.name === mod.name)
+      if (existingMod) {
+        modules = modules.filter((m) => m.name !== existingMod.name)
+      }
+      modules.push(existingMod || mod)
     })
   }
 
   // only return modules that were found
   // if the module was not found, we assume it
   // is already loaded into aos
-  return modules.filter((m) => !!m.content)
+  // we also reverse the modules, because the
+  // last modules are the first ones that need
+  // to be imported
+  return modules.filter((m) => !!m.content).reverse()
 }
 
 /**
