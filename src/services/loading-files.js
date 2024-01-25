@@ -1,4 +1,5 @@
 import minimist from 'minimist'
+import path from 'path'
 import fs from 'fs'
 
 export function checkLoadArgs() {

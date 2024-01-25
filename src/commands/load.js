@@ -2,9 +2,10 @@ import {
   createExecutableFromProject,
   createProjectStructure
 } from '../services/loading-files.js'
-import fs from 'fs'
 import chalk from 'chalk'
 import path from 'path'
+import ora from 'ora'
+import fs from 'fs'
 
 export function load(line) {
   // get filename
@@ -29,7 +30,7 @@ export function load(line) {
 
     const projectStructure = createProjectStructure(line)
     if (projectStructure.length > 0) {
-      line = createExecutableFromProject(projectStructure)
+      line = createExecutableFromProject(projectStructure) + '\n' + line
     }
 
     spinner.stop()
