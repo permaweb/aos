@@ -2,7 +2,7 @@ import cron from 'node-cron'
 import { connect } from '@permaweb/aoconnect'
 import chalk from 'chalk'
 
-export async function live(id, { editorMode }) {
+export async function live(id) {
   let ct = null
   let cursor = null
   let count = null
