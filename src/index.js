@@ -23,6 +23,7 @@ import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
 import { blueprints } from './services/blueprints.js'
 import { loadBlueprint } from './commands/blueprints.js'
+import { help, replHelp } from './services/help.js'
 
 const argv = minimist(process.argv.slice(2))
 
@@ -30,6 +31,17 @@ if (argv['get-blueprints']) {
   blueprints(argv['get-blueprints'])
   process.exit(0)
 }
+
+if (argv['help']) {
+  help()
+  process.exit(0)
+}
+
+if (argv['version']) {
+  version()
+  process.exit(0)
+}
+
 
 let cron = null
 let history = []
@@ -78,6 +90,13 @@ of()
           rl.close()
           repl()
           return;
+        }
+
+        if (!editorMode && line == ".help") {
+          replHelp()
+          rl.close()
+          repl()
+          return
         }
 
         if (!editorMode && line == ".monitor") {
