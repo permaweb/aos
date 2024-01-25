@@ -19,7 +19,7 @@ export function createProjectStructure(mainFile) {
   const modules = findRequires(mainFile)
 
   for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content) continue
+    if (modules[i].content || !fs.existsSync(modules[i].path)) continue
 
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
 
@@ -29,11 +29,13 @@ export function createProjectStructure(mainFile) {
       modules.push(mod)
     })
   }
+
+  return modules
 }
 
-export function findRequires(data) {
+function findRequires(data) {
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
-  const requiredModules = data.match(requirePattern).map(
+  const requiredModules = data.match(requirePattern)?.map(
     (mod) => ({
       name: mod,
       path: path.join(
@@ -42,7 +44,7 @@ export function findRequires(data) {
       ),
       content: undefined
     })
-  )
+  ) || []
 
   return requiredModules
 }

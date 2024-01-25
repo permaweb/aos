@@ -1,3 +1,4 @@
+import { createProjectStructure } from '../services/loading-files.js'
 import fs from 'fs'
 import chalk from 'chalk'
 import path from 'path'
@@ -15,6 +16,7 @@ export function load(line) {
     }
     console.log(chalk.green('Loading... ', fn));
     line = fs.readFileSync(filePath, 'utf-8');
+    //console.log(createProjectStructure(line).map((m) => ({ name: m.name, path: m.path })))
     return line
   } else {
     throw Error(chalk.red('ERROR: .load function requires a *.lua file'))
