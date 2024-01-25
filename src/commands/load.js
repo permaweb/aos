@@ -19,18 +19,21 @@ export function load(line) {
     }
     console.log(chalk.green('Loading... ', fn))
     line = fs.readFileSync(filePath, 'utf-8')
+
+    const spinner = ora({
+      spinner: 'dots',
+      suffixText: ``
+    })
+    spinner.start()
+    spinner.suffixText = chalk.gray('Parsing project structure...')
+
     const projectStructure = createProjectStructure(line)
     if (projectStructure.length > 0) {
-      const spinner = ora({
-        spinner: 'dots',
-        suffixText: ``
-      })
-
-      spinner.start()
-      spinner.suffixText = chalk.gray("Parsing project structure...")
       line = createExecutableFromProject(projectStructure)
-      spinner.stop()
     }
+
+    spinner.stop()
+
     return line
   } else {
     throw Error(chalk.red('ERROR: .load function requires a *.lua file'))
