@@ -6,7 +6,8 @@ local colors = {
   red = "\27[31m",
   green = "\27[32m",
   blue = "\27[34m",
-  reset = "\27[0m"
+  reset = "\27[0m",
+  gray = "\27[90m"
 }
 
 Dump = require('.dump')
@@ -195,13 +196,16 @@ function process.handle(msg, ao)
       return ao.result({ })
     end
   end
+  -- New Message from green(key) gray(:) gray(Action) = blue(Help)
+  local txt = colors.gray .. "New Message From " .. colors.green .. 
+  (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
+  if msg.Action then
+    txt = txt .. colors.gray .. (msg.Action and ("Action = " .. colors.blue .. msg.Action:sub(1,20)) or "") .. colors.reset
+  else
+    txt = txt .. colors.gray .. "Data = " .. colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. colors.reset
+  end
   -- Print to Output
-  print(colors.green .. 
-    (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. ": " .. 
-    colors.red ..  (msg.Action and ("Action: " .. msg.Action:sub(1,20)) or "") .. " " .. 
-    colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. " " .. 
-    colors.reset
-  )
+  print(txt)
 
   -- Add Message to Inbox
   table.insert(Inbox, msg)

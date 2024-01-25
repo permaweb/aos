@@ -2,8 +2,8 @@ import { fromPromise } from 'hyper-async'
 import { connect, createDataItemSigner } from '@permaweb/aoconnect'
 
 
-const SCHEDULER = "zEptcX9AHP81zOobrSvNxnY6za-vHVF9uDuk1usocLI"
-//const SCHEDULER = "TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog"
+//const SCHEDULER = "zEptcX9AHP81zOobrSvNxnY6za-vHVF9uDuk1usocLI"
+const SCHEDULER = "TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog"
 
 export function spawnProcess({ wallet, src, tags }) {
   const signer = createDataItemSigner(wallet)
