@@ -21,7 +21,15 @@ export function load(line) {
     line = fs.readFileSync(filePath, 'utf-8')
     const projectStructure = createProjectStructure(line)
     if (projectStructure.length > 0) {
+      const spinner = ora({
+        spinner: 'dots',
+        suffixText: ``
+      })
+
+      spinner.start()
+      spinner.suffixText = chalk.gray("Parsing project structure...")
       line = createExecutableFromProject(projectStructure)
+      spinner.stop()
     }
     return line
   } else {
