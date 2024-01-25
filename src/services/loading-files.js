@@ -13,7 +13,15 @@ export function checkLoadArgs() {
 }
 
 /**
+ * @typedef Module
+ * @property {string} name
+ * @property {string} path
+ * @property {string|undefined} content
+ */
+
+/**
  * Create the project structure from the main file's content
+ * @return {Module[]}
  */
 export function createProjectStructure(mainFile) {
   const modules = findRequires(mainFile)
@@ -33,6 +41,9 @@ export function createProjectStructure(mainFile) {
   return modules
 }
 
+/**
+ * @return {Module[]}
+ */
 function findRequires(data) {
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
   const requiredModules = data.match(requirePattern)?.map(
