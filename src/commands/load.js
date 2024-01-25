@@ -1,4 +1,7 @@
-import { createProjectStructure } from '../services/loading-files.js'
+import {
+  createExecutableFromProject,
+  createProjectStructure
+} from '../services/loading-files.js'
 import fs from 'fs'
 import chalk from 'chalk'
 import path from 'path'
@@ -14,9 +17,12 @@ export function load(line) {
     if (!fs.existsSync(filePath)) {
       throw Error(chalk.red('ERROR: file not found.'));
     }
-    console.log(chalk.green('Loading... ', fn));
-    line = fs.readFileSync(filePath, 'utf-8');
-    //console.log(createProjectStructure(line).map((m) => ({ name: m.name, path: m.path })))
+    console.log(chalk.green('Loading... ', fn))
+    line = fs.readFileSync(filePath, 'utf-8')
+    const projectStructure = createProjectStructure(line)
+    if (projectStructure.length > 0) {
+      line = createExecutableFromProject(projectStructure)
+    }
     return line
   } else {
     throw Error(chalk.red('ERROR: .load function requires a *.lua file'))

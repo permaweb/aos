@@ -20,7 +20,21 @@ export function checkLoadArgs() {
  */
 
 /**
+ * @param {Module[]} project 
+ * @returns {string}
+ */
+export function createExecutableFromProject(project) {
+  const emptyRequires = project.map(
+    (mod) => `_G.package.loaded["${mod.name}"] = {}`
+  ).reduce((acc, req) => acc + req, '')
+  const moduleContents = project.map(
+    (mod) => ``
+  )
+}
+
+/**
  * Create the project structure from the main file's content
+ * @param {string} mainFile
  * @return {Module[]}
  */
 export function createProjectStructure(mainFile) {
@@ -38,10 +52,14 @@ export function createProjectStructure(mainFile) {
     })
   }
 
-  return modules
+  // only return modules that were found
+  // if the module was not found, we assume it
+  // is already loaded into aos
+  return modules.filter((m) => !!m.content)
 }
 
 /**
+ * @param {string} data
  * @return {Module[]}
  */
 function findRequires(data) {
