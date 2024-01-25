@@ -51,12 +51,12 @@ of()
       process.exit(0)
     }
     version(id)
-    cron = await live(id, { editorMode })
 
     let prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
+    cron = await live(id)
 
     async function repl() {
 
