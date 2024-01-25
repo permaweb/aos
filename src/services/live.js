@@ -2,10 +2,17 @@ import cron from 'node-cron'
 import { connect } from '@permaweb/aoconnect'
 import chalk from 'chalk'
 
-export async function live(id) {
+export async function live(id, { editorMode }) {
   let ct = null
   let cursor = null
   let count = null
+
+  process.stdin.on('keypress', (str, key) => {
+    if (ct) {
+      ct.stop()
+    }
+  })
+
   const checkLive = async () => {
     ct.stop()
     let params = { process: id, limit: "1000" }
@@ -21,6 +28,15 @@ export async function live(id) {
       }
       return false
     })
+    // simulate messages
+    // const edges = [{
+    //   node: {
+    //     Output: {
+    //       prompt: "aos> ",
+    //       data: "\u001b[90mNew Message From \u001b[32mMTT...fhM\u001b[90m: \u001b[90mAction = \u001b[34mCron\u001b[0m"
+    //     }
+    //   }
+    // }]
 
     // --- peek on previous line and if delete line if last prompt.
     // --- key event can detect 

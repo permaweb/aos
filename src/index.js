@@ -43,19 +43,20 @@ of()
   )
   .toPromise()
   .then(async ({ jwk, id }) => {
+    let editorMode = false
+    let editorData = ""
+
     if (!id) {
       console.error(chalk.red("Error! Could not find Process ID"))
       process.exit(0)
     }
     version(id)
-    cron = await live(id)
+    cron = await live(id, { editorMode })
 
     let prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
-    let editorMode = false
-    let editorData = ""
 
     async function repl() {
 
@@ -116,7 +117,7 @@ of()
         }
 
         if (line === ".editor") {
-          cron.stop()
+          if (cron) cron.stop()
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
 
@@ -130,15 +131,15 @@ of()
           line = editorData
           editorData = ""
           editorMode = false;
-          cron.start()
+
         }
 
         if (editorMode && line === ".cancel") {
           editorData = ""
           editorMode = false;
 
-          rl.close()
           cron.start()
+          rl.close()
           repl()
 
           return;
@@ -184,6 +185,7 @@ of()
           console.log(output.data?.output)
         }
 
+        cron.start()
         // set prompt
         prompt = output.data?.prompt ? output.data?.prompt : prompt
         rl.close()
