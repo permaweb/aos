@@ -40,7 +40,7 @@ export function createExecutableFromProject(project) {
  * @return {Module[]}
  */
 export function createProjectStructure(mainFile) {
-  const modules = findRequires(mainFile)
+  let modules = findRequires(mainFile)
 
   for (let i = 0; i < modules.length; i++) {
     if (modules[i].content || !fs.existsSync(modules[i].path)) continue
