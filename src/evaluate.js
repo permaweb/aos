@@ -18,6 +18,9 @@ export async function evaluate(line, processId, wallet, services, spinner) {
     .chain(services.readResult)
     .bichain(services.readResult, Resolved)
     .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
     .toPromise()
   //return { output: 'echo: ' + line, prompt: null }
 }

@@ -1,6 +1,6 @@
 # aos
 
-Version: 1.6.0.            
+Version: 1.6.1.            
 Module: `Lx86b7Q1rhfvirf5zaBsYr3sYS6TfDxrG6wHv6QTvoY`
 
 ## Requirements
