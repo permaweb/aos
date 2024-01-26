@@ -161,11 +161,13 @@ end, 2)
 -- @param {any} val
 -- @param {table<Array>} t
 utils.includes = utils.curry(function (val, t)
+  assert(type(t) == "table", "argument needs to be a table")
   return utils.find(function (v) return v == val end, t) ~= nil
 end, 2)
 
 -- @param {table} table
 utils.keys = function (table)
+  assert(type(table) == "table", "argument needs to be a table")
   return utils.map(
     function (_, key) return key end,
     table
@@ -174,6 +176,7 @@ end
 
 -- @param {table} table
 utils.values = function (table)
+  assert(type(table) == "table", "argument needs to be a table")
   return utils.map(
     function (val) return val end,
     table
