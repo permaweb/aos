@@ -127,6 +127,7 @@ end, 3)
 
 -- @param {table<Array>} data
 utils.reverse = function (data)
+  assert(type(data) == "table", "argument needs to be a table that is an array")
   return utils.reduce(
     function (result, v, i)
       result[#data - i + 1] = v
@@ -144,6 +145,7 @@ utils.compose = utils.curry(function (...)
   return function (v)
     local result = v
     for _, fn in pairs(mutations) do
+      assert(type(fn) == "function", "each argument needs to be a function")
       result = fn(result)
     end
     return result
