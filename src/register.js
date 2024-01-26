@@ -10,7 +10,7 @@ import * as utils from './hyper-utils.js'
 import minimist from 'minimist'
 
 const argv = minimist(process.argv.slice(2))
-const AOS_MODULE = process.env.AOS_MODULE || argv.module || 'Lx86b7Q1rhfvirf5zaBsYr3sYS6TfDxrG6wHv6QTvoY'
+const AOS_MODULE = process.env.AOS_MODULE || argv.module || 'FXNqc3uftQc78gvKHGJjHKhjTklEdk0zP3sp9TEJNyc'
 
 export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
