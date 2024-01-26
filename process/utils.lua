@@ -125,6 +125,18 @@ utils.propEq = utils.curry(function (propName, value, object)
   return object[propName] == value
 end, 3)
 
+-- @param {table<Array>} data
+utils.reverse = function (data)
+  return utils.reduce(
+    function (result, v, i)
+      result[#data - i + 1] = v
+      return result
+    end,
+    {},
+    data
+  )
+end
+
 -- @param {function} a
 -- @param {function} b
 utils.compose = utils.curry(function(a,b) 
