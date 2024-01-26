@@ -158,4 +158,26 @@ utils.prop = utils.curry(function (propName, object)
   return object[propName]
 end, 2)
 
+-- @param {any} val
+-- @param {table<Array>} t
+utils.includes = utils.curry(function (val, t)
+  return utils.find(function (v) return v == val end, t) ~= nil
+end, 2)
+
+-- @param {table} table
+utils.keys = function (table)
+  return utils.map(
+    function (_, key) return key end,
+    table
+  )
+end
+
+-- @param {table} table
+utils.values = function (table)
+  return utils.map(
+    function (val) return val end,
+    table
+  )
+end
+
 return utils
