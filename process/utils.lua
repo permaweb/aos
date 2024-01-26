@@ -79,7 +79,7 @@ utils.map = utils.curry(function (fn, data)
   assert(type(data) == "table" and isArray(data), "second argument should be an Array")
 
   local function map (result, v, k)
-    result[k] = fn(v)
+    result[k] = fn(v, k)
     return result
   end
 
