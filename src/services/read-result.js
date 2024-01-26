@@ -7,6 +7,7 @@ export function readResult(params) {
     info['CU_URL'] = process.env.CU_URL
   }
   return fromPromise(() => connect(info).result(params))()
+    .bimap(_ => params, _ => _)
   //.map(result => (console.log(result), result))
 
 }
