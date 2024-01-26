@@ -41,29 +41,43 @@ export function createExecutableFromProject(project) {
  */
 export function createProjectStructure(mainFile) {
   let modules = findRequires(mainFile)
+  let orderedModNames = modules.map((m) => m.name)
 
   for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content || !fs.existsSync(modules[i].path)) continue
-
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
 
     const requiresInMod = findRequires(modules[i].content)
+
     requiresInMod.forEach((mod) => {
       const existingMod = modules.find((m) => m.name === mod.name)
-      if (existingMod) {
-        modules = modules.filter((m) => m.name !== existingMod.name)
+      if (!existingMod) {
+        modules = modules.push(mod)
       }
-      modules.push(existingMod || mod)
+
+      const existingName = orderedModNames.find((name) => name === mod.name)
+      if (existingName) {
+        orderedModNames = orderedModNames.filter((name) => name !== existingName)
+      }
+      orderedModNames.push(existingName || mod.name)
     })
   }
 
-  // only return modules that were found
+  // Create an ordered array of modules,
+  // we use this loop to reverse the order,
+  // because the last modules are the first
+  // ones that need to be imported
+  // only add modules that were found
   // if the module was not found, we assume it
   // is already loaded into aos
-  // we also reverse the modules, because the
-  // last modules are the first ones that need
-  // to be imported
-  return modules.filter((m) => !!m.content).reverse()
+  let orderedModules = []
+  for (let i = orderedModNames.length; i > 0; i--) {
+    mod = modules.find((m) => m.name == orderedModNames[i-1])
+    if (mod && mod.content) {
+      orderedModules.push(mod)
+    }
+  }
+
+  return orderedModules
 }
 
 /**
