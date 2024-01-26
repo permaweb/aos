@@ -137,11 +137,16 @@ utils.reverse = function (data)
   )
 end
 
--- @param {function} a
--- @param {function} b
-utils.compose = utils.curry(function(a,b) 
-  return function (v) 
-    return a(b(v))
+-- @param {function} ... 
+utils.compose = utils.curry(function (...)
+  local mutations = utils.reverse({...})
+
+  return function (v)
+    local result = v
+    for _, fn in pairs(mutations) do
+      result = fn(result)
+    end
+    return result
   end
 end, 2)
 
