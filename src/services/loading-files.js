@@ -26,29 +26,23 @@ export function checkLoadArgs() {
  */
 export function createExecutableFromProject(project) {
   const getModFnName = (name) => name.replace(/\./g, "_").replace(/^_/, "")
-  const requireMapping = []
-  const moduleContents = []
+  const contents = []
 
   // filter out repeated modules with different import names
   // and construct the executable Lua code
   for (const mod of project) {
-    const existing = requireMapping.find((m) => m.path === mod.path);
-    requireMapping.push({
+    const existing = contents.find((m) => m.path === mod.path);
+    const moduleContent = (existing && '') || `-- module: "${mod.name}"\nfunction _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`
+    const requireMapper = `_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
+
+    contents.push({
       name: mod.name,
       path: mod.path,
-      code: `_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
+      code: moduleContent + requireMapper
     })
-
-    if (!existing) {
-      moduleContents.push(
-        `-- module: "${mod.name}"\nfunction _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend`
-      )
-    }
   }
 
-  return moduleContents.reduce((acc, con) => acc + '\n\n' + con, '') +
-    '\n' +
-    requireMapping.reduce((acc, req) => acc + '\n' + req.code, '')
+  return contents.reduce((acc, con) => acc + '\n\n' + con.code, '')
 }
 
 /**
