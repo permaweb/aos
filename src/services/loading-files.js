@@ -37,10 +37,11 @@ export function createExecutableFromProject(project) {
 /**
  * Create the project structure from the main file's content
  * @param {string} mainFile
+ * @param {string} cwd
  * @return {Module[]}
  */
-export function createProjectStructure(mainFile) {
-  const modules = findRequires(mainFile)
+export function createProjectStructure(mainFile, cwd) {
+  const modules = findRequires(mainFile, cwd)
   let orderedModNames = modules.map((m) => m.name)
 
   for (let i = 0; i < modules.length; i++) {
@@ -48,7 +49,10 @@ export function createProjectStructure(mainFile) {
 
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
 
-    const requiresInMod = findRequires(modules[i].content)
+    const requiresInMod = findRequires(
+      modules[i].content,
+      path.dirname(modules[i].path)
+    )
 
     requiresInMod.forEach((mod) => {
       const existingMod = modules.find((m) => m.name === mod.name)
@@ -84,17 +88,15 @@ export function createProjectStructure(mainFile) {
 
 /**
  * @param {string} data
+ * @param {string} cwd
  * @return {Module[]}
  */
-function findRequires(data) {
+function findRequires(data, cwd) {
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
   const requiredModules = data.match(requirePattern)?.map(
     (mod) => ({
       name: mod,
-      path: path.join(
-        process.cwd(),
-        mod.replace(/\./g, '/') + '.lua'
-      ),
+      path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
       content: undefined
     })
   ) || []
