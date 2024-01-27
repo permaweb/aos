@@ -26,7 +26,7 @@ export function checkLoadArgs() {
  */
 export function createExecutableFromProject(project) {
   const moduleContents = project.map(
-    (mod, i) => `function _loaded_mod_${i}()\n${mod.content}\nend`
+    (mod, i) => `-- ${mod.name}\nfunction _loaded_mod_${i}()\n${mod.content}\nend`
   ).reduce((acc, con) => acc + '\n' + con, '')
 
   return moduleContents + '\n' + project.map(
