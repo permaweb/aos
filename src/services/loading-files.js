@@ -71,7 +71,7 @@ export function createProjectStructure(mainFile) {
   // is already loaded into aos
   let orderedModules = []
   for (let i = orderedModNames.length; i > 0; i--) {
-    mod = modules.find((m) => m.name == orderedModNames[i-1])
+    const mod = modules.find((m) => m.name == orderedModNames[i-1])
     if (mod && mod.content) {
       orderedModules.push(mod)
     }
