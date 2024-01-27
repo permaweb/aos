@@ -1,3 +1,4 @@
+import createFileTree from 'pretty-file-tree'
 import {
   createExecutableFromProject,
   createProjectStructure
@@ -27,7 +28,6 @@ export function load(line) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray('Parsing project structure...')
-
     const projectStructure = createProjectStructure(
       line,
       path.dirname(filePath)
@@ -35,8 +35,15 @@ export function load(line) {
     if (projectStructure.length > 0) {
       line = createExecutableFromProject(projectStructure) + '\n' + line
     }
-
     spinner.stop()
+
+    if (projectStructure.length > 0) {
+      console.log(chalk.yellow('The following files will be deployed:'))
+      console.log(chalk.dim(createFileTree([
+        ...projectStructure.map(m => m.path),
+        filePath + ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
+      ])))
+    }
 
     return line
   } else {
