@@ -32,7 +32,7 @@ export function createExecutableFromProject(project) {
   // and construct the executable Lua code
   for (const mod of project) {
     const existing = contents.find((m) => m.path === mod.path);
-    const moduleContent = (existing && '') || `-- module: "${mod.name}"\nfunction _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`
+    const moduleContent = (!existing && `-- module: "${mod.name}"\nfunction _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`) || ''
     const requireMapper = `_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
 
     contents.push({
