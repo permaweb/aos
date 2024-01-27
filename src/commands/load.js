@@ -34,6 +34,7 @@ export function load(line) {
     )
     if (projectStructure.length > 0) {
       line = createExecutableFromProject(projectStructure) + '\n\n' + line
+      console.log(line)
     }
     spinner.stop()
 
