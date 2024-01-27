@@ -44,6 +44,8 @@ export function createProjectStructure(mainFile) {
   let orderedModNames = modules.map((m) => m.name)
 
   for (let i = 0; i < modules.length; i++) {
+    if (modules[i].content || !fs.existsSync(modules[i].path)) continue
+
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
 
     const requiresInMod = findRequires(modules[i].content)
