@@ -48,11 +48,7 @@ export function createProjectStructure(mainFile, cwd) {
     if (modules[i].content || !fs.existsSync(modules[i].path)) continue
 
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
-
-    const requiresInMod = findRequires(
-      modules[i].content,
-      path.dirname(modules[i].path)
-    )
+    const requiresInMod = findRequires(modules[i].content, cwd)
 
     requiresInMod.forEach((mod) => {
       const existingMod = modules.find((m) => m.name === mod.name)
@@ -77,7 +73,7 @@ export function createProjectStructure(mainFile, cwd) {
   // is already loaded into aos
   let orderedModules = []
   for (let i = orderedModNames.length; i > 0; i--) {
-    const mod = modules.find((m) => m.name == orderedModNames[i-1])
+    const mod = modules.find((m) => m.name == orderedModNames[i - 1])
     if (mod && mod.content) {
       orderedModules.push(mod)
     }
