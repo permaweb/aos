@@ -33,12 +33,12 @@ export function load(line) {
       path.dirname(filePath)
     )
     if (projectStructure.length > 0) {
-      line = createExecutableFromProject(projectStructure) + '\n' + line
+      line = createExecutableFromProject(projectStructure) + '\n\n' + line
     }
     spinner.stop()
 
     if (projectStructure.length > 0) {
-      console.log(chalk.yellow('The following files will be deployed:'))
+      console.log(chalk.yellow('\nThe following files will be deployed:'))
       console.log(chalk.dim(createFileTree([
         ...projectStructure.map(m => m.path),
         filePath + ' ' + chalk.reset(chalk.bgGreen(' MAIN '))

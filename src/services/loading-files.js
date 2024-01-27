@@ -26,8 +26,8 @@ export function checkLoadArgs() {
  */
 export function createExecutableFromProject(project) {
   const moduleContents = project.map(
-    (mod, i) => `-- ${mod.name}\nfunction _loaded_mod_${i}()\n${mod.content}\nend`
-  ).reduce((acc, con) => acc + '\n' + con, '')
+    (mod, i) => `-- module: "${mod.name}"\nfunction _loaded_mod_${i}()\n${mod.content}\nend`
+  ).reduce((acc, con) => acc + '\n\n' + con, '')
 
   return moduleContents + '\n' + project.map(
     (mod, i) => `_G.package.loaded["${mod.name}"] = _loaded_mod_${i}()`
@@ -48,6 +48,10 @@ export function createProjectStructure(mainFile, cwd) {
     if (modules[i].content || !fs.existsSync(modules[i].path)) continue
 
     modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
+      .split('\n')
+      .map(v => '  ' + v)
+      .join('\n')
+
     const requiresInMod = findRequires(modules[i].content, cwd)
 
     requiresInMod.forEach((mod) => {
