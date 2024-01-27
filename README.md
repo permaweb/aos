@@ -1,7 +1,7 @@
 # aos
 
-Version: 1.6.1.            
-Module: `Lx86b7Q1rhfvirf5zaBsYr3sYS6TfDxrG6wHv6QTvoY`
+Version: 1.6.3.            
+Module: `nFdGNGGwxndsYk_YB8KL2zVAnW5XlMlaVhdFjsk7hGU`
 
 ## Requirements
 
