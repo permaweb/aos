@@ -51,7 +51,7 @@ export function createProjectStructure(mainFile) {
     requiresInMod.forEach((mod) => {
       const existingMod = modules.find((m) => m.name === mod.name)
       if (!existingMod) {
-        modules = modules.push(mod)
+        modules.push(mod)
       }
 
       const existingName = orderedModNames.find((name) => name === mod.name)
