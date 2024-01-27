@@ -11,22 +11,23 @@ export function list(jwk, services) {
   const listProcesses = ({ address }) => {
     return services.gql(queryForAOSs(), { owners: [address] })
       .map(utils.path(['data', 'transactions', 'edges']))
+    //.map(_ => (console.log(JSON.stringify(_, null, 2)), _))
   }
   return of({ jwk })
     .chain(getAddress)
     .chain(listProcesses)
+
     .map(map(({ node }) => find(t => t.name == "Name", node.tags).value || 'undefined'))
     .map(list => `
-Your Processes:
+  Your Processes:
 
-${list.join('\n')}
-    `)
+  ${list.join('\n')}
+      `)
 }
 
 function queryForAOSs() {
   return `query ($owners: [String!]!) {
     transactions(
-      first: 1,
       owners: $owners,
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
@@ -37,6 +38,7 @@ function queryForAOSs() {
       edges {
         node {
           id
+          owner { address }
           tags {
             name
             value
