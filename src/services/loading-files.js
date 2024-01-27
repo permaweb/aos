@@ -40,7 +40,7 @@ export function createExecutableFromProject(project) {
  * @return {Module[]}
  */
 export function createProjectStructure(mainFile) {
-  let modules = findRequires(mainFile)
+  const modules = findRequires(mainFile)
   let orderedModNames = modules.map((m) => m.name)
 
   for (let i = 0; i < modules.length; i++) {

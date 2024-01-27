@@ -9,7 +9,7 @@ import fs from 'fs'
 
 export function load(line) {
   // get filename
-  let fn = line.split(' ')[1]
+  let fn = line.split(' ')[1].replace(/^("|')|("|')$/g, '')
   if (/\.lua$/.test(fn)) {
     let filePath = fn;
     if (!path.isAbsolute(filePath)) {
