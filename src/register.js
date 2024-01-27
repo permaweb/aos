@@ -5,9 +5,9 @@
  * 
  */
 
-import minimist from 'minimist'
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
+import minimist from 'minimist'
 
 const AOS_MODULE = process.env.AOS_MODULE || 'nFdGNGGwxndsYk_YB8KL2zVAnW5XlMlaVhdFjsk7hGU'
 

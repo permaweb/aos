@@ -1,6 +1,6 @@
 import readline from 'readline'
 import minimist from 'minimist'
-import { of, fromPromise } from 'hyper-async'
+import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
@@ -24,6 +24,7 @@ import { unmonitor } from './commands/unmonitor.js'
 import { blueprints } from './services/blueprints.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
+import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
 
@@ -42,7 +43,6 @@ if (argv['version']) {
   process.exit(0)
 }
 
-
 let cron = null
 let history = []
 
@@ -50,6 +50,13 @@ splash()
 
 of()
   .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
+  .chain(jwk => {
+    // handle list option, need jwk in order to do it.
+    if (argv['list']) {
+      return list(jwk, { address, gql }).chain(Rejected)
+    }
+    return Resolved(jwk)
+  })
   .chain(jwk => register(jwk, { address, spawnProcess, gql })
     .map(id => ({ jwk, id }))
   )
@@ -214,6 +221,9 @@ of()
 
     repl()
 
+  })
+  .catch(e => {
+    console.log(e)
   })
 
 async function connect(jwk, id) {
