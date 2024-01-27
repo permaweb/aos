@@ -10,8 +10,10 @@ const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname + '../../package.j
 
 export function version(id) {
   console.log(chalk.gray(`
-OS Version: ${pkg.version}. 2024
-Type "Ctrl-C" to exit`))
-  console.log(`${chalk.gray("aos process: ")} ${chalk.green(id)}`)
-  console.log('')
+OS Version: ${pkg.version}. 2024`))
+  if (id) {
+    console.log(chalk.gray('Type "Ctrl-C" to exit\n'))
+    console.log(`${chalk.gray("aos process: ")} ${chalk.green(id)}`)
+    console.log('')
+  }
 }

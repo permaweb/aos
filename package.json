@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.5.10",
+  "version": "1.6.2",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/twilson63/ao-repl.git",
@@ -11,7 +11,7 @@
     "start": "node src/index.js",
     "test": "node --test",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
-    "deploy": "npx -y ardrive-cli upload-file --turbo --local-path=./$(npm pack) -w ./wallet.json -F 2985eec7-a5c9-4cb7-afd5-b87b506f45ea | jq .created[0].dataTxId"
+    "deploy": "npx -y ardrive-cli upload-file --turbo --local-path=./$(npm pack) -w ~/wallet.json -F 2985eec7-a5c9-4cb7-afd5-b87b506f45ea | jq .created[0].dataTxId"
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.35",

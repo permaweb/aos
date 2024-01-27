@@ -1,6 +1,6 @@
 import readline from 'readline'
 import minimist from 'minimist'
-import { of, fromPromise } from 'hyper-async'
+import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
@@ -23,11 +23,23 @@ import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
 import { blueprints } from './services/blueprints.js'
 import { loadBlueprint } from './commands/blueprints.js'
+import { help, replHelp } from './services/help.js'
+import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
 
 if (argv['get-blueprints']) {
   blueprints(argv['get-blueprints'])
+  process.exit(0)
+}
+
+if (argv['help']) {
+  help()
+  process.exit(0)
+}
+
+if (argv['version']) {
+  version()
   process.exit(0)
 }
 
@@ -38,24 +50,32 @@ splash()
 
 of()
   .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
+  .chain(jwk => {
+    // handle list option, need jwk in order to do it.
+    if (argv['list']) {
+      return list(jwk, { address, gql }).chain(Rejected)
+    }
+    return Resolved(jwk)
+  })
   .chain(jwk => register(jwk, { address, spawnProcess, gql })
     .map(id => ({ jwk, id }))
   )
   .toPromise()
   .then(async ({ jwk, id }) => {
+    let editorMode = false
+    let editorData = ""
+
     if (!id) {
       console.error(chalk.red("Error! Could not find Process ID"))
       process.exit(0)
     }
     version(id)
-    cron = await live(id)
 
     let prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
-    let editorMode = false
-    let editorData = ""
+    cron = await live(id)
 
     async function repl() {
 
@@ -77,6 +97,13 @@ of()
           rl.close()
           repl()
           return;
+        }
+
+        if (!editorMode && line == ".help") {
+          replHelp()
+          rl.close()
+          repl()
+          return
         }
 
         if (!editorMode && line == ".monitor") {
@@ -116,7 +143,7 @@ of()
         }
 
         if (line === ".editor") {
-          cron.stop()
+          if (cron) cron.stop()
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
 
@@ -130,15 +157,15 @@ of()
           line = editorData
           editorData = ""
           editorMode = false;
-          cron.start()
+
         }
 
         if (editorMode && line === ".cancel") {
           editorData = ""
           editorMode = false;
 
-          rl.close()
           cron.start()
+          rl.close()
           repl()
 
           return;
@@ -184,6 +211,7 @@ of()
           console.log(output.data?.output)
         }
 
+        cron.start()
         // set prompt
         prompt = output.data?.prompt ? output.data?.prompt : prompt
         rl.close()
@@ -193,6 +221,9 @@ of()
 
     repl()
 
+  })
+  .catch(e => {
+    console.log(e)
   })
 
 async function connect(jwk, id) {

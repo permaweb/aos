@@ -1,4 +1,4 @@
-import { fromPromise } from 'hyper-async'
+import { fromPromise, Resolved } from 'hyper-async'
 import chalk from 'chalk'
 
 export async function evaluate(line, processId, wallet, services, spinner) {
@@ -13,10 +13,19 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)} ${chalk.gray("state transformations]")}`
       return x
     })
-    //.chain(_ => fromPromise(() => new Promise((res) => setTimeout(() => res(_), 1000)))())
+
     .map(message => ({ message, process: processId }))
     .chain(services.readResult)
-
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
     .toPromise()
   //return { output: 'echo: ' + line, prompt: null }
 }
