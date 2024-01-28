@@ -6,6 +6,21 @@ import path from 'path'
 import os from 'os'
 import { uniqBy, prop, keys } from 'ramda'
 
+export function printLive() {
+  keys(globalThis.alerts).map(k => {
+    if (globalThis.alerts[k].print) {
+      globalThis.alerts[k].print = false
+      process.stdout.write("\u001b[2K");
+      process.stdout.write("\u001b[0G" + globalThis.alerts[k].data)
+
+      globalThis.prompt = globalThis.alerts[k].prompt || "aos> "
+
+      process.stdout.write('\n' + globalThis.prompt || "aos> ")
+    }
+  })
+
+}
+
 export async function live(id) {
   let ct = null
   let cu = null
@@ -18,13 +33,16 @@ export async function live(id) {
   }
 
   process.stdin.on('keypress', (str, key) => {
+    if (key.name === 'up') {
+      process.stdout.write("\u001b[0G" + globalThis.prompt)
+    }
     if (ct) {
       ct.stop()
     }
   })
 
   const checkLive = async () => {
-    cu.stop()
+    //cu.stop()
     let params = { process: id, limit: "1000" }
     if (cursor) {
       params["from"] = cursor
@@ -45,7 +63,7 @@ export async function live(id) {
     // --- peek on previous line and if delete line if last prompt.
     // --- key event can detect 
     // count !== null && 
-    if (count !== null && edges.length > 0) {
+    if (edges.length > 0) {
       edges.map(e => {
         if (!globalThis.alerts[e.cursor]) {
           globalThis.alerts[e.cursor] = e.node?.Output
@@ -58,24 +76,11 @@ export async function live(id) {
     cursor = results.edges[results.edges.length - 1].cursor
     fs.writeFileSync(cursorFile, cursor)
     process.nextTick()
-    cu.start()
+    //cu.start()
   }
   cu = await cron.schedule('*/2 * * * * *', checkLive)
 
-  function printLive() {
-    keys(globalThis.alerts).map(k => {
-      if (globalThis.alerts[k].print) {
-        globalThis.alerts[k].print = false
-        process.stdout.write("\u001b[2K");
-        process.stdout.write("\u001b[0G" + globalThis.alerts[k].data)
 
-        globalThis.prompt = globalThis.alerts[k].prompt || "aos> "
-
-        process.stdout.write('\n' + globalThis.prompt || "aos> ")
-      }
-    })
-
-  }
 
   ct = await cron.schedule('*/2 * * * * *', printLive)
   return ct

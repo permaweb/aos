@@ -11,7 +11,7 @@ import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import { monitorProcess } from './services/monitor-process.js'
 import { unmonitorProcess } from './services/unmonitor-process.js'
-import { live } from './services/live.js'
+import { live, printLive } from './services/live.js'
 
 import ora from 'ora'
 import chalk from 'chalk'
@@ -199,6 +199,7 @@ of()
         spinner.start();
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
 
+        printLive()
         // create message and publish to ao
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
