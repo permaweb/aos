@@ -23,7 +23,6 @@ export function printLive() {
 
 export async function live(id) {
   let ct = null
-  let cu = null
   let cursor = null
   let count = null
   let cursorFile = path.resolve(os.homedir() + `/.${id}.txt`)
@@ -42,13 +41,18 @@ export async function live(id) {
   })
 
   const checkLive = async () => {
-    //cu.stop()
     let params = { process: id, limit: "1000" }
     if (cursor) {
       params["from"] = cursor
     }
-
-    const results = await connect().results(params)
+    const info = {}
+    if (process.env.CU_URL) {
+      info['CU_URL'] = process.env.CU_URL
+    }
+    if (process.env.MU_URL) {
+      info['MU_URL'] = process.env.MU_URL
+    }
+    const results = await connect(info).results(params)
 
     const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
       if (e.node?.Output?.print === true) {
@@ -76,9 +80,8 @@ export async function live(id) {
     cursor = results.edges[results.edges.length - 1].cursor
     fs.writeFileSync(cursorFile, cursor)
     process.nextTick()
-    //cu.start()
   }
-  cu = await cron.schedule('*/2 * * * * *', checkLive)
+  await cron.schedule('*/2 * * * * *', checkLive)
 
 
 

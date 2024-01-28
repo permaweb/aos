@@ -110,6 +110,12 @@ of()
           return
         }
 
+        if (!editorMode && line == ".live") {
+          printLive()
+          rl.close()
+          repl()
+          return
+        }
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
           console.log(result)
