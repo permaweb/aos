@@ -11,7 +11,7 @@ import { sendMessage } from './services/send-message.js'
 import { readResult } from './services/read-result.js'
 import { monitorProcess } from './services/monitor-process.js'
 import { unmonitorProcess } from './services/unmonitor-process.js'
-import { live } from './services/live.js'
+import { live, printLive } from './services/live.js'
 
 import ora from 'ora'
 import chalk from 'chalk'
@@ -27,6 +27,10 @@ import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
+
+globalThis.alerts = {}
+// make prompt global :(
+globalThis.prompt = "aos> "
 
 if (argv['get-blueprints']) {
   blueprints(argv['get-blueprints'])
@@ -71,7 +75,7 @@ of()
     }
     version(id)
 
-    let prompt = await connect(jwk, id)
+    globalThis.prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
@@ -195,6 +199,7 @@ of()
         spinner.start();
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
 
+        printLive()
         // create message and publish to ao
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
@@ -213,7 +218,7 @@ of()
 
         cron.start()
         // set prompt
-        prompt = output.data?.prompt ? output.data?.prompt : prompt
+        globalThis.prompt = output.data?.prompt ? output.data?.prompt : prompt
         rl.close()
         repl()
       })
