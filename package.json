@@ -22,6 +22,7 @@
     "minimist": "^1.2.8",
     "node-cron": "^3.0.3",
     "ora": "^7.0.1",
+    "pretty-file-tree": "^1.0.1",
     "yargs": "^17.7.2"
   }
 }
