@@ -6,6 +6,9 @@ export function readResult(params) {
   if (process.env.CU_URL) {
     info['CU_URL'] = process.env.CU_URL
   }
+  if (process.env.MU_URL) {
+    info['MU_URL'] = process.env.MU_URL
+  }
   return fromPromise(() => connect(info).result(params))()
     // log the error messages most seem related to 503
     //.bimap(_ => (console.log(_), _), _ => (console.log(_), _))
