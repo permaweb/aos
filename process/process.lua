@@ -196,6 +196,10 @@ function process.handle(msg, ao)
       return ao.result({ })
     end
   end
+
+  -- Add Message to Inbox
+  table.insert(Inbox, msg)
+
   -- New Message from green(key) gray(:) gray(Action) = blue(Help)
   local txt = colors.gray .. "New Message From " .. colors.green .. 
   (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
@@ -206,9 +210,6 @@ function process.handle(msg, ao)
   end
   -- Print to Output
   print(txt)
-
-  -- Add Message to Inbox
-  table.insert(Inbox, msg)
 
   return ao.result({ })
 end

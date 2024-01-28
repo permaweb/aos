@@ -28,6 +28,10 @@ import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
 
+globalThis.alerts = {}
+// make prompt global :(
+globalThis.prompt = "aos> "
+
 if (argv['get-blueprints']) {
   blueprints(argv['get-blueprints'])
   process.exit(0)
@@ -71,7 +75,7 @@ of()
     }
     version(id)
 
-    let prompt = await connect(jwk, id)
+    globalThis.prompt = await connect(jwk, id)
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
@@ -213,7 +217,7 @@ of()
 
         cron.start()
         // set prompt
-        prompt = output.data?.prompt ? output.data?.prompt : prompt
+        globalThis.prompt = output.data?.prompt ? output.data?.prompt : prompt
         rl.close()
         repl()
       })
