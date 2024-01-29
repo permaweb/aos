@@ -6,6 +6,7 @@ import fs from 'fs'
 import path from 'path'
 import * as url from 'url';
 import chalk from 'chalk'
+import readline from 'readline/promises'
 
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -59,6 +60,7 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
       
       resolve({
         available: semverCompare(pkg.version, packageJson.version) === -1,
+        version: packageJson.version,
         data
       })
     })
@@ -68,13 +70,27 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
   }
 })
 
-export function installUpdate(data) {
-  for (const file of data) {
+export async function installUpdate(update) {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+    terminal: true
+  })
+  const line = await rl.question(
+    '✨ New version ' +
+    chalk.green(update.version) +
+    ' available. Would you like to update [Y/n]?'
+  )
+  
+  if (!line.toLowerCase().startsWith('y')) return
+
+  for (const file of update.data) {
     const localPath = path.join(
       process.cwd(),
       file.name.replace(/^(\/)?package/, '')
     )
 
+    // create path if it does not exist yet
     fs.mkdirSync(path.dirname(localPath), { recursive: true })
     fs.writeFileSync(
       localPath,

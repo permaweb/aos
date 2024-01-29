@@ -77,7 +77,7 @@ of()
 
     // check for update and install if needed
     const update = await checkForUpdate()
-    if (update.available) installUpdate(update.data)
+    if (update.available) await installUpdate(update)
 
     globalThis.prompt = await connect(jwk, id)
     // check loading files flag
