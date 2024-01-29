@@ -36,7 +36,6 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
       stream.on('data', (chunk) => {
         file.push(chunk);
       })
-    
       stream.on('end', () => {
         data.push({
           name: header.name,
@@ -52,13 +51,34 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
       const packageJson = JSON.parse(
         data.find((f) => f.name === 'package/package.json')?.data || '{}'
       )
+
+      if (!pkg.version) {
+        console.log(chalk.red('ERROR: Could not check for update'))
+        return resolve({ available: false })
+      }
       
       resolve({
-        available: semverCompare(pkg.version, packageJson.version),
+        available: semverCompare(pkg.version, packageJson.version) === -1,
         data
       })
     })
-  } catch (e) {
-    reject(e)
+  } catch {
+    console.log(chalk.red('ERROR: Could not fetch update'))
+    resolve({ available: false })
   }
 })
+
+export function installUpdate(data) {
+  for (const file of data) {
+    const localPath = path.join(
+      process.cwd(),
+      file.name.replace(/^(\/)?package/, '')
+    )
+
+    fs.mkdirSync(path.dirname(localPath), { recursive: true })
+    fs.writeFileSync(
+      localPath,
+      new TextEncoder().encode(file.data)
+    )
+  }
+}
