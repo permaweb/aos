@@ -79,7 +79,7 @@ export async function installUpdate(update) {
   const line = await rl.question(
     '✨ New version ' +
     chalk.green(update.version) +
-    ' available. Would you like to update [Y/n]?'
+    ' available. Would you like to update [Y/n]? '
   )
   
   if (!line.toLowerCase().startsWith('y')) return
