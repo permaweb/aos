@@ -85,17 +85,26 @@ export async function installUpdate(update) {
   
   if (!line.toLowerCase().startsWith('y')) return
 
-  for (const file of update.data) {
-    const localPath = path.join(
-      process.cwd(),
-      file.name.replace(/^(\/)?package/, '')
-    )
+  try {
+    for (const file of update.data) {
+      const localPath = path.join(
+        process.cwd(),
+        file.name.replace(/^(\/)?package/, '')
+      )
 
-    // create path if it does not exist yet
-    fs.mkdirSync(path.dirname(localPath), { recursive: true })
-    fs.writeFileSync(
-      localPath,
-      new TextEncoder().encode(file.data)
-    )
+      // create path if it does not exist yet
+      fs.mkdirSync(path.dirname(localPath), { recursive: true })
+      fs.writeFileSync(
+        localPath,
+        new TextEncoder().encode(file.data)
+      )
+    }
+
+    console.log(chalk.green(
+      'Updated ' + pkg.version + ' → ' + update.version
+    ))
+    process.exit(0)
+  } catch {
+    console.log(chalk.red('ERROR: Failed to install update'))
   }
 }
