@@ -8,6 +8,7 @@ import * as url from 'url';
 import chalk from 'chalk'
 import readline from 'readline/promises'
 
+const UPDATE_URL = 'https://get_ao.g8way.io'
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
@@ -25,7 +26,7 @@ OS Version: ${pkg.version}. 2024`))
 
 export const checkForUpdate = () => new Promise(async (resolve, reject) => {
   try {
-    const res = await fetch('https://get_ao.g8way.io')
+    const res = await fetch(UPDATE_URL)
     const data = []
     const extract = tar.extract()
 
