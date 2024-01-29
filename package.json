@@ -23,6 +23,8 @@
     "node-cron": "^3.0.3",
     "ora": "^7.0.1",
     "pretty-file-tree": "^1.0.1",
+    "semver": "^7.5.4",
+    "tar-stream": "^3.1.7",
     "yargs": "^17.7.2"
   }
 }
