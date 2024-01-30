@@ -78,7 +78,9 @@ of()
 
     // check for update and install if needed
     const update = await checkForUpdate()
-    if (update.available) await installUpdate(update)
+    if (update.available && !process.env.DEBUG) {
+      await installUpdate(update)
+    }
 
     if (process.env.DEBUG) console.time(chalk.gray('connecting'))
     globalThis.prompt = await connect(jwk, id)
