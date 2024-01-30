@@ -66,6 +66,7 @@ of()
   )
   .toPromise()
   .then(async ({ jwk, id }) => {
+
     let editorMode = false
     let editorData = ""
 
@@ -75,7 +76,9 @@ of()
     }
     version(id)
 
+    if (process.env.DEBUG) console.time(chalk.gray('connecting'))
     globalThis.prompt = await connect(jwk, id)
+    if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
     // check loading files flag
     await handleLoadArgs(jwk, id)
 
@@ -95,7 +98,7 @@ of()
         history.concat(e)
       })
 
-      rl.question(editorMode ? "" : prompt, async function (line) {
+      rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
         if (line.trim() == '') {
           console.log(undefined)
           rl.close()
@@ -202,6 +205,7 @@ of()
           suffixText: ``
         })
 
+        if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
         spinner.start();
         spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
 
@@ -210,10 +214,7 @@ of()
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-        if (process.env.DEBUG) {
-          console.log({ id })
-          console.log({ result })
-        }
+
         // log output
         spinner.stop()
         if (result.Error) {
@@ -222,9 +223,15 @@ of()
           console.log(output.data?.output)
         }
 
+        if (process.env.DEBUG) {
+          console.log("\n")
+          console.timeEnd(chalk.gray('elapsed'))
+          console.log("\n")
+        }
+
         cron.start()
         // set prompt
-        globalThis.prompt = output.data?.prompt ? output.data?.prompt : prompt
+        globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
         rl.close()
         repl()
       })
