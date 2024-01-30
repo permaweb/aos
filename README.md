@@ -1,6 +1,6 @@
 # aos
 
-Version: 1.6.4.            
+Version: 1.7.0.            
 Module: `b4j92JzHPvskOxGRQb4656MVIQXOm09SR97TK8RGR-E`
 
 ## Requirements
