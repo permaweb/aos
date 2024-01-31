@@ -10,12 +10,12 @@ export function readResult(params) {
     info['MU_URL'] = process.env.MU_URL || 'https://mu.ao-testnet.xyz'
   }
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 10))
+    new Promise((resolve) => setTimeout(() => resolve(params), 300))
   )().chain(fromPromise(() => connect(info).result(params)))
     // log the error messages most seem related to 503
     //.bimap(_ => (console.log(_), _), _ => (console.log(_), _))
     .bichain(fromPromise(() =>
-      new Promise((resolve, reject) => setTimeout(() => reject(params), 100))
+      new Promise((resolve, reject) => setTimeout(() => reject(params), 50))
     ),
       Resolved
     )
