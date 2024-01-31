@@ -187,10 +187,10 @@ function process.handle(msg, ao)
      
     if status then
       --if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
-      if result then
-        local response = ao.result({})
-        return response
-      end
+      -- if result then
+      local response = ao.result({})
+      return response
+      --end
     else
       table.insert(Errors, result)
       return ao.result({ })
