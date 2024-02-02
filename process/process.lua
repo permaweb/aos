@@ -144,6 +144,22 @@ function process.handle(msg, ao)
       return 'installing manpage'
     end
 
+    function Lock()
+      LockedAt = msg["Block-Height"]
+      return 'Process is being locked... It can be unlocked until block ' .. (LockedAt + 5) .. '.'
+    end
+
+    -- to make sure the user can revert an unintentional locking,
+    -- they're allowed to Unlock() in the next 5 blocks
+    function Unlock()
+      if not LockedAt or LockedAt + 5 < msg["Block-Height"] then
+        return
+      end
+
+      LockedAt = nil
+      return 'process unlocked'
+    end
+
     -- exec expression
     local expr = msg.Data
 
