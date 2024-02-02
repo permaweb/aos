@@ -160,6 +160,15 @@ function process.handle(msg, ao)
       return 'process unlocked'
     end
 
+    -- return if the process has been locked
+    if LockedAt and LockedAt + 5 < msg["Block-Height"] then
+      return ao.result({ Output = { data = {
+        json = "undefined",
+        output = "process locked",
+        prompt = Prompt()
+      } } })
+    end
+
     -- exec expression
     local expr = msg.Data
 
