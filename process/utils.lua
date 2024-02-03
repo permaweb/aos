@@ -165,22 +165,24 @@ utils.includes = utils.curry(function (val, t)
   return utils.find(function (v) return v == val end, t) ~= nil
 end, 2)
 
--- @param {table} table
-utils.keys = function (table)
-  assert(type(table) == "table", "argument needs to be a table")
-  return utils.map(
-    function (_, key) return key end,
-    table
-  )
+-- @param {table} t
+utils.keys = function (t)
+  assert(type(t) == "table", "argument needs to be a table")
+  local keys = {}
+  for key in pairs(t) do
+    table.insert(keys, key)
+  end
+  return keys
 end
 
--- @param {table} table
-utils.values = function (table)
-  assert(type(table) == "table", "argument needs to be a table")
-  return utils.map(
-    function (val) return val end,
-    table
-  )
+-- @param {table} t
+utils.values = function (t)
+  assert(type(t) == "table", "argument needs to be a table")
+  local values = {}
+  for _, value in pairs(t) do
+    table.insert(values, value)
+  end
+  return values
 end
 
 return utils
