@@ -32,9 +32,6 @@ export async function live(id) {
   }
 
   process.stdin.on('keypress', (str, key) => {
-    if (key.name === 'up') {
-      process.stdout.write("\u001b[0G" + globalThis.prompt)
-    }
     if (ct) {
       ct.stop()
     }

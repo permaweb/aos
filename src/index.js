@@ -42,6 +42,17 @@ if (argv['help']) {
   process.exit(0)
 }
 
+if (argv['dev']) {
+  console.log('*** DEV ENVIRONMENT ***')
+  process.env.SCHEDULER = 'TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog'
+  process.env.CU_URL = 'https://ao-cu-router-1.onrender.com'
+  process.env.MU_URL = 'https://ao-mu-router-1.onrender.com'
+
+  console.log('CU', process.env.CU_URL)
+  console.log('MU', process.env.MU_URL)
+  console.log('SU', process.env.SCHEDULER)
+}
+
 if (argv['version']) {
   version()
   process.exit(0)
@@ -156,7 +167,6 @@ of()
         }
 
         if (line === ".editor") {
-          if (cron) cron.stop()
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
 
@@ -229,7 +239,9 @@ of()
           console.log("\n")
         }
 
-        cron.start()
+        if (cron) {
+          cron.start()
+        }
         // set prompt
         globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
         rl.close()
