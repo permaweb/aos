@@ -7,7 +7,7 @@ function _utils.hasMatchingTag(name, value)
   assert(type(name) == 'string' and type(value) == 'string', 'invalid arguments: (name : string, value : string)')
 
   return function (msg) 
-    if msg.Tags[name] == value then
+    if msg.Tags ~= undefined and msg.Tags[name] == value then
       return -1
     end
     return 0
