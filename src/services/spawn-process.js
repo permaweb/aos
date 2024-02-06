@@ -1,6 +1,8 @@
 import { fromPromise } from 'hyper-async'
 import { connect, createDataItemSigner } from '@permaweb/aoconnect'
+import { getPkg } from './get-pkg.js'
 
+const pkg = getPkg()
 // vm const SCHEDULER = "T9UhH6kyesadPlAkH-4WT8znbmz_b6Nnlvu1vDtZGB4"
 // dev const SCHEDULER = "TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog"
 
@@ -14,6 +16,7 @@ export function spawnProcess({ wallet, src, tags }) {
   if (process.env.MU_URL) {
     info['MU_URL'] = process.env.MU_URL || 'https://mu.ao-testnet.xyz'
   }
+  tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
   return fromPromise(() => connect(info).spawn({
     module: src, scheduler: SCHEDULER, signer, tags
   })
