@@ -32,9 +32,6 @@ export async function live(id) {
   }
 
   process.stdin.on('keypress', (str, key) => {
-    if (key.name === 'up') {
-      process.stdout.write("\u001b[0G" + globalThis.prompt)
-    }
     if (ct) {
       ct.stop()
     }
@@ -47,10 +44,10 @@ export async function live(id) {
     }
     const info = {}
     if (process.env.CU_URL) {
-      info['CU_URL'] = process.env.CU_URL
+      info['CU_URL'] = process.env.CU_URL || 'https://cu.ao-testnet.xyz'
     }
     if (process.env.MU_URL) {
-      info['MU_URL'] = process.env.MU_URL
+      info['MU_URL'] = process.env.MU_URL || 'https://mu.ao-testnet.xyz'
     }
     const results = await connect(info).results(params)
 
