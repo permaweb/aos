@@ -1,9 +1,15 @@
 {
+  "type": "module",
   "name": "process",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@permaweb/ao-loader": "^0.0.12"
+    "@permaweb/ao-loader": "^0.0.14"
+  },
+  "scripts": {
+    "build": "ao build",
+    "test": "node --test ./test",
+    "deploy": "ao publish -w ~/.wallet.json process.wasm"
   }
 }

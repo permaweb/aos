@@ -83,7 +83,7 @@ local function initializeState(msg, env)
   end
 
   if not Name then
-    local aosName = findObject(msg.Tags, "name", "Name")
+    local aosName = findObject(env.Process.Tags, "name", "Name")
     if aosName then
       Name = aosName.value
     else
