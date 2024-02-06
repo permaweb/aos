@@ -10,6 +10,6 @@
   "scripts": {
     "build": "ao build",
     "test": "node --test ./test",
-    "deploy": "ao publish -w ~/.wallet.json process.wasm"
+    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 500-mb -t Compute-Limit -v 9000000000"
   }
 }
