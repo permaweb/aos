@@ -1,5 +1,5 @@
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./logos/aOS.svg">
+  <source media="(prefers-color-scheme: dark)" srcset="./logos/aOS_darkmode.svg">
   <source media="(prefers-color-scheme: light)" srcset="./logos/aOS.svg">
   <img alt="logo">
 </picture>
