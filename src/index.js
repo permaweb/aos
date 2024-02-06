@@ -145,7 +145,7 @@ of()
         }
 
         if (!editorMode && line == ".unmonitor") {
-          const result = await unmonitor(jwk, id, { unmonitorProcess })
+          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
           console.log(result)
           rl.close()
           repl()
