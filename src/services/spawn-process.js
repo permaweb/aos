@@ -1,11 +1,11 @@
 import { fromPromise } from 'hyper-async'
 import { connect, createDataItemSigner } from '@permaweb/aoconnect'
 
-const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
 // vm const SCHEDULER = "T9UhH6kyesadPlAkH-4WT8znbmz_b6Nnlvu1vDtZGB4"
 // dev const SCHEDULER = "TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog"
 
 export function spawnProcess({ wallet, src, tags }) {
+  const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const signer = createDataItemSigner(wallet)
   const info = {}
   if (process.env.CU_URL) {
