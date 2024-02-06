@@ -16,7 +16,7 @@ import { live, printLive } from './services/live.js'
 import ora from 'ora'
 import chalk from 'chalk'
 import { splash } from './services/splash.js'
-import { version } from './services/version.js'
+import { checkForUpdate, installUpdate, version } from './services/version.js'
 import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
@@ -86,6 +86,12 @@ of()
       process.exit(0)
     }
     version(id)
+
+    // check for update and install if needed
+    const update = await checkForUpdate()
+    if (update.available && !process.env.DEBUG) {
+      await installUpdate(update)
+    }
 
     if (process.env.DEBUG) console.time(chalk.gray('connecting'))
     globalThis.prompt = await connect(jwk, id)
