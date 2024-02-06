@@ -8,13 +8,13 @@
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 import minimist from 'minimist'
-
-const AOS_MODULE = process.env.AOS_MODULE || 'A_27SBYdXagRZK_0sfxgh4aSin-LCI7Y0PkNbxelozk'
+import { getPkg } from './services/get-pkg.js'
 
 export function register(jwk, services) {
+  const AOS_MODULE = process.env.AOS_MODULE || getPkg().aos.module
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address, name, spawnTags }) => {
-    return services.gql(queryForAOS(name), { owners: [address] })
+    return services.gql(queryForAOS(name, AOS_MODULE), { owners: [address] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
         _ => Rejected({ jwk, address, name, spawnTags }),
@@ -67,7 +67,7 @@ export function register(jwk, services) {
 
 }
 
-function queryForAOS(name) {
+function queryForAOS(name, AOS_MODULE) {
   return `query ($owners: [String!]!) {
     transactions(
       first: 1,

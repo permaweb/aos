@@ -2,17 +2,12 @@ import semverCompare from 'semver/functions/compare.js'
 import { createGunzip } from 'zlib'
 import { Readable } from 'stream'
 import tar from 'tar-stream'
-import fs from 'fs'
-import path from 'path'
-import * as url from 'url';
 import chalk from 'chalk'
 import readline from 'readline/promises'
+import { getPkg } from './get-pkg.js'
 
 const UPDATE_URL = 'https://get_ao.g8way.io'
-
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-
-const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname + '../../package.json')))
+const pkg = getPkg()
 
 export function version(id) {
   console.log(chalk.gray(`
@@ -50,6 +45,7 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
       stream.resume()
     })
     extract.on('finish', () => {
+
       const packageJson = JSON.parse(
         data.find((f) => f.name === 'package/package.json')?.data || '{}'
       )
@@ -58,7 +54,7 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
         console.log(chalk.red('ERROR: Could not check for update'))
         return resolve({ available: false })
       }
-      
+
       resolve({
         available: semverCompare(pkg.version, packageJson.version) === -1,
         version: packageJson.version,
@@ -82,7 +78,7 @@ export async function installUpdate(update) {
     chalk.green(update.version) +
     ' available. Would you like to update [Y/n]? '
   )
-  
+
   if (!line.toLowerCase().startsWith('y')) return
 
   try {
