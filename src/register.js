@@ -63,8 +63,8 @@ export function register(jwk, services) {
   return of({ jwk, name, spawnTags })
     .chain(getAddress)
     .chain(findProcess)
-
     .bichain(createProcess, alreadyRegistered)
+
 }
 
 function queryForAOS(name) {

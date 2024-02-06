@@ -13,7 +13,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
         { name: 'Action', value: 'Eval' }
       ],
       data: line
-    }))
+    }, spinner))
 
     .map(x => {
       //console.log(x)
@@ -29,6 +29,14 @@ export async function evaluate(line, processId, wallet, services, spinner) {
 
     .map(message => ({ message, process: processId }))
     .chain(services.readResult)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
     .bichain(services.readResult, Resolved)
     .bichain(services.readResult, Resolved)
     .bichain(services.readResult, Resolved)
