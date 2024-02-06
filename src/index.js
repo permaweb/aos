@@ -108,14 +108,19 @@ of()
         output: process.stdout,
         terminal: true,
         history: history,
-        historySize: 100
+        historySize: 100,
+        prompt: globalThis.prompt
       });
 
       rl.on('history', e => {
         history.concat(e)
       })
 
-      rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+      //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+      rl.setPrompt(globalThis.prompt)
+      if (!editorMode) rl.prompt()
+
+      rl.on('line', async line => {
         if (line.trim() == '') {
           console.log(undefined)
           rl.close()
@@ -175,7 +180,7 @@ of()
         if (line === ".editor") {
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
-
+          globalThis.prompt = ""
           rl.close()
           repl()
 
