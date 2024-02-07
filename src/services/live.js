@@ -14,8 +14,9 @@ export function printLive() {
       process.stdout.write("\u001b[0G" + globalThis.alerts[k].data)
 
       globalThis.prompt = globalThis.alerts[k].prompt || "aos> "
-
+      globalThis.setPrompt(globalThis.prompt || "aos> ")
       process.stdout.write('\n' + globalThis.prompt || "aos> ")
+
     }
   })
 

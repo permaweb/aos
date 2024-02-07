@@ -111,6 +111,14 @@ of()
         historySize: 100,
         prompt: globalThis.prompt
       });
+      globalThis.setPrompt = (p) => {
+        rl.setPrompt(p)
+      }
+      // process.stdin.on('keypress', (str, key) => {
+      //   if (ct) {
+      //     ct.stop()
+      //   }
+      // })
 
       rl.on('history', e => {
         history.concat(e)
@@ -118,7 +126,7 @@ of()
 
       //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
       rl.setPrompt(globalThis.prompt)
-      if (!editorMode) rl.prompt()
+      if (!editorMode) rl.prompt(true)
 
       rl.on('line', async line => {
         if (line.trim() == '') {
@@ -241,7 +249,11 @@ of()
         if (result.Error) {
           console.log(chalk.red(result.Error))
         } else {
-          console.log(output.data?.output)
+          if (output?.data) {
+            console.log(output.data?.output)
+          } else {
+            console.log(chalk.red('An error occured trying to access your response.'))
+          }
         }
 
         if (process.env.DEBUG) {
