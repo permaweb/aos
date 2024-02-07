@@ -1,27 +1,32 @@
+import './services/dev.js'
 import readline from 'readline'
 import minimist from 'minimist'
-import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
-import { evaluate } from './evaluate.js'
-import { register } from './register.js'
-import { getWallet, getWalletFromArgs } from './services/wallets.js'
-import { address } from './services/address.js'
-import { spawnProcess } from './services/spawn-process.js'
-import { gql } from './services/gql.js'
-import { sendMessage } from './services/send-message.js'
-import { readResult } from './services/read-result.js'
-import { monitorProcess } from './services/monitor-process.js'
-import { unmonitorProcess } from './services/unmonitor-process.js'
-import { live, printLive } from './services/live.js'
-
 import ora from 'ora'
 import chalk from 'chalk'
+
+import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
+
+// actions
+import { evaluate } from './evaluate.js'
+import { register } from './register.js'
+
+// services
+import { getWallet, getWalletFromArgs } from './services/wallets.js'
+import { address } from './services/address.js'
+import {
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess
+} from './services/connect.js'
+import { blueprints } from './services/blueprints.js'
+import { gql } from './services/gql.js'
+import { live, printLive } from './services/live.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
+
+// commands
 import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
 import { unmonitor } from './commands/unmonitor.js'
-import { blueprints } from './services/blueprints.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
@@ -40,17 +45,6 @@ if (argv['get-blueprints']) {
 if (argv['help']) {
   help()
   process.exit(0)
-}
-
-if (argv['dev']) {
-  console.log('*** DEV ENVIRONMENT ***')
-  process.env.SCHEDULER = 'TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog'
-  process.env.CU_URL = 'https://ao-cu-router-1.onrender.com'
-  process.env.MU_URL = 'https://ao-mu-router-1.onrender.com'
-
-  console.log('CU', process.env.CU_URL)
-  console.log('MU', process.env.MU_URL)
-  console.log('SU', process.env.SCHEDULER)
 }
 
 if (argv['version']) {
@@ -80,6 +74,7 @@ of()
 
     let editorMode = false
     let editorData = ""
+    let editorPrompt = ""
 
     if (!id) {
       console.error(chalk.red("Error! Could not find Process ID"))
@@ -151,7 +146,7 @@ of()
         }
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess })
-          console.log(result)
+          console.log(chalk.green(result))
           rl.close()
           repl()
           return;
@@ -159,7 +154,7 @@ of()
 
         if (!editorMode && line == ".unmonitor") {
           const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
-          console.log(result)
+          console.log(chalk.green(result))
           rl.close()
           repl()
           return;
@@ -188,7 +183,10 @@ of()
         if (line === ".editor") {
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
           editorMode = true;
+          //rl.setPrompt('')
+          editorPrompt = globalThis.prompt
           globalThis.prompt = ""
+
           rl.close()
           repl()
 
@@ -199,14 +197,17 @@ of()
           line = editorData
           editorData = ""
           editorMode = false;
+          globalThis.prompt = editorPrompt
+          editorPrompt = ""
 
         }
 
         if (editorMode && line === ".cancel") {
           editorData = ""
           editorMode = false;
+          globalThis.prompt = editorPrompt
+          editorPrompt = ""
 
-          cron.start()
           rl.close()
           repl()
 
