@@ -14,11 +14,10 @@ import { register } from './register.js'
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address } from './services/address.js'
 import {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive
 } from './services/connect.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
-import { live, printLive } from './services/live.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
 
