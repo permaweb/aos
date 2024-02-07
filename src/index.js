@@ -241,7 +241,11 @@ of()
         if (result.Error) {
           console.log(chalk.red(result.Error))
         } else {
-          console.log(output.data?.output)
+          if (output.data) {
+            console.log(output.data?.output)
+          } else {
+            console.log(chalk.red('An error occured trying to access your response.'))
+          }
         }
 
         if (process.env.DEBUG) {
