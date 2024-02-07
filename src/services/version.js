@@ -13,7 +13,7 @@ export function version(id) {
   console.log(chalk.gray(`
 OS Version: ${pkg.version}. 2024`))
   if (id) {
-    console.log(chalk.gray('Type "Ctrl-C" to exit\n'))
+    console.log(chalk.gray('Type "Ctrl-C" twice to exit\n'))
     console.log(`${chalk.gray("aos process: ")} ${chalk.green(id)}`)
     console.log('')
   }
@@ -79,28 +79,35 @@ export async function installUpdate(update) {
     ' available. Would you like to update [Y/n]? '
   )
 
-  if (!line.toLowerCase().startsWith('y')) return
+  if (!line.toLowerCase().startsWith('y')) {
+    rl.close()
+    return
+  }
 
   try {
-    for (const file of update.data) {
-      const localPath = path.join(
-        process.cwd(),
-        file.name.replace(/^(\/)?package/, '')
-      )
+    // for (const file of update.data) {
+    //   const localPath = path.join(
+    //     process.cwd(),
+    //     file.name.replace(/^(\/)?package/, '')
+    //   )
 
-      // create path if it does not exist yet
-      fs.mkdirSync(path.dirname(localPath), { recursive: true })
-      fs.writeFileSync(
-        localPath,
-        new TextEncoder().encode(file.data)
-      )
-    }
+    //   // create path if it does not exist yet
+    //   fs.mkdirSync(path.dirname(localPath), { recursive: true })
+    //   fs.writeFileSync(
+    //     localPath,
+    //     new TextEncoder().encode(file.data)
+    //   )
+    // }
 
-    console.log(chalk.green(
-      'Updated ' + pkg.version + ' → ' + update.version
-    ))
+    // console.log(chalk.green(
+    //   'Updated ' + pkg.version + ' → ' + update.version
+    // ))
+    console.log('run: npm i -g https://get_ao.g8way.io')
     process.exit(0)
   } catch {
     console.log(chalk.red('ERROR: Failed to install update'))
+  } finally {
+    rl.close()
+    process.exit(0)
   }
 }

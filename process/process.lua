@@ -77,6 +77,8 @@ end
 local function initializeState(msg, env)
   Errors = Errors or {}
   Inbox = Inbox or {}
+  
+  --Seed = Seed or ""
 
   if not Owner then
     Owner = env.Process.Owner
@@ -197,6 +199,9 @@ function process.handle(msg, ao)
         end
         -- Print to Output
         print(txt)
+        if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+          table.insert(Inbox, msg)
+        end
       end
       --if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
       -- if result then
