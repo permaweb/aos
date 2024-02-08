@@ -6,7 +6,7 @@
 
 # aos
 
-Version: 1.8.5.            
+Version: 1.8.6.            
 Module: `-fPDTAL564yP6pdYMEZUN3e1WD3vTprtWr8XJeBhhSU`
 
 ## Requirements

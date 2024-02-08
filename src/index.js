@@ -251,6 +251,7 @@ of()
         } else {
           if (output?.data) {
             console.log(output.data?.output)
+
             globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
           } else {
             console.log(chalk.red('An error occured trying to access your response.'))
