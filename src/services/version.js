@@ -5,6 +5,8 @@ import tar from 'tar-stream'
 import chalk from 'chalk'
 import readline from 'readline/promises'
 import { getPkg } from './get-pkg.js'
+import path from 'path'
+import fs from 'fs'
 
 const UPDATE_URL = 'https://get_ao.g8way.io'
 const pkg = getPkg()
