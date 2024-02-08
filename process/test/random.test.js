@@ -5,7 +5,7 @@ import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
 
-test('ping pong', async () => {
+test('generate random number', async () => {
   const handle = await AoLoader(wasm)
   const env = {
     Process: {
@@ -25,25 +25,9 @@ test('ping pong', async () => {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: `
-Handlers.add("ping", 
-  Handlers.utils.hasMatchingData("ping"), 
-  function (Msg) 
-    print("pong")
-  end
-)
-    `
+    Data: 'math.random(10)'
   }
-  // load handler
-  const { Memory } = await handle(null, msg, env)
-  // ---
-  const ping = {
-    Target: 'AOS',
-    Owner: 'FRED',
-    Tags: [],
-    Data: 'ping'
-  }
-  const result = await handle(Memory, ping, env)
-  assert.equal(result.Output.data, 'pong')
+  const result = await handle(null, msg, env)
+  assert.equal(result.Output?.data.output, '9')
   assert.ok(true)
 })

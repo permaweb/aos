@@ -1,6 +1,7 @@
 local pretty = require('.pretty')
 local base64 = require('.base64')
 local json = require('json')
+local chance = require('.chance')
 
 local colors = {
   red = "\27[31m",
@@ -73,12 +74,40 @@ function print(a)
   return tostring(a)
 end
 
+Seeded = Seeded or false
+
+-- this is a temporary approach...
+function stringToSeed(s)
+  local seed = 0
+  for i = 1, #s do
+      local char = string.byte(s, i)
+      seed = seed + char
+  end
+  return seed
+end
 
 local function initializeState(msg, env)
+  if not Seeded then
+    --math.randomseed(1234)
+    chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. msg.Module .. msg.Id)))
+    math.random = function (...)
+      local args = {...}
+      local n = #args
+      if n == 0 then
+        return chance.random()
+      end
+      if n == 1 then
+        return chance.integer(1, args[1])
+      end
+      if n == 2 then
+        return chance.integer(args[1], args[2])
+      end
+      return chance.random()
+    end
+    Seeded = true
+  end
   Errors = Errors or {}
   Inbox = Inbox or {}
-  
-  --Seed = Seed or ""
 
   if not Owner then
     Owner = env.Process.Owner

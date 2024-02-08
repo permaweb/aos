@@ -19,6 +19,9 @@ test('run evaluate action successfully', async () => {
   const msg = {
     Target: 'AOS',
     Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
@@ -43,6 +46,9 @@ test('print hello world', async () => {
   const msg = {
     Target: 'AOS',
     Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
