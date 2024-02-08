@@ -67,7 +67,7 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
   }
 })
 
-export async function installUpdate(update) {
+export async function installUpdate(update, rootDir) {
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout,
@@ -85,24 +85,23 @@ export async function installUpdate(update) {
   }
 
   try {
-    // for (const file of update.data) {
-    //   const localPath = path.join(
-    //     process.cwd(),
-    //     file.name.replace(/^(\/)?package/, '')
-    //   )
+    for (const file of update.data) {
+      const localPath = path.join(
+        rootDir,
+        file.name.replace(/^(\/)?package/, '')
+      )
 
-    //   // create path if it does not exist yet
-    //   fs.mkdirSync(path.dirname(localPath), { recursive: true })
-    //   fs.writeFileSync(
-    //     localPath,
-    //     new TextEncoder().encode(file.data)
-    //   )
-    // }
+      // create path if it does not exist yet
+      fs.mkdirSync(path.dirname(localPath), { recursive: true })
+      fs.writeFileSync(
+        localPath,
+        new TextEncoder().encode(file.data)
+      )
+    }
 
-    // console.log(chalk.green(
-    //   'Updated ' + pkg.version + ' → ' + update.version
-    // ))
-    console.log('run: npm i -g https://get_ao.g8way.io')
+    console.log(chalk.green(
+      'Updated ' + pkg.version + ' → ' + update.version
+    ))
     process.exit(0)
   } catch {
     console.log(chalk.red('ERROR: Failed to install update'))

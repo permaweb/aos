@@ -84,7 +84,8 @@ of()
     // check for update and install if needed
     const update = await checkForUpdate()
     if (update.available && !process.env.DEBUG) {
-      await installUpdate(update)
+      const aosRootDir = new URL(path.join(import.meta.url, "../"))
+      await installUpdate(update, aosRootDir)
     }
 
     if (process.env.DEBUG) console.time(chalk.gray('connecting'))
