@@ -4,6 +4,7 @@ import minimist from 'minimist'
 import ora from 'ora'
 import chalk from 'chalk'
 import path from 'path'
+import * as url from 'url'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -85,8 +86,8 @@ of()
     // check for update and install if needed
     const update = await checkForUpdate()
     if (update.available && !process.env.DEBUG) {
-      const aosRootDir = new URL(path.join(import.meta.url, "../../"))
-      await installUpdate(update, aosRootDir.pathname)
+      const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+      await installUpdate(update, path.join(__dirname, "../"))
     }
 
     if (process.env.DEBUG) console.time(chalk.gray('connecting'))
