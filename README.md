@@ -6,8 +6,8 @@
 
 # aos
 
-Version: 1.8.2.            
-Module: `A_27SBYdXagRZK_0sfxgh4aSin-LCI7Y0PkNbxelozk`
+Version: 1.8.4.            
+Module: `vbtIAduIAXyRT_QxFVso-rlavKkRcGh4rc6_H3gzdNA`
 
 ## Requirements
 

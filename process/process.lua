@@ -189,18 +189,20 @@ function process.handle(msg, ao)
      
     if status then
       if not _ao.outbox.Output.data then
-        -- New Message from green(key) gray(:) gray(Action) = blue(Help)
-        local txt = colors.gray .. "New Message From " .. colors.green .. 
-        (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
-        if msg.Action then
-          txt = txt .. colors.gray .. (msg.Action and ("Action = " .. colors.blue .. msg.Action:sub(1,20)) or "") .. colors.reset
-        else
-          txt = txt .. colors.gray .. "Data = " .. colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. colors.reset
-        end
-        -- Print to Output
-        print(txt)
-        if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
+        if #ao.outbox.Messages == 0 and #ao.outbox.Spawns == 0 then
           table.insert(Inbox, msg)
+            -- New Message from green(key) gray(:) gray(Action) = blue(Help)
+          local txt = colors.gray .. "New Message From " .. colors.green .. 
+          (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
+          if msg.Action then
+            txt = txt .. colors.gray .. (msg.Action and ("Action = " .. colors.blue .. msg.Action:sub(1,20)) or "") .. colors.reset
+          else
+            txt = txt .. colors.gray .. "Data = " .. colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. colors.reset
+          end
+          -- Print to Output
+          print(txt)
+          
+          
         end
       end
       --if #ao.outbox.Messages > 0 or #ao.outbox.Spawns > 0 then
