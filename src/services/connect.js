@@ -119,10 +119,12 @@ export async function live(id) {
   if (fs.existsSync(cursorFile)) {
     cursor = fs.readFileSync(cursorFile, 'utf-8')
   }
-
+  let stopped = false
   process.stdin.on('keypress', (str, key) => {
-    if (ct) {
+    if (ct && !stopped) {
       ct.stop()
+      stopped = true
+      setTimeout(() => { ct.start(); stopped = false }, 1000)
     }
   })
 
