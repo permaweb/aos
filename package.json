@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.8.4",
+  "version": "1.8.5",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/twilson63/ao-repl.git",
@@ -14,7 +14,7 @@
     "deploy": "npx -y ardrive-cli upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 2985eec7-a5c9-4cb7-afd5-b87b506f45ea | jq .created[0].dataTxId"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "0.0.40",
+    "@permaweb/aoconnect": "^0.0.40",
     "arweave": "^1.14.4",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -28,6 +28,6 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "vbtIAduIAXyRT_QxFVso-rlavKkRcGh4rc6_H3gzdNA"
+    "module": "-fPDTAL564yP6pdYMEZUN3e1WD3vTprtWr8XJeBhhSU"
   }
 }

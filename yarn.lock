@@ -15,7 +15,7 @@
     lru-cache "^10.1.0"
     ramda "^0.29.1"
 
-"@permaweb/aoconnect@0.0.40":
+"@permaweb/aoconnect@^0.0.40":
   version "0.0.40"
   resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.40.tgz#73ea61023cd2c825496f02858a2987d4cb7fac93"
   integrity sha512-p7eTvP6fDmhlBLlqskXOMBPUDx4CPQN+nYsb69NJXq+eVLJ9mhAgSg+gTfNTuImU2aK2im4K3E7QVWmy5OZbEg==
