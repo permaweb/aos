@@ -3,6 +3,7 @@ import readline from 'readline'
 import minimist from 'minimist'
 import ora from 'ora'
 import chalk from 'chalk'
+import path from 'path'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
