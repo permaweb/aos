@@ -6,8 +6,9 @@
 
 # aos
 
-Version: 1.8.7.            
-Module: `zxczO0TgpuXN595OZ48aqdaPln_FXdfoC3tdYoyg_HY`
+Status: Preview
+Version: 1.8.8.            
+Module: `BInXP5bzApuXKMDxtAT3YaKx4g22QuPjgaUlxL94rcQ`
 
 ## Requirements
 
@@ -21,13 +22,24 @@ npm i -g https://get_ao.g8way.io && aos
 
 > NOTE: after the first time you run `aos` it installs it to your local machine, so the next time you want to run `aos`, just type `aos` + [enter]
 
-## About
-
-aos is a command-line app that connects to your `aos` Process on the ao Permaweb Computer Grid. The ao Computer Grid, is like the internet, but for compute. Each Process on the Grid can receive messages and send messages. This cli will allow you to pass LUA expressions to your Process, and those expressions get evaluated and return output to your system.  
-
-## Documentation
+## User Documentation
 
 Go to [ao Cookbook](https://cookbook_ao.g8way.io)
+
+## Project Background and Current Status
+
+This project is a proof of concept implementation of the `aos` module and `aos console`, the module is located in the `process` directory of this repository. The `console` is located in the `src` directory of this repository. 
+
+## Design Principals
+
+* aos the module is designed to be an operating system on the ao network, it provides developers the ability to build ao processes that are fast to iterate with and highly flexible. The design goal of the aos process is to not have too many opinions and implement the core functionality extremely well. The design should quickly reach a complete status. Currently it is in the `Preview` stage and should be progressing to an `Early` stage, then finally a `Complete` stage. 
+
+* aos console is an interactive shell to the aos module, the purpose of this shell is to provide developers with a fun and engaging experience with the aos operating system module, as well as users. Users should enjoy to run their personal processes and engage on the network, from trading, to chats, to games. So the console should be easy to install on all major os platforms.
+
+## Preview Implementation
+
+The current implementation of aos is using the ao wasm module and building with the ao cli that uses a emscripten `c` compiler and embeds `Lua v5.3` in the wasm binary. This gives the developers and users with a built in operating system with a first class interactive language to engage with the Process business logic. The `aos` module also provides features like `json`, `base64`, 
+
 
 ## For Developers
 
