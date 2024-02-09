@@ -67,8 +67,13 @@ function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
   end
-  pcall(function() 
-    _ao.outbox.Output = { data = a, prompt = Prompt(), print = true }
+  
+  pcall(function () 
+    local data = a
+    if _ao.outbox.Output.data then
+      data =  _ao.outbox.Output.data .. "\n" .. a
+    end
+    _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
   end)
 
   return tostring(a)
