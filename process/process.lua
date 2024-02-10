@@ -3,7 +3,7 @@ local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
 
-local colors = {
+Colors = {
   red = "\27[31m",
   green = "\27[32m",
   blue = "\27[34m",
@@ -227,12 +227,12 @@ function process.handle(msg, ao)
         if #ao.outbox.Messages == 0 and #ao.outbox.Spawns == 0 then
           table.insert(Inbox, msg)
             -- New Message from green(key) gray(:) gray(Action) = blue(Help)
-          local txt = colors.gray .. "New Message From " .. colors.green .. 
-          (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
+          local txt = Colors.gray .. "New Message From " .. Colors.green .. 
+          (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. Colors.gray .. ": "
           if msg.Action then
-            txt = txt .. colors.gray .. (msg.Action and ("Action = " .. colors.blue .. msg.Action:sub(1,20)) or "") .. colors.reset
+            txt = txt .. Colors.gray .. (msg.Action and ("Action = " .. Colors.blue .. msg.Action:sub(1,20)) or "") .. Colors.reset
           else
-            txt = txt .. colors.gray .. "Data = " .. colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. colors.reset
+            txt = txt .. Colors.gray .. "Data = " .. Colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. Colors.reset
           end
           -- Print to Output
           print(txt)
@@ -255,12 +255,12 @@ function process.handle(msg, ao)
   table.insert(Inbox, msg)
 
   -- New Message from green(key) gray(:) gray(Action) = blue(Help)
-  local txt = colors.gray .. "New Message From " .. colors.green .. 
-  (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. colors.gray .. ": "
+  local txt = Colors.gray .. "New Message From " .. Colors.green .. 
+  (msg.From and (msg.From:sub(1,3) .. "..." .. msg.From:sub(-3)) or "unknown") .. Colors.gray .. ": "
   if msg.Action then
-    txt = txt .. colors.gray .. (msg.Action and ("Action = " .. colors.blue .. msg.Action:sub(1,20)) or "") .. colors.reset
+    txt = txt .. Colors.gray .. (msg.Action and ("Action = " .. Colors.blue .. msg.Action:sub(1,20)) or "") .. Colors.reset
   else
-    txt = txt .. colors.gray .. "Data = " .. colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. colors.reset
+    txt = txt .. Colors.gray .. "Data = " .. Colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. Colors.reset
   end
   -- Print to Output
   print(txt)

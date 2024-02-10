@@ -32,6 +32,22 @@ import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
 
+if (!process.stdin.isTTY) {
+  let luaData = ""
+  const onData = chunk => {
+    luaData = luaData + chunk
+  }
+  const onEnd = () => {
+    argv['lua-file'] = luaData
+    process.stdin.removeListener('data', onData)
+    process.stdin.removeListener('end', onEnd)
+
+  }
+  process.stdin.on('data', onData)
+  process.stdin.on('end', onEnd)
+}
+
+
 globalThis.alerts = {}
 // make prompt global :(
 globalThis.prompt = "aos> "
@@ -249,6 +265,7 @@ of()
         if (result.Error) {
           console.log(chalk.red(result.Error))
         } else {
+
           if (output?.data) {
             console.log(output.data?.output)
 
@@ -291,7 +308,6 @@ async function connect(jwk, id) {
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate('"Loading..."', id, jwk, { sendMessage, readResult }, spinner)
-
   spinner.stop();
   return promptResult?.Output?.data?.prompt
 }
