@@ -31,20 +31,18 @@ import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
 
 const argv = minimist(process.argv.slice(2))
-
+let luaData = ""
 if (!process.stdin.isTTY) {
-  let luaData = ""
+
   const onData = chunk => {
     luaData = luaData + chunk
   }
   const onEnd = () => {
     argv['lua-file'] = luaData
-    process.stdin.removeListener('data', onData)
-    process.stdin.removeListener('end', onEnd)
 
   }
   process.stdin.on('data', onData)
-  process.stdin.on('end', onEnd)
+  //process.stdin.on('end', onEnd)
 }
 
 
@@ -86,10 +84,25 @@ of()
   )
   .toPromise()
   .then(async ({ jwk, id }) => {
-
     let editorMode = false
     let editorData = ""
     let editorPrompt = ""
+
+    if (luaData.length > 0 && argv['load']) {
+      const spinner = ora({
+        spinner: 'dots',
+        suffixText: ``
+      })
+
+      spinner.start();
+      spinner.suffixText = chalk.gray("[Loading Lua...]")
+      const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+      spinner.stop()
+      if (result.Output?.data?.output) {
+        console.log(result.Output?.data?.output)
+      }
+      process.exit(0)
+    }
 
     if (!id) {
       console.error(chalk.red("Error! Could not find Process ID"))
@@ -104,7 +117,7 @@ of()
     }
 
     if (process.env.DEBUG) console.time(chalk.gray('connecting'))
-    globalThis.prompt = await connect(jwk, id)
+    globalThis.prompt = await connect(jwk, id, luaData)
     if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
     // check loading files flag
     await handleLoadArgs(jwk, id)
@@ -307,8 +320,9 @@ async function connect(jwk, id) {
   spinner.suffixText = chalk.gray("[Connecting to Process...]")
 
   // need to check if a process is registered or create a process
-  let promptResult = await evaluate('"Loading..."', id, jwk, { sendMessage, readResult }, spinner)
+  let promptResult = await evaluate("Loading...", id, jwk, { sendMessage, readResult }, spinner)
   spinner.stop();
+
   return promptResult?.Output?.data?.prompt
 }
 
