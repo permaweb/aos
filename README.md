@@ -8,7 +8,7 @@
 
 Status: Preview
 Version: 1.8.8.            
-Module: `BInXP5bzApuXKMDxtAT3YaKx4g22QuPjgaUlxL94rcQ`
+Module: `2rEYpGAF-zuvgKh8-7fie7TLUdXCS1ZHa7GJ_lw3jpo`
 
 ## Requirements
 
