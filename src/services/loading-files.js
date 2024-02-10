@@ -8,6 +8,9 @@ export function checkLoadArgs() {
     if (typeof argv.load === 'string') {
       return [argv.load]
     }
+    if (typeof argv.load === 'boolean') {
+      return []
+    }
     return argv.load
   }
   return []
