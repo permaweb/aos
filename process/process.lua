@@ -11,6 +11,8 @@ Colors = {
   gray = "\27[90m"
 }
 
+Bell = "\x07"
+
 Dump = require('.dump')
 Utils = require('.utils')
 Handlers = require('.handlers')
@@ -82,7 +84,7 @@ end
 Seeded = Seeded or false
 
 -- this is a temporary approach...
-function stringToSeed(s)
+local function stringToSeed(s)
   local seed = 0
   for i = 1, #s do
       local char = string.byte(s, i)
