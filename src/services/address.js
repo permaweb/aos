@@ -1,7 +1,7 @@
 import { fromPromise } from 'hyper-async'
 import Arweave from 'arweave'
 
-const ARWEAVE_HOST = process.env.ARWEAVE_HOST || 'arweave.net'
+const ARWEAVE_HOST = process.env.ARWEAVE_HOST || 'arweave2.net'
 const ARWEAVE_PORT = process.env.ARWEAVE_PORT || 443
 const ARWEAVE_PROTOCOL = process.env.ARWEAVE_PROTOCOL || 'https'
 

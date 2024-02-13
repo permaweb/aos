@@ -9,6 +9,7 @@ ${chalk.blue('Documentation:')} https://cookbook_ao.g8way.io
 ${chalk.green('Commands:')}
 
   ${chalk.green('.load [file]')}                  Loads local lua file into connected Process
+  ${chalk.green('.load-blueprint [blueprint]')}   Loads a blueprint from the blueprints repository
   ${chalk.green('.monitor')}                      Starts monitoring cron messages for this Process
   ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this Process
   ${chalk.green('.editor')}                       Simple code editor for writing multi-line lua expressions

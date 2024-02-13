@@ -128,40 +128,54 @@ export async function live(id) {
     }
   })
 
+  let isJobRunning = false
+
   const checkLive = async () => {
-    let params = { process: id, limit: "1000" }
-    if (cursor) {
-      params["from"] = cursor
-    }
-
-    const results = await connect(info).results(params)
-
-    const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
-      if (e.node?.Output?.print === true) {
-        return true
-      }
-      if (e.cursor === cursor) {
-        return false
-      }
-      return false
-    }))
-
-    // --- peek on previous line and if delete line if last prompt.
-    // --- key event can detect 
-    // count !== null && 
-    if (edges.length > 0) {
-      edges.map(e => {
-        if (!globalThis.alerts[e.cursor]) {
-          globalThis.alerts[e.cursor] = e.node?.Output
+    if (!isJobRunning) {
+      try {
+        isJobRunning = true;
+        let params = { process: id, limit: "1000" }
+        if (cursor) {
+          params["from"] = cursor
         }
-      })
 
+        const results = await connect(info).results(params)
 
+        const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
+          if (e.node?.Output?.print === true) {
+            return true
+          }
+          if (e.cursor === cursor) {
+            return false
+          }
+          return false
+        }))
+
+        // --- peek on previous line and if delete line if last prompt.
+        // --- key event can detect 
+        // count !== null && 
+        if (edges.length > 0) {
+          edges.map(e => {
+            if (!globalThis.alerts[e.cursor]) {
+              globalThis.alerts[e.cursor] = e.node?.Output
+            }
+          })
+
+        }
+        count = edges.length
+        if (results.edges.length > 0) {
+          cursor = results.edges[results.edges.length - 1].cursor
+          fs.writeFileSync(cursorFile, cursor)
+        }
+        //process.nextTick(() => null)
+
+      } catch (e) {
+        console.log(chalk.red('An error occurred with live updates...'))
+        console.log('Message: ', chalk.gray(e.message))
+      } finally {
+        isJobRunning = false
+      }
     }
-    count = edges.length
-    cursor = results.edges[results.edges.length - 1].cursor
-    fs.writeFileSync(cursorFile, cursor)
-    process.nextTick()
   }
   await cron.schedule('*/2 * * * * *', checkLive)
 

@@ -277,6 +277,8 @@ of()
         spinner.stop()
         if (result.Error) {
           console.log(chalk.red(result.Error))
+        } else if (result.error) {
+          console.log(chalk.red(result.error))
         } else {
 
           if (output?.data) {
@@ -284,7 +286,7 @@ of()
 
             globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
           } else {
-            console.log(chalk.red('An error occured trying to access your response.'))
+            console.log(chalk.red('An unknown error occured'))
           }
         }
 
@@ -307,7 +309,7 @@ of()
 
   })
   .catch(e => {
-    console.log(e)
+    console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
   })
 
 async function connect(jwk, id) {
