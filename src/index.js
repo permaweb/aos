@@ -64,6 +64,10 @@ if (argv['version']) {
   version()
   process.exit(0)
 }
+console.log(argv['module'])
+if (argv['module'] && argv['module'].length === 43) {
+  process.env.AOS_MODULE = argv['module']
+}
 
 let cron = null
 let history = []
