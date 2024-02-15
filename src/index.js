@@ -309,7 +309,11 @@ of()
 
   })
   .catch(e => {
-    console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+    if (argv['list']) {
+      console.log(e)
+    } else {
+      console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+    }
   })
 
 async function connect(jwk, id) {
