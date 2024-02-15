@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.9.0",
+  "version": "1.9.1",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/twilson63/ao-repl.git",
