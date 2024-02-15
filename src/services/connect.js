@@ -124,7 +124,7 @@ export async function live(id) {
     if (ct && !stopped) {
       ct.stop()
       stopped = true
-      setTimeout(() => { ct.start(); stopped = false }, 1000)
+      setTimeout(() => { ct.start(); stopped = false }, 30000)
     }
   })
 
