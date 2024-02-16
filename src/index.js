@@ -120,6 +120,7 @@ of()
     const update = await checkForUpdate()
     if (update.available && !process.env.DEBUG) {
       const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
       await installUpdate(update, path.join(__dirname, "../"))
     }
 
