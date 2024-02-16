@@ -66,7 +66,7 @@ if (argv['version']) {
   version()
   process.exit(0)
 }
-console.log(argv['module'])
+
 if (argv['module'] && argv['module'].length === 43) {
   process.env.AOS_MODULE = argv['module']
 }
@@ -120,6 +120,7 @@ of()
     const update = await checkForUpdate()
     if (update.available && !process.env.DEBUG) {
       const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
       await installUpdate(update, path.join(__dirname, "../"))
     }
 
