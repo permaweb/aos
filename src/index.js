@@ -74,255 +74,264 @@ if (argv['module'] && argv['module'].length === 43) {
 let cron = null
 let history = []
 
+if (argv['watch'] && argv['watch'].length === 43) {
+  live(argv['watch'], true).then(res => {
+    process.stdout.write('\n' + "\u001b[0G" + chalk.green('Watching: ') + chalk.blue(argv['watch']) + '\n')
+    cron = res
+  })
+}
+
 splash()
 
-of()
-  .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
-  .chain(jwk => {
-    // handle list option, need jwk in order to do it.
-    if (argv['list']) {
-      return list(jwk, { address, gql }).chain(Rejected)
-    }
-    return Resolved(jwk)
-  })
-  .chain(jwk => register(jwk, { address, spawnProcess, gql })
-    .map(id => ({ jwk, id }))
-  )
-  .toPromise()
-  .then(async ({ jwk, id }) => {
-    let editorMode = false
-    let editorData = ""
-    let editorPrompt = ""
-
-    if (luaData.length > 0 && argv['load']) {
-      const spinner = ora({
-        spinner: 'dots',
-        suffixText: ``
-      })
-
-      spinner.start();
-      spinner.suffixText = chalk.gray("[Loading Lua...]")
-      const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
-      spinner.stop()
-      if (result.Output?.data?.output) {
-        console.log(result.Output?.data?.output)
+if (!argv['watch']) {
+  of()
+    .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
+    .chain(jwk => {
+      // handle list option, need jwk in order to do it.
+      if (argv['list']) {
+        return list(jwk, { address, gql }).chain(Rejected)
       }
-      process.exit(0)
-    }
+      return Resolved(jwk)
+    })
+    .chain(jwk => register(jwk, { address, spawnProcess, gql })
+      .map(id => ({ jwk, id }))
+    )
+    .toPromise()
+    .then(async ({ jwk, id }) => {
+      let editorMode = false
+      let editorData = ""
+      let editorPrompt = ""
 
-    if (!id) {
-      console.error(chalk.red("Error! Could not find Process ID"))
-      process.exit(0)
-    }
-    version(id)
-
-    // check for update and install if needed
-    const update = await checkForUpdate()
-    if (update.available && !process.env.DEBUG) {
-      const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
-
-      await installUpdate(update, path.join(__dirname, "../"))
-    }
-
-    if (process.env.DEBUG) console.time(chalk.gray('connecting'))
-    globalThis.prompt = await connect(jwk, id, luaData)
-    if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
-    // check loading files flag
-    await handleLoadArgs(jwk, id)
-
-    cron = await live(id)
-
-    async function repl() {
-
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        terminal: true,
-        history: history,
-        historySize: 100,
-        prompt: globalThis.prompt
-      });
-      globalThis.setPrompt = (p) => {
-        rl.setPrompt(p)
-      }
-      // process.stdin.on('keypress', (str, key) => {
-      //   if (ct) {
-      //     ct.stop()
-      //   }
-      // })
-
-      rl.on('history', e => {
-        history.concat(e)
-      })
-
-      //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
-      rl.setPrompt(globalThis.prompt)
-      if (!editorMode) rl.prompt(true)
-
-      rl.on('line', async line => {
-        if (line.trim() == '') {
-          console.log(undefined)
-          rl.close()
-          repl()
-          return;
-        }
-
-        if (!editorMode && line == ".help") {
-          replHelp()
-          rl.close()
-          repl()
-          return
-        }
-
-        if (!editorMode && line == ".live") {
-          printLive()
-          rl.close()
-          repl()
-          return
-        }
-        if (!editorMode && line == ".monitor") {
-          const result = await monitor(jwk, id, { monitorProcess })
-          console.log(chalk.green(result))
-          rl.close()
-          repl()
-          return;
-        }
-
-        if (!editorMode && line == ".unmonitor") {
-          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
-          console.log(chalk.green(result))
-          rl.close()
-          repl()
-          return;
-        }
-
-        if (/^\.load-blueprint/.test(line)) {
-          try { line = loadBlueprint(line) }
-          catch (e) {
-            console.log(e.message)
-            rl.close()
-            repl()
-            return;
-          }
-        }
-
-        if (/^\.load/.test(line)) {
-          try { line = load(line) }
-          catch (e) {
-            console.log(e.message)
-            rl.close()
-            repl()
-            return;
-          }
-        }
-
-        if (line === ".editor") {
-          console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
-          editorMode = true;
-          //rl.setPrompt('')
-          editorPrompt = globalThis.prompt
-          globalThis.prompt = ""
-
-          rl.close()
-          repl()
-
-          return;
-        }
-
-        if (editorMode && line === ".done") {
-          line = editorData
-          editorData = ""
-          editorMode = false;
-          globalThis.prompt = editorPrompt
-          editorPrompt = ""
-
-        }
-
-        if (editorMode && line === ".cancel") {
-          editorData = ""
-          editorMode = false;
-          globalThis.prompt = editorPrompt
-          editorPrompt = ""
-
-          rl.close()
-          repl()
-
-          return;
-        }
-
-        if (editorMode) {
-          editorData += line + '\n'
-
-          rl.close()
-          repl()
-
-          return;
-        }
-
-        if (line === ".exit") {
-          cron.stop();
-          console.log("Exiting...");
-          rl.close();
-          return;
-        }
-
+      if (luaData.length > 0 && argv['load']) {
         const spinner = ora({
           spinner: 'dots',
           suffixText: ``
         })
 
-        if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
         spinner.start();
-        spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-
-        printLive()
-        // create message and publish to ao
-        const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-          .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-        const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-
-        // log output
+        spinner.suffixText = chalk.gray("[Loading Lua...]")
+        const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
-        if (result.Error) {
-          console.log(chalk.red(result.Error))
-        } else if (result.error) {
-          console.log(chalk.red(result.error))
-        } else {
+        if (result.Output?.data?.output) {
+          console.log(result.Output?.data?.output)
+        }
+        process.exit(0)
+      }
 
-          if (output?.data) {
-            console.log(output.data?.output)
+      if (!id) {
+        console.error(chalk.red("Error! Could not find Process ID"))
+        process.exit(0)
+      }
+      version(id)
 
-            globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
-          } else {
-            console.log(chalk.red('An unknown error occured'))
+      // check for update and install if needed
+      const update = await checkForUpdate()
+      if (update.available && !process.env.DEBUG) {
+        const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+
+        await installUpdate(update, path.join(__dirname, "../"))
+      }
+
+      if (process.env.DEBUG) console.time(chalk.gray('connecting'))
+      globalThis.prompt = await connect(jwk, id, luaData)
+      if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
+      // check loading files flag
+      await handleLoadArgs(jwk, id)
+
+      cron = await live(id)
+
+      async function repl() {
+
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+          terminal: true,
+          history: history,
+          historySize: 100,
+          prompt: globalThis.prompt
+        });
+        globalThis.setPrompt = (p) => {
+          rl.setPrompt(p)
+        }
+        // process.stdin.on('keypress', (str, key) => {
+        //   if (ct) {
+        //     ct.stop()
+        //   }
+        // })
+
+        rl.on('history', e => {
+          history.concat(e)
+        })
+
+        //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+        rl.setPrompt(globalThis.prompt)
+        if (!editorMode) rl.prompt(true)
+
+        rl.on('line', async line => {
+          if (line.trim() == '') {
+            console.log(undefined)
+            rl.close()
+            repl()
+            return;
           }
-        }
 
-        if (process.env.DEBUG) {
-          console.log("\n")
-          console.timeEnd(chalk.gray('elapsed'))
-          console.log("\n")
-        }
+          if (!editorMode && line == ".help") {
+            replHelp()
+            rl.close()
+            repl()
+            return
+          }
 
-        if (cron) {
-          cron.start()
-        }
+          if (!editorMode && line == ".live") {
+            printLive()
+            rl.close()
+            repl()
+            return
+          }
+          if (!editorMode && line == ".monitor") {
+            const result = await monitor(jwk, id, { monitorProcess })
+            console.log(chalk.green(result))
+            rl.close()
+            repl()
+            return;
+          }
 
-        rl.close()
-        repl()
-      })
-    }
+          if (!editorMode && line == ".unmonitor") {
+            const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
+            console.log(chalk.green(result))
+            rl.close()
+            repl()
+            return;
+          }
 
-    repl()
+          if (/^\.load-blueprint/.test(line)) {
+            try { line = loadBlueprint(line) }
+            catch (e) {
+              console.log(e.message)
+              rl.close()
+              repl()
+              return;
+            }
+          }
 
-  })
-  .catch(e => {
-    if (argv['list']) {
-      console.log(e)
-    } else {
-      console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
-    }
-  })
+          if (/^\.load/.test(line)) {
+            try { line = load(line) }
+            catch (e) {
+              console.log(e.message)
+              rl.close()
+              repl()
+              return;
+            }
+          }
+
+          if (line === ".editor") {
+            console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+            editorMode = true;
+            //rl.setPrompt('')
+            editorPrompt = globalThis.prompt
+            globalThis.prompt = ""
+
+            rl.close()
+            repl()
+
+            return;
+          }
+
+          if (editorMode && line === ".done") {
+            line = editorData
+            editorData = ""
+            editorMode = false;
+            globalThis.prompt = editorPrompt
+            editorPrompt = ""
+
+          }
+
+          if (editorMode && line === ".cancel") {
+            editorData = ""
+            editorMode = false;
+            globalThis.prompt = editorPrompt
+            editorPrompt = ""
+
+            rl.close()
+            repl()
+
+            return;
+          }
+
+          if (editorMode) {
+            editorData += line + '\n'
+
+            rl.close()
+            repl()
+
+            return;
+          }
+
+          if (line === ".exit") {
+            cron.stop();
+            console.log("Exiting...");
+            rl.close();
+            return;
+          }
+
+          const spinner = ora({
+            spinner: 'dots',
+            suffixText: ``
+          })
+
+          if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
+          spinner.start();
+          spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+
+          printLive()
+          // create message and publish to ao
+          const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+          const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+
+          // log output
+          spinner.stop()
+          if (result.Error) {
+            console.log(chalk.red(result.Error))
+          } else if (result.error) {
+            console.log(chalk.red(result.error))
+          } else {
+
+            if (output?.data) {
+              console.log(output.data?.output)
+
+              globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
+            } else {
+              console.log(chalk.red('An unknown error occured'))
+            }
+          }
+
+          if (process.env.DEBUG) {
+            console.log("\n")
+            console.timeEnd(chalk.gray('elapsed'))
+            console.log("\n")
+          }
+
+          if (cron) {
+            cron.start()
+          }
+
+          rl.close()
+          repl()
+        })
+      }
+
+      repl()
+
+    })
+    .catch(e => {
+      if (argv['list']) {
+        console.log(e)
+      } else {
+        console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+      }
+    })
+}
 
 async function connect(jwk, id) {
   const spinner = ora({
