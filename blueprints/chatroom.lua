@@ -1,4 +1,4 @@
-Weavers = Weavers or {}
+Members = Members or {}
 
 Handlers.add(
   "register",
