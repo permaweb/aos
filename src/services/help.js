@@ -34,8 +34,9 @@ ${chalk.green('Options:')}
   ${chalk.green('--tag-name [name]')}        Tag Name for Process when Spawn more than 1 is supported
   ${chalk.green('--tag-value [value]')}      Tag Value for Process when Spawning grouped with tag-name
   ${chalk.green('--wallet [file]')}          Wallet to use for Process Managment a default wallet is created for you.
-  ${chalk.green('--module [TXID]')}          The module source to use to spin up Process
+  ${chalk.green('--module=[TXID]')}          The module source to use to spin up Process
   ${chalk.green('--list')}                   Lists the processes for a given wallet
+  ${chalk.green('--watch=[PROCESSID]')}.     Watch a process
   ${chalk.green('--help')}                   Shows help page
   ${chalk.green('--version')}                Shows Console Version
 

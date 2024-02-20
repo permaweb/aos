@@ -94,11 +94,18 @@ export function unmonitorProcess({ id, wallet }) {
 
 }
 
+let _watch = false
+
 export function printLive() {
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
-      process.stdout.write("\u001b[2K");
+      
+      if (!_watch) {
+        process.stdout.write("\u001b[2K");
+      } else { 
+        process.stdout.write('\n')
+      }
       process.stdout.write("\u001b[0G" + globalThis.alerts[k].data)
 
       globalThis.prompt = globalThis.alerts[k].prompt || "aos> "
@@ -110,7 +117,8 @@ export function printLive() {
 
 }
 
-export async function live(id) {
+export async function live(id, watch) {
+  _watch = watch
   let ct = null
   let cursor = null
   let count = null
