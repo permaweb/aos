@@ -28,8 +28,8 @@ ${chalk.green('Usage:')} aos [name] [OPTIONS]
 
 ${chalk.green('Options:')}
 
-  ${chalk.green('--get-blueprints [dir]')}   Small Lua Scripts for your Process - [dir] is optional
-  ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval
+  ${chalk.green('--get-blueprints [dir]')}   Download Blueprint Lua Scripts to your current working directory
+  ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval ie (1-minute, 5-minutes)
   ${chalk.green('--load [file]')}            Load a lua source file into your process more than 1 is supported
   ${chalk.green('--tag-name [name]')}        Tag Name for Process when Spawn more than 1 is supported
   ${chalk.green('--tag-value [value]')}      Tag Value for Process when Spawning grouped with tag-name
@@ -37,6 +37,7 @@ ${chalk.green('Options:')}
   ${chalk.green('--module=[TXID]')}          The module source to use to spin up Process
   ${chalk.green('--list')}                   Lists the processes for a given wallet
   ${chalk.green('--watch=[PROCESSID]')}.     Watch a process
+  ${chalk.green('--monitor')}.               Monitor and Push Cron Outbox Messages and Spawns
   ${chalk.green('--help')}                   Shows help page
   ${chalk.green('--version')}                Shows Console Version
 

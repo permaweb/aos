@@ -123,6 +123,12 @@ if (!argv['watch']) {
         process.exit(0)
       }
       version(id)
+      
+      // kick start monitor if monitor option
+      if (argv['monitor']) {
+        const result = await monitor(jwk, id, { monitorProcess })
+        console.log(chalk.green(result))
+      }
 
       // check for update and install if needed
       const update = await checkForUpdate()
@@ -302,7 +308,9 @@ if (!argv['watch']) {
 
               globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
             } else {
-              console.log(chalk.red('An unknown error occured'))
+              if (!output) {
+                console.log(chalk.red('An unknown error occurred'))
+              }
             }
           }
 

@@ -18,6 +18,7 @@ function handlers.add(name, pattern, handle)
   assert(type(pattern) == 'function', 'pattern MUST be function')
   assert(type(handle) == 'function', 'handle MUST be function')
   
+  
   -- update existing handler by name
   local idx = findIndexByProp(handlers.list, "name", name)
   if idx ~= nil and idx > 0 then
@@ -45,6 +46,7 @@ function handlers.append(name, pattern, handle)
     handlers.list[idx].pattern = pattern
     handlers.list[idx].handle = handle
   else
+    
     table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
   end
 
@@ -132,39 +134,48 @@ function handlers.evaluate(msg, env)
   assert(type(env) == 'table', 'env is not valid')
   
   for _, o in ipairs(handlers.list) do
-    local match = o.pattern(msg)
-    if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
-      error({message = "pattern result is not valid, it MUST be string, number, or boolean"})
-    end
-    
-    -- handle boolean returns
-    if type(match) == "boolean" then
-      match = match and 1 or 0
-    end
-    -- handle string returns
-    if type(match) == "string" then
-      if match == "continue" then
-        match = 1
-      elseif match == "break" then
+    if o.name ~= "_default" then
+      local match = o.pattern(msg)
+      if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
+        error({message = "pattern result is not valid, it MUST be string, number, or boolean"})
+      end
+      
+      -- handle boolean returns
+      if type(match) == "boolean" and match == true then
         match = -1
       else
         match = 0
       end
-    end
 
-    if match ~= 0 then
-      handled = true
-      -- each handle function can accept, the msg, env
-      local status, err = pcall(o.handle, msg, env) 
-      if not status then
-        error(err)
+      -- handle string returns
+      if type(match) == "string" then
+        if match == "continue" then
+          match = 1
+        elseif match == "break" then
+          match = -1
+        else
+          match = 0
+        end
+      end
+
+      if match ~= 0 then
+        handled = true
+        -- each handle function can accept, the msg, env
+        local status, err = pcall(o.handle, msg, env) 
+        if not status then
+          error(err)
+        end
+      end
+      if match < 0 then
+        return handled
       end
     end
-    if match < 0 then
-      return handled
-    end
   end
-
+  -- do default
+  if not handled then
+    local idx = findIndexByProp(handlers.list, "name", "_default")
+    handlers.list[idx].handle(msg,env)
+  end
 end
 
 return handlers
