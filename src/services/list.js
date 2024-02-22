@@ -34,6 +34,7 @@ export function list(jwk, services) {
 function queryForAOSs() {
   return `query ($owners: [String!]!, $module: [String!]!) {
     transactions(
+      first: 100,
       owners: $owners,
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
