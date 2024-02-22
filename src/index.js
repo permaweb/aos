@@ -302,7 +302,9 @@ if (!argv['watch']) {
 
               globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
             } else {
-              console.log(chalk.red('An unknown error occured'))
+              if (!output) {
+                console.log(chalk.red('An unknown error occurred'))
+              }
             }
           }
 

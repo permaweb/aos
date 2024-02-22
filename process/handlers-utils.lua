@@ -7,20 +7,14 @@ function _utils.hasMatchingTag(name, value)
   assert(type(name) == 'string' and type(value) == 'string', 'invalid arguments: (name : string, value : string)')
 
   return function (msg) 
-    if msg.Tags[name] == value then
-      return -1
-    end
-    return 0
+    return msg.Tags[name] == value 
   end
 end
 
 function _utils.hasMatchingData(value)
   assert(type(value) == 'string', 'invalid arguments: (value : string)')
   return function (msg)
-    if msg.Data == value then
-      return -1
-    end
-    return 0
+    return msg.Data == value
   end
 end
 
