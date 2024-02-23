@@ -7,8 +7,8 @@
 # aos
 
 Status: Preview
-Version: 1.9.6.  
-Module: `CvgpT0LI5ZbTt9xuEel4NpuI65UUAVOUAjRnYsNccO0`
+Version: 1.9.7.  
+Module: `qEdNizCkk1II0q7kXKOVOKgB5-uDAfXB-0K0jJpDZko`
 
 ## Requirements
 
@@ -71,14 +71,3 @@ When running the console, you can type `dot` commands to instruct the console to
 | `.load`                  | This command allows you to load a lua source file from your local directory                                                                  |
 | `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                               |
 | `.exit`                  | This command will exit you console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                 |
-
-## CUSTOM CUs and MUs
-
-Use specified MUs and CUs
-
-```sh
-export MU_URL=http://66.42.91.25:3005
-export CU_URL=http://45.32.213.131:3005
-
-aos
-```

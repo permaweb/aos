@@ -112,6 +112,7 @@ if (!argv['watch']) {
         spinner.suffixText = chalk.gray("[Loading Lua...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
+        
         if (result.Output?.data?.output) {
           console.log(result.Output?.data?.output)
         }
@@ -297,6 +298,7 @@ if (!argv['watch']) {
 
           // log output
           spinner.stop()
+          
           if (result.Error) {
             console.log(chalk.red(result.Error))
           } else if (result.error) {
