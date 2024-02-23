@@ -16,6 +16,7 @@ return function (ao)
       output = err
     end
     if e then output = e end
+    
     -- set result in outbox.Output 
     ao.outbox.Output = { data = { 
       json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",

@@ -147,6 +147,8 @@ function process.handle(msg, ao)
   -- tagify Process
   ao.env.Process.TagArray = ao.env.Process.Tags
   ao.env.Process.Tags = Tab(ao.env.Process)
+  -- init Errors
+  Errors = Errors or {}
   -- clear Outbox
   ao.clearOutbox()
 
@@ -158,11 +160,23 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  Errors = {}
+  
   local status, result = pcall(Handlers.evaluate, msg, ao.env)
   if not status then
     table.insert(Errors, result)
+    return {
+      Output = { 
+        data = { 
+          prompt = Prompt(), 
+          json = 'undefined', 
+          output = result 
+        }
+      }, 
+      Messages = {}, 
+      Spawns = {}
+    }
   end
+  
   return ao.result({ })
 end
 
