@@ -44,5 +44,16 @@ function _utils.reply(input)
   end
 end
 
+function _utils.continue(fn)
+  assert(type(fn) == 'function', 'invalid arguments: (fn : function)')
+  return function (msg)
+    local patternResult = fn(msg)
+
+    if not patternResult or patternResult == 0 or patternResult == "skip" then
+      return patternResult
+    end
+    return 1
+  end
+end
 
 return _utils
