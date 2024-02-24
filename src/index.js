@@ -175,7 +175,7 @@ if (!argv['watch']) {
         if (!editorMode) rl.prompt(true)
 
         rl.on('line', async line => {
-          if (line.trim() == '') {
+          if (!editorMode && line.trim() == '') {
             console.log(undefined)
             rl.close()
             repl()

@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.9.7",
+  "version": "1.9.8",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/permaweb/aos.git",
@@ -28,6 +28,6 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "qEdNizCkk1II0q7kXKOVOKgB5-uDAfXB-0K0jJpDZko"
+    "module": "5bM7aIRkE9LNDxefDROzrUGHVbpu6Ye3vmYlHFBiL70"
   }
 }

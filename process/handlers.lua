@@ -143,7 +143,7 @@ function handlers.evaluate(msg, env)
       -- handle boolean returns
       if type(match) == "boolean" and match == true then
         match = -1
-      else
+      elseif type(match) == "boolean" and match == false then
         match = 0
       end
 
