@@ -124,7 +124,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
       })
       -- Send Credit-Notice to the Recipient
       ao.send({
-        Target = msgs.Recipient,
+        Target = msg.Recipient,
         Action = 'Credit-Notice', 
         Sender = msg.From, 
         Quantity = tostring(qty),
