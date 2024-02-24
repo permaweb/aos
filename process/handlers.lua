@@ -159,12 +159,15 @@ function handlers.evaluate(msg, env)
       end
 
       if match ~= 0 then
-        handled = true
+        if match < 0 then
+          handled = true
+        end
         -- each handle function can accept, the msg, env
         local status, err = pcall(o.handle, msg, env) 
         if not status then
           error(err)
         end
+        
       end
       if match < 0 then
         return handled

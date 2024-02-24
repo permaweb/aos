@@ -87,6 +87,15 @@ Handlers.add("two",
   end
 )
 
+Handlers.add("three", 
+  function (Msg)
+    return "skip"
+  end, 
+  function (Msg) 
+    print("three")
+  end
+)
+
     `
   }
   // load handler
@@ -99,6 +108,6 @@ Handlers.add("two",
     Data: 'ping'
   }
   const result = await handle(Memory, ping, env)
-  assert.equal(result.Output.data, 'one\ntwo')
+  assert.equal(result.Output.data, 'one\ntwo\n\x1B[90mNew Message From \x1B[32munknown\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m')
   assert.ok(true)
 })
