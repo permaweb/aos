@@ -48,6 +48,14 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
 
 - **Returns:** Function that takes a message object and sends the specified reply.
 
+### continue(fn)
+Inverts the provided pattern matching function's result if it matches, so that it continues execution with the next matching handler.
+
+- **Parameters:**
+  - `fn` (function): Pattern matcher function that returns `"skip"`, `false` or `0` if it does not match.
+
+- **Returns:** Function that executes the pattern matcher and returns `1` (continue), so that the execution of handlers continues.
+
 ## Usage
 
 1. **Import the module:**
@@ -95,6 +103,17 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    ```lua
    local replyWithTable = _utils.reply({Tags = {status = 'received'}})
    replyWithTable(message)
+   ```
+
+6. **Continue execution shortcut:**
+   
+   ```lua
+   local isUrgent = _utils.continue(_utils.hasMatchingTag('priority', 'urgent'))
+   if isUrgent(message) ~= 0 then
+     print('This is an urgent message!')
+   end
+   if isUrgent(message) == -1 then return end
+   print('This message will continue')
    ```
 
 ## Conventions and Requirements
