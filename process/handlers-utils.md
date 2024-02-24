@@ -23,6 +23,15 @@ Checks if a given message has a tag that matches the specified name and value.
 
 - **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
 
+### hasMatchingTagOf(name, values)
+Checks if a given message has a tag that matches the specified name and one of the specified values.
+
+- **Parameters:**
+  - `name` (string): The name of the tag to check.
+  - `values` (string): The values of which one should match.
+
+- **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
+
 ### hasMatchingData(value)
 Checks if the message data matches the specified value.
 
@@ -56,7 +65,16 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    end
    ```
 
-3. **Check if the message data matches a value:**
+3. **Check for a specific tag with multiple possible values allowed:**
+   
+   ```lua
+   local isNotUrgent = _utils.hasMatchingTagOf('priority', { 'trivial', 'unimportant' })
+   if isNotUrgent(message) == -1 then
+     print('This is not an urgent message!')
+   end
+   ```
+
+4. **Check if the message data matches a value:**
 
    ```lua
    local isHello = _utils.hasMatchingData('Hello')
@@ -65,7 +83,7 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    end
    ```
 
-4. **Reply to a message:**
+5. **Reply to a message:**
 
    ```lua
    local replyWithText = _utils.reply('Thank you for your message!')
