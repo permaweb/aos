@@ -13,7 +13,7 @@ const pkg = getPkg()
 
 export function version(id) {
   console.log(chalk.gray('Type ".load-blueprint chat" to join Chat'))
-  console.log(chalk.gray('Type ".load-blueprint token" to create Social Token\n'))
+  //console.log(chalk.gray('Type ".load-blueprint token" to create Social Token\n'))
   console.log(chalk.gray(`
 OS Version: ${pkg.version}. 2024`))
   if (id) {
