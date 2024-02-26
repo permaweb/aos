@@ -132,7 +132,7 @@ export async function live(id, watch) {
     if (ct && !stopped) {
       ct.stop()
       stopped = true
-      setTimeout(() => { ct.start(); stopped = false }, 30000)
+      setTimeout(() => { ct.start(); stopped = false }, 60000)
     }
   })
 

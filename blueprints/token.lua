@@ -31,7 +31,7 @@ local json = require('json')
      ao.id is equal to the Process.Id
    ]]
 --
-if not Balances then Balances = { [ao.id] = tostring(bint(100000000000000)) } end
+if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 
 if Name ~= 'Points Coin' then Name = 'Points Coin' end
 
@@ -100,7 +100,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
   assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
   
   if not Balances[msg.From] then Balances[msg.From] = "0" end
-  if not Balances[msg.Tags.Recipient] then Balances[msg.Tags.Recipient] = "0" end
+  if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
 
   local qty = bint(msg.Quantity)
   local balance = bint(Balances[msg.From])
