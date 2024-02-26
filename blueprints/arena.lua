@@ -38,7 +38,7 @@ GameTime = GameTime or 20 * 60 * 1000 -- 20 minutes
 Now = Now or undefined -- Current time, updated on every message.
 
 -- Token information for player stakes.
-UNIT = 1e6
+UNIT = 1000
 PaymentToken = PaymentToken or "ADDR"  -- Token address
 PaymentQty = PaymentQty or tostring(math.floor(UNIT))    -- Quantity of tokens for registration
 BonusQty = BonusQty or tostring(math.floor(UNIT))        -- Bonus token quantity for winners
@@ -177,17 +177,17 @@ function endGame()
     print("Game Over")
 
     Winners = 0
-    Winnings = BonusQty / Winners -- Calculating winnings per player
+    Winnings = tonumber(BonusQty) / Winners -- Calculating winnings per player
 
     for player, _ in pairs(Players) do
         Winners = Winners + 1
     end
 
-    Winnings = BonusQty / Winners
+    Winnings = tonumber(BonusQty) / Winners
 
     for player, _ in pairs(Players) do
         -- addLog("EndGame", "Sending reward of:".. Winnings + PaymentQty .. "to player: " .. player) -- Useful for tracking rewards
-        sendReward(player, Winnings + PaymentQty, "Win")
+        sendReward(player, Winnings + tonumber(PaymentQty), "Win")
         Waiting[player] = false
     end
     
@@ -293,7 +293,7 @@ Handlers.add(
     "AddBet",
     Handlers.utils.hasMatchingTag("Reason", "AddBet"),
     function(Msg)
-        BonusQty = BonusQty + tonumber(Msg.Tags.Quantity)
+        BonusQty = tonumber(BonusQty) + tonumber(Msg.Tags.Quantity)
         announce("Bet-Added", Msg.From .. "has placed a bet. " .. "BonusQty amount increased by " .. Msg.Tags.Quantity .. "!")
     end
 )
@@ -336,11 +336,11 @@ Handlers.add(
     "RequestTokens",
     Handlers.utils.hasMatchingTag("Action", "RequestTokens"),
     function (Msg)
-        print("Transfering Tokens: " .. tostring(math.floor(1000 + UNIT)))
+        print("Transfering Tokens: " .. tostring(math.floor(10000 * UNIT)))
         ao.send({
             Target = ao.id,
             Action = "Transfer",
-            Quantity = tostring(math.floor(1000 + UNIT)),
+            Quantity = tostring(math.floor(10000 * UNIT)),
             Recipient = Msg.From,
         })
     end
