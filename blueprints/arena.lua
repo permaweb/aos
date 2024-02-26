@@ -127,8 +127,6 @@ function startGamePeriod()
     LastTick = undefined
     GameMode = "Playing"
     StateChangeTime = Now + GameTime
-    announce("Started-Game", "The game has started. Good luck!")
-
     for player, hasPaid in pairs(Waiting) do
         if hasPaid then
             Players[player] = playerInitState()
@@ -141,6 +139,7 @@ function startGamePeriod()
             removeListener(player) -- Removing player from listener if they didn't pay
         end
     end
+    announce("Started-Game", "The game has started. Good luck!")
     print("Game Started....")
 end
 
