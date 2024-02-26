@@ -40,8 +40,8 @@ Now = Now or undefined -- Current time, updated on every message.
 -- Token information for player stakes.
 UNIT = 1e6
 PaymentToken = PaymentToken or "ADDR"  -- Token address
-PaymentQty = PaymentQty or 1 + UNIT    -- Quantity of tokens for registration
-BonusQty = BonusQty or 1 + UNIT        -- Bonus token quantity for winners
+PaymentQty = PaymentQty or tostring(math.floor(UNIT))    -- Quantity of tokens for registration
+BonusQty = BonusQty or tostring(math.floor(UNIT))        -- Bonus token quantity for winners
 
 -- Players waiting to join the next game and their payment status.
 Waiting = Waiting or {}
@@ -217,7 +217,7 @@ end
 Handlers.add(
     "Game-State-Timers",
     function(Msg)
-        return true
+        return "continue"
     end,
     function(Msg)
         Now = Msg.Timestamp
@@ -245,7 +245,7 @@ Handlers.add(
         return
             Msg.Action == "Credit-Notice" and
             Msg.From == PaymentToken and
-            tonumber(Msg.Quantity) >= PaymentQty
+            tonumber(Msg.Quantity) >= tonumber(PaymentQty) and "continue"
     end,
     function(Msg)
         Waiting[Msg.Sender] = true
@@ -271,7 +271,7 @@ Handlers.add(
             Target = Msg.From,
             Action = "Registered"
         })
-        announce("New Player Registered", Msg.Sender .. " has joined in waiting.")
+        announce("New Player Registered", Msg.From .. " has joined in waiting.")
     end
 )
 
@@ -336,10 +336,11 @@ Handlers.add(
     "RequestTokens",
     Handlers.utils.hasMatchingTag("Action", "RequestTokens"),
     function (Msg)
+        print("Transfering Tokens: " .. tostring(math.floor(1000 + UNIT)))
         ao.send({
             Target = ao.id,
             Action = "Transfer",
-            Quantity = tostring(1000 + UNIT),
+            Quantity = tostring(math.floor(1000 + UNIT)),
             Recipient = Msg.From,
         })
     end

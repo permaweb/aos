@@ -31,7 +31,7 @@ local json = require('json')
      ao.id is equal to the Process.Id
    ]]
 --
-if not Balances then Balances = { [ao.id] = tostring(bint(100000000000000)) } end
+if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 
 if Name ~= 'Points Coin' then Name = 'Points Coin' end
 
