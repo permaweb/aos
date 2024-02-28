@@ -112,7 +112,7 @@ if (!argv['watch']) {
         spinner.suffixText = chalk.gray("[Loading Lua...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
-        
+
         if (result.Output?.data?.output) {
           console.log(result.Output?.data?.output)
         }
@@ -124,7 +124,7 @@ if (!argv['watch']) {
         process.exit(0)
       }
       version(id)
-      
+
       // kick start monitor if monitor option
       if (argv['monitor']) {
         const result = await monitor(jwk, id, { monitorProcess })
@@ -298,7 +298,7 @@ if (!argv['watch']) {
 
           // log output
           spinner.stop()
-          
+
           if (result.Error) {
             console.log(chalk.red(result.Error))
           } else if (result.error) {
@@ -338,6 +338,9 @@ if (!argv['watch']) {
       if (argv['list']) {
         console.log(e)
       } else {
+        if (process.env.DEBUG) {
+          console.log(e)
+        }
         console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
       }
     })
