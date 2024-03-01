@@ -1,3 +1,4 @@
+import './services/proxy.js'
 import './services/dev.js'
 import readline from 'readline'
 import minimist from 'minimist'
