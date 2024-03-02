@@ -12,7 +12,7 @@ const UPDATE_URL = 'https://get_ao.g8way.io'
 const pkg = getPkg()
 
 export function version(id) {
-  console.log(chalk.gray('Type ".load-blueprint chat" to join Chat'))
+  console.log(chalk.gray('Type ".load-blueprint chat" to join the community chat and ask questions!'))
   //console.log(chalk.gray('Type ".load-blueprint token" to create Social Token\n'))
   console.log(chalk.gray(`
 OS Version: ${pkg.version}. 2024`))
