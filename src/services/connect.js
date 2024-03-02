@@ -100,10 +100,10 @@ export function printLive() {
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
-      
+
       if (!_watch) {
         process.stdout.write("\u001b[2K");
-      } else { 
+      } else {
         process.stdout.write('\n')
       }
       process.stdout.write("\u001b[0G" + globalThis.alerts[k].data)
@@ -145,6 +145,9 @@ export async function live(id, watch) {
         let params = { process: id, limit: "1000" }
         if (cursor) {
           params["from"] = cursor
+        } else {
+          params["limit"] = 1
+          params["sort"] = "DESC"
         }
 
         const results = await connect(info).results(params)
