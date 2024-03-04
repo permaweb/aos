@@ -148,191 +148,217 @@ if (!argv['watch']) {
 
       cron = await live(id)
 
-      async function repl() {
+      const spinner = ora({
+        spinner: 'dots',
+        suffixText: ``,
+        discardStdin: false
+      });
 
-        const rl = readline.createInterface({
-          input: process.stdin,
-          output: process.stdout,
-          terminal: true,
-          history: history,
-          historySize: 100,
-          prompt: globalThis.prompt
-        });
-        globalThis.setPrompt = (p) => {
-          rl.setPrompt(p)
-        }
-        // process.stdin.on('keypress', (str, key) => {
-        //   if (ct) {
-        //     ct.stop()
-        //   }
-        // })
-
-        rl.on('history', e => {
-          history.concat(e)
-        })
-
-        //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
-        rl.setPrompt(globalThis.prompt)
-        if (!editorMode) rl.prompt(true)
-
-        rl.on('line', async line => {
-          if (!editorMode && line.trim() == '') {
-            console.log(undefined)
-            rl.close()
-            repl()
-            return;
-          }
-
-          if (!editorMode && line == ".help") {
-            replHelp()
-            rl.close()
-            repl()
-            return
-          }
-
-          if (!editorMode && line == ".live") {
-            printLive()
-            rl.close()
-            repl()
-            return
-          }
-          if (!editorMode && line == ".monitor") {
-            const result = await monitor(jwk, id, { monitorProcess })
-            console.log(chalk.green(result))
-            rl.close()
-            repl()
-            return;
-          }
-
-          if (!editorMode && line == ".unmonitor") {
-            const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
-            console.log(chalk.green(result))
-            rl.close()
-            repl()
-            return;
-          }
-
-          if (/^\.load-blueprint/.test(line)) {
-            try { line = loadBlueprint(line) }
-            catch (e) {
-              console.log(e.message)
-              rl.close()
-              repl()
-              return;
-            }
-          }
-
-          if (/^\.load/.test(line)) {
-            try { line = load(line) }
-            catch (e) {
-              console.log(e.message)
-              rl.close()
-              repl()
-              return;
-            }
-          }
-
-          if (line === ".editor") {
-            console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
-            editorMode = true;
-            //rl.setPrompt('')
-            editorPrompt = globalThis.prompt
-            globalThis.prompt = ""
-
-            rl.close()
-            repl()
-
-            return;
-          }
-
-          if (editorMode && line === ".done") {
-            line = editorData
-            editorData = ""
-            editorMode = false;
-            globalThis.prompt = editorPrompt
-            editorPrompt = ""
-
-          }
-
-          if (editorMode && line === ".cancel") {
-            editorData = ""
-            editorMode = false;
-            globalThis.prompt = editorPrompt
-            editorPrompt = ""
-
-            rl.close()
-            repl()
-
-            return;
-          }
-
-          if (editorMode) {
-            editorData += line + '\n'
-
-            rl.close()
-            repl()
-
-            return;
-          }
-
-          if (line === ".exit") {
-            cron.stop();
-            console.log("Exiting...");
-            rl.close();
-            return;
-          }
-
-          const spinner = ora({
-            spinner: 'dots',
-            suffixText: ``
-          })
-
-          if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
-          spinner.start();
-          spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-
-          printLive()
-          // create message and publish to ao
-          const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-          const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-
-          // log output
-          spinner.stop()
-
-          if (result.Error) {
-            console.log(chalk.red(result.Error))
-          } else if (result.error) {
-            console.log(chalk.red(result.error))
-          } else {
-
-            if (output?.data) {
-              console.log(output.data?.output)
-
-              globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
-            } else {
-              if (!output) {
-                console.log(chalk.red('An unknown error occurred'))
-              }
-            }
-          }
-
-          if (process.env.DEBUG) {
-            console.log("\n")
-            console.timeEnd(chalk.gray('elapsed'))
-            console.log("\n")
-          }
-
-          if (cron) {
-            cron.start()
-          }
-
-          rl.close()
-          repl()
-        })
+      const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout,
+        terminal: true,
+        history: history,
+        historySize: 100,
+        prompt: globalThis.prompt
+      });
+      globalThis.setPrompt = (p) => {
+        rl.setPrompt(p)
       }
 
-      repl()
+      //async function repl() {
+
+
+      // process.stdin.on('keypress', (str, key) => {
+      //   if (ct) {
+      //     ct.stop()
+      //   }
+      // })
+
+      rl.on('history', e => {
+        history.concat(e)
+      })
+
+      //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+      rl.setPrompt(globalThis.prompt)
+      if (!editorMode) rl.prompt(true)
+
+      rl.on('line', async line => {
+        if (!editorMode && line.trim() == '') {
+          console.log(undefined)
+          //rl.close()
+          //repl()
+          rl.prompt(true)
+          return;
+        }
+
+        if (!editorMode && line == ".help") {
+          replHelp()
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+          return
+        }
+
+        if (!editorMode && line == ".live") {
+          //printLive()
+          cron.start()
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+          return
+        }
+        // pause live
+        if (!editorMode && line == ".pause") {
+          // pause live feed
+          cron.stop()
+          rl.prompt(true)
+          return
+        }
+
+        if (!editorMode && line == ".monitor") {
+          const result = await monitor(jwk, id, { monitorProcess })
+          console.log(chalk.green(result))
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+          return;
+        }
+
+        if (!editorMode && line == ".unmonitor") {
+          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
+          console.log(chalk.green(result))
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+          return;
+        }
+
+        if (/^\.load-blueprint/.test(line)) {
+          try { line = loadBlueprint(line) }
+          catch (e) {
+            console.log(e.message)
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+            return;
+          }
+        }
+
+        if (/^\.load/.test(line)) {
+          try { line = load(line) }
+          catch (e) {
+            console.log(e.message)
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+            return;
+          }
+        }
+
+        if (line === ".editor") {
+          console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+          editorMode = true;
+          rl.setPrompt('')
+          editorPrompt = globalThis.prompt
+
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+
+          return;
+        }
+
+        if (editorMode && line === ".done") {
+          line = editorData
+          editorData = ""
+          editorMode = false;
+          rl.setPrompt(globalThis.prompt)
+
+
+        }
+
+        if (editorMode && line === ".cancel") {
+          editorData = ""
+          editorMode = false;
+          rl.setPrompt(globalThis.prompt)
+
+
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+
+          return;
+        }
+
+        if (editorMode) {
+          editorData += line + '\n'
+
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+
+          return;
+        }
+
+        if (line === ".exit") {
+          cron.stop();
+          console.log("Exiting...");
+          rl.close();
+          return;
+        }
+
+        if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
+        printLive()
+
+        spinner.start();
+        spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+
+
+        // create message and publish to ao
+        const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+          .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+        const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+
+        // log output
+        spinner.stop()
+
+        if (result.Error) {
+          console.log(chalk.red(result.Error))
+        } else if (result.error) {
+          console.log(chalk.red(result.error))
+        } else {
+
+          if (output?.data) {
+            console.log(output.data?.output)
+
+            globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
+            rl.setPrompt(globalThis.prompt)
+          } else {
+            if (!output) {
+              console.log(chalk.red('An unknown error occurred'))
+            }
+          }
+        }
+
+        if (process.env.DEBUG) {
+          console.log("\n")
+          console.timeEnd(chalk.gray('elapsed'))
+          console.log("\n")
+        }
+
+        if (cron) {
+          cron.start()
+        }
+
+        // rl.close()
+        // repl()
+        rl.prompt(true)
+        return
+      })
+      //}
+
+      //repl()
 
     })
     .catch(e => {

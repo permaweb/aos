@@ -24,7 +24,8 @@ export function load(line) {
 
     const spinner = ora({
       spinner: 'dots',
-      suffixText: ``
+      suffixText: ``,
+      discardStdin: false
     })
     spinner.start()
     spinner.suffixText = chalk.gray('Parsing project structure...')

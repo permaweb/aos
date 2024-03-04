@@ -222,10 +222,10 @@ Handlers.add(
         Now = Msg.Timestamp
         if GameMode == "Not-Started" then
             startWaitingPeriod()
-        elseif GameMode == "Waiting" then
-            if Now > StateChangeTime then
-                startGamePeriod()
-            end
+        -- elseif GameMode == "Waiting" then
+            -- if Now > StateChangeTime then
+            --     startGamePeriod()
+            -- end
         elseif GameMode == "Playing" then
             if onTick and type(onTick) == "function" then
               onTick()
