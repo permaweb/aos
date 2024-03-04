@@ -30,5 +30,8 @@
   },
   "aos": {
     "module": "9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4"
+  },
+  "devDependencies": {
+    "esbuild": "^0.20.1"
   }
 }
