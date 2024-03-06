@@ -153,7 +153,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function (
 
   if msg.From == ao.id then
     -- Add tokens to the token pool, according to Quantity
-    Balances[msg.From] = tostring(bint.__add(Balances[Owner], msg.Quantity))
+    Balances[msg.From] = tostring(bint.__add(Balances[msg.From], msg.Quantity))
     ao.send({
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
@@ -163,7 +163,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function (
       Target = msg.From,
       Action = 'Mint-Error',
       ['Message-Id'] = msg.Id,
-      Error = 'Only the Process Owner can mint new ' .. Ticker .. ' tokens!'
+      Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
     })
   end
 end)

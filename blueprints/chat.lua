@@ -142,19 +142,18 @@ Handlers.add(
                     .. Colors.blue .. shortRoom .. Colors.gray .. ".]"
                     .. Colors.reset)
             end
-        else
-            local nick = string.sub(m.Nickname, 1, 10)
-            if m.Broadcaster ~= m.Nickname then
-                nick = nick .. Colors.gray .. "#" .. string.sub(m.Broadcaster, 1, 3)
-            end
-            print(
-                "[" .. Colors.red .. nick .. Colors.reset
-                .. "@" .. Colors.blue .. shortRoom .. Colors.reset
-                .. "]> " .. Colors.green .. m.Data .. Colors.reset)
-
-            DevChat.LastReceive.Room = m.From
-            DevChat.LastReceive.Sender = m.Broadcaster
         end
+        local nick = string.sub(m.Nickname, 1, 10)
+        if m.Broadcaster ~= m.Nickname then
+            nick = nick .. Colors.gray .. "#" .. string.sub(m.Broadcaster, 1, 3)
+        end
+        print(
+            "[" .. Colors.red .. nick .. Colors.reset
+            .. "@" .. Colors.blue .. shortRoom .. Colors.reset
+            .. "]> " .. Colors.green .. m.Data .. Colors.reset)
+
+        DevChat.LastReceive.Room = m.From
+        DevChat.LastReceive.Sender = m.Broadcaster
     end
 )
 
