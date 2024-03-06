@@ -5,18 +5,19 @@ local bint = require('.bint')(256)
 -- Stake Action Handler
 Handlers.stake = function(msg)
   local quantity = bint(msg.Tags.Quantity)
-  local delay = bint(msg.Tags.UnstakeDelay)
-  local height = bint(msg['Block-Height'])
+  local delay = tonumber(msg.Tags.UnstakeDelay)
+  local height = tonumber(msg['Block-Height'])
   assert(Balances[msg.From] and bint(Balances[msg.From]) >= quantity, "Insufficient balance to stake")
   Balances[msg.From] = tostring(bint(Balances[msg.From]) - quantity)
   Stakers[msg.From] = Stakers[msg.From] or {}
   Stakers[msg.From].amount = tostring(bint(Stakers[msg.From].amount or "0") + quantity)
   Stakers[msg.From].unstake_at = height + delay
+  ao.send({Target = msg.From, Data = "Successfully Staked " .. msg.Quantity})
 end
 
 -- Unstake Action Handler
 Handlers.unstake = function(msg)
-  local quantity = bint(msg.Tags.Quantity)
+  local quantity = bint(msg.Quantity)
   local stakerInfo = Stakers[msg.From]
   assert(stakerInfo and bint(stakerInfo.amount) >= quantity, "Insufficient staked amount")
   stakerInfo.amount = tostring(bint(stakerInfo.amount) - quantity)
@@ -24,6 +25,7 @@ Handlers.unstake = function(msg)
       amount = tostring(quantity),
       release_at = stakerInfo.unstake_at
   }
+  ao.send({Target = msg.From, Data = "Successfully unstaked " .. msg.Quantity})
 end
 
 -- Finalization Handler
