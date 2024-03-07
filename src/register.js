@@ -9,6 +9,8 @@ import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
 import minimist from 'minimist'
 import { getPkg } from './services/get-pkg.js'
+import fs from 'fs'
+import path from 'path'
 
 export function register(jwk, services) {
   const AOS_MODULE = process.env.AOS_MODULE || getPkg().aos.module
@@ -25,6 +27,7 @@ export function register(jwk, services) {
   }
 
   const createProcess = ({ jwk, address, name, spawnTags }) => {
+    let data = "1984"
     let tags = [
       { name: 'App-Name', value: 'aos' },
       { name: 'Name', value: name },
@@ -32,7 +35,7 @@ export function register(jwk, services) {
     ]
     const argv = minimist(process.argv.slice(2))
     if (argv.cron) {
-      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks)$/.test(argv.cron)) {
+      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(argv.cron)) {
         tags = [...tags,
         { name: 'Cron-Interval', value: argv.cron },
         { name: 'Cron-Tag-Action', value: 'Cron' }
@@ -42,10 +45,17 @@ export function register(jwk, services) {
       }
     }
 
+    if (argv.data) {
+      if (fs.existsSync(path.resolve(argv.data))) {
+        data = fs.readFileSync(path.resolve(argv.data), 'utf-8')
+      }
+    }
+
     return services.spawnProcess({
       wallet: jwk,
       src: AOS_MODULE,
-      tags
+      tags,
+      data
     })
   }
 
