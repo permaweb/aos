@@ -67,13 +67,13 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
 
 }
 
-export function spawnProcess({ wallet, src, tags }) {
+export function spawnProcess({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const signer = createDataItemSigner(wallet)
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
   return fromPromise(() => connect(info).spawn({
-    module: src, scheduler: SCHEDULER, signer, tags
+    module: src, scheduler: SCHEDULER, signer, tags, data
   })
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
