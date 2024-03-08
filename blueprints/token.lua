@@ -78,7 +78,7 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), func
     Target = msg.From,
     Balance = bal,
     Ticker = Ticker,
-    Account = msg.Tags.Target or msg.From,
+    Account = msg.Tags.Recipient or msg.From,
     Data = bal
   })
 end)
@@ -121,8 +121,8 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Recipient = msg.Recipient,
         Quantity = tostring(qty),
         Data = Colors.gray ..
-        "You transferred " ..
-        Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
+            "You transferred " ..
+            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
       })
       -- Send Credit-Notice to the Recipient
       ao.send({
@@ -131,8 +131,8 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Sender = msg.From,
         Quantity = tostring(qty),
         Data = Colors.gray ..
-        "You received " ..
-        Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.Recipient .. Colors.reset
+            "You received " ..
+            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.Recipient .. Colors.reset
       })
     end
   else
