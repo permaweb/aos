@@ -61,6 +61,17 @@ local function isCreditNotice(msg)
     end
 end
 
+local function formatBalance(balance)
+    -- Ensure balance is treated as a string
+    balance = tostring(balance)
+    -- Check if balance length is more than 3 to avoid unnecessary formatting
+    if #balance > 3 then
+        -- Insert dot before the last three digits
+        balance = balance:sub(1, -4) .. "." .. balance:sub(-3)
+    end
+    return balance
+end
+
 -- Handles Balance messages
 Handlers.add(
     "UpdateCredBalance",
@@ -70,12 +81,14 @@ Handlers.add(
         if msg.Tags.Balance then
             balance = msg.Tags.Balance
         end
-        -- Requests blance if its not set
+        -- Format the balance if it's not set
         if balance then
-            _CRED.balance = balance
+            -- Format the balance by inserting a dot after the first three digits from the right
+            local formattedBalance = formatBalance(balance)
+            _CRED.balance = formattedBalance
             print("CRED Balance updated: " .. _CRED.balance)
         else
-            print("An error occured while updating CRED balance")
+            print("An error occurred while updating CRED balance")
         end
     end
 )
