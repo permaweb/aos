@@ -1,0 +1,7 @@
+# lock files
+package-lock.json
+yarn.lock
+
+# binaries
+process.js
+process.wasm
