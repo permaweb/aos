@@ -33,7 +33,7 @@ test('run sha3 hash successfully', async () => {
 		results[3] = crypto.digest.keccak256("ao");
 		results[4] = crypto.digest.keccak512("ao");
 
-		return table.concat(results,", ");
+		return table.concat(results,", ")
 	`;
 	const msg = {
 		Target: 'AOS',

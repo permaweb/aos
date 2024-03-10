@@ -114,12 +114,16 @@ end
 -- Get a random 32-bit value within the specified range.
 -- @param min (optional) The minimum value of the range. Defaults to 0.
 -- @param max (optional) The maximum value of the range. Defaults to 2^31-1.
+-- @param seed (optional) The seed to use for the random number generator.
 -- @return The random 32-bit value within the specified range.
-local function random(min, max)
+local function random(min, max, seed)
     local min = min or 0;
     local max = max or 2^31-1;
-    local randomStr = tostring(math.random(2^31-1));
-    seedIsaac(randomStr, true);
+    if seed then
+      seedIsaac(seed, true);
+    else
+      seedIsaac(tostring(math.random(2^31-1)), false);
+    end
     return (getRandom() % (max - min + 1)) + min;
 end
 
