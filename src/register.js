@@ -71,6 +71,9 @@ export function register(jwk, services) {
   if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
     spawnTags = [{ name: argv["tag-name"], value: argv["tag-value"] || "" }]
   }
+  if (name.length === 43) {
+    return of(name)
+  }
 
   return of({ jwk, name, spawnTags })
     .chain(getAddress)
