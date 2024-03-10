@@ -5,7 +5,7 @@ import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
 
-test('run sha1 hash successfully', async () => {
+test('run sha256 hash successfully', async () => {
 	const cases = [
 		['', 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855'],
 		['ao','2dd411308b37266d33c9246821adc5aa4002f0091f5e2aece1953789930ad924'],
@@ -30,7 +30,7 @@ test('run sha1 hash successfully', async () => {
 			local crypto = require(".crypto");
 
 			local str = crypto.utils.stream.fromString("${e[0]}");
-			return crypto.digest.sha256(str).asHex();
+			return crypto.digest.sha2_256(str).asHex();
         `;
 		const msg = {
 			Target: 'AOS',
