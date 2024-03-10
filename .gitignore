@@ -2,3 +2,7 @@ node_modules
 wallet.json
 tom.json
 aos.json
+
+# prettier config
+.prettierrc
+.prettierignore
