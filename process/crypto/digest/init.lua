@@ -2,7 +2,8 @@ local MD2 = require(".crypto.digest.md2")
 local MD4 = require(".crypto.digest.md4")
 local MD5 = require(".crypto.digest.md5")
 local SHA1 = require(".crypto.digest.sha1")
-local SHA256 = require(".crypto.digest.sha256")
+local SHA2_256 = require(".crypto.digest.sha2_256")
+local SHA3 = require(".crypto.digest.sha3")
 
 
 local digest = {
@@ -11,8 +12,13 @@ local digest = {
     md4 = MD4,
     md5 = MD5,
     sha1 = SHA1,
-    sha256 = SHA256
+    sha2_256 = SHA2_256,
+    sha3_256 = SHA3.sha3_256,
+    sha3_512 = SHA3.sha3_512,
+    keccak256 = SHA3.keccak256,
+    keccak512 = SHA3.keccak512
 }
+
 
 
 
