@@ -21,6 +21,32 @@ local function stringToHex(s, ln, sep)
 	return table.concat(t)
 end
 
+--- Converts a hex encoded string to its corresponding decoded string.
+--- If the optional parameter `unsafe` is defined, it assumes that the hex string is well-formed
+--- (no checks, no whitespace removal). By default, it removes whitespace (including newlines)
+--- and checks that the hex string is well-formed.
+--- 
+--- @param hs string: The hex encoded string to be decoded.
+--- @param unsafe boolean: (optional) If true, assumes the hex string is well-formed.
+--- @return string, number: The decoded string.
+local function hexToString(hs, unsafe)
+	-- decode an hex encoded string. return the decoded string
+	-- if optional parameter unsafe is defined, assume the hex
+	-- string is well formed (no checks, no whitespace removal).
+	-- Default is to remove white spaces (incl newlines)
+	-- and check that the hex string is well formed
+	local tonumber = tonumber
+	if not unsafe then
+		hs = string.gsub(hs, "%s+", "") -- remove whitespaces
+		if string.find(hs, '[^0-9A-Za-z]') or #hs % 2 ~= 0 then
+			error("invalid hex string")
+		end
+	end
+	return hs:gsub(	'(%x%x)',
+		function(c) return string.char(tonumber(c, 16)) end
+		)
+end
+
 
 local function ascii2hex(source)
   local ss = "";
@@ -32,5 +58,6 @@ end
 
 return {
 	stringToHex = stringToHex,
+	hexToString = hexToString,
 	ascii2hex = ascii2hex
 }
