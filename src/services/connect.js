@@ -42,6 +42,7 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
     .chain(fromPromise(() => connect(info).message({ process: processId, signer, tags, data })))
 
   return fromPromise(() => connect(info).message({ process: processId, signer, tags, data }))()
+    //.bimap(function (e) { console.log(e); return e }, function (a) { console.log(a); return a; })
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
