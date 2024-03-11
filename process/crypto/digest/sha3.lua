@@ -206,8 +206,19 @@ local function keccakHash(rate, length, data, algorithm)
 	state.permuted = { {}, {}, {}, {}, {}, }
 	state.parities = {0,0,0,0,0}
 	absorb(state, data, algorithm)
-	local encodedHex = Hex.stringToHex(squeeze(state):sub(1,length/8));
-	return encodedHex
+	local encoded = squeeze(state):sub(1,length/8);
+
+	local public = {}
+
+	public.asString = function()
+		return encoded
+	end
+
+	public.asHex = function()
+		return Hex.stringToHex(encoded)
+	end
+
+	return public
 end
 
 -- output Hex Strings

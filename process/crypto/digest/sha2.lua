@@ -91,7 +91,21 @@ local function sha256 (msg)
 	h7 = h7 & 0xffffffff
 	h8 = h8 & 0xffffffff
 
-	return Hex.stringToHex(string.pack(">I4I4I4I4I4I4I4I4", h1, h2, h3, h4, h5, h6, h7, h8))
+	local public = {}
+
+	public.asBytes = function()
+		return { h1, h2, h3, h4, h5, h6, h7, h8}
+	end
+
+	public.asString = function()
+		return string.pack(">I4I4I4I4I4I4I4I4", h1, h2, h3, h4, h5, h6, h7, h8)
+	end
+
+	public.asHex = function()
+		return Hex.stringToHex(string.pack(">I4I4I4I4I4I4I4I4", h1, h2, h3, h4, h5, h6, h7, h8))
+	end
+
+	return public
 end
 
 ------------------------------------------------------------------------
@@ -180,7 +194,22 @@ local function sha512 (msg)
 		h7 = h7 + g 
 		h8 = h8 + h 
 	end
-	return Hex.stringToHex(string.pack(">i8i8i8i8i8i8i8i8", h1, h2, h3, h4, h5, h6, h7, h8))
+
+	local public = {}
+
+	public.asBytes = function()
+		return { h1, h2, h3, h4, h5, h6, h7, h8}
+	end
+
+	public.asString = function()
+		return string.pack(">i8i8i8i8i8i8i8i8", h1, h2, h3, h4, h5, h6, h7, h8)
+	end
+
+	public.asHex = function()
+		return Hex.stringToHex(string.pack(">i8i8i8i8i8i8i8i8", h1, h2, h3, h4, h5, h6, h7, h8))
+	end
+
+	return public
 end
 
 ------------------------------------------------------------------------

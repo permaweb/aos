@@ -176,12 +176,24 @@ end
 -- @param data - The input data to be hashed.
 -- @param outlen(optional) - The desired length of the hash output.
 -- @param key(optional) - The key to be used for the hash calculation.
--- @return The calculated BLAKE2b Hex encoded Hash.
+-- @return The calculated BLAKE2b encoded hash.
 local function black2b(data, outlen, key)
     local ctx, msg = init(outlen, key)
     if not ctx then return ctx, msg end
     update(ctx, data)
-    return Hex.stringToHex(final(ctx))
+	local hash = final(ctx)
+
+	local public = {}
+
+	public.asString = function()
+		return hash
+	end
+
+	public.asHex = function()
+		return Hex.stringToHex(hash)
+	end
+
+	return public
 end
 
 return black2b

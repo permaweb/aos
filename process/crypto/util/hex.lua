@@ -47,17 +47,7 @@ local function hexToString(hs, unsafe)
 		)
 end
 
-
-local function ascii2hex(source)
-  local ss = "";
-  for i = 1,#source do
-    ss = ss..string.format("%02X",source:byte(i,i));
-  end
-  return ss
-end
-
 return {
 	stringToHex = stringToHex,
 	hexToString = hexToString,
-	ascii2hex = ascii2hex
 }

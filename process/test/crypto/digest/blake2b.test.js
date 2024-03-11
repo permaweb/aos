@@ -26,8 +26,8 @@ test('run sha3 hash successfully', async () => {
 
 		local results = {};
 
-		results[1] =  crypto.digest.blake2b("ao");
-		results[2] =  crypto.digest.blake2b("ao", 32);
+		results[1] =  crypto.digest.blake2b("ao").asHex();
+		results[2] =  crypto.digest.blake2b("ao", 32).asHex();
 
 		return table.concat(results, ", ");
 	`;

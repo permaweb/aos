@@ -35,7 +35,7 @@ test('run morus cipher successfully', async () => {
 
 		local e = crypto.cipher.morus.encrypt(k, iv, m, ad);
 		results[1] = e.asHex();
-		results[2] = crypto.cipher.morus.decrypt(k, iv, e.asBytes(), #ad);
+		results[2] = crypto.cipher.morus.decrypt(k, iv, e.asString(), #ad);
 
 		--[[
 			32 bit key
@@ -45,7 +45,7 @@ test('run morus cipher successfully', async () => {
 		
 		e = crypto.cipher.morus.encrypt(k, iv, m, ad);
 		results[3] = e.asHex();
-		results[4] = crypto.cipher.morus.decrypt(k, iv, e.asBytes(), #ad);
+		results[4] = crypto.cipher.morus.decrypt(k, iv, e.asString(), #ad);
 
 		return table.concat(results, ", ");
 	`;

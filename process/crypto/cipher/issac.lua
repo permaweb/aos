@@ -149,7 +149,7 @@ end
 -- Encrypts a message using the ISSAC cipher algorithm.
 -- @param msg (string) The message to be encrypted.
 -- @param key (string) The encryption key. The string can be any size. The first 256 values will be used.
--- @return (string) The encrypted message.
+-- @return (table) Functions to get the encrypted message as bytes, string, or hex.
 local function encrypt(msg, key)
     seedIsaac(key, true);
     local msgLength = #msg;
@@ -159,7 +159,22 @@ local function encrypt(msg, key)
         destination[i] = string.char(caesar(1, msg:byte(i, i), getRandomChar(), 95, 32));
     end
     
-    return table.concat(destination);
+    local encrypted = destination
+
+    local public = {}
+    public.asBytes = function()
+        return encrypted
+    end
+
+    public.asString = function()
+        return table.concat(encrypted)
+    end
+
+    public.asHex = function()
+        return Hex.stringToHex(table.concat(encrypted))
+    end
+
+    return public
 end
 
 -- Decrypts an encrypted message using the ISSAC cipher algorithm.

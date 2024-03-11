@@ -15,8 +15,7 @@ test('run issac cipher successfully', async () => {
 		},
 	};
 
-	const results = [ "412C3D76522622667D7836", "hello world" ]
-
+	const results = [ "412c3d76522622667d7836", "hello world" ]
 	
 	const data = `
 		local crypto = require(".crypto");
@@ -29,9 +28,9 @@ test('run issac cipher successfully', async () => {
 		local encrypted, decrypted;
 
 		encrypted = crypto.cipher.issac.encrypt(message, key);
-		decrypted = crypto.cipher.issac.decrypt(encrypted, key);
+		decrypted = crypto.cipher.issac.decrypt(encrypted.asString(), key);
 
-		results[1] = crypto.utils.hex.ascii2hex(encrypted);
+		results[1] = encrypted.asHex();
 		results[2] = decrypted;
 
 		return table.concat(results, ", ");

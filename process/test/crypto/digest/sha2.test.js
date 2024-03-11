@@ -26,11 +26,11 @@ test('run sha2 hash successfully', async () => {
 
 	local results = {};
 	
-	results[1] = crypto.digest.sha2_256("abc");
-	results[2] = crypto.digest.sha2_256("ao");
+	results[1] = crypto.digest.sha2_256("abc").asHex();
+	results[2] = crypto.digest.sha2_256("ao").asHex();
 	
-	results[3] = crypto.digest.sha2_512("abc");
-	results[4] = crypto.digest.sha2_512("ao");
+	results[3] = crypto.digest.sha2_512("abc").asHex();
+	results[4] = crypto.digest.sha2_512("ao").asHex();
 
 	return table.concat(results,", ")
 	`;

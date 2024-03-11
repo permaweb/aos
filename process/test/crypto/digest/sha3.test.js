@@ -28,10 +28,10 @@ test('run sha3 hash successfully', async () => {
 
 		local results = {};
 
-		results[1] = crypto.digest.sha3_256("ao");
-		results[2] = crypto.digest.sha3_512("ao");
-		results[3] = crypto.digest.keccak256("ao");
-		results[4] = crypto.digest.keccak512("ao");
+		results[1] = crypto.digest.sha3_256("ao").asHex();
+		results[2] = crypto.digest.sha3_512("ao").asHex();
+		results[3] = crypto.digest.keccak256("ao").asHex();
+		results[4] = crypto.digest.keccak512("ao").asHex();
 
 		return table.concat(results,", ")
 	`;

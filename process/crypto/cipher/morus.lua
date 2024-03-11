@@ -340,16 +340,20 @@ local function encrypt(k, iv, m, ad)
 
 	local public = {};
 
+	public.asBytes = function()
+		return ct
+	end
+
 	public.asHex = function()
 		return Hex.stringToHex(table.concat(ct))
 	end
 
-	public.asBytes = function()
+	public.asString = function()
 		return table.concat(ct)
 	end
 
 	return public
-end--encrypt()
+end
 
 
 --- Decrypts an encrypted message using the Morus cipher.
