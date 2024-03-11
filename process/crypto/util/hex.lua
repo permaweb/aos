@@ -28,7 +28,7 @@ end
 --- 
 --- @param hs string: The hex encoded string to be decoded.
 --- @param unsafe boolean: (optional) If true, assumes the hex string is well-formed.
---- @return string, number: The decoded string.
+--- @return string: The decoded string.
 local function hexToString(hs, unsafe)
 	-- decode an hex encoded string. return the decoded string
 	-- if optional parameter unsafe is defined, assume the hex
@@ -42,9 +42,8 @@ local function hexToString(hs, unsafe)
 			error("invalid hex string")
 		end
 	end
-	return hs:gsub(	'(%x%x)',
-		function(c) return string.char(tonumber(c, 16)) end
-		)
+	local count =  string.gsub(hs, '(%x%x)',function(c) return string.char(tonumber(c, 16)) end)
+	return count
 end
 
 return {
