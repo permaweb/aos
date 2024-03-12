@@ -28,7 +28,7 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
     const res = await fetch(UPDATE_URL)
     const data = []
     const extract = tar.extract()
-
+    if (res.status === 404) { return resolve({ available: false }) }
     Readable.fromWeb(res.body).pipe(createGunzip()).pipe(extract)
 
     extract.on('entry', (header, stream, next) => {
@@ -46,7 +46,9 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
         })
         next()
       })
+
       stream.resume()
+
     })
     extract.on('finish', () => {
 
@@ -65,6 +67,8 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
         data
       })
     })
+
+
   } catch {
     console.log(chalk.red('ERROR: Could not fetch update'))
     resolve({ available: false })
