@@ -37,7 +37,7 @@ local G = function(x, y, z) return XOR(x, XOR(y, z)); end
 local H = function(x, y, z) return OR(AND(x, OR(y, z)), AND(y, z)); end
 local I = function(x, y, z) return XOR(x, XOR(y, z)); end
 
-local SHA1 = function(stream)
+local SHA1 = function()
 
     local queue = Queue();
 
@@ -96,31 +96,50 @@ local SHA1 = function(stream)
         h4 = AND(h4 + e, 0xFFFFFFFF);
     end
 
-    for s in stream do
-        queue.push(s);
-        if queue.size() >= 64 then processBlock(); end
+    public.init = function()
+        queue.reset();
+        h0 = 0x67452301;
+        h1 = 0xEFCDAB89;
+        h2 = 0x98BADCFE;
+        h3 = 0x10325476;
+        h4 = 0xC3D2E1F0;
+        return public;
     end
 
-    local bits = queue.getHead() * 8;
 
-    queue.push(0x80);
-    while ((queue.size() + 7) % 64) < 63 do
-        queue.push(0x00);
+    public.update = function(bytes)
+        for b in bytes do
+            queue.push(b);
+            if queue.size() >= 64 then processBlock(); end
+        end
+
+        return public;
     end
 
-    local b0, b1, b2, b3, b4, b5, b6, b7 = dword2bytes(bits);
+    public.finish = function()
+        local bits = queue.getHead() * 8;
 
-    queue.push(b0);
-    queue.push(b1);
-    queue.push(b2);
-    queue.push(b3);
-    queue.push(b4);
-    queue.push(b5);
-    queue.push(b6);
-    queue.push(b7);
+        queue.push(0x80);
+        while ((queue.size() + 7) % 64) < 63 do
+            queue.push(0x00);
+        end
 
-    while queue.size() > 0 do
-        processBlock();
+        local b0, b1, b2, b3, b4, b5, b6, b7 = dword2bytes(bits);
+
+        queue.push(b0);
+        queue.push(b1);
+        queue.push(b2);
+        queue.push(b3);
+        queue.push(b4);
+        queue.push(b5);
+        queue.push(b6);
+        queue.push(b7);
+
+        while queue.size() > 0 do
+            processBlock();
+        end
+
+        return public;
     end
 
     public.asBytes = function()
@@ -158,4 +177,15 @@ local SHA1 = function(stream)
     return public;
 end
 
-return SHA1;
+
+local sha1 = function(stream)
+    local result = SHA1()
+            .update(stream)
+            .finish()
+    return result
+end
+
+return {
+    sha1 = sha1,
+    SHA1 = SHA1
+}
