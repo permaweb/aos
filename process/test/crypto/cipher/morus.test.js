@@ -15,7 +15,7 @@ test('run morus cipher successfully', async () => {
 		},
 	};
 
-	const results = [ 'da4f100a110da5c37e0c91e1609846377540', 'ao' ,'6164646974696f6e616c2064617461145d484fb6261fca15a66193de4ae1a06886','ao']
+	const results = [ '514ed31473d8fb0b76c6cbb17af35ed01d0a', 'ao' ,'6164646974696f6e616c20646174616aae7a8b95c50047bea251c3b7133eec5fcc','ao']
 
 	
 	const data = `
@@ -29,8 +29,8 @@ test('run morus cipher successfully', async () => {
 			16 bit key
 		]]--
 
-		local k = crypto.utils.hex.hexToString("00000000000000000000000000000000");
-		local iv = crypto.utils.hex.hexToString("00000000000000000000000000000000");
+		local k = "super_secret_shh"
+		local iv = "0000000000000000"
 		local ad= "";
 
 		local e = crypto.cipher.morus.encrypt(k, iv, m, ad);

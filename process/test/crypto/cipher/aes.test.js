@@ -81,4 +81,4 @@ test('run aes cipher successfully', async () => {
 	const result = await handle(null, msg, env);
 	assert.equal(result.Output?.data.output, results.join(', '));
 	assert.ok(true);
-}, 10000000);
+});

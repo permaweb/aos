@@ -15,16 +15,13 @@ test('run hmac successfully', async () => {
 		},
 	};
 
-	const results = [ "81ed1cb2e8969a74d74e22891d5ba2f85134d1a5", "1b3a581fd7fd5784861392fdbb031e5d74a27af8b5c0221a57f3ebb364b941a7" ]
+	const results = [ "3966f45acb53f7a1a493bae15afecb1a204fa32d", "542da02a324155d688c7689669ff94c6a5f906892aa8eccd7284f210ac66e2a7" ]
 	
 	const data = `
 		local crypto = require(".crypto")
 
-		local Stream = require(".crypto.util.stream")
-		local Array = require(".crypto.util.array")
-
-		local data = Stream.fromString("ao")
-		local key = Array.fromString("Jefebbadadada")
+		local data = crypto.utils.stream.fromString("ao")
+		local key = crypto.utils.array.fromString("super_secret_key")
 
 		local results = {}
 

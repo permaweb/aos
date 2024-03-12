@@ -20,12 +20,11 @@ test('run pbkdf2 successfully', async () => {
 
 	const data = `
 	local crypto = require(".crypto");
-    local Array = require(".crypto.util.array")
 
 	local results = {};
 
-	local salt = Array.fromString("salt")
-    local password = Array.fromString("password")
+	local salt = crypto.utils.array.fromString("salt")
+    local password = crypto.utils.array.fromString("password")
     local iterations = 4
     local keyLen = 16
 

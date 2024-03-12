@@ -15,15 +15,15 @@ test('run issac cipher successfully', async () => {
 		},
 	};
 
-	const results = [ "412c3d76522622667d7836", "hello world" ]
+	const results = [ "7851", "ao" ]
 	
 	const data = `
 		local crypto = require(".crypto");
 
 		local results = {};
 
-		local message = "hello world";
-		local key = "secret-key";
+		local message = "ao";
+		local key = "secret_key";
 
 		local encrypted, decrypted;
 
