@@ -36,7 +36,8 @@ end
 
 local ww512 = {}
 	  
-local function sha512 (msg)
+local function sha512 (stream)
+	local msg = Stream.toString(stream)
 	msg = pad128(msg, #msg)
 	local h1, h2, h3, h4, h5, h6, h7, h8 = 
 		0x6a09e667f3bcc908, 0xbb67ae8584caa73b,

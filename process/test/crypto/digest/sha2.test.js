@@ -25,12 +25,13 @@ test('run sha2 hash successfully', async () => {
 	local results = {};
 
 	local data1 = crypto.utils.stream.fromString("abc");
-	local data2 = "ao"
+	local data2 = crypto.utils.stream.fromString("ao");
+
 	
 	results[1] = crypto.digest.sha2_256(data1).asHex();
 	results[2] = crypto.digest.sha2_512(data2).asHex();
 
-	return table.concat(results,", ")
+	return table.concat(results, ", ");
 	`;
 	const msg = {
 		Target: 'AOS',
