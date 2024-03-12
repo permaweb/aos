@@ -221,14 +221,12 @@ local function keccakHash(rate, length, data, algorithm)
 	return public
 end
 
--- output Hex Strings
+-- output tables for getting the hash as bytes, string, or hex
 local function sha3_256(data) return keccakHash(1088, 256, data, 'sha3') end
 local function sha3_512(data) return keccakHash(576, 512, data, 'sha3') end
 local function keccak256(data) return keccakHash(1088, 256, data, 'keccak') end
 local function keccak512(data) return keccakHash(576, 512, data, 'keccak') end
 
-
---return module
 return {
 	sha3_256 = sha3_256,
 	sha3_512 = sha3_512,

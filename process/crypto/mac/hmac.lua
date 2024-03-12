@@ -28,12 +28,14 @@ local HMAC = function()
 
     public.setKey = function(key)
         local keyStream;
-
-        if(Array.size(key) > blockSize) then
+        if Digest == nil then
+            error("Digest not set");
+        end
+        if (Array.size(key) > blockSize) then
             keyStream = Stream.fromArray(Digest()
-                        .update(Stream.fromArray(key))
-                        .finish()
-                        .asBytes());
+                .update(Stream.fromArray(key))
+                .finish()
+                .asBytes());
         else
             keyStream = Stream.fromArray(key);
         end
@@ -53,7 +55,7 @@ local HMAC = function()
 
     public.init = function()
         digest.init()
-              .update(Stream.fromArray(innerPadding));
+            .update(Stream.fromArray(innerPadding));
         return public;
     end
 
@@ -65,9 +67,9 @@ local HMAC = function()
     public.finish = function()
         local inner = digest.finish().asBytes();
         digest.init()
-              .update(Stream.fromArray(outerPadding))
-              .update(Stream.fromArray(inner))
-              .finish();
+            .update(Stream.fromArray(outerPadding))
+            .update(Stream.fromArray(inner))
+            .finish();
 
         return public;
     end
@@ -85,10 +87,16 @@ local HMAC = function()
     end
 
     return public;
-
 end
 
+--- @class Array : table
+--- @class Stream : table
 
+--- HMAC function for generating a hash-based message authentication code
+--- @param data (Stream) - The data to hash and authenticate
+--- @param key (Array) - The key to use for the HMAC
+--- @param algorithm? (string) - The algorithm to use for the HMAC (sha1, sha256). Defaults to "sha1"
+--- @returns table - A table containing the HMAC in bytes, string, and hex formats.
 local hmac = function(data, key, algorithm)
     local digest = nil
     if algorithm == "sha1" then

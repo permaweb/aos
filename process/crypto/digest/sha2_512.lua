@@ -1,7 +1,4 @@
 local Hex = require(".crypto.util.hex")
-local Stream = require(".crypto.util.stream")
-------------------------------------------------------------------------
--- sha512
 
 local k512 = {
 0x428a2f98d728ae22,0x7137449123ef65cd,0xb5c0fbcfec4d3b2f,0xe9b5dba58189dbbc,
@@ -35,9 +32,11 @@ local function pad128(msg, len)
 end
 
 local ww512 = {}
-	  
-local function sha512 (stream)
-	local msg = Stream.toString(stream)
+
+--- SHA-512 hash function.
+--- @param msg string - The message to hash.
+--- @returns table - A table containing the hash in bytes, string, and hex formats.
+local function sha512 (msg)
 	msg = pad128(msg, #msg)
 	local h1, h2, h3, h4, h5, h6, h7, h8 = 
 		0x6a09e667f3bcc908, 0xbb67ae8584caa73b,
@@ -104,7 +103,5 @@ local function sha512 (stream)
 
 	return public
 end
-
-------------------------------------------------------------------------
 
 return sha512

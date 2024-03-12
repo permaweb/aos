@@ -90,8 +90,9 @@ local function randInit(flag)
 
 end
 
--- Seed ISAAC with a given string.
--- The string can be any size. The first 256 values will be used.
+--- Seeds the ISAAC random number generator with the given seed.
+--- @param seed string - The seed to use for the random number generator.
+--- @param flag? boolean - Whether to use all the information in the seed. Defaults to true.
 local function seedIsaac(seed, flag)
   local seedLength = #seed;
   for i = 0,255 do mm[i] = 0; end
@@ -99,8 +100,8 @@ local function seedIsaac(seed, flag)
   randInit(flag);
 end
 
--- Retrieves a random number from the ISAAC random number generator.
--- @return The random number.
+--- Retrieves a random number from the ISAAC random number generator
+--- @return number: The random number
 local function getRandom()
     local result = randRsl[randCnt];
     randCnt = randCnt + 1;
@@ -111,11 +112,11 @@ local function getRandom()
     return result;
 end
 
--- Get a random 32-bit value within the specified range.
--- @param min (optional) The minimum value of the range. Defaults to 0.
--- @param max (optional) The maximum value of the range. Defaults to 2^31-1.
--- @param seed (optional) The seed to use for the random number generator.
--- @return The random 32-bit value within the specified range.
+--- Get a random 32-bit value within the specified range.
+--- @param min? number (optional) - The minimum value of the range. Defaults to 0.
+--- @param max? number (optional) - The maximum value of the range. Defaults to 2^31-1.
+--- @param seed? string (optional) - The seed to use for the random number generator.
+--- @return number: The random 32-bit value within the specified range.
 local function random(min, max, seed)
     local min = min or 0;
     local max = max or 2^31-1;
@@ -127,9 +128,9 @@ local function random(min, max, seed)
     return (getRandom() % (max - min + 1)) + min;
 end
 
--- Get a random character in printable ASCII range
--- Returns a random character between ASCII values 32 and 126.
--- @return number: The random character.
+
+--- Get a random character in printable ASCII range.
+--- @return number: The random character [32, 126].
 local function getRandomChar()
     return getRandom() % 95 + 32;
 end
@@ -146,10 +147,10 @@ local function caesar(m, ch, shift, modulo, start)
   return start + n;
 end
 
--- Encrypts a message using the ISSAC cipher algorithm.
--- @param msg (string) The message to be encrypted.
--- @param key (string) The encryption key. The string can be any size. The first 256 values will be used.
--- @return (table) Functions to get the encrypted message as bytes, string, or hex.
+--- Encrypts a message using the ISSAC cipher algorithm.
+--- @param msg string - The message to be encrypted.
+--- @param key string - The key used for encryption.
+--- @returns table - A table containing the encrypted message in bytes, string, and hex formats.
 local function encrypt(msg, key)
     seedIsaac(key, true);
     local msgLength = #msg;
@@ -177,10 +178,10 @@ local function encrypt(msg, key)
     return public
 end
 
--- Decrypts an encrypted message using the ISSAC cipher algorithm.
--- @param encrypted The encrypted message to be decrypted.
--- @param key The key used for encryption.
--- @return The decrypted message.
+--- Decrypts an encrypted message using the ISSAC cipher algorithm.
+--- @param encrypted string - The encrypted message to be decrypted.
+--- @param key string - The key used for encryption.
+--- @returns string - The decrypted message.
 local function decrypt(encrypted, key)
     seedIsaac(key, true);
     local msgLength = #encrypted;

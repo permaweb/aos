@@ -1,31 +1,4 @@
---[[
-
-=== Morus-1280
-
-   1280-bit/160-byte state (as 20 uint64), 32-byte block
-   16 or 32-byte key, 16-byte nonce
-
-Morus Authors: Hongjun Wu, Tao Huang - Nanyang Tech University (NTU)
-https://personal.ntu.edu.sg/wuhj/research/caesar/caesar.html
-
-Morus is a finalist (round 4) in the CAESAR competition
-http://competitions.cr.yp.to/caesar-submissions.html
-   
-]]
-
 local Hex = require(".crypto.util.hex");
-
-------------------------------------------------------------------------
-
--- rotation constants:
---   n1 = 13
---   n2 = 46
---   n3 = 38
---   n4 = 7
---   n5 = 4
-
--- local function rotl(x,n) return (x << n) | (x >> (64-n)) end
--- rotate inlined in state_update()
 
 local function state_update(s, m0, m1, m2, m3)
 	local s00, s01, s02, s03 = s[1],  s[2],  s[3],  s[4]
@@ -279,24 +252,23 @@ local function tag_compute(s, mlen, adlen)
 	s[2] = s[2] ~ s[7] ~ (s[10] & s[14]) -- j=1
 	s[3] = s[3] ~ s[8] ~ (s[11] & s[15]) -- j=2
 	s[4] = s[4] ~ s[5] ~ (s[12] & s[16]) -- j=3
-	-- [why compute s[3], s[4]?  for a 32-byte mac?]
-	--
-	return s[1], s[2] -- tag is state[0][0]..state[0][1]
-end-- tag_compute
+	
+	return s[1], s[2]
+end
 
 --- Encrypts a message using the Morus encryption algorithm.
--- @param k The encryption key (16 or 32-byte string).
--- @param iv The nonce or initial value (16-byte string).
--- @param m The message to encrypt (variable length string).
--- @param ad The additional data (variable length string). Optional, defaults to "".
--- @return The encrypted message as a string (ad .. c .. tag), where ad is the non-encrypted additional data, c is the encrypted message, and tag is the 16-byte authentication MAC.
--- @usage local encryptedMessage = encrypt(key, nonce, message, additionalData)
+--- @param k string - The encryption key (16 or 32-byte string).
+--- @param iv string - The nonce or initial value (16-byte string).
+--- @param m string - The message to encrypt (variable length string).
+--- @param ad? string (optional) - The additional data (variable length string). Optional, defaults to "".
+--- @returns table - A table containing the encrypted message in bytes, hex, and string formats.
+--- @usage local encryptedMessage = encrypt(key, nonce, message, additionalData)
 local function encrypt(k, iv, m, ad)
 	ad = ad or ""
 	local mlen, adlen = #m, #ad
 	local m0, m1, m2, m3, c0, c1, c2, c3
 	local blk, blen
-	local ct = {} -- used to collect ad, encrypted blocks and tag
+	local ct = {}
 	-- init
 	local s = state_init(k, iv)
 	-- absorb ad
@@ -355,14 +327,12 @@ local function encrypt(k, iv, m, ad)
 	return public
 end
 
-
---- Decrypts an encrypted message using the Morus cipher.
--- @param k The encryption key (16-byte string).
--- @param iv The nonce or initial value (16-byte string).
--- @param e The encrypted message.
--- @param adlen The length of the additional data at the start of e (optional, defaults to 0).
--- @return The plain text message as a string, or nil and an error message if the authentication tag is not valid.
--- @usage local plaintext = decrypt(key, nonce, encrypted_message, additional_data_length)
+--- Decrypts an encrypted message using the Morus encryption algorithm.
+--- @param k string - The encryption key (16 or 32-byte string).
+--- @param iv string - The nonce or initial value (16-byte string).
+--- @param e string - The encrypted message (variable length string).
+--- @param adlen? number (optional) - The length of the additional data at the start of e. Optional, defaults to 0.
+--- @returns table - A table containing the decrypted message in bytes, hex, and string formats.
 local function decrypt(k, iv, e, adlen)
 	adlen = adlen or 0
     local ad =  ""

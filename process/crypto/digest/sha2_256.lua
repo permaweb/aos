@@ -1,5 +1,6 @@
 local Bit = require(".crypto.util.bit");
 local Queue = require(".crypto.util.queue");
+local Stream = require(".crypto.util.stream");
 
 local CONSTANTS = {
    0x428a2f98, 0x71374491, 0xb5c0fbcf, 0xe9b5dba5, 0x3956c25b, 0x59f111f1, 0x923f82a4, 0xab1c5ed5,
@@ -45,8 +46,6 @@ local dword2bytes = function(i)
     local b0, b1, b2, b3 = word2bytes(math.floor(i / 0x100000000));
     return b0, b1, b2, b3, b4, b5, b6, b7;
 end
-
-
 
 
 local SHA2_256 = function()
@@ -214,6 +213,10 @@ local SHA2_256 = function()
 
 end
 
+--- @class Stream : table
+
+--- @param stream (Stream) - A function that returns the next byte of the stream, or nil if the stream has ended.
+--- @returns table - A table containing the hash in bytes, string, and hex formats.
 local sha2_256 = function(stream)
     local result = SHA2_256()
             .update(stream)

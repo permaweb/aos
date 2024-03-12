@@ -1,22 +1,3 @@
---[[
-
-norx - authenticated encryption with associated data (AEAD)
-
-NORX is a high-performance authenticated encryption algorithm
-supporting associated data (AEAD). It has been designed by
-Jean-Philippe Aumasson, Philipp Jovanovic and Samuel Neves.
-See https://github.com/norx/resources
-
-NORX is a submission to CAESAR (Competition for Authenticated
-Encryption: Security, Applicability, and Robustness) http://competitions.cr.yp.to/caesar.html
-
-This Lua code implements the default NORX 64-4-1 variant
-- state is 16 64-bit words, four rounds, no parallel execution
-- key and nonce are 256 bits
-
-
-]]
-
 local Hex = require(".crypto.util.hex")
 
 -- tags
@@ -268,13 +249,14 @@ local function verify_tag(tag1, tag2)
 	return tag1 == tag2
 end
 
--- Encrypts the given plain text using the NORX cipher with an AEAD construction.
--- @param {string} key - 32-byte string
--- @param {string} nonce - 32-byte string
--- @param {string} plain - plain text to encrypt
--- @param {string=} header - optional string (can be nil or an empty string)
--- @param {string=} trailer - an optional string (can be nil or an empty string)
--- @return {table} - Functions to get encrypted text with the 32-byte authentication tag in different formats
+
+--- Encrypts the given plain text using the NORX cipher with an AEAD construction.
+--- @param key string - The key used for encryption.
+--- @param nonce string - The nonce used for encryption 32-byte string.
+--- @param plain string - The plain text to be encrypted 32-byte string.
+--- @param header? string (optional) - The header to be encrypted 32-byte string. Defaults to an empty string.
+--- @param trailer? string (optional) - The trailer to be encrypted 32-byte string. Defaults to an empty string.
+--- @returns table - A table containing the encrypted message in bytes, string, and hex formats.
 local function aead_encrypt(key, nonce, plain, header, trailer)
 	header = header or ""
 	trailer = trailer or ""
@@ -305,13 +287,13 @@ local function aead_encrypt(key, nonce, plain, header, trailer)
     return public
 end
 
--- Decrypts the given crypted text using the NORX cipher with an AEAD construction.
--- @param {string} key - 32-byte string
--- @param {string} nonce - 32-byte string
--- @param {string} crypted - crypted text to decrypt as string
--- @param {string=} header - optional string (can be nil or an empty string)
--- @param {string=} trailer - an optional string (can be nil or an empty string)
--- @return {string|nil} - the decrypted plain text, or (nil, error message) if the authenticated decryption fails
+--- Decrypts the given crypted text using the NORX cipher with an AEAD construction.
+--- @param key string - The key used for decryption 32-byte string.
+--- @param nonce string - The nonce used for decryption 32-byte string.
+--- @param crypted string - The crypted text to be decrypted 32-byte string.
+--- @param header? string (optional) - The header to be decrypted 32-byte string. Defaults to an empty string.
+--- @param trailer? string (optional) - The trailer to be decrypted 32-byte string. Defaults to an empty string.
+--- @returns string|nil - The decrypted plain text, or (nil, error message) if the authenticated decryption fails.
 local function aead_decrypt(key, nonce, crypted, header, trailer)
 	header = header or ""
 	trailer = trailer or ""

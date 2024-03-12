@@ -1,17 +1,3 @@
-
---[[
-
-blake2b hash function -- See https://blake2.net/
-
-Specified in RFC 7693, https://tools.ietf.org/html/rfc7693
-
-BLAKE2 is based on the SHA-3 proposal BLAKE, designed by Jean-Philippe Aumasson,
-Luca Henzen, Willi Meier, and Raphael C.-W. Phan.
-
-This Lua 5.3 implementation is derived from the C reference code in RFC 7693.
-
-]]
-
 local Hex = require(".crypto.util.hex");
 
 
@@ -169,21 +155,26 @@ local function final(ctx)
 			(ctx.h[(i >> 3) + 1] >> (8 * (i & 7))) & 0xff)
 	end
 	local dig = table.concat(outtbl)
-	return dig
+	return outtbl
 end
 
--- Calculates the BLAKE2b hash of the given data.
--- @param data - The input data to be hashed.
--- @param outlen(optional) - The desired length of the hash output.
--- @param key(optional) - The key to be used for the hash calculation.
--- @return The calculated BLAKE2b encoded hash.
+--- Calculates the BLAKE2b hash of the given data.
+--- @param data string - The input data to be hashed.
+--- @param outlen? number (optional) - The desired length of the hash output. Defaults to 64.
+--- @param key? string (optional) - The key to be used for the hash calculation. Defaults to an empty string.
+--- @returns table - A table containing the hash in bytes, string, and hex formats.
 local function black2b(data, outlen, key)
     local ctx, msg = init(outlen, key)
     if not ctx then return ctx, msg end
     update(ctx, data)
-	local hash = final(ctx)
+    local bytes = final(ctx)
+	local hash = table.concat(bytes)
 
-	local public = {}
+    local public = {}
+	
+	public.asBytes = function()
+		return bytes
+	end
 
 	public.asString = function()
 		return hash

@@ -49,31 +49,32 @@ local getMode = function(mode)
     end
 end
 
+
 --- Encrypts the given data using AES encryption.
--- @param {string} data -  The data to be encrypted.
--- @param {string} key - The key to use for encryption.
--- @param {string=} iv - The initialization vector to use for encryption. Defaults to 16 null bytes.
--- @param {string=} mode - The mode to use for encryption. Defaults to "CBC".
--- @param {number=} keyLength - The length of the key to use for encryption. Defaults to 128.
--- @returns {table} - A table containing the encrypted data in bytes, hex, and string formats.
+--- @param data string - The data to be encrypted.
+--- @param key string - The key to use for encryption.
+--- @param iv? string (optional) - The initialization vector to use for encryption. Defaults to 16 null bytes.
+--- @param mode? string (optional) - The mode to use for encryption. Defaults to "CBC".
+--- @param keyLength? number (optional) - The length of the key to use for encryption. Defaults to 128.
+--- @returns table - A table containing the encrypted data in bytes, hex, and string formats.
 public.encrypt = function(data, key, iv, mode, keyLength)
-    data = Array.fromString(data)
-    key = Array.fromString(key)
-    iv = iv ~= nil and Array.fromString(iv) or Array.fromHex("00000000000000000000000000000000")
+    local d = Array.fromString(data)
+    local k = Array.fromString(key)
+    local _iv = iv ~= nil and Array.fromString(iv) or Array.fromHex("00000000000000000000000000000000")
 
     local cipherMode = getMode(mode) or CBCMode
     local blockCipher = getBlockCipher(keyLength) or AES128Cipher
 
     local cipher = cipherMode.Cipher()
-        .setKey(key)
+        .setKey(k)
         .setBlockCipher(blockCipher)
         .setPadding(ZeroPadding);
 
 
     local cipherOutput = cipher
         .init()
-        .update(Stream.fromArray(iv))
-        .update(Stream.fromArray(data))
+        .update(Stream.fromArray(_iv))
+        .update(Stream.fromArray(d))
         .finish()
 
     local results = {}
@@ -94,30 +95,29 @@ public.encrypt = function(data, key, iv, mode, keyLength)
 end
 
 --- Decrypts the given data using AES decryption.
--- @param {string} cipher -  The hex encoded cipher to be decrypted.
--- @param {string} key - The key to use for decryption.
--- @param {string=} iv - The initialization vector to use for decryption. Defaults to 16 null bytes.
--- @param {string=} mode - The mode to use for decryption. Defaults to "CBC".
--- @param {number=} keyLength - The length of the key to use for decryption. Defaults to 128.
--- @returns {table} - A table containing the decrypted data in bytes, hex, and string formats.
+--- @param cipher string - The hex encoded cipher to be decrypted.
+--- @param key string - The key to use for decryption.
+--- @param iv? string (optional) - The initialization vector to use for decryption. Defaults to 16 null bytes.
+--- @param mode? string (optional) - The mode to use for decryption. Defaults to "CBC".
+--- @param keyLength? number (optional) - The length of the key to use for decryption. Defaults to 128.
 public.decrypt = function(cipher, key, iv, mode, keyLength)
     local cipherText = Array.fromHex(cipher)
-    key = Array.fromString(key)
-    iv = iv ~= nil and Array.fromString(iv) or Array.fromHex("00000000000000000000000000000000")
+    local k = Array.fromString(key)
+    local _iv = iv ~= nil and Array.fromString(iv) or Array.fromHex("00000000000000000000000000000000")
 
     local cipherMode = getMode(mode) or CBCMode
     local blockCipher = getBlockCipher(keyLength) or AES128Cipher
 
 
     local decipher = cipherMode.Decipher()
-            .setKey(key)
+            .setKey(k)
             .setBlockCipher(blockCipher)
             .setPadding(ZeroPadding);
 
 
     local plainOutput = decipher
         .init()
-        .update(Stream.fromArray(iv))
+        .update(Stream.fromArray(_iv))
         .update(Stream.fromArray(cipherText))
         .finish()
 

@@ -1,9 +1,9 @@
--- Converts a string to its hexadecimal representation.
--- If the string is empty, it returns an empty string.
--- If the 'ln' parameter is not provided, it performs the conversion without adding newlines or separators.
--- If the 'ln' parameter is provided, it adds a newline character every 'ln' bytes.
--- The 'sep' parameter is an optional separator between each byte.
--- Returns the hexadecimal representation of the string.
+
+--- Converts a string to its hexadecimal representation.
+--- @param s string The input string.
+--- @param ln? number - The number of characters per line. If not provided, the output will be a single line.
+--- @param sep? string - The separator between each pair of hexadecimal characters. Defaults to an empty string.
+--- @return string The - hexadecimal representation of the input string.
 local function stringToHex(s, ln, sep)
 	if #s == 0 then return "" end
 	if not ln then
@@ -25,16 +25,10 @@ end
 --- If the optional parameter `unsafe` is defined, it assumes that the hex string is well-formed
 --- (no checks, no whitespace removal). By default, it removes whitespace (including newlines)
 --- and checks that the hex string is well-formed.
---- 
---- @param hs string: The hex encoded string to be decoded.
---- @param unsafe boolean: (optional) If true, assumes the hex string is well-formed.
---- @return string: The decoded string.
+--- @param hs (string) The hex encoded string to be decoded.
+--- @param unsafe (boolean) [optional] If true, assumes the hex string is well-formed.
+--- @return (string) The decoded string.
 local function hexToString(hs, unsafe)
-	-- decode an hex encoded string. return the decoded string
-	-- if optional parameter unsafe is defined, assume the hex
-	-- string is well formed (no checks, no whitespace removal).
-	-- Default is to remove white spaces (incl newlines)
-	-- and check that the hex string is well formed
 	local tonumber = tonumber
 	if not unsafe then
 		hs = string.gsub(hs, "%s+", "") -- remove whitespaces

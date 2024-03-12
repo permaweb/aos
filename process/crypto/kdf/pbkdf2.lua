@@ -118,6 +118,15 @@ local PBKDF2 = function()
     return public;
 end
 
+--- @class Array : table
+
+--- PBKDF2 key derivation function
+--- @param password (Array) - The password to derive the key from
+--- @param salt (Array) - The salt to use
+--- @param iterations number - The number of iterations to perform
+--- @param keyLen number - The length of the key to derive
+--- @param digest? string - The digest algorithm to use (sha1, sha256). Defaults to sha1.
+--- @returns string - The derived key
 local pbkdf2 = function(password, salt, iterations, keyLen, digest)
     local Digest = nil
     if digest == "sha1" then
