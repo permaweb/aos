@@ -25,7 +25,7 @@ test('run sha2 hash successfully', async () => {
 	local results = {};
 
 	local data1 = crypto.utils.stream.fromString("abc");
-	local data2 = crypto.utils.stream.fromString("ao");
+	local data2 = "ao"
 
 	
 	results[1] = crypto.digest.sha2_256(data1).asHex();
