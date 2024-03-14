@@ -23,6 +23,15 @@ Checks if a given message has a tag that matches the specified name and value.
 
 - **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
 
+### hasMatchingTagOf(name, values)
+Checks if a given message has a tag that matches the specified name and one of the specified values.
+
+- **Parameters:**
+  - `name` (string): The name of the tag to check.
+  - `values` (string): The values of which one should match.
+
+- **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
+
 ### hasMatchingData(value)
 Checks if the message data matches the specified value.
 
@@ -38,6 +47,14 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
   - `input` (table or string): The content to send back. If a string, it sends it as data. If a table, it assumes a structure with `Tags`.
 
 - **Returns:** Function that takes a message object and sends the specified reply.
+
+### continue(fn)
+Inverts the provided pattern matching function's result if it matches, so that it continues execution with the next matching handler.
+
+- **Parameters:**
+  - `fn` (function): Pattern matching function that returns `"skip"`, `false` or `0` if it does not match.
+
+- **Returns:** Function that executes the pattern matching function and returns `1` (continue), so that the execution of handlers continues.
 
 ## Usage
 
@@ -56,7 +73,16 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    end
    ```
 
-3. **Check if the message data matches a value:**
+3. **Check for a specific tag with multiple possible values allowed:**
+   
+   ```lua
+   local isNotUrgent = _utils.hasMatchingTagOf('priority', { 'trivial', 'unimportant' })
+   if isNotUrgent(message) == -1 then
+     print('This is not an urgent message!')
+   end
+   ```
+
+4. **Check if the message data matches a value:**
 
    ```lua
    local isHello = _utils.hasMatchingData('Hello')
@@ -65,7 +91,7 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    end
    ```
 
-4. **Reply to a message:**
+5. **Reply to a message:**
 
    ```lua
    local replyWithText = _utils.reply('Thank you for your message!')
@@ -77,6 +103,17 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
    ```lua
    local replyWithTable = _utils.reply({Tags = {status = 'received'}})
    replyWithTable(message)
+   ```
+
+6. **Continue execution shortcut:**
+   
+   ```lua
+   local isUrgent = _utils.continue(_utils.hasMatchingTag('priority', 'urgent'))
+   if isUrgent(message) ~= 0 then
+     print('This is an urgent message!')
+   end
+   if isUrgent(message) == -1 then return end
+   print('This message will continue')
    ```
 
 ## Conventions and Requirements

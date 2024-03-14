@@ -11,6 +11,21 @@ function _utils.hasMatchingTag(name, value)
   end
 end
 
+function _utils.hasMatchingTagOf(name, values)
+  assert(type(name) == 'string' and type(values) == 'table', 'invalid arguments: (name : string, values : string[])')
+  return function (msg)
+    for _, value in ipairs(values) do
+      local patternResult = Handlers.utils.hasMatchingTag(name, value)(msg)
+
+      if patternResult ~= 0 then
+        return patternResult
+      end
+    end
+
+    return 0
+  end
+end
+
 function _utils.hasMatchingData(value)
   assert(type(value) == 'string', 'invalid arguments: (value : string)')
   return function (msg)
@@ -29,5 +44,16 @@ function _utils.reply(input)
   end
 end
 
+function _utils.continue(fn)
+  assert(type(fn) == 'function', 'invalid arguments: (fn : function)')
+  return function (msg)
+    local patternResult = fn(msg)
+
+    if not patternResult or patternResult == 0 or patternResult == "skip" then
+      return patternResult
+    end
+    return 1
+  end
+end
 
 return _utils
