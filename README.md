@@ -70,6 +70,7 @@ When running the console, you can type `dot` commands to instruct the console to
 | `.editor`                | This command opens a simple cli editor that you can type on multiple lines, and then you can type `.done` or `.cancel` to exist editor mode. |
 | `.load`                  | This command allows you to load a lua source file from your local directory                                                                  |
 | `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                               |
+| `.dryrun {tags}`         | This command will allow you to perform dryrun.                                                                                               |
 | `.exit`                  | This command will exit you console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                 |
 
 ## License
@@ -77,5 +78,5 @@ When running the console, you can type `dot` commands to instruct the console to
 The ao and aos codebases are offered under the BSL 1.1 license for the duration
 of the testnet period. After the testnet phase is over, the code will be made
 available under either a new
-[evolutionary forking](https://arweave.medium.com/arweave-is-an-evolutionary-protocol-e072f5e69eaa)
+[evolutionary forking](https://arweave.medium.com/arweave-is-an-evolutionary-protocol-e072f5e69eaa)s
 license, or a traditional OSS license (GPLv3/v2, MIT, etc).
