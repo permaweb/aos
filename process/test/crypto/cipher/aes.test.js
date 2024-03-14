@@ -6,7 +6,7 @@ import fs from 'fs';
 const wasm = fs.readFileSync('./process.wasm');
 
 test('run aes cipher successfully', async () => {
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, 10024704733);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -27,7 +27,7 @@ test('run aes cipher successfully', async () => {
 		// AES128 CTR Mode
 		"1DA7169C093D6B23160B6785B28E4BED", "616F0000000000000000000000000000"
 	]
-	
+
 	const data = `
 		local crypto = require(".crypto")
 		local Hex = require(".crypto.util.hex")
@@ -65,7 +65,6 @@ test('run aes cipher successfully', async () => {
 		run(128, modes)
 		-- run(192, modes)
 		-- run(256, modes)
-		
 		return table.concat(results, ", ")
 	`;
 	const msg = {
@@ -79,6 +78,8 @@ test('run aes cipher successfully', async () => {
 	};
 
 	const result = await handle(null, msg, env);
+
 	assert.equal(result.Output?.data.output, results.join(', '));
+	assert.equal(result.GasUsed, 9024704733)
 	assert.ok(true);
 });

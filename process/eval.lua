@@ -13,10 +13,13 @@ return function (ao)
     if func then
       output, e = func()
     else
-      output = err
+      ao.outbox.Error = err
+      return
     end
-    if e then output = e end
-    
+    if e then 
+      ao.outbox.Error = e
+      return 
+    end
     -- set result in outbox.Output 
     ao.outbox.Output = { data = { 
       json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",

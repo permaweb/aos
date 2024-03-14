@@ -217,7 +217,7 @@ if (!argv['watch']) {
         }
 
         if (!editorMode && line == ".monitor") {
-          const result = await monitor(jwk, id, { monitorProcess })
+          const result = await monitor(jwk, id, { monitorProcess }).catch(err => chalk.gray('⚡️ could not monitor process!'))
           console.log(chalk.green(result))
           // rl.close()
           // repl()
@@ -383,9 +383,8 @@ async function connect(jwk, id) {
   spinner.suffixText = chalk.gray("[Connecting to Process...]")
 
   // need to check if a process is registered or create a process
-  let promptResult = await evaluate("Loading...", id, jwk, { sendMessage, readResult }, spinner)
+  let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   spinner.stop();
-
   return promptResult?.Output?.data?.prompt
 }
 
@@ -400,6 +399,8 @@ async function handleLoadArgs(jwk, id) {
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
     await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
       .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+
     spinner.stop()
+
   }
 }

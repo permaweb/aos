@@ -2,6 +2,7 @@ local pretty = require('.pretty')
 local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
+local crypto = require('.crypto.init')
 
 Colors = {
   red = "\27[31m",
@@ -120,7 +121,7 @@ local function initializeState(msg, env)
   Inbox = Inbox or {}
 
   if not Owner then
-    Owner = env.Process.Owner
+    Owner = msg.From
   end
 
   if not Name then
@@ -154,7 +155,7 @@ function process.handle(msg, ao)
 
   Handlers.add("_eval", 
     function (msg)
-      return msg.Action == "Eval" and Owner == msg.Owner
+      return msg.Action == "Eval" and Owner == msg.From
     end,
     require('.eval')(ao)
   )
@@ -162,19 +163,22 @@ function process.handle(msg, ao)
   -- call evaluate from handlers passing env
   
   local status, result = pcall(Handlers.evaluate, msg, ao.env)
+  
+
   if not status then
     table.insert(Errors, result)
-    return {
-      Output = { 
-        data = { 
-          prompt = Prompt(), 
-          json = 'undefined', 
-          output = result 
-        }
-      }, 
-      Messages = {}, 
-      Spawns = {}
-    }
+    return { Error = result }
+    -- return {
+    --   Output = { 
+    --     data = { 
+    --       prompt = Prompt(), 
+    --       json = 'undefined', 
+    --       output = result 
+    --     }
+    --   }, 
+    --   Messages = {}, 
+    --   Spawns = {}
+    -- }
   end
   
   return ao.result({ })
