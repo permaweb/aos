@@ -166,6 +166,8 @@ function handlers.evaluate(msg, env)
         local status, err = pcall(o.handle, msg, env) 
         if not status then
           error(err)
+          ao.outbox.Error = { err = err }
+
         end
         
       end

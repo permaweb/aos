@@ -19,6 +19,7 @@ test('check state properties for aos', async () => {
   const msg = {
     Target: 'AOS',
     Owner: 'FOOBAR',
+    From: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
     Module: "WOOPAWOOPA",

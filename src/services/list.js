@@ -10,7 +10,7 @@ export function list(jwk, services) {
 
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const listProcesses = ({ address }) => {
-    return services.gql(queryForAOSs(), { owners: [address], module: [AOS_MODULE, "9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4"] })
+    return services.gql(queryForAOSs(), { owners: [address], module: [AOS_MODULE, "1SafZGlZT4TLI8xoc0QEQ4MylHhuyQUblxD8xLKvEKI", "9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4"] })
       .map(utils.path(['data', 'transactions', 'edges']))
     //.map(_ => (console.log(JSON.stringify(_, null, 2)), _))
   }

@@ -118,7 +118,7 @@ function queryForAOS(name, AOS_MODULE) {
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
         { name: "Type", values: ["Process"]},
-        { name: "Module", values: ["${AOS_MODULE}", "9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4"]},
+        { name: "Module", values: ["${AOS_MODULE}", "1SafZGlZT4TLI8xoc0QEQ4MylHhuyQUblxD8xLKvEKI", "9afQ1PLf2mrshqCTZEzzJTR2gWaC9zNPnYgYEqg1Pt4"]},
         { name: "Name", values: ["${name}"]}
       ]
     ) {

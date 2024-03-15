@@ -122,20 +122,20 @@
   resolved "https://registry.yarnpkg.com/@fastify/busboy/-/busboy-2.1.0.tgz#0709e9f4cb252351c609c6e6d8d6779a8d25edff"
   integrity sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==
 
-"@permaweb/ao-scheduler-utils@~0.0.7":
-  version "0.0.8"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.8.tgz#fad5b3c4a0d26c8d166b09310cd3a369438b893e"
-  integrity sha512-RD0cxai/O4dV/tXmaL/98UsltxHjGENlr7g1QooEWzxwaWsX+BrTPZr7o4btdleimi9N79CWSH3nqo2f3fhaAQ==
+"@permaweb/ao-scheduler-utils@~0.0.13":
+  version "0.0.14"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.14.tgz#b30625d076ce6b0de4178cc5ec80d59ebf8ac46f"
+  integrity sha512-qXyAFSPQKZD5Cs5324b+zSd9Jbs+cmm29orJsBNtv8/mDQMMQgTOAefH82R5e9or7SlEF1VfEhvIKMcJXG9k8w==
   dependencies:
-    lru-cache "^10.1.0"
+    lru-cache "^10.2.0"
     ramda "^0.29.1"
 
-"@permaweb/aoconnect@^0.0.44":
-  version "0.0.44"
-  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.44.tgz#2e23b87542c6b3211c25bc5b483be4bf319fc46d"
-  integrity sha512-VEcx72LXXMt+3oTlFsf2ZtaSIWPjUDBEdz93d5NaSVHUjhBnavBXKM2c/nmOuXA5QHEnIhBX2UO8wPpF1Uhocw==
+"@permaweb/aoconnect@^0.0.48":
+  version "0.0.48"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.48.tgz#432ddfe7f0eaa4c37a6869ac976960d58c5ae7c0"
+  integrity sha512-CldwoE+6STKrfvknnmozRDBlo5gSHXLhmfAtAqHZvbMRprZ3yk+N3OIAt8La5axQ8Rwte5KKRcltvrNyxZpsVA==
   dependencies:
-    "@permaweb/ao-scheduler-utils" "~0.0.7"
+    "@permaweb/ao-scheduler-utils" "~0.0.13"
     buffer "^6.0.3"
     debug "^4.3.4"
     hyper-async "^1.1.2"
@@ -392,10 +392,10 @@ log-symbols@^5.1.0:
     chalk "^5.0.0"
     is-unicode-supported "^1.1.0"
 
-lru-cache@^10.1.0:
-  version "10.1.0"
-  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.1.0.tgz#2098d41c2dc56500e6c88584aa656c84de7d0484"
-  integrity sha512-/1clY/ui8CzjKFyjdvwPWJUYKiFVXG2I2cY0ssG7h4+hwk+XOIX7ZSG9Q7TW8TW3Kp3BUSqgFWBLgL4PJ+Blag==
+lru-cache@^10.2.0:
+  version "10.2.0"
+  resolved "https://registry.yarnpkg.com/lru-cache/-/lru-cache-10.2.0.tgz#0bd445ca57363465900f4d1f9bd8db343a4d95c3"
+  integrity sha512-2bIM8x+VAf6JT4bKAljS1qUWgMsqZRPGJS6FSahIMPVvctcNhyVp7AJu7quxOW9jwkryBReKZY5tY5JYv2n/7Q==
 
 lru-cache@^6.0.0:
   version "6.0.0"
