@@ -11,6 +11,7 @@ import { uniqBy, prop, keys } from 'ramda'
 
 const pkg = getPkg()
 const info = {
+  GATEWAY_URL: process.env.GATEWAY_URL,
   CU_URL: process.env.CU_URL,
   MU_URL: process.env.MU_URL
 }

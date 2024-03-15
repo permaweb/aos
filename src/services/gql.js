@@ -16,7 +16,9 @@ export function gql(query, variables) {
     .chain(queryArweave)
 }
 
-const ARWEAVE_GRAPHQL = process.env.ARWEAVE_GRAPHQL || 'https://arweave.net/graphql'
+const ARWEAVE_GRAPHQL = process.env.ARWEAVE_GRAPHQL || (
+  process.env.GATEWAY_URL ? new URL('/graphql', process.env.GATEWAY_URL) : 'https://arweave.net/graphql'
+)
 function queryArweave(body) {
   return fromPromise(() => fetch(ARWEAVE_GRAPHQL, {
     method: 'POST',
