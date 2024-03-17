@@ -176,7 +176,6 @@ function endGame()
     print("Game Over")
 
     Winners = 0
-    Winnings = tonumber(BonusQty) / Winners -- Calculating winnings per player
 
     for player, _ in pairs(Players) do
         Winners = Winners + 1
