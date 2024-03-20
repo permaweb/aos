@@ -52,6 +52,8 @@ local function continue(fn)
   end
 end
 
+Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Stakers'),
+  function(msg) Send({ Target = msg.From, Data = require('json').encode(Stakers) }) end)
 -- Registering Handlers
 Handlers.add("stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)
@@ -61,3 +63,4 @@ Handlers.add("unstake",
 -- This should be at the end of your handlers list because no message will pass 
 -- through here
 Handlers.add("finalize", function (msg) return true end, finalizationHandler)
+
