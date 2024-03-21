@@ -32,6 +32,7 @@ import { unmonitor } from './commands/unmonitor.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
+import { performDryRun } from './commands/dryrun.js'
 
 const argv = minimist(process.argv.slice(2))
 let luaData = ""
@@ -266,6 +267,15 @@ if (!argv['watch']) {
           // repl()
           rl.prompt(true)
 
+          return;
+        }
+
+
+        if (!editorMode && line.startsWith('.dryrun')) {
+          let pid = id
+          let input = line
+          await performDryRun(input, pid)
+          rl.prompt(false);
           return;
         }
 
