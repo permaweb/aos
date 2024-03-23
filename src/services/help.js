@@ -26,27 +26,29 @@ ${chalk.blue('Documentation:')} https://cookbook_ao.g8way.io
 
 ${chalk.green('Usage:')} aos [name] [OPTIONS]
 
+${chalk.green('name')}                       The name of the process that you want to spawn or connect to.
+                           If you do not specify a name, the value "default" is used.
+
 ${chalk.green('Options:')}
 
-  ${chalk.green('--get-blueprints')}         Download Blueprint Lua Scripts to your current working directory
-  ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval ie (1-minute, 5-minutes)
-  ${chalk.green('--load [file]')}            Load a lua source file into your process more than 1 is supported
-                           If you do not specify a file, then the Lua script will be read from stdin.
-  ${chalk.green('--data [file]')}            Load a data file when creating process
-  ${chalk.green('--tag-name [name]')}        Tag Name for Process when Spawn more than 1 is supported
-  ${chalk.green('--tag-value [value]')}      Tag Value for Process when Spawning grouped with tag-name
-  ${chalk.green('--wallet [file]')}          Wallet to use for Process Managment a default wallet is created for you.
-  ${chalk.green('--module=[TXID]')}          The module source to use to spin up Process
-  ${chalk.green('--list')}                   Lists the processes for a given wallet
-  ${chalk.green('--watch=[PROCESSID]')}.     Watch a process
-  ${chalk.green('--monitor')}.               Monitor and Push Cron Outbox Messages and Spawns
-  ${chalk.green('--help')}                   Shows help page
-  ${chalk.green('--version')}                Shows Console Version
-  ${chalk.green('--quiet')}                  Do not print Console Splashscreen or Version information. Useful for CLI scripts.
-  ${chalk.green('--sequential')}             Do not batch upload multiple ${chalk.green('--load [file]')}.
-
-${chalk.green('name')}                       Name is the Process name you want to spawn or connect to, if you do not
-                           specify a name then "default" will be used.
+  ${chalk.green('--cron [interval]')}        Set up automated messages for your process, at an interval (e.g. 1-minute, 5-minutes).
+  ${chalk.green('--data [file]')}            Load a Lua script when creating a new process.
+  ${chalk.green('--get-blueprints')}         Export the standard blueprint Lua scripts to your current working directory.
+  ${chalk.green('--help')}                   Displays this help page.
+  ${chalk.green('--list')}                   Lists the spawned processes for a given wallet.
+  ${chalk.green('--load [file]')}            Load a Lua script into your process. Can be specified multiple times.
+                           If you do not specify a file, then the Lua script will be read from ${chalk.green('stdin')}.
+  ${chalk.green('--module [txid]')}          The Arweave tx id with the module source to use when spawning a new process.
+  ${chalk.green('--monitor')}                Monitor and push cron outbox messages and spawns.
+  ${chalk.green('--quiet')}                  Do not print the ${chalk.green('aos')} splashscreen or version information. Useful for CLI scripts.
+  ${chalk.green('--sequential')}             Do not combine multiple ${chalk.green('--load')} files into a single batch.
+  ${chalk.green('--tag-name [name]')}        Specify a tag to define when spawning a new process. Paired with a ${chalk.green('--tag-value')}.
+  ${chalk.green('--tag-value [value]')}      The value of the tag. Paired with a ${chalk.green('--tag-name')}.
+                           Multiple ${chalk.green('--tag-name')} and ${chalk.green('--tag-value')} are supported. Always use them in pairs.
+  ${chalk.green('--version')}                Print the ${chalk.green('aos')} version information.
+  ${chalk.green('--wallet [file]')}          Use this wallet for process management.
+                           If you do not specify a wallet, ${chalk.green('.aos.json')} from your home directory is used.
+                           If ${chalk.green('.aos.json')} does not exist, it will be created for you.
+  ${chalk.green('--watch [processId]')}      Watch a process.
 `)
-
 }
