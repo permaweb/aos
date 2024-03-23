@@ -82,7 +82,9 @@ if (argv['watch'] && argv['watch'].length === 43) {
   })
 }
 
-splash()
+if (!argv['quiet']) {
+  splash()
+}
 
 if (!argv['watch']) {
   of()
@@ -112,9 +114,13 @@ if (!argv['watch']) {
         spinner.start();
         spinner.suffixText = chalk.gray("[Loading Lua...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+          .catch(err => ({ Error: err.message }))
         spinner.stop()
 
-        if (result.Output?.data?.output) {
+        if (result.Error) {
+          console.log(chalk.red(result.Error))
+          process.exit(1)
+        } else if (result.Output?.data?.output) {
           console.log(result.Output?.data?.output)
         }
         process.exit(0)
@@ -124,7 +130,10 @@ if (!argv['watch']) {
         console.error(chalk.red("Error! Could not find Process ID"))
         process.exit(0)
       }
-      version(id)
+
+      if (!argv['quiet']) {
+        version(id)
+      }
 
       // kick start monitor if monitor option
       if (argv['monitor']) {
@@ -389,18 +398,39 @@ async function connect(jwk, id) {
 }
 
 async function handleLoadArgs(jwk, id) {
-  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(load).join('\n')
-  if (loadCode) {
+  async function _eval (luaCode) {
     const spinner = ora({
       spinner: 'dots',
       suffixText: ``
     })
     spinner.start()
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-
+    const result = await evaluate(luaCode, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Error: err.message }))
     spinner.stop()
+    return result
+  }
 
+  const filesToLoad = checkLoadArgs()
+
+  if (argv['sequential']) {
+    for await (const file of filesToLoad) {
+      const luaCode = load(`.load ${file}`)
+      const result = await _eval(luaCode)
+      if (result.Error) {
+        console.log(chalk.red(result.Error))
+        break;
+      } else if (result.Output?.data?.output) {
+        console.log(result.Output?.data?.output)
+      }
+    }
+  } else {
+    const luaCode = filesToLoad.map(f => `.load ${f}`).map(load).join('\n')
+    const result = await _eval(luaCode)
+    if (result.Error) {
+      console.log(chalk.red(result.Error))
+    } else if (result.Output?.data?.output) {
+      console.log(result.Output?.data?.output)
+    }
   }
 }
