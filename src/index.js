@@ -398,19 +398,35 @@ async function connect(jwk, id) {
 }
 
 async function handleLoadArgs(jwk, id) {
-  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(load).join('\n')
-  if (loadCode) {
+  async function _eval (luaCode) {
     const spinner = ora({
       spinner: 'dots',
       suffixText: ``
     })
     spinner.start()
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-    const result = await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
+    const result = await evaluate(luaCode, id, jwk, { sendMessage, readResult }, spinner)
       .catch(err => ({ Error: err.message }))
-
     spinner.stop()
+    return result
+  }
 
+  const filesToLoad = checkLoadArgs()
+
+  if (argv['sequential']) {
+    for await (const file of filesToLoad) {
+      const luaCode = load(`.load ${file}`)
+      const result = await _eval(luaCode)
+      if (result.Error) {
+        console.log(chalk.red(result.Error))
+        break;
+      } else if (result.Output?.data?.output) {
+        console.log(result.Output?.data?.output)
+      }
+    }
+  } else {
+    const luaCode = filesToLoad.map(f => `.load ${f}`).map(load).join('\n')
+    const result = await _eval(luaCode)
     if (result.Error) {
       console.log(chalk.red(result.Error))
     } else if (result.Output?.data?.output) {
