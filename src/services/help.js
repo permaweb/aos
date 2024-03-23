@@ -41,6 +41,7 @@ ${chalk.green('Options:')}
   ${chalk.green('--monitor')}.               Monitor and Push Cron Outbox Messages and Spawns
   ${chalk.green('--help')}                   Shows help page
   ${chalk.green('--version')}                Shows Console Version
+  ${chalk.green('--quiet')}                  Do not print Console Splashscreen or Version information. Useful for CLI scripts.
 
 ${chalk.green('name')}                       Name is the Process name you want to spawn or connect to, if you do not
                            specify a name then "default" will be used.

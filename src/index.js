@@ -82,7 +82,9 @@ if (argv['watch'] && argv['watch'].length === 43) {
   })
 }
 
-splash()
+if (!argv['quiet']) {
+  splash()
+}
 
 if (!argv['watch']) {
   of()
@@ -124,7 +126,10 @@ if (!argv['watch']) {
         console.error(chalk.red("Error! Could not find Process ID"))
         process.exit(0)
       }
-      version(id)
+
+      if (!argv['quiet']) {
+        version(id)
+      }
 
       // kick start monitor if monitor option
       if (argv['monitor']) {
