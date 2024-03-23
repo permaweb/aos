@@ -31,6 +31,7 @@ ${chalk.green('Options:')}
   ${chalk.green('--get-blueprints')}         Download Blueprint Lua Scripts to your current working directory
   ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval ie (1-minute, 5-minutes)
   ${chalk.green('--load [file]')}            Load a lua source file into your process more than 1 is supported
+                           If you do not specify a file, then the Lua script will be read from stdin.
   ${chalk.green('--data [file]')}            Load a data file when creating process
   ${chalk.green('--tag-name [name]')}        Tag Name for Process when Spawn more than 1 is supported
   ${chalk.green('--tag-value [value]')}      Tag Value for Process when Spawning grouped with tag-name

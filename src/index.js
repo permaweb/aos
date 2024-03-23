@@ -114,9 +114,13 @@ if (!argv['watch']) {
         spinner.start();
         spinner.suffixText = chalk.gray("[Loading Lua...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+          .catch(err => ({ Error: err.message }))
         spinner.stop()
 
-        if (result.Output?.data?.output) {
+        if (result.Error) {
+          console.log(chalk.red(result.Error))
+          process.exit(1)
+        } else if (result.Output?.data?.output) {
           console.log(result.Output?.data?.output)
         }
         process.exit(0)
@@ -402,10 +406,15 @@ async function handleLoadArgs(jwk, id) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+    const result = await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Error: err.message }))
 
     spinner.stop()
 
+    if (result.Error) {
+      console.log(chalk.red(result.Error))
+    } else if (result.Output?.data?.output) {
+      console.log(result.Output?.data?.output)
+    }
   }
 }
