@@ -28,7 +28,7 @@ ${chalk.green('Usage:')} aos [name] [OPTIONS]
 
 ${chalk.green('Options:')}
 
-  ${chalk.green('--get-blueprints [dir]')}   Download Blueprint Lua Scripts to your current working directory
+  ${chalk.green('--get-blueprints')}         Download Blueprint Lua Scripts to your current working directory
   ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval ie (1-minute, 5-minutes)
   ${chalk.green('--load [file]')}            Load a lua source file into your process more than 1 is supported
   ${chalk.green('--data [file]')}            Load a data file when creating process
