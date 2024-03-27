@@ -17,7 +17,7 @@ function _utils.hasMatchingTagOf(name, values)
     for _, value in ipairs(values) do
       local patternResult = Handlers.utils.hasMatchingTag(name, value)(msg)
 
-      if patternResult ~= 0 then
+      if patternResult ~= 0 and patternResult ~= false and patternResult ~= "skip" then
         return patternResult
       end
     end
