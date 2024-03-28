@@ -10,7 +10,7 @@ OWNER_TTL_MS = 24 * 60 * 60 * 1000 -- 24 hours by default
 SW_CACHE_URL = "https://api.arns.app/v1/contract/"
 
 -- Process IDs for interacting with other services or processes
-ARNS_PROCESS_ID = "COnVYFiqpycAJrFQbrKIgUEAZ1L98sF0h_26G8GxRpQ"
+ARNS_PROCESS_ID = "TyduW6spZTr3gkdIsdktduJhgtilaR_ex5JukK8gI9o"
 _0RBIT_SEND_PROCESS_ID = "WSXUI2JjYUldJ7CKq9wE1MGwXs-ldzlUlHOQszwQe0s"
 _0RBIT_RECEIVE_PROCESS_ID = "8aE3_6NJ_MU_q3fbhz2S6dA8PKQOSCe95Gt7suQ3j7U"
 
