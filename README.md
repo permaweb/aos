@@ -7,7 +7,7 @@
 # aos
 
 Status: Preview
-Version: 1.10.23.  
+Version: 1.10.24.  
 Module: `SBNb1qPQ1TDwpD_mboxm2YllmMLXpWw4U8P9Ff8W9vk`
 
 ## Requirements
