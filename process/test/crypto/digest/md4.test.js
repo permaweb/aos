@@ -4,11 +4,11 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run md4 hash successfully', async () => {
 	const cases = [
 		['', '31d6cfe0d16ae931b73c59d7e0c089c0'],
-		['ao','e068dfe3d8cb95311b58be566db66954'],
+		['ao', 'e068dfe3d8cb95311b58be566db66954'],
 		['abc', 'a448017aaf21d8525fc10ae87aa6729d'],
 		['abcdefghijklmnopqrstuvwxyz', 'd79e1c308aa5bbcdeea8ed63df412da9'],
 		[
@@ -16,7 +16,7 @@ test('run md4 hash successfully', async () => {
 			'b2a5cc34fc21a764ae2fad94d56fadf6',
 		],
 	];
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',

@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run morus cipher successfully', async () => {
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -15,9 +15,9 @@ test('run morus cipher successfully', async () => {
 		},
 	};
 
-	const results = [ '514ed31473d8fb0b76c6cbb17af35ed01d0a', 'ao' ,'6164646974696f6e616c20646174616aae7a8b95c50047bea251c3b7133eec5fcc','ao']
+	const results = ['514ed31473d8fb0b76c6cbb17af35ed01d0a', 'ao', '6164646974696f6e616c20646174616aae7a8b95c50047bea251c3b7133eec5fcc', 'ao']
 
-	
+
 	const data = `
 		local crypto = require(".crypto");
 

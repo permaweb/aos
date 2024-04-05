@@ -4,12 +4,12 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run pbkdf2 successfully', async () => {
 	const results = [
-        'C4C21BF2BBF61541408EC2A49C89B9C6',
+		'C4C21BF2BBF61541408EC2A49C89B9C6',
 	];
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -42,7 +42,7 @@ test('run pbkdf2 successfully', async () => {
 		Data: data,
 	};
 
-    const result = await handle(null, msg, env);
+	const result = await handle(null, msg, env);
 	assert.equal(result.Output?.data.output, results);
 	assert.ok(true);
 });

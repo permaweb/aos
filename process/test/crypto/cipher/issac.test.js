@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run issac cipher successfully', async () => {
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -15,8 +15,8 @@ test('run issac cipher successfully', async () => {
 		},
 	};
 
-	const results = [ "7851", "ao" ]
-	
+	const results = ["7851", "ao"]
+
 	const data = `
 		local crypto = require(".crypto");
 

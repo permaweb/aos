@@ -4,7 +4,7 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run sha3 hash successfully', async () => {
 	const results = [
 		'1bbe785577db997a394d5b4555eec9159cb51f235aec07514872d2d436c6e985',
@@ -13,7 +13,7 @@ test('run sha3 hash successfully', async () => {
 		'046fbfad009a12cef9ff00c2aac361d004347b2991c1fa80fba5582251b8e0be8def0283f45f020d4b04ff03ead9f6e7c43cc3920810c05b33b4873b99affdea'
 	];
 
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -22,7 +22,7 @@ test('run sha3 hash successfully', async () => {
 		},
 	};
 
-	
+
 	const data = `
 		local crypto = require(".crypto");
 

@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run random generator successfully', async () => {
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -15,7 +15,7 @@ test('run random generator successfully', async () => {
 		},
 	};
 
-	
+
 	const data = `
 		local crypto = require(".crypto")
 
@@ -31,7 +31,7 @@ test('run random generator successfully', async () => {
 		Data: data,
 	};
 
-    const result = await handle(null, msg, env);
+	const result = await handle(null, msg, env);
 	assert.equal(result.Output?.data.output, 532713800);
 	assert.ok(true);
 });
