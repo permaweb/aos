@@ -5,6 +5,8 @@ local token = require('./mods/token')
 if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 if not Allowances then Allowances = {} end
 
+if not Minter then Minter = '' end
+
 if Name ~= '' then Name = '' end
 
 if Ticker ~= '' then Ticker = '' end

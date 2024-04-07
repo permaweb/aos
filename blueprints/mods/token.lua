@@ -183,6 +183,7 @@ function Mod.approve(msg)
 end
 
 function Mod.mint(msg)
+  assert(msg.from == Minter, 'Not Authorized')
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint.__lt(0, msg.Quantity), 'Quantity must be greater than zero!')
 
@@ -206,11 +207,19 @@ function Mod.mint(msg)
 end
 
 function Mod.init(msg)
+  assert(type(msg.Minter) == 'string', 'Minter is required!')
   assert(type(msg.Name) == 'string', 'Name is required!')
   assert(type(msg.Ticker) == 'string', 'Ticker is required!')
   assert(type(msg.Logo) == 'string', 'Logo is required!')
   assert(type(msg.Denomination) == 'string', 'Denomination is required!')
   assert(bint.__lt(0, msg.Denomination), 'Denomination must be greater than zero!')
+  
+  assert(Minter == '', 'Not Authorized')
+  assert(Name == '', 'Not Authorized')
+  assert(Ticker == '', 'Not Authorized')
+  assert(Logo == '', 'Not Authorized')
+
+  Minter = msg.Minter
   Name = msg.Name
   Ticker = msg.Ticker
   Logo = msg.Logo
