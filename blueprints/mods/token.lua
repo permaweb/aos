@@ -206,6 +206,17 @@ function Mod.mint(msg)
   end
 end
 
+function Mod.setMinter(msg)
+  --[[
+          Allows the Minter to set another processId as the Minter
+          If the Minter wants to prevent any future mints they can set the processId to the processId of the token
+        ]]
+      --
+  assert(msg.from == Minter, 'Not Authorized')
+  assert(type(msg.Minter) == 'string', 'Minter is required!')
+  Minter = msg.Minter
+end
+
 function Mod.init(msg)
   assert(type(msg.Minter) == 'string', 'Minter is required!')
   assert(type(msg.Name) == 'string', 'Name is required!')
