@@ -120,8 +120,14 @@ local function initializeState(msg, env)
   Errors = Errors or {}
   Inbox = Inbox or {}
 
+  -- temporary fix for Spawn
   if not Owner then
-    Owner = msg.From
+    local _from = findObject(env.Process.Tags, "name", "From-Process")
+    if _from then
+      Owner = _from.value
+    else
+      Owner = msg.From
+    end
   end
 
   if not Name then

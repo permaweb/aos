@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader'
 import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
-
+const options = { format: "wasm32-unknown-emscripten", computeLimit: 9e22 }
 test.skip('inbox unbounded', async () => {
-  const handle = await AoLoader(wasm, 9e22)
+  const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
       Id: 'AOS',
@@ -27,7 +27,7 @@ test.skip('inbox unbounded', async () => {
   }
   const result = await handle(null, msg, env)
   let memory = result.Memory
-  for(var i = 0; i < 10001; i++) {
+  for (var i = 0; i < 10001; i++) {
     const { Memory } = await handle(memory, msg, env)
     memory = Memory
   }
@@ -37,7 +37,7 @@ test.skip('inbox unbounded', async () => {
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
     Module: "WOOPAWOOPA",
-    Tags: [{name: 'Action', value: 'Eval'}],
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: '#Inbox'
   }, env)
   //assert.equal(count.Error, 'Error')

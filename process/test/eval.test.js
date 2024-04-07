@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader'
 import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run evaluate action unsuccessfully', async () => {
-  const handle = await AoLoader(wasm)
+  const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
       Id: 'AOS',
@@ -34,7 +34,7 @@ test('run evaluate action unsuccessfully', async () => {
 })
 
 test('run evaluate action successfully', async () => {
-  const handle = await AoLoader(wasm)
+  const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
       Id: 'AOS',
@@ -61,7 +61,7 @@ test('run evaluate action successfully', async () => {
 })
 
 test('print hello world', async () => {
-  const handle = await AoLoader(wasm)
+  const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
       Id: 'AOS',

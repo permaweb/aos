@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten" }
 test('run hmac successfully', async () => {
-	const handle = await AoLoader(wasm);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -15,8 +15,8 @@ test('run hmac successfully', async () => {
 		},
 	};
 
-	const results = [ "3966f45acb53f7a1a493bae15afecb1a204fa32d", "542da02a324155d688c7689669ff94c6a5f906892aa8eccd7284f210ac66e2a7" ]
-	
+	const results = ["3966f45acb53f7a1a493bae15afecb1a204fa32d", "542da02a324155d688c7689669ff94c6a5f906892aa8eccd7284f210ac66e2a7"]
+
 	const data = `
 		local crypto = require(".crypto")
 

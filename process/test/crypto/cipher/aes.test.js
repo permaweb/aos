@@ -4,9 +4,9 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-
+const options = { format: "wasm32-unknown-emscripten", computeLimit: 10024704733 }
 test('run aes cipher successfully', async () => {
-	const handle = await AoLoader(wasm, 10024704733);
+	const handle = await AoLoader(wasm, options);
 	const env = {
 		Process: {
 			Id: 'AOS',
@@ -80,6 +80,6 @@ test('run aes cipher successfully', async () => {
 	const result = await handle(null, msg, env);
 
 	assert.equal(result.Output?.data.output, results.join(', '));
-	assert.equal(result.GasUsed, 9024704733)
+	assert.equal(result.GasUsed, 3013082607)
 	assert.ok(true);
 });
