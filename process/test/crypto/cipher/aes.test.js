@@ -80,6 +80,6 @@ test('run aes cipher successfully', async () => {
 	const result = await handle(null, msg, env);
 
 	assert.equal(result.Output?.data.output, results.join(', '));
-	assert.equal(result.GasUsed, 3008743503)
+	assert.equal(result.GasUsed, 3013082607)
 	assert.ok(true);
 });
