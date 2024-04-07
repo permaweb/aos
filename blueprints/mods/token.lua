@@ -159,7 +159,7 @@ function Mod.transferFrom(msg)
     else
       ao.send({
         Target = msg.Owner,
-        Action = 'Transfer-Error',
+        Action = 'TransferFrom-Error',
         ['Message-Id'] = msg.Id,
         Error = 'Insufficient Balance!'
       })
@@ -167,7 +167,7 @@ function Mod.transferFrom(msg)
   else
     ao.send({
       Target = msg.Owner,
-      Action = 'Transfer-Error',
+      Action = 'TransferFrom-Error',
       ['Message-Id'] = msg.Id,
       Error = 'Insufficient Allowance!'
     })
