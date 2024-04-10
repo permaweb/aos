@@ -1,5 +1,6 @@
 local bint = require('.bint')(256)
 local ao = require('ao')
+
 --[[
   This module implements the ao Standard Token Specification.
 
@@ -31,15 +32,14 @@ local json = require('json')
      ao.id is equal to the Process.Id
    ]]
 --
-if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 
-if Name ~= 'Points Coin' then Name = 'Points Coin' end
+if Name ~= '0rbit Token' then Name = '0rbit Token' end
 
-if Ticker ~= 'Points' then Ticker = 'PNTS' end
+if Ticker ~= '0RBT' then Ticker = '0RBT' end
 
 if Denomination ~= 12 then Denomination = 12 end
 
-if not Logo then Logo = 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY' end
+if not Logo then Logo = 'nvx7DgTR8ws_k6VNCSe8vhwbZLx5jNbfNLJS0IKTTHA' end
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
@@ -122,7 +122,8 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Quantity = tostring(qty),
         Data = Colors.gray ..
             "You transferred " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
+            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors
+            .reset
       })
       -- Send Credit-Notice to the Recipient
       ao.send({
@@ -132,9 +133,66 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Quantity = tostring(qty),
         Data = Colors.gray ..
             "You received " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.Recipient .. Colors.reset
+            Colors.blue ..
+            msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.Recipient .. Colors.reset
       })
     end
+  else
+    ao.send({
+      Target = msg.From,
+      Action = 'Transfer-Error',
+      ['Message-Id'] = msg.Id,
+      Error = 'Insufficient Balance!'
+    })
+  end
+end)
+
+--[[
+     Transfer For is used when one process wants to send Tokens to anotherr process to do some task
+   ]]
+--
+Handlers.add('transfer-for', Handlers.utils.hasMatchingTag('Action', 'TransferFor'), function(msg)
+  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+  assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
+
+  if not Balances[msg.From] then Balances[msg.From] = "0" end
+  if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
+
+  local qty = bint(msg.Quantity)
+  local balance = bint(Balances[msg.From])
+  if bint.__le(qty, balance) then
+    Balances[msg.From] = tostring(bint.__sub(balance, qty))
+    Balances[msg.Recipient] = tostring(bint.__add(Balances[msg.Recipient], qty))
+
+    --[[
+         Only send the notifications to the Sender and Recipient
+         if the Cast tag is not set on the Transfer message
+       ]]
+    --
+    -- Send Debit-Notice to the Sender
+    ao.send({
+      Target = msg.From,
+      Action = 'Debit-Notice-For',
+      Recipient = msg.Recipient,
+      Quantity = tostring(qty),
+      Data = Colors.gray ..
+          "You transferred " ..
+          Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors
+          .reset
+    })
+    -- Send Credit-Notice to the Recipient
+    ao.send({
+      Target = msg.Recipient,
+      Action = 'Credit-Notice-For',
+      Sender = msg.From,
+      Quantity = tostring(qty),
+      PrevTags = json.encode(msg.Tags),
+      Data = Colors.gray ..
+          "You received " ..
+          Colors.blue ..
+          msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.Recipient .. Colors.reset
+    })
   else
     ao.send({
       Target = msg.From,
