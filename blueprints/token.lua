@@ -33,13 +33,15 @@ local json = require('json')
    ]]
 --
 
-if Name ~= '0rbit Token' then Name = '0rbit Token' end
+if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 
-if Ticker ~= '0RBT' then Ticker = '0RBT' end
+if Name ~= 'Points Coin' then Name = 'Points Coin' end
+
+if Ticker ~= 'Points' then Ticker = 'PNTS' end
 
 if Denomination ~= 12 then Denomination = 12 end
 
-if not Logo then Logo = 'nvx7DgTR8ws_k6VNCSe8vhwbZLx5jNbfNLJS0IKTTHA' end
+if not Logo then Logo = 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY' end
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
