@@ -14,7 +14,6 @@
     "deploy": "npx -y ardrive-cli upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId"
   },
   "dependencies": {
-    "@permaweb/ao-loader": "^0.0.26",
     "@permaweb/aoconnect": "^0.0.48",
     "arweave": "^1.14.4",
     "chalk": "^5.3.0",

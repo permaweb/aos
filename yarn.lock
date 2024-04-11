@@ -122,11 +122,6 @@
   resolved "https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.0.tgz"
   integrity sha512-+KpH+QxZU7O4675t3mnkQKcZZg56u+K/Ct2K+N2AZYNVK8kyeo/bI18tI8aPm3tvNNRyTWfj6s5tnGNlcbQRsA==
 
-"@permaweb/ao-loader@^0.0.26":
-  version "0.0.26"
-  resolved "https://registry.yarnpkg.com/@permaweb/ao-loader/-/ao-loader-0.0.26.tgz#5b177037950275ddcc2979a6bf95fda138cf77b1"
-  integrity sha512-e40lM4C9rBWcHuGfg6zf/T5Qbr+JxiE5IBy+97qroke6EoPH88V+wgsHdunoEqlprcI3hw197cWP9GLWtBnXbg==
-
 "@permaweb/ao-scheduler-utils@~0.0.13":
   version "0.0.14"
   resolved "https://registry.npmjs.org/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.14.tgz"
