@@ -86,3 +86,34 @@ test('print hello world', async () => {
   assert.equal(result.Output?.data.output, "Hello World")
   assert.ok(true)
 })
+
+
+test('create an Assignment', async () => {
+  const handle = await AoLoader(wasm, options)
+  const env = {
+    Process: {
+      Id: 'AOS',
+      Owner: 'FOOBAR',
+      Tags: [
+        { name: 'Name', value: 'Thomas' }
+      ]
+    }
+  }
+  const msg = {
+    Target: 'AOS',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: 'Assign({ Processes = { "pid-1", "pid-2" }, Message = "mid-1" })'
+  }
+  const result = await handle(null, msg, env)
+  console.log(result)
+  assert.deepStrictEqual(result.Assignments, [
+    { Processes: [ 'pid-1', 'pid-2' ], Message: 'mid-1' }
+  ])
+  assert.ok(true)
+})
