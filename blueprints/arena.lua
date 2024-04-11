@@ -129,7 +129,7 @@ function startGamePeriod()
     StateChangeTime = Now + GameTime
     for player, hasPaid in pairs(Waiting) do
         if hasPaid then
-            Players[player] = playerInitState
+            Players[player] = PlayerInitState
         else
             ao.send({
                 Target = player,
