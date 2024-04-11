@@ -85,6 +85,11 @@ function Spawn(module, msg)
   return 'spawn process request'
 end
 
+function Assign(assignment)
+  _ao.assign(assignment)
+  return 'assignment added to outbox'
+end
+
 Seeded = Seeded or false
 
 -- this is a temporary approach...
