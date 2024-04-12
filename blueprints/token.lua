@@ -171,3 +171,23 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     })
   end
 end)
+
+--[[
+     Total Supply
+   ]]
+--
+Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Supply'), function(msg)
+  assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
+
+  local totalSupply = bint(0)
+  for _, balance in pairs(Balances) do
+    totalSupply = bint.__add(totalSupply, bint(balance))
+  end
+
+  ao.send({
+    Target = msg.From,
+    Action = 'Total-Supply',
+    Data = tostring(totalSupply),
+    Ticker = Ticker
+  })
+end)
