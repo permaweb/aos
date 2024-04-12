@@ -8,7 +8,7 @@
 
 Status: Preview
 Version: 1.10.25.  
-Module: `L8822ViHsAZQFNhOKa-wnnZoVlcbQPxjJ0qCxUvuBeY`
+Module: `1PdCJiXhNafpJbvC-sjxWTeNzbf9Q_RfUNs84GYoPm0`
 
 ## Requirements
 
