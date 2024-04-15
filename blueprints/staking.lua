@@ -2,27 +2,41 @@ Stakers = Stakers or {}
 Unstaking = Unstaking or {}
 local bint = require('.bint')(256)
 
+--[[
+  utils helper functions to remove the bint complexity.
+]]
+--
+
+
+local utils = {
+  add = function (a,b) 
+    return tostring(bint(a) + bint(b))
+  end,
+  subtract = function (a,b)
+    return tostring(bint(a) - bint(b))
+  end
+}
+
 -- Stake Action Handler
 Handlers.stake = function(msg)
   local quantity = bint(msg.Tags.Quantity)
   local delay = tonumber(msg.Tags.UnstakeDelay)
   local height = tonumber(msg['Block-Height'])
   assert(Balances[msg.From] and bint(Balances[msg.From]) >= quantity, "Insufficient balance to stake")
-  Balances[msg.From] = tostring(bint(Balances[msg.From]) - quantity)
-  Stakers[msg.From] = Stakers[msg.From] or {}
-  Stakers[msg.From].amount = tostring(bint(Stakers[msg.From].amount or "0") + quantity)
+  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity) 
+  Stakers[msg.From] = Stakers[msg.From] or { amount = "0" }
+  Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
   Stakers[msg.From].unstake_at = height + delay
   ao.send({Target = msg.From, Data = "Successfully Staked " .. msg.Quantity})
 end
 
 -- Unstake Action Handler
 Handlers.unstake = function(msg)
-  local quantity = bint(msg.Quantity)
   local stakerInfo = Stakers[msg.From]
-  assert(stakerInfo and bint(stakerInfo.amount) >= quantity, "Insufficient staked amount")
-  stakerInfo.amount = tostring(bint(stakerInfo.amount) - quantity)
+  assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Quantity), "Insufficient staked amount")
+  stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Quantity)
   Unstaking[msg.From] = {
-      amount = tostring(quantity),
+      amount = msg.Quantity,
       release_at = stakerInfo.unstake_at
   }
   ao.send({Target = msg.From, Data = "Successfully unstaked " .. msg.Quantity})
@@ -34,7 +48,7 @@ local finalizationHandler = function(msg)
   -- Process unstaking
   for address, unstakeInfo in pairs(Unstaking) do
       if currentHeight >= unstakeInfo.release_at then
-          Balances[address] = tostring(bint(Balances[address] or "0") + bint(unstakeInfo.amount))
+          Balances[address] = utils.add(Balances[address] or "0", unstakeInfo.amount)
           Unstaking[address] = nil
       end
   end
