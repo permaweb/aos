@@ -35,7 +35,7 @@ if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
 
 if Name ~= 'Points Coin' then Name = 'Points Coin' end
 
-if Ticker ~= 'Points' then Ticker = 'PNTS' end
+if Ticker ~= 'PNTS' then Ticker = 'PNTS' end
 
 if Denomination ~= 12 then Denomination = 12 end
 
