@@ -27,19 +27,20 @@ Handlers.stake = function(msg)
   Stakers[msg.From] = Stakers[msg.From] or { amount = "0" }
   Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
   Stakers[msg.From].unstake_at = height + delay
-  ao.send({Target = msg.From, Data = "Successfully Staked " .. msg.Quantity})
+  print("Successfully Staked " .. msg.Tags.Quantity)
+  ao.send({Target = msg.From, Data = "Successfully Staked " .. msg.Tags.Quantity})
 end
 
 -- Unstake Action Handler
 Handlers.unstake = function(msg)
   local stakerInfo = Stakers[msg.From]
-  assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Quantity), "Insufficient staked amount")
-  stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Quantity)
+  assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Tags.Quantity), "Insufficient staked amount")
+  stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Tags.Quantity)
   Unstaking[msg.From] = {
       amount = msg.Quantity,
       release_at = stakerInfo.unstake_at
   }
-  ao.send({Target = msg.From, Data = "Successfully unstaked " .. msg.Quantity})
+  ao.send({Target = msg.From, Data = "Successfully unstaked " .. msg.Tags.Quantity})
 end
 
 -- Finalization Handler
@@ -74,7 +75,6 @@ Handlers.add("stake",
 Handlers.add("unstake",
   continue(Handlers.utils.hasMatchingTag("Action", "Unstake")), Handlers.unstake)
 -- Finalization handler should be called for every message
--- This should be at the end of your handlers list because no message will pass 
--- through here
-Handlers.add("finalize", function (msg) return true end, finalizationHandler)
+-- changed to continue to let messages pass-through
+Handlers.add("finalize", function (msg) return "continue" end, finalizationHandler)
 
