@@ -55,7 +55,7 @@ Listeners = Listeners or {}
 MinimumPlayers = MinimumPlayers or 2
 
 -- Default player state initialization.
-PlayerInitState = PlayerInitState or {}
+PlayerInitState = PlayerInitState or function () return {} end
 
 -- Sends a state change announcement to all registered listeners.
 -- @param event: The event type or name.
@@ -129,7 +129,7 @@ function startGamePeriod()
     StateChangeTime = Now + GameTime
     for player, hasPaid in pairs(Waiting) do
         if hasPaid then
-            Players[player] = playerInitState()
+            Players[player] = PlayerInitState()
         else
             ao.send({
                 Target = player,

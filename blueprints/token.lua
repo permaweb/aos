@@ -53,6 +53,8 @@ local utils = {
      ao.id is equal to the Process.Id
    ]]
 --
+Variant = "0.0.2"
+
 if not Balances then Balances = { [ao.id] = utils.toBalanceValue(10000 * 1e12) } end
 
 if Name ~= 'Points Coin' then Name = 'Points Coin' end

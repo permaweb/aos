@@ -1,3 +1,4 @@
+Variant = "0.0.2"
 Stakers = Stakers or {}
 Unstaking = Unstaking or {}
 local bint = require('.bint')(256)
