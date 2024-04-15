@@ -26,12 +26,34 @@ local ao = require('ao')
 local json = require('json')
 
 --[[
+  utils helper functions to remove the bint complexity.
+]]
+--
+
+
+local utils = {
+  add = function (a,b) 
+    return tostring(bint(a) + bint(b))
+  end,
+  subtract = function (a,b)
+    return tostring(bint(a) - bint(b))
+  end,
+  toBalanceValue = function (a)
+    return tostring(bint(a))
+  end,
+  toNumber = function (a)
+    return tonumber(a)
+  end
+}
+
+
+--[[
      Initialize State
 
      ao.id is equal to the Process.Id
    ]]
 --
-if not Balances then Balances = { [ao.id] = tostring(bint(10000 * 1e12)) } end
+if not Balances then Balances = { [ao.id] = utils.toBalanceValue(10000 * 1e12) } end
 
 if Name ~= 'Points Coin' then Name = 'Points Coin' end
 
@@ -102,11 +124,9 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
   if not Balances[msg.From] then Balances[msg.From] = "0" end
   if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
 
-  local qty = bint(msg.Quantity)
-  local balance = bint(Balances[msg.From])
-  if bint.__le(qty, balance) then
-    Balances[msg.From] = tostring(bint.__sub(balance, qty))
-    Balances[msg.Recipient] = tostring(bint.__add(Balances[msg.Recipient], qty))
+  if bint(msg.Quantity) <= bint(Balances[msg.From]) then
+    Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
+    Balances[msg.Recipient] = utils.add(Balances[msg.Recipient], msg.Quantity)
 
     --[[
          Only send the notifications to the Sender and Recipient
@@ -119,7 +139,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Target = msg.From,
         Action = 'Debit-Notice',
         Recipient = msg.Recipient,
-        Quantity = tostring(qty),
+        Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You transferred " ..
             Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
@@ -129,7 +149,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Target = msg.Recipient,
         Action = 'Credit-Notice',
         Sender = msg.From,
-        Quantity = tostring(qty),
+        Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You received " ..
             Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
@@ -151,13 +171,13 @@ end)
 --
 Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(msg)
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(bint.__lt(0, msg.Quantity), 'Quantity must be greater than zero!')
+  assert(bint(0) < bint(msg.Quantity), 'Quantity must be greater than zero!')
 
   if not Balances[ao.id] then Balances[ao.id] = "0" end
 
   if msg.From == ao.id then
     -- Add tokens to the token pool, according to Quantity
-    Balances[msg.From] = tostring(bint.__add(Balances[msg.From], msg.Quantity))
+    Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity) 
     ao.send({
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
@@ -181,7 +201,7 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Suppl
 
   local totalSupply = bint(0)
   for _, balance in pairs(Balances) do
-    totalSupply = bint.__add(totalSupply, bint(balance))
+    totalSupply =  utils.add(totalSupply, balance) 
   end
 
   ao.send({
