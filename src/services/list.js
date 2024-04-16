@@ -20,9 +20,10 @@ export function list(jwk, services) {
     .chain(listProcesses)
 
     .map(map(({ node }) => {
+      const pid = node.id
       const name = find(t => t.name == "Name", node.tags)?.value
       const version = find(t => t.name == "aos-Version", node.tags)?.value
-      return `${name}:v${version || 'unknown'}`
+      return `${name}:v${version || 'unknown'} - ${pid}`
     }))
     .map(list => `
   Your Processes:
