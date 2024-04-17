@@ -63,9 +63,9 @@ local ao = require('ao')
 local token = require('.ao20')
 
 local ao20 = {
-  _version = "0.0.21",
+  _version = "0.1.0",
   token = token,
-  process = "IVoKzaQNotDFXKlilVprJU8FKli_N-Az99zMZWHzids"
+  process = "k3q7P41HoZQTTNFk10Nz7FWN-1BrzDZH-lxIL1A5QK0"
 }
 
 --[[
