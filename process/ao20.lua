@@ -1,7 +1,7 @@
 --[[
   ao20 Token Module - v0.1.0 - 17/Apr/2024
   Puente.ai - michael@puente.ai
-  https://github.com/puente-ai/aos/blob/main/process/ao20.lua
+  https://github.com/puente-ai/ao-modules/blob/main/src/blueprints/modules/token/ao20.lua
 
   This module implements the base module for core ao20 Token functionality.
 

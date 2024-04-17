@@ -1,7 +1,7 @@
 --[[
   ao20 Token Specification - v0.1.0 - 17/Apr/2024
   Puente.ai - michael@puente.ai
-  https://github.com/puente-ai/aos/blob/main/blueprints/ao20.lua  
+  https://github.com/puente-ai/ao-modules/blob/main/src/blueprints/ao20.lua
   
   This module implements the ao20 Token Specification.
 
