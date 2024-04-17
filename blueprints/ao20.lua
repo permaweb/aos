@@ -60,7 +60,7 @@
 
 local bint = require('.bint')(256)
 local ao = require('ao')
-local token = require('.modules.token.ao20.ao20')
+local token = require('.ao20')
 
 local ao20 = {
   _version = "0.0.21",
