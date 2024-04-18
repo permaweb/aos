@@ -53,17 +53,14 @@ local utils = {
      ao.id is equal to the Process.Id
    ]]
 --
-Variant = "0.0.2"
+Variant = "0.0.3"
 
-if not Balances then Balances = { [ao.id] = utils.toBalanceValue(10000 * 1e12) } end
-
-if Name ~= 'Points Coin' then Name = 'Points Coin' end
-
-if Ticker ~= 'PNTS' then Ticker = 'PNTS' end
-
-if Denomination ~= 12 then Denomination = 12 end
-
-if not Logo then Logo = 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY' end
+-- token should be idempotent and not change previous state updates
+Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 1e12) }
+Name = Name or 'Points Coin' 
+Ticker = Ticker or 'PNTS'
+Denomination = Denomination or 12
+Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
