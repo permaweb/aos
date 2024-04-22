@@ -91,6 +91,8 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), func
   -- If not Recipient is provided, then return the Senders balance
   if (msg.Tags.Recipient and Balances[msg.Tags.Recipient]) then
     bal = Balances[msg.Tags.Recipient]
+  elseif msg.Tags.Target and Balances[msg.Tags.Target] then
+    bal = Balances[msg.Tags.Target]
   elseif Balances[msg.From] then
     bal = Balances[msg.From]
   end
