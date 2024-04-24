@@ -68,14 +68,14 @@ local function continue(fn)
   end
 end
 
-Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Stakers'),
+Handlers.add('staking.balances', Handlers.utils.hasMatchingTag('Action', 'Stakers'),
   function(msg) Send({ Target = msg.From, Data = require('json').encode(Stakers) }) end)
 -- Registering Handlers
-Handlers.add("stake",
+Handlers.add("staking.stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)
-Handlers.add("unstake",
+Handlers.add("staking.unstake",
   continue(Handlers.utils.hasMatchingTag("Action", "Unstake")), Handlers.unstake)
 -- Finalization handler should be called for every message
 -- changed to continue to let messages pass-through
-Handlers.add("finalize", function (msg) return "continue" end, finalizationHandler)
+Handlers.add("staking.finalize", function (msg) return "continue" end, finalizationHandler)
 
