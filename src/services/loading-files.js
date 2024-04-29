@@ -51,63 +51,45 @@ export function createExecutableFromProject(project) {
 /**
  * Create the project structure from the main file's content
  * @param {string} mainFile
- * @param {string} cwd
  * @return {Module[]}
  */
-export function createProjectStructure(mainFile, cwd) {
-  const modules = findRequires(mainFile, cwd)
-  let orderedModNames = modules.map((m) => m.name)
+export function createProjectStructure(mainFile) {
+  const sorted = []
+  const cwd = path.dirname(mainFile)
 
-  for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content || !fs.existsSync(modules[i].path)) continue
+  /**
+   * Recursive dfs algorithm
+   */
+  function dfs(currentNode) {
+    const unvisitedChildNodes = exploreNodes(currentNode.path, cwd).filter(
+      (node) => !sorted.find((sortedNode) => sortedNode.path === node.path)
+    )
 
-    modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
-      .split('\n')
-      .map(v => '  ' + v)
-      .join('\n')
-
-    const requiresInMod = findRequires(modules[i].content, cwd)
-
-    requiresInMod.forEach((mod) => {
-      const existingMod = modules.find((m) => m.name === mod.name)
-      if (!existingMod) {
-        modules.push(mod)
-      }
-
-      const existingName = orderedModNames.find((name) => name === mod.name)
-      if (existingName) {
-        orderedModNames = orderedModNames.filter((name) => name !== existingName)
-      }
-      orderedModNames.push(existingName || mod.name)
-    })
-  }
-
-  // Create an ordered array of modules,
-  // we use this loop to reverse the order,
-  // because the last modules are the first
-  // ones that need to be imported
-  // only add modules that were found
-  // if the module was not found, we assume it
-  // is already loaded into aos
-  let orderedModules = []
-  for (let i = orderedModNames.length; i > 0; i--) {
-    const mod = modules.find((m) => m.name == orderedModNames[i - 1])
-    if (mod && mod.content) {
-      orderedModules.push(mod)
+    for (let i = 0; i < unvisitedChildNodes.length; i++) {
+      dfs(unvisitedChildNodes[i])
     }
+
+    sorted.push(currentNode)
   }
 
-  return orderedModules
+  // run DFS from the main file
+  dfs({ path: mainFile })
+
+  return sorted
 }
 
 /**
- * @param {string} data
- * @param {string} cwd
+ * Find child nodes for a node (a module)
+ * @param {string} node Parent node
+ * @param {string} cwd Project root dir
  * @return {Module[]}
  */
-function findRequires(data, cwd) {
+function exploreNodes(node, cwd) {
+  if (!fs.existsSync(node)) return []
+
+  const content = fs.readFileSync(node, 'utf-8')
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
-  const requiredModules = data.match(requirePattern)?.map(
+  const requiredModules = content.match(requirePattern)?.map(
     (mod) => ({
       name: mod,
       path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
