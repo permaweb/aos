@@ -30,18 +30,19 @@ export function load(line) {
     spinner.suffixText = chalk.gray('Parsing project structure...')
   
     const projectStructure = createProjectStructure(filePath)
-    console.log(projectStructure.map(n => n.path))
-    throw new Error("snd")
 
-    line = createExecutableFromProject(projectStructure) + '\n\n' + line
+    line = createExecutableFromProject(projectStructure)
     spinner.stop()
 
     if (projectStructure.length > 0) {
       console.log(chalk.yellow('\nThe following files will be deployed:'))
-      console.log(chalk.dim(createFileTree([
-        ...projectStructure.map(m => m.path),
-        filePath + ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
-      ])))
+      console.log(chalk.dim(createFileTree(projectStructure.map((mod) => {
+        if (mod.path === filePath) {
+          mod.path += ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
+        }
+
+        return mod.path
+      }))))
     }
 
     return line
