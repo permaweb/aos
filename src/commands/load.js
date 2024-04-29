@@ -30,7 +30,7 @@ export function load(line) {
     spinner.suffixText = chalk.gray('Parsing project structure...')
   
     const projectStructure = createProjectStructure(filePath)
-    console.log(projectStructure)
+    console.log(projectStructure.map(n => n.path))
     throw new Error("snd")
 
     line = createExecutableFromProject(projectStructure) + '\n\n' + line

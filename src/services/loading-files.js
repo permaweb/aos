@@ -57,19 +57,23 @@ export function createProjectStructure(mainFile) {
   const sorted = []
   const cwd = path.dirname(mainFile)
 
-  /**
-   * Recursive dfs algorithm
-   */
+  // checks if the sorted module list already includes a node
+  const isSorted = (node) => sorted.find(
+    (sortedNode) => sortedNode.path === node.path
+  )
+
+  // recursive dfs algorithm
   function dfs(currentNode) {
-    const unvisitedChildNodes = exploreNodes(currentNode.path, cwd).filter(
-      (node) => !sorted.find((sortedNode) => sortedNode.path === node.path)
+    const unvisitedChildNodes = exploreNodes(currentNode, cwd).filter(
+      (node) => !isSorted(node)
     )
 
     for (let i = 0; i < unvisitedChildNodes.length; i++) {
       dfs(unvisitedChildNodes[i])
     }
 
-    sorted.push(currentNode)
+    if (!isSorted(currentNode))
+      sorted.push(currentNode)
   }
 
   // run DFS from the main file
@@ -80,16 +84,18 @@ export function createProjectStructure(mainFile) {
 
 /**
  * Find child nodes for a node (a module)
- * @param {string} node Parent node
+ * @param {Module} node Parent node
  * @param {string} cwd Project root dir
  * @return {Module[]}
  */
 function exploreNodes(node, cwd) {
-  if (!fs.existsSync(node)) return []
+  if (!fs.existsSync(node.path)) return []
 
-  const content = fs.readFileSync(node, 'utf-8')
+  // set content
+  node.content = fs.readFileSync(node.path, 'utf-8')
+
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
-  const requiredModules = content.match(requirePattern)?.map(
+  const requiredModules = node.content.match(requirePattern)?.map(
     (mod) => ({
       name: mod,
       path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
