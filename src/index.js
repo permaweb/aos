@@ -32,6 +32,7 @@ import { unmonitor } from './commands/unmonitor.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
+import { parseError } from './services/errors.js'
 
 const argv = minimist(process.argv.slice(2))
 let luaData = ""
@@ -323,10 +324,24 @@ if (!argv['watch']) {
         // log output
         spinner.stop()
 
-        if (result.Error) {
-          console.log(chalk.red(result.Error))
-        } else if (result.error) {
-          console.log(chalk.red(result.error))
+        if (result?.Error || result?.error) {
+          const error = parseError(result.Error || result.error);
+          
+          if (error) {
+            const lineNumberPlaceholder = " ".repeat(error.lineNumber.toString().length);
+
+            console.log(
+              chalk.bold(chalk.red("Error: " + error.errorMessage)) +
+              "\n" +
+              chalk.blue(`  ${lineNumberPlaceholder}  |\n  ${error.lineNumber}  |    `) +
+              chalk.black(line.split("\n")[error.lineNumber - 1]) +
+              "\n" +
+              chalk.blue(`  ${lineNumberPlaceholder}  |\n`) +
+              chalk.dim("This error occurred while evaluating the submitted code.")
+            )
+          } else {
+            console.log(chalk.red(result.Error || result.error));
+          }
         } else {
 
           if (output?.data) {
