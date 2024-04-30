@@ -326,7 +326,7 @@ if (!argv['watch']) {
 
         if (result?.Error || result?.error) {
           const error = parseError(result.Error || result.error);
-          
+
           if (error) {
             const lineNumberPlaceholder = " ".repeat(error.lineNumber.toString().length);
 
@@ -337,7 +337,7 @@ if (!argv['watch']) {
               chalk.black(line.split("\n")[error.lineNumber - 1]) +
               "\n" +
               chalk.blue(`  ${lineNumberPlaceholder}  |\n`) +
-              chalk.dim("This error occurred while evaluating the submitted code.")
+              chalk.dim("This error occurred while aos was evaluating the submitted code.")
             )
           } else {
             console.log(chalk.red(result.Error || result.error));
