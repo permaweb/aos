@@ -28,86 +28,81 @@ export function checkLoadArgs() {
  * @returns {string}
  */
 export function createExecutableFromProject(project) {
-  const getModFnName = (name) => name.replace(/\./g, "_").replace(/^_/, "")
+  const getModFnName = (name) => name.replace(/\./g, '_').replace(/^_/, '')
   const contents = []
 
   // filter out repeated modules with different import names
   // and construct the executable Lua code
-  for (const mod of project) {
-    const existing = contents.find((m) => m.path === mod.path);
+  // (the main file content is handled separately)
+  for (let i = 0; i < project.length - 1; i++) {
+    const mod = project[i]
+
+    const existing = contents.find((m) => m.path === mod.path)
     const moduleContent = (!existing && `-- module: "${mod.name}"\nlocal function _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`) || ''
     const requireMapper = `\n_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
 
-    contents.push({
-      name: mod.name,
-      path: mod.path,
-      code: moduleContent + requireMapper
-    })
+    contents.push(moduleContent + requireMapper)
   }
 
-  return contents.reduce((acc, con) => acc + '\n\n' + con.code, '')
+  // finally, add the main file
+  contents.push(project[project.length - 1].content)
+
+  return contents.reduce((acc, con) => acc + '\n\n' + con, '')
 }
 
 /**
  * Create the project structure from the main file's content
  * @param {string} mainFile
- * @param {string} cwd
  * @return {Module[]}
  */
-export function createProjectStructure(mainFile, cwd) {
-  const modules = findRequires(mainFile, cwd)
-  let orderedModNames = modules.map((m) => m.name)
+export function createProjectStructure(mainFile) {
+  const sorted = []
+  const cwd = path.dirname(mainFile)
 
-  for (let i = 0; i < modules.length; i++) {
-    if (modules[i].content || !fs.existsSync(modules[i].path)) continue
+  // checks if the sorted module list already includes a node
+  const isSorted = (node) => sorted.find(
+    (sortedNode) => sortedNode.path === node.path
+  )
 
-    modules[i].content = fs.readFileSync(modules[i].path, 'utf-8')
-      .split('\n')
-      .map(v => '  ' + v)
-      .join('\n')
+  // recursive dfs algorithm
+  function dfs(currentNode) {
+    const unvisitedChildNodes = exploreNodes(currentNode, cwd).filter(
+      (node) => !isSorted(node)
+    )
 
-    const requiresInMod = findRequires(modules[i].content, cwd)
-
-    requiresInMod.forEach((mod) => {
-      const existingMod = modules.find((m) => m.name === mod.name)
-      if (!existingMod) {
-        modules.push(mod)
-      }
-
-      const existingName = orderedModNames.find((name) => name === mod.name)
-      if (existingName) {
-        orderedModNames = orderedModNames.filter((name) => name !== existingName)
-      }
-      orderedModNames.push(existingName || mod.name)
-    })
-  }
-
-  // Create an ordered array of modules,
-  // we use this loop to reverse the order,
-  // because the last modules are the first
-  // ones that need to be imported
-  // only add modules that were found
-  // if the module was not found, we assume it
-  // is already loaded into aos
-  let orderedModules = []
-  for (let i = orderedModNames.length; i > 0; i--) {
-    const mod = modules.find((m) => m.name == orderedModNames[i - 1])
-    if (mod && mod.content) {
-      orderedModules.push(mod)
+    for (let i = 0; i < unvisitedChildNodes.length; i++) {
+      dfs(unvisitedChildNodes[i])
     }
+
+    if (!isSorted(currentNode))
+      sorted.push(currentNode)
   }
 
-  return orderedModules
+  // run DFS from the main file
+  dfs({ path: mainFile })
+
+  return sorted.filter(
+    // modules that were not read don't exist locally
+    // aos assumes that these modules have already been
+    // loaded into the process, or they're default modules
+    (mod) => mod.content !== undefined
+  )
 }
 
 /**
- * @param {string} data
- * @param {string} cwd
+ * Find child nodes for a node (a module)
+ * @param {Module} node Parent node
+ * @param {string} cwd Project root dir
  * @return {Module[]}
  */
-function findRequires(data, cwd) {
+function exploreNodes(node, cwd) {
+  if (!fs.existsSync(node.path)) return []
+
+  // set content
+  node.content = fs.readFileSync(node.path, 'utf-8')
+
   const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
-  const requiredModules = data.match(requirePattern)?.map(
+  const requiredModules = node.content.match(requirePattern)?.map(
     (mod) => ({
       name: mod,
       path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
