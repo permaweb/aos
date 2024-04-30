@@ -20,7 +20,6 @@ export function load(line) {
       throw Error(chalk.red('ERROR: file not found.'));
     }
     console.log(chalk.green('Loading... ', fn))
-    line = fs.readFileSync(filePath, 'utf-8')
 
     const spinner = ora({
       spinner: 'dots',
@@ -29,21 +28,21 @@ export function load(line) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray('Parsing project structure...')
-    const projectStructure = createProjectStructure(
-      line,
-      path.dirname(filePath)
-    )
-    if (projectStructure.length > 0) {
-      line = createExecutableFromProject(projectStructure) + '\n\n' + line
-    }
+  
+    const projectStructure = createProjectStructure(filePath)
+
+    line = createExecutableFromProject(projectStructure)
     spinner.stop()
 
     if (projectStructure.length > 0) {
       console.log(chalk.yellow('\nThe following files will be deployed:'))
-      console.log(chalk.dim(createFileTree([
-        ...projectStructure.map(m => m.path),
-        filePath + ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
-      ])))
+      console.log(chalk.dim(createFileTree(projectStructure.map((mod) => {
+        if (mod.path === filePath) {
+          mod.path += ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
+        }
+
+        return mod.path
+      }))))
     }
 
     return line
