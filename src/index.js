@@ -23,6 +23,7 @@ import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
+import { outputError, parseError } from './services/errors.js'
 
 // commands
 import { load } from './commands/load.js'
@@ -32,7 +33,6 @@ import { unmonitor } from './commands/unmonitor.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
-import { parseError } from './services/errors.js'
 
 const argv = minimist(process.argv.slice(2))
 let luaData = ""
@@ -246,8 +246,13 @@ if (!argv['watch']) {
           }
         }
 
+        // indicates if the line/code was loaded from a file/project
+        let wasLoading = false
         if (/^\.load/.test(line)) {
-          try { line = load(line) }
+          try {
+            line = load(line)
+            wasLoading = true
+          }
           catch (e) {
             console.log(e.message)
             // rl.close()
@@ -325,20 +330,10 @@ if (!argv['watch']) {
         spinner.stop()
 
         if (result?.Error || result?.error) {
-          const error = parseError(result.Error || result.error);
+          const error = parseError(result.Error || result.error)
 
           if (error) {
-            const lineNumberPlaceholder = " ".repeat(error.lineNumber.toString().length);
-
-            console.log(
-              chalk.bold(chalk.red("Error: " + error.errorMessage)) +
-              "\n" +
-              chalk.blue(`  ${lineNumberPlaceholder}  |\n  ${error.lineNumber}  |    `) +
-              chalk.black(line.split("\n")[error.lineNumber - 1]) +
-              "\n" +
-              chalk.blue(`  ${lineNumberPlaceholder}  |\n`) +
-              chalk.dim("This error occurred while aos was evaluating the submitted code.")
-            )
+            outputError(error)
           } else {
             console.log(chalk.red(result.Error || result.error));
           }
