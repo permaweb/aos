@@ -23,7 +23,7 @@ import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
-import { outputError, parseError } from './services/errors.js'
+import { getErrorOrigin, outputError, parseError } from './services/errors.js'
 
 // commands
 import { load } from './commands/load.js'
@@ -246,13 +246,11 @@ if (!argv['watch']) {
           }
         }
 
-        // indicates if the line/code was loaded from a file/project
-        let wasLoading = false
+        // modules loaded
+        /** @type {Module[]} */
+        let loadedModules = []
         if (/^\.load/.test(line)) {
-          try {
-            line = load(line)
-            wasLoading = true
-          }
+          try { [line, loadedModules] = load(line) }
           catch (e) {
             console.log(e.message)
             // rl.close()
@@ -333,7 +331,12 @@ if (!argv['watch']) {
           const error = parseError(result.Error || result.error)
 
           if (error) {
-            outputError(error)
+            // get what file the error comes from,
+            // if the line was loaded
+            const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
+
+            // print error
+            outputError(line, error, errorOrigin)
           } else {
             console.log(chalk.red(result.Error || result.error));
           }

@@ -25,10 +25,11 @@ export function checkLoadArgs() {
 
 /**
  * @param {Module[]} project 
- * @returns {string}
+ * @returns {[string, Module[]]}
  */
 export function createExecutableFromProject(project) {
   const getModFnName = (name) => name.replace(/\./g, '_').replace(/^_/, '')
+  /** @type {Module[]} */
   const contents = []
 
   // filter out repeated modules with different import names
@@ -41,13 +42,19 @@ export function createExecutableFromProject(project) {
     const moduleContent = (!existing && `-- module: "${mod.name}"\nlocal function _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`) || ''
     const requireMapper = `\n_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
 
-    contents.push(moduleContent + requireMapper)
+    contents.push({
+      ...mod,
+      content: moduleContent + requireMapper
+    })
   }
 
   // finally, add the main file
-  contents.push(project[project.length - 1].content)
+  contents.push(project[project.length - 1])
 
-  return contents.reduce((acc, con) => acc + '\n\n' + con, '')
+  return [
+    contents.reduce((acc, con) => acc + '\n\n' + con.content, ''),
+    contents
+  ]
 }
 
 /**

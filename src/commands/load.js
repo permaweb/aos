@@ -31,7 +31,8 @@ export function load(line) {
   
     const projectStructure = createProjectStructure(filePath)
 
-    line = createExecutableFromProject(projectStructure)
+    const [executable, modules] = createExecutableFromProject(projectStructure)
+    line = executable
     spinner.stop()
 
     if (projectStructure.length > 0) {
@@ -45,7 +46,7 @@ export function load(line) {
       }))))
     }
 
-    return line
+    return [line, modules]
   } else {
     throw Error(chalk.red('ERROR: .load function requires a *.lua file'))
   }
