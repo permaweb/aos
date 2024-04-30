@@ -57,11 +57,12 @@ export function getErrorOrigin(loadedModules, lineNumber) {
   let currentLine = 0
 
   // get the end position of this file in the executable
-  // "+1" is the line break
+  // "+5" is the line breaks and the extra content aos adds
+  // to the contents
   const getFilePosition = (content) =>
-    (content?.split('\n')?.length || 0) + 1
+    (content?.split('\n')?.length || 0) + 5
   
-  for (let i = 0; i < loadedModules; i++) {
+  for (let i = 0; i < loadedModules.length; i++) {
     const pos = getFilePosition(loadedModules[i].content)
 
     if (currentLine + pos < lineNumber) {
@@ -71,7 +72,7 @@ export function getErrorOrigin(loadedModules, lineNumber) {
 
     return {
       file: loadedModules[i].path,
-      line: lineNumber - pos
+      line: lineNumber - currentLine
     }
   }
 
@@ -91,7 +92,7 @@ export function outputError(line, error, origin) {
   console.log(
     chalk.bold(chalk.red('error') + ': ' + error.errorMessage) +
     '\n' +
-    origin ? chalk.dim(`  in ${origin.file}\n`) : "" +
+    (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
     chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +
     line.split('\n')[error.lineNumber - 1] +
     '\n' +
