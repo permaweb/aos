@@ -48,7 +48,7 @@ export function getErrorOrigin(loadedModules, lineNumber) {
   if (!loadedModules) return undefined
   if (loadedModules.length === 1) {
     return {
-      file: path.basename(loadedModules[0].path),
+      file: loadedModules[0].path,
       line: undefined
     }
   }
