@@ -53,27 +53,20 @@ export function getErrorOrigin(loadedModules, lineNumber) {
     }
   }
 
-  // get which file the line is in
   let currentLine = 0
 
-  // get the end position of this file in the executable
-  // "+5" is the line breaks and the extra content aos adds
-  // to the contents
-  const getFilePosition = (content) =>
-    (content?.split('\n')?.length || 0) + 5
-  
-  for (let i = 0; i < loadedModules.length; i++) {
-    const pos = getFilePosition(loadedModules[i].content)
+  for (let i = 0; i < loadedModules.length; i++) {
+    // get module line count
+    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1
 
-    if (currentLine + pos < lineNumber) {
-      currentLine += pos
-      continue
+    if (currentLine + lineCount >= lineNumber) {
+      return {
+        file: loadedModules[i].path,
+        line: lineNumber - currentLine - i * 2
+      }
     }
 
-    return {
-      file: loadedModules[i].path,
-      line: lineNumber - currentLine
-    }
+    currentLine += lineCount
   }
 
   return undefined
@@ -86,7 +79,7 @@ export function getErrorOrigin(loadedModules, lineNumber) {
  * @param {ErrorOrigin|undefined} origin
  */
 export function outputError(line, error, origin) {
-  const lineNumber = origin.line || error.lineNumber
+  const lineNumber = origin?.line || error.lineNumber
   const lineNumberPlaceholder = ' '.repeat(lineNumber.toString().length)
 
   console.log(
