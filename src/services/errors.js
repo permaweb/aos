@@ -23,8 +23,10 @@ export function parseError(error) {
   const lineNumbers = error.match(/:([0-9]*):/g)
   if (!lineNumbers) return undefined
   if (lineNumbers.length === 1) {
+    const lineNumber = parseInt(errorMessage.match(/(?<=at line )[0-9]+/g) || 1)
+
     return {
-      lineNumber: 1,
+      lineNumber,
       errorMessage
     }
   } 
