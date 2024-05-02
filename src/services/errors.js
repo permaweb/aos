@@ -22,6 +22,12 @@ export function parseError(error) {
   // parse line number
   const lineNumbers = error.match(/:([0-9]*):/g)
   if (!lineNumbers) return undefined
+  if (lineNumbers.length === 1) {
+    return {
+      lineNumber: 1,
+      errorMessage
+    }
+  } 
 
   // (it's going to be the last ":linenumber:")
   const lineNumber = parseInt(lineNumbers[lineNumbers.length - 1].replace(/:/g, ''))
