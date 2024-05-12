@@ -1,0 +1,9 @@
+{
+  "name": "@permaweb/weavedrive",
+  "version": "0.0.1",
+  "main": "./dist/index.js",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.21.1"
+  }
+}
