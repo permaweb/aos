@@ -57,6 +57,7 @@ Variant = "0.0.3"
 
 -- token should be idempotent and not change previous state updates
 Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 1e12) }
+TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 1e12)
 Name = Name or 'Points Coin' 
 Ticker = Ticker or 'PNTS'
 Denomination = Denomination or 12
@@ -192,6 +193,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
   if msg.From == ao.id then
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity) 
+    TotalSupply = utils.add(TotalSupply, msg.Quantity)
     ao.send({
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
@@ -213,15 +215,26 @@ end)
 Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Supply'), function(msg)
   assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
 
-  local totalSupply = bint(0)
-  for _, balance in pairs(Balances) do
-    totalSupply =  utils.add(totalSupply, balance) 
-  end
-
   ao.send({
     Target = msg.From,
     Action = 'Total-Supply',
-    Data = tostring(totalSupply),
+    Data = TotalSupply,
     Ticker = Ticker
+  })
+end)
+
+--[[
+ Burn
+]] --
+Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(msg)
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+  assert(bint(msg.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
+
+  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
+  TotalSupply = utils.subtract(TotalSupply, msg.Quantity)
+
+  ao.send({
+    Target = msg.From,
+    Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   })
 end)
