@@ -141,6 +141,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Action = 'Debit-Notice',
         Recipient = msg.Recipient,
         Quantity = msg.Quantity,
+        ['Message-Id'] = msg.Id,
         Data = Colors.gray ..
             "You transferred " ..
             Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
@@ -151,6 +152,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Action = 'Credit-Notice',
         Sender = msg.From,
         Quantity = msg.Quantity,
+        ['Message-Id'] = msg.Id,
         Data = Colors.gray ..
             "You received " ..
             Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
