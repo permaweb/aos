@@ -23,6 +23,7 @@ import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
+import { getErrorOrigin, outputError, parseError } from './services/errors.js'
 
 // commands
 import { load } from './commands/load.js'
@@ -245,8 +246,11 @@ if (!argv['watch']) {
           }
         }
 
+        // modules loaded
+        /** @type {Module[]} */
+        let loadedModules = []
         if (/^\.load/.test(line)) {
-          try { line = load(line) }
+          try { [line, loadedModules] = load(line) }
           catch (e) {
             console.log(e.message)
             // rl.close()
@@ -323,10 +327,19 @@ if (!argv['watch']) {
         // log output
         spinner.stop()
 
-        if (result.Error) {
-          console.log(chalk.red(result.Error))
-        } else if (result.error) {
-          console.log(chalk.red(result.error))
+        if (result?.Error || result?.error) {
+          const error = parseError(result.Error || result.error)
+
+          if (error) {
+            // get what file the error comes from,
+            // if the line was loaded
+            const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
+
+            // print error
+            outputError(line, error, errorOrigin)
+          } else {
+            console.log(chalk.red(result.Error || result.error));
+          }
         } else {
 
           if (output?.data) {
