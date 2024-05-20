@@ -1,19 +1,22 @@
 Members = Members or {}
 
-function valueExists(arr, val)
-  local str = table.concat(arr, ",")
-  return string.match(","..str..",", ","..val..",") ~= nil
-end
-
 Handlers.add(
   "register",
   Handlers.utils.hasMatchingTag("Action", "Register"),
   function (msg)
-    if valueExists(myArray, searchValue) then
-        Handlers.utils.reply("Have registered, not need register again")(msg)
+    local found = false
+    for _, member in ipairs(Members) do
+      if member == msg.From then
+        found = true
+        break
+      end
+    end
+    
+    if not found then
+      table.insert(Members, msg.From)
+      Handlers.utils.reply("Registered.")(msg)
     else
-        table.insert(Members, msg.From)
-        Handlers.utils.reply("registered")(msg)
+      Handlers.utils.reply("Already registered.")(msg)
     end
   end
 )
@@ -41,8 +44,12 @@ Handlers.add(
   "broadcast",
   Handlers.utils.hasMatchingTag("Action", "Broadcast"),
   function (msg)
+    local haveSentRecords = {}
     for _, recipient in ipairs(Members) do
-      ao.send({Target = recipient, Data = msg.Data})
+      if not haveSentRecords[recipient] then
+        ao.send({Target = recipient, Data = msg.Data})
+        haveSentRecords[recipient] = true
+      end
     end
     Handlers.utils.reply("Broadcasted.")(msg)
   end
