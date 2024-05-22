@@ -21,12 +21,15 @@ export function register(jwk, services) {
     return services.gql(queryForAOS(name, AOS_MODULE), { owners: [address, argv.address || ""] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
-        _ => Rejected({ jwk, address, name, spawnTags }),
-        results => results.length > 0 ? Resolved(results.reverse()) : Rejected({ jwk, address, name, spawnTags })
+        _ => Rejected({ ok: false }),
+        results => results.length > 0 ? Resolved(results.reverse()) : Rejected({ ok: true, jwk, address, name, spawnTags })
       )
   }
 
-  const createProcess = ({ jwk, address, name, spawnTags }) => {
+  const createProcess = ({ ok, jwk, address, name, spawnTags }) => {
+    if (!ok) {
+      return Rejected({ error: 'GRAPHQL Error trying to locate process.' })
+    }
     let data = "1984"
     let tags = [
       { name: 'App-Name', value: 'aos' },
@@ -66,7 +69,7 @@ export function register(jwk, services) {
   let spawnTags = Array.isArray(argv["tag-name"]) ?
     argv["tag-name"].map((name, i) => ({
       name: String(name || ""),
-      value: String(argv["tag-value"][i] || "")
+      value: String(argv["tag-value"][i] || "")
     })) : [];
   if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
     spawnTags = [{

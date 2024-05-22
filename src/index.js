@@ -403,17 +403,20 @@ async function connect(jwk, id) {
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
-  for (var i = 0; i < 10; i++) {
+  for (var i = 0; i < 50; i++) {
     if (promptResult?.Output?.data?.prompt === undefined) {
       spinner.suffixText = chalk.red("[Retrying...]")
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      await new Promise(resolve => setTimeout(resolve, 1000 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
     } else {
       break;
     }
   }
   spinner.stop();
-
+  if (promptResult?.Output?.data?.prompt === undefined) {
+    console.log('Could not connect to process! Exiting...')
+    process.exit(1);
+  }
   return promptResult?.Output?.data?.prompt
 }
 
