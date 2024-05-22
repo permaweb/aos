@@ -142,6 +142,7 @@ export async function live(id, watch) {
 
   const checkLive = async () => {
     if (!isJobRunning) {
+
       try {
         isJobRunning = true;
         let params = { process: id, limit: "1000" }
@@ -183,8 +184,10 @@ export async function live(id, watch) {
         //process.nextTick(() => null)
 
       } catch (e) {
-        console.log(chalk.red('An error occurred with live updates...'))
-        console.log('Message: ', chalk.gray(e.message))
+        // surpress error messages #195
+
+        // console.log(chalk.red('An error occurred with live updates...'))
+        // console.log('Message: ', chalk.gray(e.message))
       } finally {
         isJobRunning = false
       }
