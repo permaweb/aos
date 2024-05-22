@@ -199,8 +199,8 @@ function help()
         "The interface is simple. Run...\n\n" ..
         Colors.green .. "\t\t`List()`" .. Colors.reset .. " to see which rooms are available.\n" .. 
         Colors.green .. "\t\t`Join(\"RoomName\")`" .. Colors.reset .. " to join a room.\n" .. 
-        Colors.green .. "\t\t`Say(\"Msg\"[, \"RoomName\"])`" .. Colors.reset .. " to post to a room (remembering your last choice for next time).\n" ..
-        Colors.green .. "\t\t`Replay([\"Count\"])`" .. Colors.reset .. " to reprint the most recent messages from a chat.\n" ..
+        Colors.green .. "\t\t`Say(\"Msg\", \"RoomName\") or Say(\"Msg\", \"RoomName1\", \"RoomName2\")`" .. Colors.reset .. " to post to a room (remembering your last choice for next time).\n" ..
+        Colors.green .. "\t\t`Replay(Count, \"RoomName\") e.g. Replay(1, \"Getting-Started\")`" .. Colors.reset .. " to reprint the most recent messages from a chat.\n" ..
         Colors.green .. "\t\t`Leave(\"RoomName\")`" .. Colors.reset .. " at any time to unsubscribe from a chat.\n" ..
         Colors.green .. "\t\t`Tip([\"Recipient\"])`" .. Colors.reset .. " to send a token from the chatroom to the sender of the last message.\n\n" ..
         "You have already been registered to the " .. Colors.blue .. DevChat.Rooms[DevChat.InitRoom] .. Colors.reset .. ".\n" ..
