@@ -65,11 +65,14 @@ export function register(jwk, services) {
 
   let spawnTags = Array.isArray(argv["tag-name"]) ?
     argv["tag-name"].map((name, i) => ({
-      name,
-      value: argv["tag-value"][i]
+      name: String(name || ""),
+      value: String(argv["tag-value"][i] || "")
     })) : [];
   if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
-    spawnTags = [{ name: argv["tag-name"], value: argv["tag-value"] || "" }]
+    spawnTags = [{
+      name: String(argv["tag-name"] || ""),
+      value: String(argv["tag-value"] || "")
+    }]
   }
   if (name.length === 43) {
     return of(name)
