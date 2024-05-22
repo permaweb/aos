@@ -9,7 +9,11 @@ return function (insertInbox)
     if msg.Action then
       txt = txt .. Colors.gray .. (msg.Action and ("Action = " .. Colors.blue .. msg.Action:sub(1,20)) or "") .. Colors.reset
     else
-      txt = txt .. Colors.gray .. "Data = " .. Colors.blue .. (msg.Data and msg.Data:sub(1,20) or "") .. Colors.reset
+      local data = msg.Data
+      if type(data) == 'table' then
+        data = require('json').encode(data)
+      end
+      txt = txt .. Colors.gray .. "Data = " .. Colors.blue .. (data and data:sub(1,20) or "") .. Colors.reset
     end
     -- Print to Output
     print(txt)
