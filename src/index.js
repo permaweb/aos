@@ -5,6 +5,7 @@ import minimist from 'minimist'
 import ora from 'ora'
 import chalk from 'chalk'
 import path from 'path'
+import { errors } from './errors.js'
 import * as url from 'url'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
@@ -328,7 +329,7 @@ if (!argv['watch']) {
         spinner.stop()
 
         if (result?.Error || result?.error) {
-          const error = parseError(result.Error || result.error)
+          const error = parseError(result.Error || result.error)
 
           if (error) {
             // get what file the error comes from,
@@ -381,7 +382,12 @@ if (!argv['watch']) {
         if (process.env.DEBUG) {
           console.log(e)
         }
-        console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+        if (argv['load']) {
+          console.log(e.message)
+        } else {
+          console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+        }
+
       }
     })
 }
