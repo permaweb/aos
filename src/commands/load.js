@@ -17,7 +17,7 @@ export function load(line) {
       filePath = path.resolve(path.join(process.cwd(), fn))
     }
     if (!fs.existsSync(filePath)) {
-      throw Error(chalk.red('ERROR: file not found.'));
+      throw Error(chalk.red('ERROR (200): file not found.'));
     }
     console.log(chalk.green('Loading... ', fn))
 
@@ -28,7 +28,7 @@ export function load(line) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray('Parsing project structure...')
-  
+
     const projectStructure = createProjectStructure(filePath)
 
     const [executable, modules] = createExecutableFromProject(projectStructure)
