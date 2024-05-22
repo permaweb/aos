@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "1.10.29",
+  "version": "1.10.30",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/permaweb/aos.git",
@@ -29,7 +29,7 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "1PdCJiXhNafpJbvC-sjxWTeNzbf9Q_RfUNs84GYoPm0"
+    "module": "5l00H2S0RuPYe-V5GAI-1RgQEHFInSMr20E-3RNXJ_U"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"

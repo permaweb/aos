@@ -7,8 +7,8 @@
 # aos
 
 Status: Preview
-Version: 1.10.28.  
-Module: `1PdCJiXhNafpJbvC-sjxWTeNzbf9Q_RfUNs84GYoPm0`
+Version: 1.10.30.  
+Module: `5l00H2S0RuPYe-V5GAI-1RgQEHFInSMr20E-3RNXJ_U`
 
 ## Requirements
 

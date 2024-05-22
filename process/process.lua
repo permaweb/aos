@@ -22,6 +22,24 @@ local _ao = require('ao')
 local process = { _version = "0.2.0" }
 local maxInboxCount = 10000
 
+-- wrap ao.send and ao.spawn for magic table
+local aosend = _ao.send 
+local aospawn = _ao.spawn
+_ao.send = function (msg)
+  if msg.Data and type(msg.Data) == 'table' then
+    msg['Content-Type'] = 'application/json'
+    msg.Data = require('json').encode(msg.Data)
+  end
+  return aosend(msg)
+end
+_ao.spawn = function (module, msg) 
+  if msg.Data and type(msg.Data) == 'table' then
+    msg['Content-Type'] = 'application/json'
+    msg.Data = require('json').encode(msg.Data)
+  end
+  return aospawn(module, msg)
+end
+
 local function insertInbox(msg)
   table.insert(Inbox, msg)
   if #Inbox > maxInboxCount then
@@ -153,12 +171,17 @@ end
 function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
+
   -- tagify msg
   msg.TagArray = msg.Tags
   msg.Tags = Tab(msg)
   -- tagify Process
   ao.env.Process.TagArray = ao.env.Process.Tags
   ao.env.Process.Tags = Tab(ao.env.Process)
+  -- magic table - if Content-Type == application/json - decode msg.Data to a Table
+  if msg.Tags['Content-Type'] and msg.Tags['Content-Type'] == 'application/json' then
+    msg.Data = require('json').decode(msg.Data or "{}")
+  end
   -- init Errors
   Errors = Errors or {}
   -- clear Outbox
