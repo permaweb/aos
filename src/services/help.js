@@ -13,6 +13,7 @@ ${chalk.green('Commands:')}
   ${chalk.green('.monitor')}                      Starts monitoring cron messages for this Process
   ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this Process
   ${chalk.green('.editor')}                       Simple code editor for writing multi-line lua expressions
+  ${chalk.green('.dryrun')}                       To Perform dryrun
   ${chalk.green('.help')}                         Print this help screen
   ${chalk.green('.exit')}                         Quit console
   `)
