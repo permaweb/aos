@@ -10,17 +10,17 @@ import { uniqBy, prop, keys } from 'ramda'
 
 
 const pkg = getPkg()
-const info = {
+const getInfo = () => ({
   GATEWAY_URL: process.env.GATEWAY_URL,
   CU_URL: process.env.CU_URL,
   MU_URL: process.env.MU_URL
-}
+})
 
 export function readResult(params) {
 
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(params), 500))
-  )().chain(fromPromise(() => connect(info).result(params)))
+  )().chain(fromPromise(() => connect(getInfo()).result(params)))
     // log the error messages most seem related to 503
     //.bimap(_ => (console.log(_), _), _ => (console.log(_), _))
     .bichain(fromPromise(() =>
@@ -40,9 +40,9 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
       retries += "."
       return _
     })
-    .chain(fromPromise(() => connect(info).message({ process: processId, signer, tags, data })))
+    .chain(fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data })))
 
-  return fromPromise(() => connect(info).message({ process: processId, signer, tags, data }))()
+  return fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data }))()
     //.bimap(function (e) { console.log(e); return e }, function (a) { console.log(a); return a; })
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -74,7 +74,7 @@ export function spawnProcess({ wallet, src, tags, data }) {
   const signer = createDataItemSigner(wallet)
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => connect(info).spawn({
+  return fromPromise(() => connect(getInfo()).spawn({
     module: src, scheduler: SCHEDULER, signer, tags, data
   })
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
@@ -84,14 +84,14 @@ export function spawnProcess({ wallet, src, tags, data }) {
 
 export function monitorProcess({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(info).monitor({ process: id, signer }))()
+  return fromPromise(() => connect(getInfo()).monitor({ process: id, signer }))()
   //.map(result => (console.log(result), result))
 
 }
 
 export function unmonitorProcess({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(info).unmonitor({ process: id, signer }))()
+  return fromPromise(() => connect(getInfo()).unmonitor({ process: id, signer }))()
   //.map(result => (console.log(result), result))
 
 }
@@ -153,7 +153,7 @@ export async function live(id, watch) {
           params["sort"] = "DESC"
         }
 
-        const results = await connect(info).results(params)
+        const results = await connect(getInfo()).results(params)
 
         const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {

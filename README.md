@@ -60,6 +60,9 @@ aos [name]
 | `--get-blueprints [dir]`                      | This command will grab blueprints from the `/blueprints` folder or a folder specified by the user. These blueprints are small lua files that can be applied to your process to automatically give it some functionality.           | 0-1      |
 | `--tag-name [name]` and `--tag-value [value]` | These flags are also only when aos is spawning a Process. You may add many of these combinations as you would like and they will appear on the Process tags object                                                                 | 0-n      |
 | `--load [luaFile]`                            | The load command allows you to load lua source files from your local directory.                                                                                                                                                    | 0-n      |
+| `--gateway-url [url]`                         | The gateway-url flag allows you to specify a custom Gateway to connect to.                                                                                                                                                         | 0-1      |
+| `--cu-url`                                    | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1      |
+| `mu-url`                                      | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
 
 ### Commands
 
