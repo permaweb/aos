@@ -144,7 +144,8 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You transferred " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
+            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset,
+        Note = msg.Note or nil
       }
       -- Credit-Notice message template, that is sent to the Recipient of the transfer
       local creditNotice = {
@@ -154,7 +155,8 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
         Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You received " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
+            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset,
+        Note = msg.Note or nil
       }
 
       -- Add forwarded tags to the credit and debit notice messages
