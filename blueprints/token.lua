@@ -78,7 +78,8 @@ Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(m
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
-    Denomination = tostring(Denomination)
+    Denomination = tostring(Denomination),
+    TotalSupply = TotalSupply
   })
 end)
 
@@ -206,21 +207,6 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
       Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
     })
   end
-end)
-
---[[
-     Total Supply
-   ]]
---
-Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Supply'), function(msg)
-  assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
-
-  ao.send({
-    Target = msg.From,
-    Action = 'Total-Supply',
-    Data = TotalSupply,
-    Ticker = Ticker
-  })
 end)
 
 --[[
