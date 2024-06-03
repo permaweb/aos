@@ -6,7 +6,7 @@ import * as url from 'url';
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 if (os.platform() === 'win32') {
-  __dirname = __dirname.replace(/\\/g, "/").replace(/^[A-Za-z]:\//, "/")
+  __dirname = __dirname.replace(/\\/g, "/")
 }
 
 const pkg = JSON.parse(fs.readFileSync(path.resolve(__dirname + '../../package.json')))
