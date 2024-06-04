@@ -4,7 +4,7 @@ import AoLoader from '@permaweb/ao-loader'
 import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
-const options = { format: "wasm32-unknown-emscripten" }
+const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
 test('run evaluate action unsuccessfully', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
@@ -113,7 +113,7 @@ test('create an Assignment', async () => {
   const result = await handle(null, msg, env)
   console.log(result)
   assert.deepStrictEqual(result.Assignments, [
-    { Processes: [ 'pid-1', 'pid-2' ], Message: 'mid-1' }
+    { Processes: ['pid-1', 'pid-2'], Message: 'mid-1' }
   ])
   assert.ok(true)
 })

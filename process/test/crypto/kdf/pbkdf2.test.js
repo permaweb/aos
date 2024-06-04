@@ -4,7 +4,8 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-const options = { format: "wasm32-unknown-emscripten" }
+const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
+
 test('run pbkdf2 successfully', async () => {
 	const results = [
 		'C4C21BF2BBF61541408EC2A49C89B9C6',

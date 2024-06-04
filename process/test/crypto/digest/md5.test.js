@@ -4,7 +4,8 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-const options = { format: "wasm32-unknown-emscripten" }
+const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
+
 test('run md5 hash successfully', async () => {
 	const cases = [
 		['', 'd41d8cd98f00b204e9800998ecf8427e'],
@@ -25,7 +26,7 @@ test('run md5 hash successfully', async () => {
 		},
 	};
 
-	cases.forEach(async (e) => {
+	const testCase = async (e) => {
 		const data = `
 			local crypto = require(".crypto");
 
@@ -45,5 +46,10 @@ test('run md5 hash successfully', async () => {
 		const result = await handle(null, msg, env);
 		assert.equal(result.Output?.data.output, e[1]);
 		assert.ok(true);
-	});
+	};
+	await testCase(cases[0]);
+	await testCase(cases[1]);
+	await testCase(cases[2]);
+	await testCase(cases[3]);
+	await testCase(cases[4]);
 });
