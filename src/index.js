@@ -86,6 +86,19 @@ if (argv['watch'] && argv['watch'].length === 43) {
 
 splash()
 
+if (argv['gateway-url']) {
+  console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
+  process.env.GATEWAY_URL = argv['gateway-url']
+}
+
+if (argv['cu-url']) {
+  process.env.CU_URL = argv['cu-url']
+}
+
+if (argv['mu-url']) {
+  process.env.SCHEDULER = argv['mu-url']
+}
+
 if (!argv['watch']) {
   of()
     .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))

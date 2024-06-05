@@ -41,6 +41,9 @@ ${chalk.green('Options:')}
   ${chalk.green('--monitor')}.               Monitor and Push Cron Outbox Messages and Spawns
   ${chalk.green('--help')}                   Shows help page
   ${chalk.green('--version')}                Shows Console Version
+  ${chalk.green('--gateway-url')}            Set the Gateway URL
+  ${chalk.green('--cu-url')}                 Set the Computer Unit URL
+  ${chalk.green('--mu-url')}                 Set the Messenger Unit URL
 
 ${chalk.green('name')}                       Name is the Process name you want to spawn or connect to, if you do not
                            specify a name then "default" will be used.
