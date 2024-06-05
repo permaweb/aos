@@ -8,7 +8,7 @@
 
 Status: Preview
 Version: 1.11.0.  
-Module: `pJlh1tfQHSJWlpbCLEZOOeRkSEDickxXuTeRiyQcl8E`
+Module: `nI_jcZgPd0rcsnjaHtaaJPpMCW847ou-3RGA5_W3aZg`
 
 ## Requirements
 
@@ -26,10 +26,6 @@ npm i -g https://get_ao.g8way.io && aos
 
 Go to [ao Cookbook](https://cookbook_ao.g8way.io)
 
-## Project Background and Current Status
-
-This project is a proof of concept implementation of the `aos` module and `aos console`, the module is located in the `process` directory of this repository. The `console` is located in the `src` directory of this repository.
-
 ## Design Principals
 
 - aos the module is designed to be an operating system on the ao network, it provides developers the ability to build ao processes that are fast to iterate with and highly flexible. The design goal of the aos process is to not have too many opinions and implement the core functionality extremely well. The design should quickly reach a complete status. Currently it is in the `Preview` stage and should be progressing to an `Early` stage, then finally a `Complete` stage.
@@ -43,6 +39,17 @@ The current implementation of aos is using the ao wasm module and building with 
 ## For Developers
 
 The aos console is a command-line application that provides a easy to use DX experience to create Processes (aka Smart Contracts) on the ao Computer.
+
+### Setup
+
+Use yarn to build the project and run.
+
+```sh
+yarn
+yarn build
+yarn start
+```
+
 
 ### Command-line options
 
