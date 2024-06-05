@@ -5,11 +5,11 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@permaweb/ao-loader": "^0.0.26"
+    "@permaweb/ao-loader": "^0.0.33"
   },
   "scripts": {
     "build": "ao build",
-    "test": "node --test ./test",
+    "test": "node --test --experimental-wasm-memory64 test",
     "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 500-mb -t Compute-Limit -v 9000000000000"
   }
 }

@@ -34,6 +34,7 @@ export function register(jwk, services) {
     let tags = [
       { name: 'App-Name', value: 'aos' },
       { name: 'Name', value: name },
+      { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
       ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))

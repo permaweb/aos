@@ -171,7 +171,7 @@ end
 function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
-
+  
   -- tagify msg
   msg.TagArray = msg.Tags
   msg.Tags = Tab(msg)
@@ -186,6 +186,14 @@ function process.handle(msg, ao)
   Errors = Errors or {}
   -- clear Outbox
   ao.clearOutbox()
+
+  -- Only trust messages from a signed owner or an Authority
+  if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
+    Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    print('Message is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+    return ao.result({ }) 
+  end
+
 
   Handlers.add("_eval", 
     function (msg)

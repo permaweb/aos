@@ -4,7 +4,7 @@ import AoLoader from '@permaweb/ao-loader';
 import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
-const options = { format: "wasm32-unknown-emscripten" }
+const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
 test('run sha2 hash successfully', async () => {
 	const results = [
 		'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
