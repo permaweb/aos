@@ -176,7 +176,7 @@ arconnect@^0.4.2:
   dependencies:
     arweave "^1.10.13"
 
-arweave@^1.10.13, arweave@^1.13.7, arweave@^1.14.4:
+arweave@^1.10.13, arweave@^1.13.7, arweave@^1.15.1:
   version "1.15.1"
   resolved "https://registry.yarnpkg.com/arweave/-/arweave-1.15.1.tgz#c6183136b20980c81a8cb77ce6fd9fb333e1a174"
   integrity sha512-rT7FOwqdudd5npqp4xOYdDT2035LtpcqePjwirh4wjRiEtVsz1FZkRiM2Yj+fOAwYzOm/hNG0GDOipDSaiEGGQ==

@@ -1,4 +1,7 @@
 var assert = require('assert')
+var Arweave = require('arweave')
+
+
 const KB = 1024
 const MB = KB * 1024
 const CACHE_SZ = 32 * KB
@@ -52,9 +55,17 @@ module.exports = function weaveDrive(mod, FS) {
       return stream;
     },
     async createTxHeader(id) {
+      async function toAddress(owner) {
+        return Arweave.utils.bufferTob64Url(
+          await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
+        );
+      }
       // todo: add a bunch of retries
       var result = await fetch(`${mod.ARWEAVE}/tx/${id}`)
-        .then(res => res.text());
+        .then(res => res.json())
+        .then(async entry => ({...entry, ownerAddress: await toAddress(entry.owner)  }))
+        //.then(x => (console.error(x), x))
+        .then(x => JSON.stringify(x));
        
       var node = FS.createDataFile('/', 'tx/' + id, result, true, false);
       var stream = FS.open('/tx/' + id, 'r');
