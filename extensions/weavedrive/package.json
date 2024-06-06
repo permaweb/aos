@@ -4,6 +4,8 @@
   "main": "./dist/index.js",
   "license": "MIT",
   "devDependencies": {
+    "@permaweb/ao-loader": "^0.0.33",
+    "@permaweb/weavedrive": "^0.0.2",
     "esbuild": "^0.21.1"
   }
 }
