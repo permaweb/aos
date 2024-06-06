@@ -69,7 +69,7 @@ aos [name]
 | `--load [luaFile]`                            | The load command allows you to load lua source files from your local directory.                                                                                                                                                    | 0-n      |
 | `--gateway-url [url]`                         | The gateway-url flag allows you to specify a custom Gateway to connect to.                                                                                                                                                         | 0-1      |
 | `--cu-url [url]`                              | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1      |
-| `mu-url [url]`                                | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
+| `--mu-url [url]`                                | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
 
 ### Commands
 
