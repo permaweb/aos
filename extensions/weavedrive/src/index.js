@@ -97,7 +97,7 @@ module.exports = function weaveDrive(mod, FS) {
     async open(filename) {
       const pathCategory = filename.split('/')[1];
       const id = filename.split('/')[2];
-      console.error("JS: Opening ID: ", id);
+      console.log("JS: Opening ID: ", id);
       if (pathCategory === 'tx') {
         FS.createPath('/', 'tx', true, false);
         if (FS.analyzePath(filename).exists) {
