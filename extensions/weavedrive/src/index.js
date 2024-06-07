@@ -1,4 +1,7 @@
 var assert = require('assert')
+var Arweave = require('arweave')
+
+
 const KB = 1024
 const MB = KB * 1024
 const CACHE_SZ = 32 * KB
@@ -20,7 +23,7 @@ module.exports = function weaveDrive(mod, FS) {
         console.log("WeaveDrive: Arweave ID is not admissable! ", id)
         return 0;
       }
-
+      
       // Create the file in the emscripten FS
       // TODO: might make sense to create the `data` folder here if does not exist
       var node = FS.createFile('/', 'data/' + id, properties, true, false);
@@ -39,11 +42,91 @@ module.exports = function weaveDrive(mod, FS) {
       //console.log("JS: Created file: ", id, " fd: ", stream.fd);
       return stream;
     },
+    async createBlockHeader(id) {
+      // todo: add a bunch of retries
+      async function retry(x) {
+        return new Promise(r => {
+          setTimeout(function () {
+            r(fetch(`${mod.ARWEAVE}/block/height/${id}`))
+          }, x * 1000)
+        })
+      }
+      var result = await fetch(`${mod.ARWEAVE}/block/height/${id}`)
+        .then(res => ! res.ok ? retry(1) : res)
+        .then(res => ! res.ok ? retry(2) : res)
+        .then(res => ! res.ok ? retry(3) : res)
+        .then(res => ! res.ok ? retry(4) : res)
+        .then(res => res.text());
+
+      var bytesLength = result.length;
+       
+      var node = FS.createDataFile('/', 'block/' + id, result, true, false);
+      
+      var stream = FS.open('/block/' + id, 'r');
+      return stream;
+    },
+    async createTxHeader(id) {
+      async function toAddress(owner) {
+        return Arweave.utils.bufferTob64Url(
+          await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
+        );
+      }
+      async function retry(x) {
+        return new Promise(r => {
+          setTimeout(function () {
+            r(fetch(`${mod.ARWEAVE}/tx/${id}`))
+          }, x * 1000)
+        })
+      }
+      // todo: add a bunch of retries
+      var result = await fetch(`${mod.ARWEAVE}/tx/${id}`)
+        .then(res => ! res.ok ? retry(1) : res)
+        .then(res => ! res.ok ? retry(2) : res)
+        .then(res => ! res.ok ? retry(3) : res)
+        .then(res => ! res.ok ? retry(4) : res)
+        .then(res => res.json())
+        .then(async entry => ({...entry, ownerAddress: await toAddress(entry.owner)  }))
+        //.then(x => (console.error(x), x))
+        .then(x => JSON.stringify(x));
+       
+      var node = FS.createDataFile('/', 'tx/' + id, result, true, false);
+      var stream = FS.open('/tx/' + id, 'r');
+      return stream;
+    },
 
     async open(filename) {
       const pathCategory = filename.split('/')[1];
       const id = filename.split('/')[2];
-      console.log("JS: Opening ID: ", id);
+      console.error("JS: Opening ID: ", id);
+      if (pathCategory === 'tx') {
+        FS.createPath('/', 'tx', true, false);
+        if (FS.analyzePath(filename).exists) {
+          for (var i = 0; i < FS.streams.length; i++) {
+            if (FS.streams[i].node.name === id) {
+              return FS.streams[i].fd;
+            }
+          }
+          return 0;
+        } else {
+          const stream = await this.createTxHeader(id);
+          return stream.fd;
+        }
+
+      }
+      if (pathCategory === 'block') {
+        FS.createPath('/', 'block', true, false);
+        if (FS.analyzePath(filename).exists) {
+          for (var i = 0; i < FS.streams.length; i++) {
+            if (FS.streams[i].node.name === id) {
+              return FS.streams[i].fd;
+            }
+          }
+          return 0;
+        } else {
+          const stream = await this.createBlockHeader(id);
+          return stream.fd;
+        }
+      }
 
       if (pathCategory === 'data') {
         if (FS.analyzePath(filename).exists) {
@@ -74,6 +157,7 @@ module.exports = function weaveDrive(mod, FS) {
     },
 
     async read(fd, raw_dst_ptr, raw_length) {
+    
       // Note: The length and dst_ptr are 53 bit integers in JS, so this _should_ be ok into a large memspace.
       var to_read = Number(raw_length)
       var dst_ptr = Number(raw_dst_ptr)
@@ -84,7 +168,16 @@ module.exports = function weaveDrive(mod, FS) {
           stream = FS.streams[i]
         }
       }
-
+      // read block headers
+      if (stream.path.includes('/block')) {
+        mod.HEAP8.set(stream.node.contents.subarray(0,to_read),  dst_ptr);
+        return to_read; 
+      }
+      // read tx headers
+      if (stream.path.includes('/tx')) {
+        mod.HEAP8.set(stream.node.contents.subarray(0, to_read), dst_ptr);
+        return to_read;
+      }
       // Satisfy what we can with the cache first
       var bytes_read = this.readFromCache(stream, dst_ptr, to_read)
       stream.position += bytes_read

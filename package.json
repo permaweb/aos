@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.48",
-    "arweave": "^1.14.4",
+    "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
     "https-proxy-agent": "^7.0.4",
