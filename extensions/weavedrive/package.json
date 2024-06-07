@@ -1,7 +1,7 @@
 {
   "name": "@permaweb/weavedrive",
-  "version": "0.0.3",
-  "main": "./dist/index.js",
+  "version": "0.0.4",
+  "main": "./dist/index.cjs",
   "license": "MIT",
   "devDependencies": {
     "@permaweb/ao-loader": "^0.0.33",

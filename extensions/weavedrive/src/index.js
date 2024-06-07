@@ -20,7 +20,7 @@ module.exports = function weaveDrive(mod, FS) {
       var properties = { isDevice: false, contents: null }
 
       if (!await this.checkAdmissible(id)) {
-        console.log("WeaveDrive: Arweave ID is not admissable! ", id)
+        //console.log("WeaveDrive: Arweave ID is not admissable! ", id)
         return 0;
       }
       
@@ -48,7 +48,7 @@ module.exports = function weaveDrive(mod, FS) {
         return new Promise(r => {
           setTimeout(function () {
             r(fetch(`${mod.ARWEAVE}/block/height/${id}`))
-          }, x * 1000)
+          }, x * 10000)
         })
       }
       var result = await fetch(`${mod.ARWEAVE}/block/height/${id}`)
@@ -75,7 +75,7 @@ module.exports = function weaveDrive(mod, FS) {
         return new Promise(r => {
           setTimeout(function () {
             r(fetch(`${mod.ARWEAVE}/tx/${id}`))
-          }, x * 1000)
+          }, x * 10000)
         })
       }
       // todo: add a bunch of retries
