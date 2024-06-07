@@ -44,7 +44,18 @@ module.exports = function weaveDrive(mod, FS) {
     },
     async createBlockHeader(id) {
       // todo: add a bunch of retries
+      async function retry(x) {
+        return new Promise(r => {
+          setTimeout(function () {
+            r(fetch(`${mod.ARWEAVE}/block/height/${id}`))
+          }, x * 1000)
+        })
+      }
       var result = await fetch(`${mod.ARWEAVE}/block/height/${id}`)
+        .then(res => ! res.ok ? retry(1) : res)
+        .then(res => ! res.ok ? retry(2) : res)
+        .then(res => ! res.ok ? retry(3) : res)
+        .then(res => ! res.ok ? retry(4) : res)
         .then(res => res.text());
 
       var bytesLength = result.length;
@@ -60,8 +71,19 @@ module.exports = function weaveDrive(mod, FS) {
           await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
         );
       }
+      async function retry(x) {
+        return new Promise(r => {
+          setTimeout(function () {
+            r(fetch(`${mod.ARWEAVE}/tx/${id}`))
+          }, x * 1000)
+        })
+      }
       // todo: add a bunch of retries
       var result = await fetch(`${mod.ARWEAVE}/tx/${id}`)
+        .then(res => ! res.ok ? retry(1) : res)
+        .then(res => ! res.ok ? retry(2) : res)
+        .then(res => ! res.ok ? retry(3) : res)
+        .then(res => ! res.ok ? retry(4) : res)
         .then(res => res.json())
         .then(async entry => ({...entry, ownerAddress: await toAddress(entry.owner)  }))
         //.then(x => (console.error(x), x))
