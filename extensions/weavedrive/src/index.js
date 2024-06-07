@@ -20,7 +20,7 @@ module.exports = function weaveDrive(mod, FS) {
       var properties = { isDevice: false, contents: null }
 
       if (!await this.checkAdmissible(id)) {
-        console.log("WeaveDrive: Arweave ID is not admissable! ", id)
+        //console.log("WeaveDrive: Arweave ID is not admissable! ", id)
         return 0;
       }
       
@@ -48,7 +48,7 @@ module.exports = function weaveDrive(mod, FS) {
         return new Promise(r => {
           setTimeout(function () {
             r(fetch(`${mod.ARWEAVE}/block/height/${id}`))
-          }, x * 1000)
+          }, x * 10000)
         })
       }
       var result = await fetch(`${mod.ARWEAVE}/block/height/${id}`)
@@ -75,7 +75,7 @@ module.exports = function weaveDrive(mod, FS) {
         return new Promise(r => {
           setTimeout(function () {
             r(fetch(`${mod.ARWEAVE}/tx/${id}`))
-          }, x * 1000)
+          }, x * 10000)
         })
       }
       // todo: add a bunch of retries
@@ -97,7 +97,7 @@ module.exports = function weaveDrive(mod, FS) {
     async open(filename) {
       const pathCategory = filename.split('/')[1];
       const id = filename.split('/')[2];
-      console.error("JS: Opening ID: ", id);
+      console.log("JS: Opening ID: ", id);
       if (pathCategory === 'tx') {
         FS.createPath('/', 'tx', true, false);
         if (FS.analyzePath(filename).exists) {
