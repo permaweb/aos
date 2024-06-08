@@ -93,11 +93,13 @@ if (argv['gateway-url']) {
 }
 
 if (argv['cu-url']) {
+  console.log(chalk.yellow('Using CU: ') + chalk.blue(argv['cu-url']))
   process.env.CU_URL = argv['cu-url']
 }
 
 if (argv['mu-url']) {
-  process.env.SCHEDULER = argv['mu-url']
+  console.log(chalk.yellow('Using MU: ') + chalk.blue(argv['mu-url']))
+  process.env.MU_URL = argv['mu-url']
 }
 
 if (!argv['watch']) {
