@@ -7,7 +7,7 @@
 # aos
 
 Status: Preview
-Version: 1.11.0.  
+Version: 1.11.1  
 Module: `JdN3ffZQaFE33-s20LSp2uLhm9Z94wnG59aLRnBAecU`
 
 ## Requirements
