@@ -1,4 +1,19 @@
+-- AO Package Manager for easy installation of packages in ao processes
+-------------------------------------------------------------------------
+--      ___      .______   .___  ___.     __       __    __       ___
+--     /   \     |   _  \  |   \/   |    |  |     |  |  |  |     /   \
+--    /  ^  \    |  |_)  | |  \  /  |    |  |     |  |  |  |    /  ^  \
+--   /  /_\  \   |   ___/  |  |\/|  |    |  |     |  |  |  |   /  /_\  \
+--  /  _____  \  |  |      |  |  |  |  __|  `----.|  `--'  |  /  _____  \
+-- /__/     \__\ | _|      |__|  |__| (__)_______| \______/  /__/     \__\
+--
+---------------------------------------------------------------------------
+-- APM Registry source code: https://github.com/ankushKun/ao-package-manager
+-- Web UI for browsing & publishing packages: https://apm.betteridea.dev
+-- Built with ❤️ by BetterIDEa
+
 local apm_id = "UdPDhw5S7pByV3pVqwyr1qzJ8mR8ktzi9olgsdsyZz4"
+local version = "1.0.2"
 
 json = require("json")
 base64 = require(".base64")
@@ -47,6 +62,10 @@ function split_package_name(query)
     return vendor, pkgname, version
 end
 
+function hexdecode(hex)
+    return (hex:gsub("%x%x", function(digits) return string.char(tonumber(digits, 16)) end))
+end
+
 -- function to generate package data
 -- @param name: Name of the package
 -- @param Vendor: Vender under which package is published (leave nil for default @apm)
@@ -58,7 +77,7 @@ end
 -- @param repo_url: URL of the repository
 -- @param items: List of files in the package
 -- @param authors: List of authors
-function generate_package_data(name, Vendor, version, readme, description, main, dependencies, repo_url, items,authors)
+function generate_package_data(name, Vendor, version, readme, description, main, dependencies, repo_url, items, authors)
     assert(type(name) == "string", "Name must be a string")
     assert(type(Vendor) == "string" or Vendor == nil, "Vendor must be a string or nil")
     assert(type(version) == "string" or version == nil, "Version must be a string or nil")
@@ -270,17 +289,75 @@ Handlers.add(
 
 ----------------------------------------
 
+function UpdateNoticeHandler(msg)
+    print(msg.Data)
+end
+
+Handlers.add(
+    "APM.UpdateNotice",
+    Handlers.utils.hasMatchingTag("Action", "APM.UpdateNotice"),
+    function(msg)
+        handle_run(UpdateNoticeHandler, msg)
+    end
+)
+
+----------------------------------------
+
+function UpdateClientResponseHandler(msg)
+    assert(msg.From == APM.ID, "Invalid client package source process")
+    local pkg = json.decode(msg.Data)
+    local items = json.decode(hexdecode(pkg.Items))
+    local main_src
+
+    for _, item in ipairs(items) do
+        if item.meta.name == pkg.Main then
+            main_src = item.data
+        end
+    end
+
+    assert(main_src, "❌ Unable to find main.lua file to load")
+
+    print("ℹ️ Attempting to load client " .. pkg.Version)
+
+    local func, err = load(string.format([[
+            %s
+
+    ]], main_src, pkg.Version))
+
+    if not func then
+        print(err)
+        error("Error compiling load function: ")
+    end
+
+    print(func())
+    APM._version = pkg.Version
+    print(Colors.green .. "✨ Client has been updated to " .. pkg.Version .. Colors.reset)
+end
+
+Handlers.add(
+    "APM.UpdateClientResponse",
+    Handlers.utils.hasMatchingTag("Action", "APM.UpdateClientResponse"),
+    function(msg)
+        handle_run(UpdateClientResponseHandler, msg)
+    end
+)
+
+
+----------------------------------------
+
 APM = {}
 
 APM.ID = apm_id
-APM.installed = {}
+APM._version = APM._version or version
+APM.installed = APM.installed or {}
 
 function APM.registerVendor(name)
     Send({
         Target = APM.ID,
         Action = "APM.RegisterVendor",
         Data = name,
-        Quantity = '100000000000'
+        Quantity = '100000000000',
+        Version = APM._version
     })
     return "📤 Vendor registration request sent"
 end
@@ -299,7 +376,8 @@ function APM.publish(package_data, options)
         Target = APM.ID,
         Action = "APM.Publish",
         Data = data,
-        Quantity = quantity
+        Quantity = quantity,
+        Version = APM._version
     })
     return "📤 Publish request sent"
 end
@@ -308,7 +386,8 @@ function APM.info(name)
     Send({
         Target = APM.ID,
         Action = "APM.Info",
-        Data = name
+        Data = name,
+        Version = APM._version
     })
     return "📤 Fetching package info"
 end
@@ -316,7 +395,8 @@ end
 function APM.popular()
     Send({
         Target = APM.ID,
-        Action = "APM.GetPopular"
+        Action = "APM.GetPopular",
+        Version = APM._version
     })
     return "📤 Fetching top 50 downloaded packages"
 end
@@ -327,7 +407,8 @@ function APM.search(query)
     Send({
         Target = APM.ID,
         Action = "APM.Search",
-        Data = query
+        Data = query,
+        Version = APM._version
     })
 
     return "📤 Searching for packages"
@@ -341,7 +422,8 @@ function APM.transfer(name, recipient)
         Target = APM.ID,
         Action = "APM.Transfer",
         Data = name,
-        To = recipient
+        To = recipient,
+        Version = APM._version
     })
     return "📤 Transfer request sent"
 end
@@ -349,7 +431,7 @@ end
 function APM.install(name)
     assert(type(name) == "string", "Name must be a string")
 
-    -- name cam be in the following formats: 
+    -- name cam be in the following formats:
     -- @vendor/pkgname@x.y.z
     -- pkgname@x.y.z
     -- pkgname
@@ -358,7 +440,8 @@ function APM.install(name)
     Send({
         Target = APM.ID,
         Action = "APM.Download",
-        Data = name
+        Data = name,
+        Version = APM._version
     })
     return "📤 Download request sent"
 end
@@ -374,6 +457,15 @@ function APM.uninstall(name)
     APM.installed[name] = nil
 
     return "📦 Package has been uninstalled"
+end
+
+function APM.update()
+    Send({
+        Target = APM.ID,
+        Action = "APM.UpdateClient",
+        Version = APM._version
+    })
+    return "📤 Update request sent"
 end
 
 return "📦 Loaded APM Client"
