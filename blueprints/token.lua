@@ -32,16 +32,16 @@ local json = require('json')
 
 
 local utils = {
-  add = function (a,b) 
+  add = function(a, b)
     return tostring(bint(a) + bint(b))
   end,
-  subtract = function (a,b)
+  subtract = function(a, b)
     return tostring(bint(a) - bint(b))
   end,
-  toBalanceValue = function (a)
+  toBalanceValue = function(a)
     return tostring(bint(a))
   end,
-  toNumber = function (a)
+  toNumber = function(a)
     return tonumber(a)
   end
 }
@@ -90,8 +90,10 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), func
   local bal = '0'
 
   -- If not Recipient is provided, then return the Senders balance
-  if (msg.Tags.Recipient and Balances[msg.Tags.Recipient]) then
-    bal = Balances[msg.Tags.Recipient]
+  if (msg.Tags.Recipient) then
+    if (Balances[msg.Tags.Recipient]) then
+      bal = Balances[msg.Tags.Recipient]
+    end
   elseif msg.Tags.Target and Balances[msg.Tags.Target] then
     bal = Balances[msg.Tags.Target]
   elseif Balances[msg.From] then
@@ -192,7 +194,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
 
   if msg.From == ao.id then
     -- Add tokens to the token pool, according to Quantity
-    Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity) 
+    Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
     ao.send({
       Target = msg.From,
