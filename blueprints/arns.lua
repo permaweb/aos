@@ -11,7 +11,7 @@ SW_CACHE_URL = "https://api.arns.app/v1/contract/"
 
 -- Process IDs for interacting with other services or processes
 ARNS_PROCESS_ID = "TyduW6spZTr3gkdIsdktduJhgtilaR_ex5JukK8gI9o"
-_0RBIT_SEND_PROCESS_ID = "WSXUI2JjYUldJ7CKq9wE1MGwXs-ldzlUlHOQszwQe0s"
+_0RBIT_SEND_PROCESS_ID = "BaMK1dfayo75s3q1ow6AO64UDpD9SEFbeE8xYrY2fyQ"
 _0RBIT_RECEIVE_PROCESS_ID = "8aE3_6NJ_MU_q3fbhz2S6dA8PKQOSCe95Gt7suQ3j7U"
 
 -- Initialize the NAMES and ID_NAME_MAPPING tables
