@@ -208,21 +208,29 @@ function process.handle(msg, ao)
   
 
   if not status then
-    table.insert(Errors, result)
-    return { Error = result }
-    -- return {
-    --   Output = { 
-    --     data = { 
-    --       prompt = Prompt(), 
-    --       json = 'undefined', 
-    --       output = result 
-    --     }
-    --   }, 
-    --   Messages = {}, 
-    --   Spawns = {}
-    -- }
+    if (msg.Action == "Eval") then
+      table.insert(Errors, result)
+      return { Error = result }
+    end 
+      table.insert(Errors, result)
+      ao.outbox.Output.data = ""
+      print(Colors.red .. "Error" .. Colors.gray .. " in Handler, check the Errors Table" .. Colors.reset)
+      print(Colors.green .. result .. Colors.reset)
+      return ao.result({ })
+      -- if error in handler accept the msg and set Errors
+      
+      -- return {
+      --   Output = { 
+      --     data = { 
+      --       prompt = Prompt(), 
+      --       json = 'undefined', 
+      --       output = result 
+      --     }
+      --   }, 
+      --   Messages = {}, 
+      --   Spawns = {}
+      -- }
   end
-  
   return ao.result({ })
 end
 

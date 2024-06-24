@@ -96,3 +96,35 @@ test('Typos for functions should generate errors', async () => {
   assert.ok(true)
 })
 
+test('Print Errors in Handlers', async () => {
+  const handle = await AoLoader(wasm, options)
+  const env = {
+    Process: {
+      Id: 'AOS',
+      Owner: 'FOOBAR',
+      Tags: [
+        { name: 'Name', value: 'Thomas' }
+      ]
+    }
+  }
+  const msg = {
+    Target: 'AOS',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: 'Handlers.add("ping", Handlers.utils.hasMatchingData("ping"), function (m) print(m.Data); print("pong" .. x) end)'
+  }
+  const { Memory, Output, Error } = await handle(null, msg, env)
+
+  let msg2 = msg
+  msg2.Tags = []
+  msg2.Data = "ping"
+  const result = await handle(Memory, msg2, env)
+
+  assert.ok(result.Output.data.includes('check the Errors Table'))
+  assert.ok(true)
+})
