@@ -216,7 +216,7 @@ function process.handle(msg, ao)
       ao.outbox.Output.data = ""
       print(Colors.red .. "Error" .. Colors.gray .. " in Handler, check the Errors Table" .. Colors.reset)
       print(Colors.green .. result .. Colors.reset)
-      return ao.result({ })
+      return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
       -- if error in handler accept the msg and set Errors
       
       -- return {
