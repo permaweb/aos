@@ -40,6 +40,22 @@ _ao.spawn = function (module, msg)
   return aospawn(module, msg)
 end
 
+local function removeLastThreeLines(input)
+  local lines = {}
+  for line in input:gmatch("([^\n]*)\n?") do
+      table.insert(lines, line)
+  end
+
+  -- Remove the last three lines
+  for i = 1, 3 do
+      table.remove(lines)
+  end
+
+  -- Concatenate the remaining lines
+  return table.concat(lines, "\n")
+end
+
+
 local function insertInbox(msg)
   table.insert(Inbox, msg)
   if #Inbox > maxInboxCount then
@@ -208,21 +224,34 @@ function process.handle(msg, ao)
   
 
   if not status then
-    table.insert(Errors, result)
-    return { Error = result }
-    -- return {
-    --   Output = { 
-    --     data = { 
-    --       prompt = Prompt(), 
-    --       json = 'undefined', 
-    --       output = result 
-    --     }
-    --   }, 
-    --   Messages = {}, 
-    --   Spawns = {}
-    -- }
+    if (msg.Action == "Eval") then
+      table.insert(Errors, result)
+      return { Error = result }
+    end 
+      --table.insert(Errors, result)
+      --ao.outbox.Output.data = ""
+      if msg.Action then
+        print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
+      else
+        print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
+      end
+      print(Colors.green .. result .. Colors.reset)
+      print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
+      return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
+      -- if error in handler accept the msg and set Errors
+      
+      -- return {
+      --   Output = { 
+      --     data = { 
+      --       prompt = Prompt(), 
+      --       json = 'undefined', 
+      --       output = result 
+      --     }
+      --   }, 
+      --   Messages = {}, 
+      --   Spawns = {}
+      -- }
   end
-  
   return ao.result({ })
 end
 

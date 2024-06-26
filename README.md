@@ -7,8 +7,8 @@
 # aos
 
 Status: Preview
-Version: 1.11.2  
-Module: `cbn0KKrBZH7hdNkNokuXLtGryrWM--PjSTBqIzw9Kkk`
+Version: 1.11.3  
+Module: `Pq2Zftrqut0hdisH_MC2pDOT6S4eQFoxGsFUzR6r350`
 
 ## Requirements
 
