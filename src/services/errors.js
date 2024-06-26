@@ -63,14 +63,14 @@ export function getErrorOrigin(loadedModules, lineNumber) {
 
   let currentLine = 0
 
-  for (let i = 0; i < loadedModules.length; i++) {
+  for (let i = 0; i < loadedModules.length; i++) {
     // get module line count
-    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1
+    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1
 
     if (currentLine + lineCount >= lineNumber) {
       return {
         file: loadedModules[i].path,
-        line: lineNumber - currentLine - i * 2
+        line: lineNumber - currentLine - i * 2
       }
     }
 
