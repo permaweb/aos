@@ -125,6 +125,6 @@ test('Print Errors in Handlers', async () => {
   msg2.Data = "ping"
   const result = await handle(Memory, msg2, env)
 
-  assert.ok(result.Output.data.includes('check the Errors Table'))
+  assert.ok(result.Output.data.includes('handling message'))
   assert.ok(true)
 })

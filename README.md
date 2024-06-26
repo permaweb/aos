@@ -8,7 +8,7 @@
 
 Status: Preview
 Version: 1.11.3  
-Module: `OQ3W-ksscmbt9QTNq_WOI79FawULiTteggtD6hHHfJ8`
+Module: `Pq2Zftrqut0hdisH_MC2pDOT6S4eQFoxGsFUzR6r350`
 
 ## Requirements
 
