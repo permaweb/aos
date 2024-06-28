@@ -9,7 +9,7 @@ local ao = require('ao')
   It will first initialize the internal state, and then attach handlers,
     according to the ao Standard Token Spec API:
 
-    - Info(): return the token parameters, like Name, Ticker, Logo, and Denomination
+    - Info(): return the token parameters, like TokenName, Ticker, Logo, and Denomination
 
     - Balance(Target?: string): return the token balance of the Target. If Target is not provided, the Sender
         is assumed to be the Target
@@ -59,7 +59,7 @@ Variant = "0.0.3"
 Denomination = Denomination or 12
 Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
 TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
-Name = Name or 'Points Coin'
+TokenName = TokenName or 'Points Coin'
 Ticker = Ticker or 'PNTS'
 Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 
@@ -75,7 +75,7 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(msg)
   ao.send({
     Target = msg.From,
-    Name = Name,
+    TokenName = TokenName,
     Ticker = Ticker,
     Logo = Logo,
     Denomination = tostring(Denomination)
