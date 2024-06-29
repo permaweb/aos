@@ -1,4 +1,4 @@
-local handlers = { _version = "0.0.3" }
+local handlers = { _version = "0.0.4" }
 
 handlers.utils = require('.handlers-utils')
 handlers.list = {}
@@ -12,12 +12,28 @@ local function findIndexByProp(array, prop, value)
   return nil
 end
 
-function handlers.add(name, pattern, handle)
-  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+function handlers.once(...)
+  local name, pattern, handle
+  if select("#", ...) == 3 then
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+  else
+    name = "_once_" .. tostring(handlers.onceNonce)
+    handlers.onceNonce = handlers.onceNonce + 1
+    pattern = select(1, ...)
+    handle = select(2, ...)
+  end
+  handlers.add(name, pattern, handle, 1)
+end
+
+function handlers.add(name, pattern, handle, maxRuns)
+  assert(type(name) == 'string'
+    and (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string')
+    and type(handle) == 'function', 'invalid arguments: handler.add(name : string, pattern : Action : string | MsgMatch : table | function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void) | MaxRuns? : number') 
   assert(type(name) == 'string', 'name MUST be string')
-  assert(type(pattern) == 'function', 'pattern MUST be function')
+  assert(type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string', 'pattern MUST be function or a table to match elements against')
   assert(type(handle) == 'function', 'handle MUST be function')
-  
   
   -- update existing handler by name
   local idx = findIndexByProp(handlers.list, "name", name)
@@ -25,18 +41,20 @@ function handlers.add(name, pattern, handle)
     -- found update
     handlers.list[idx].pattern = pattern
     handlers.list[idx].handle = handle
+    handlers.list[idx].maxRuns = maxRuns
   else
     -- not found then add    
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
+    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
 
   end
+  return #handlers.list
 end
 
 
-function handlers.append(name, pattern, handle)
-  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.append(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+function handlers.append(name, pattern, handle, maxRuns)
+  assert(type(name) == 'string' and (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string') and  type(handle) == 'function', 'invalid arguments: handler.append(name : string, pattern : Action : string | MsgMatch : table | function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void) | MaxRuns? : number') 
   assert(type(name) == 'string', 'name MUST be string')
-  assert(type(pattern) == 'function', 'pattern MUST be function')
+  assert(type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string', 'pattern MUST be function or a table to match elements against')
   assert(type(handle) == 'function', 'handle MUST be function')
   
     -- update existing handler by name
@@ -45,18 +63,19 @@ function handlers.append(name, pattern, handle)
     -- found update
     handlers.list[idx].pattern = pattern
     handlers.list[idx].handle = handle
+    handlers.list[idx].maxRuns = maxRuns
   else
     
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name })
+    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
   end
 
   
 end
 
-function handlers.prepend(name, pattern, handle) 
-  assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.prepend(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+function handlers.prepend(name, pattern, handle, maxRuns) 
+  assert(type(name) == 'string' and (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string') and  type(handle) == 'function', 'invalid arguments: handler.prepend(name : string, pattern : Action : string | MsgMatch : table | function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void) | MaxRuns? : number') 
   assert(type(name) == 'string', 'name MUST be string')
-  assert(type(pattern) == 'function', 'pattern MUST be function')
+  assert(type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string', 'pattern MUST be function or a table to match elements against')
   assert(type(handle) == 'function', 'handle MUST be function')
   
 
@@ -66,8 +85,9 @@ function handlers.prepend(name, pattern, handle)
     -- found update
     handlers.list[idx].pattern = pattern
     handlers.list[idx].handle = handle
+    handlers.list[idx].maxRuns = maxRuns
   else  
-    table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name })
+    table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
   end
 
   
@@ -79,15 +99,15 @@ function handlers.before(handleName)
 
   local idx = findIndexByProp(handlers.list, "name", handleName)
   return {
-    add = function (name, pattern, handle) 
-      assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.before("foo").add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+    add = function (name, pattern, handle, maxRuns) 
+      assert(type(name) == 'string' and (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string') and  type(handle) == 'function', 'invalid arguments: handler.before("foo").add(name : string, pattern : Action : string | MsgMatch : table | function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void) | MaxRuns? : number') 
       assert(type(name) == 'string', 'name MUST be string')
       
-      assert(type(pattern) == 'function', 'pattern MUST be function')
+      assert(type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string', 'pattern MUST be function or a table to match elements against')
       assert(type(handle) == 'function', 'handle MUST be function')
       
       if idx then
-        table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name })
+        table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
       end
       
     end
@@ -98,16 +118,16 @@ function handlers.after(handleName)
   assert(handleName ~= nil, 'invalid arguments: handlers.after(name : string) : { add = function(name, pattern, handler)}')
   assert(type(handleName) == 'string', 'name MUST be string')
   local idx = findIndexByProp(handlers.list, "name", handleName)
-  return { 
-    add = function (name, pattern, handle)
-      assert(type(name) == 'string' and type(pattern) == 'function' and  type(handle) == 'function', 'invalid arguments: handler.after("foo").add(name : string, pattern : function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void)') 
+  return {
+    add = function (name, pattern, handle, maxRuns)
+      assert(type(name) == 'string' and (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string') and  type(handle) == 'function', 'invalid arguments: handler.after("foo").add(name : string, pattern : Action : string | MsgMatch : table | function(msg: Message) : {-1 = break, 0 = skip, 1 = continue}, handle(msg : Message) : void) | MaxRuns? : number') 
 
       assert(type(name) == 'string', 'name MUST be string')
-      assert(type(pattern) == 'function', 'pattern MUST be function')
+      assert(type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string', 'pattern MUST be function or a table to match elements against')
       assert(type(handle) == 'function', 'handle MUST be function')
       
       if idx then
-        table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name })
+        table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
       end
       
     end
@@ -127,15 +147,67 @@ function handlers.remove(name)
   
 end
 
+local function matchesPattern(msg, pattern)
+  if type(pattern) == 'function' then
+    return pattern(msg)
+  -- If the pattern is a table, step through every key/value pair in the pattern and check if the msg matches
+  -- Supported match types:
+  --   - Exact string match
+  --   - Lua gmatch string
+  --   - '_' (wildcard: Message has tag, but can be any value)
+  --   - Function execution on the tag, optionally using the msg as the second argument
+  end
+  if type(pattern) == 'table' then
+    for key, patternMatchSpec in pairs(pattern) do
+      local matched = false
+      -- If the key is not in the message, then it does not match
+      if(not msg[key]) then
+        return false
+      end
+      -- if the patternMatchSpec is a wildcard, then it always matches
+      if patternMatchSpec == '_' then
+        matched = true
+      end
+      -- if the patternMatchSpec is a function, then it is executed on the tag value
+      if type(patternMatchSpec) == "function" then
+        if patternMatchSpec(msg[key], msg) then
+          matched = true
+        else
+          return false
+        end
+      end
+      -- if the patternMatchSpec is a string, check it for special symbols and exact match mode
+      if not matched and string.match(patternMatchSpec, "[%^%$%(%)%%%.%[%]%*%+%-%?]") then
+        if string.match(msg[key], patternMatchSpec) then
+          matched = true
+        end
+      else
+        if msg[key] == patternMatchSpec then
+          matched = true
+        end
+      end
+      -- if the patternMatchSpec is not matched, then the msg does not match
+      if not matched then
+        return false
+      end
+    end
+    return true
+  end
+  if type(pattern) == 'string' and msg.Action == pattern then
+    return true
+  end
+  return false
+end
+
 --- return 0 to not call handler, -1 to break after handler is called, 1 to continue
 function handlers.evaluate(msg, env)
   local handled = false
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
-  
+
   for _, o in ipairs(handlers.list) do
     if o.name ~= "_default" then
-      local match = o.pattern(msg)
+      local match = matchesPattern(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
         error({message = "pattern result is not valid, it MUST be string, number, or boolean"})
       end
@@ -163,13 +235,18 @@ function handlers.evaluate(msg, env)
           handled = true
         end
         -- each handle function can accept, the msg, env
-        local status, err = pcall(o.handle, msg, env) 
+        local status, err = pcall(o.handle, msg, env)
         if not status then
           error(err)
           ao.outbox.Error = { err = err }
-
         end
-        
+        -- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
+        if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
+          o.maxRuns = o.maxRuns - 1
+          if o.maxRuns == 0 then
+            handlers.remove(o.name)
+          end
+        end
       end
       if match < 0 then
         return handled
