@@ -1,7 +1,19 @@
+--[[
+  Author: ItsJackAnton
+  Twitter: ItsJackAnton
+  Discord: ItsJackAnton
+
+  Made: 30/Jun/2024
+
+  Description: AO Blueprint Token Extension V2.
+]]--
+
 local bint = require('.bint')(256)
 local ao = require('ao')
 --[[
-  This module implements the ao Standard Token Specification.
+  Token Blueprint Version: V2.
+
+  This module is an extencion of the the ao Standard Token implementation that can be found here: https://github.com/permaweb/aos/blob/main/blueprints/token.lua
 
   Terms:
     Sender: the wallet or Process that sent the Message
@@ -21,6 +33,24 @@ local ao = require('ao')
 
     - Mint(Quantity: number): if the Sender matches the Process Owner, then mint the desired Quantity of tokens, adding
         them the Processes' balance
+    
+    - Approve(Spender: string, Quantity: number): approve someone else to spend on your belhalf
+
+    - Approval(Allower: string, Spender: string): it returns how much the "Spender" can spend on behalf of the "Allower"
+
+    - Approvals(Allower: string): it returns all the spenders and how much they can spend on behalf of a specified "Allower"
+
+    - TransferFrom(Allower: string, Spender: string, Quantity: numeric): it allows an user or process to transfer on behalf of some other user or process.
+
+    What is new?
+    1- Extracted the transfer logic from the transfer handler to re-use the transfer logic in the "TransferFrom" handler.
+    2- Implemented the "Approve" handler
+    3- Implemented the "Approval" handler
+    3- Implemented the "Approvals" handler
+    4- Implemented the "TransferFrom" handler
+
+    Summary:
+    Now users and processes can approve someone else to spend tokens on their behalf.
 ]]
 --
 local json = require('json')
@@ -58,6 +88,7 @@ Variant = "0.0.3"
 -- token should be idempotent and not change previous state updates
 Denomination = Denomination or 12
 Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
+Allowance = Allowance or { }
 TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 Name = Name or 'Points Coin'
 Ticker = Ticker or 'PNTS'
@@ -78,7 +109,8 @@ Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(m
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
-    Denomination = tostring(Denomination)
+    Denomination = tostring(Denomination),
+    -- Data = Colors.gray .. "Name: \"" .. Name .. "\" | Ticker: \"" .. Ticker .. "\" | Logo: \"" .. Logo .. "\" | Denomination: \"" .. Denomination .. "\"" .. Colors.reset;
   })
 end)
 
@@ -120,17 +152,13 @@ Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Balances'),
      Transfer
    ]]
 --
-Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
-  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
+local transfer = function (from, to, quantity, msg);
+  if not Balances[from] then Balances[from] = "0" end
+  if not Balances[to] then Balances[to] = "0" end
 
-  if not Balances[msg.From] then Balances[msg.From] = "0" end
-  if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
-
-  if bint(msg.Quantity) <= bint(Balances[msg.From]) then
-    Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
-    Balances[msg.Recipient] = utils.add(Balances[msg.Recipient], msg.Quantity)
+  if bint(quantity) <= bint(Balances[from]) then
+    Balances[from] = utils.subtract(Balances[from], quantity)
+    Balances[to] = utils.add(Balances[to], quantity)
 
     --[[
          Only send the notifications to the Sender and Recipient
@@ -140,23 +168,23 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     if not msg.Cast then
       -- Debit-Notice message template, that is sent to the Sender of the transfer
       local debitNotice = {
-        Target = msg.From,
+        Target = from,
         Action = 'Debit-Notice',
-        Recipient = msg.Recipient,
-        Quantity = msg.Quantity,
+        Recipient = to,
+        Quantity = quantity,
         Data = Colors.gray ..
             "You transferred " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
+            Colors.blue .. quantity .. Colors.gray .. " to " .. Colors.green .. to .. Colors.reset
       }
       -- Credit-Notice message template, that is sent to the Recipient of the transfer
       local creditNotice = {
-        Target = msg.Recipient,
+        Target = to,
         Action = 'Credit-Notice',
-        Sender = msg.From,
-        Quantity = msg.Quantity,
+        Sender = from,
+        Quantity = quantity,
         Data = Colors.gray ..
             "You received " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
+            Colors.blue .. quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
       }
 
       -- Add forwarded tags to the credit and debit notice messages
@@ -180,6 +208,107 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
       Error = 'Insufficient Balance!'
     })
   end
+end;
+
+
+Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
+  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+  assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
+
+  transfer(msg.From, msg.Recipient, msg.Quantity, msg);
+end)
+
+--[[
+  Approve
+]]--
+
+Handlers.add('approve', Handlers.utils.hasMatchingTag('Action', 'Approve'), function(msg)
+  assert(type(msg.Spender) == 'string', 'Recipient is required!')
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+
+  Allowance[msg.From] = Allowance[msg.From] or {}
+
+  local spenders = Allowance[msg.From]
+
+  spenders[msg.Spender] = spenders[msg.Spender] or "0"
+  spenders[msg.Spender] = utils.add(spenders[msg.Spender], msg.Quantity)
+
+  Handlers.utils.reply("You have allowed +" .. msg.Quantity .. " to: " .. msg.Spender .. "\nSpender can use up to: " .. spenders[msg.Spender])(msg)
+end)
+
+--[[
+  Approval
+]]--
+
+Handlers.add('approval', Handlers.utils.hasMatchingTag('Action', 'Approval'), function(msg)
+  assert(type(msg.Allower) == 'string', 'Allower is required!')
+  assert(type(msg.Spender) == 'string', 'Spender is required!')
+
+  if not Allowance[msg.Allower] then
+    
+    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
+
+    return
+  end
+
+  local spenders = Allowance[msg.Allower]
+
+  if not spenders[msg.Spender] then
+
+    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
+
+    return
+  end
+
+  Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. spenders[msg.Spender] .. " from: \'" .. msg.Allower .. "\'")(msg)
+end)
+
+--[[
+  Approvals
+]]--
+
+Handlers.add('approvals', Handlers.utils.hasMatchingTag('Action', 'Approvals'), function(msg)
+  assert(type(msg.Allower) == 'string', 'Allower is required!')
+
+  if not Allowance[msg.Allower] then
+    
+    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
+
+    return
+  end
+
+  local spenders = Allowance[msg.Allower]
+
+  Handlers.utils.reply("Spenders: " .. json.encode(spenders))(msg)
+end)
+
+--[[
+  TransferFrom
+]]--
+
+Handlers.add('transferFrom', Handlers.utils.hasMatchingTag('Action', 'TransferFrom'), function(msg)
+  assert(type(msg.Allower) == 'string', 'Allower is required!')
+  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+  assert(Allowance[msg.Allower] ~= nil, 'Allower has not allowed you to handle anything!')
+  assert(Allowance[msg.Allower][msg.From] ~= nil, 'Allower has not allowed you to handle anything!')
+  assert(bint.__le(bint(msg.Quantity), bint(Allowance[msg.Allower][msg.From])), 'Quantity must greather or equal to ' .. tostring(Allowance[msg.Allower][msg.From])..", current cuantity: " .. msg.Quantity)
+  
+  Allowance[msg.From] = Allowance[msg.Allower] or {}
+
+  local spenders = Allowance[msg.Allower]
+
+  spenders[msg.Spender] = spenders[msg.Spender] or "0"
+  spenders[msg.Spender] = utils.subtract(spenders[msg.Spender], msg.Quantity)
+
+  if spenders[msg.Spender] == "0" then
+
+    spenders[msg.Spender] = nil;
+
+  end
+
+  transfer(msg.Allower, msg.From, msg.Quantity, msg);
 end)
 
 --[[
