@@ -2,6 +2,7 @@ local handlers = { _version = "0.0.4" }
 
 handlers.utils = require('.handlers-utils')
 handlers.list = {}
+handlers.onceNonce = 0
 
 local function findIndexByProp(array, prop, value)
   for index, object in ipairs(array) do
