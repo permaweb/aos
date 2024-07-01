@@ -177,8 +177,9 @@ local function matchesPattern(msg, pattern)
           return false
         end
       end
-      -- if the patternMatchSpec is a string, check it for special symbols and exact match mode
-      if not matched and string.match(patternMatchSpec, "[%^%$%(%)%%%.%[%]%*%+%-%?]") then
+      -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
+      -- and exact string match mode
+      if not matched and string.match(patternMatchSpec, "[%^%$%(%)%%%.%[%]%*%+%?]") then
         if string.match(msg[key], patternMatchSpec) then
           matched = true
         end
