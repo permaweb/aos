@@ -308,7 +308,7 @@ Handlers.add('transferFrom', Handlers.utils.hasMatchingTag('Action', 'TransferFr
 
   end
 
-  transfer(msg.Allower, msg.From, msg.Quantity, msg);
+  transfer(msg.Allower, msg.Recipient, msg.Quantity, msg);
 end)
 
 --[[
