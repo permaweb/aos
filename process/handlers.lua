@@ -1,4 +1,4 @@
-local handlers = { _version = "0.0.4" }
+local handlers = { _version = "0.0.5" }
 
 handlers.utils = require('.handlers-utils')
 handlers.list = {}
