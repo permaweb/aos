@@ -225,7 +225,7 @@ function handlers.evaluate(msg, env)
     if o.name ~= "_default" then
       local match = handlers.matchesPattern(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
-        error({message = "pattern result is not valid, it MUST be string, number, or boolean"})
+        error("Pattern result is not valid, it MUST be string, number, or boolean")
       end
       
       -- handle boolean returns
