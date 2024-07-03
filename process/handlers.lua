@@ -33,7 +33,7 @@ function handlers.generateResolver(resolveSpec)
       return resolveSpec(msg)
     else
         for matchSpec, func in pairs(resolveSpec) do
-            if Handlers.matchesPattern(msg, matchSpec) then
+            if handlers.matchesPattern(msg, matchSpec) then
                 return func(msg)
             end
         end
