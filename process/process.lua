@@ -211,7 +211,7 @@ function process.handle(msg, ao)
   end
 
 
-  Handlers.add("_eval", 
+  Handlers.add("_eval",
     function (msg)
       return msg.Action == "Eval" and Owner == msg.From
     end,
@@ -220,6 +220,34 @@ function process.handle(msg, ao)
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
   
+  msg.reply =
+    function(replyMsg)
+      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
+      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      replyMsg["X-Origin"] = msg["X-Origin"] or nil
+
+      return ao.send(replyMsg)
+    end
+  
+  msg.forward =
+    function(target, forwardMsg)
+      -- Clone the message and add forwardMsg tags
+      local newMsg =  ao.sanitize(msg)
+      forwardMsg = forwardMsg or {}
+
+      for k,v in pairs(forwardMsg) do
+        newMsg[k] = v
+      end
+
+      -- Set forward-specific tags
+      newMsg.Target = target
+      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
+      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
+
+      ao.send(newMsg)
+    end
+
   local status, result = pcall(Handlers.evaluate, msg, ao.env)
   
 
