@@ -254,7 +254,6 @@ function handlers.evaluate(msg, env)
         local status, err = pcall(o.handle, msg, env)
         if not status then
           error(err)
-          ao.outbox.Error = { err = err }
         end
         -- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
         if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
