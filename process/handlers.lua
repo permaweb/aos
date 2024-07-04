@@ -152,14 +152,13 @@ end
 
 function handlers.remove(name)
   assert(type(name) == 'string', 'Handler name MUST be a string')
-  if #handlers.list == 1 and handlers.list[1].name == name then
-    handlers.list = {}
-    
-  end
-
-  local idx = findIndexByProp(handlers.list, "name", name)
-  table.remove(handlers.list, idx)
   
+  local idx = findIndexByProp(handlers.list, "name", name)
+  if idx then
+    table.remove(handlers.list, idx)
+  else
+    error('Handler not found')
+  end
 end
 
 function handlers.matchesPattern(msg, pattern)
