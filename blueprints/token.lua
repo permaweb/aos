@@ -56,14 +56,15 @@ local utils = {
 Variant = "0.0.3"
 
 -- token should be idempotent and not change previous state updates
-Denomination = Denomination or 12
 if not ao.env.Process.Tags['Parent-Token'] then
+  Denomination = Denomination or 12
   Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
   TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
   Name = Name or 'Points Coin'
   Ticker = Ticker or 'PNTS'
   Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 else
+  Denomination = ao.env.Process.Tags['Token-Denomination']
   Balances = Balances or {}
   ParentToken = ao.env.Process.Tags['Parent-Token']
   SourceToken = ao.env.Process.Tags['Source-Token']
@@ -324,6 +325,7 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
       ['Token-Name'] = Name,
       ['Token-Ticker'] = Ticker,
       ['Token-Logo'] = Logo,
+      ['Token-Denomination'] = Denomination,
       ['Deployer'] = msg.From,
       ['Original-Message-Id'] = msg.Id,
     }
