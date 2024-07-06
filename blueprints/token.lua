@@ -70,7 +70,7 @@ if not ao.env.Process.Tags['Parent-Token'] then
 else
   Name = ao.env.Process.Tags['Token-Name']
   Ticker = ao.env.Process.Tags['Token-Ticker']
-  Denomination = ao.env.Process.Tags['Token-Denomination']
+  Denomination = tonumber(ao.env.Process.Tags['Token-Denomination'])
   Logo = ao.env.Process.Tags['Token-Logo']
 
   Balances = Balances or {}
@@ -331,7 +331,7 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
       ['Token-Name'] = Name,
       ['Token-Ticker'] = Ticker,
       ['Token-Logo'] = Logo,
-      ['Token-Denomination'] = Denomination,
+      ['Token-Denomination'] = tostring(Denomination),
       ['Deployer'] = msg.From,
       ['Original-Message-Id'] = msg.Id,
     }
