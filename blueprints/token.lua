@@ -1,5 +1,8 @@
 local bint = require('.bint')(256)
 local ao = require('ao')
+
+local subledgerCode = require('subledger_code')
+
 --[[
   This module implements the ao Standard Token Specification.
 
@@ -315,7 +318,6 @@ Handlers.add('withdraw', Handlers.utils.hasMatchingTag('Action', 'Withdraw'), fu
 end)
 
 -- Subledger specific handlers
-ProcessCode = require('subledger_code')
 
 -- Spawning subledger process
 Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Subledger'), function(msg)
@@ -360,7 +362,7 @@ Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Sub
   ao.send({
     Target = ao.id,
     Action = "Eval",
-    Data = ProcessCode,
+    Data = subledgerCode,
     Assignments = processIds
   })
 
