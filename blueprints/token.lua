@@ -58,27 +58,25 @@ local utils = {
 --
 Variant = "0.0.3"
 
+-- token state should be assigned from the spawning message
 -- token should be idempotent and not change previous state updates
+Name = Name or ao.env.Process.Tags['Token-Name']
+Ticker = Ticker or ao.env.Process.Tags['Token-Ticker']
+Denomination = Denomination or tonumber(ao.env.Process.Tags['Token-Denomination']) or 12
+Logo = Logo or ao.env.Process.Tags['Token-Logo']
+
 if not ao.env.Process.Tags['Parent-Token'] then
-  Name = Name or 'Points Coin'
-  Ticker = Ticker or 'PNTS'
-  Denomination = Denomination or 12
-  Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+  local initialSupply = tonumber(ao.env.Process.Tags['Token-Supply']) or 10000
+  local initialBalance = utils.toBalanceValue(initialSupply * 10 ^ Denomination)
 
-  Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
-  TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
+  Balances = Balances or { [ao.id] = initialBalance }
+  TotalSupply = TotalSupply or initialBalance
 else
-  Name = ao.env.Process.Tags['Token-Name']
-  Ticker = ao.env.Process.Tags['Token-Ticker']
-  Denomination = tonumber(ao.env.Process.Tags['Token-Denomination'])
-  Logo = ao.env.Process.Tags['Token-Logo']
-
   Balances = Balances or {}
-
-  -- subledger-only globals
-  ParentToken = ao.env.Process.Tags['Parent-Token']
-  SourceToken = ao.env.Process.Tags['Source-Token']
 end
+
+SourceToken = ao.env.Process.Tags['Source-Token'] or ao.id
+ParentToken = ao.env.Process.Tags['Parent-Token']
 
 Subledgers = Subledgers or {}
 SubledgersPendingInit = SubledgersPendingInit or {}
