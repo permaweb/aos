@@ -1,5 +1,8 @@
 local bint = require('.bint')(256)
 local ao = require('ao')
+
+local subledgerCode = require('subledger_code')
+
 --[[
   This module implements the ao Standard Token Specification.
 
@@ -56,21 +59,29 @@ local utils = {
 Variant = "0.0.3"
 
 -- token should be idempotent and not change previous state updates
-Denomination = Denomination or 12
 if not ao.env.Process.Tags['Parent-Token'] then
-  _G.Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
-  _G.TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
-  _G.Name = Name or 'Points Coin'
-  _G.Ticker = Ticker or 'PNTS'
-  _G.Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+  Name = Name or 'Points Coin'
+  Ticker = Ticker or 'PNTS'
+  Denomination = Denomination or 12
+  Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+
+  Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
+  TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 else
-  _G.Balances = Balances or {}
-  _G.ParentToken = ao.env.Process.Tags['Parent-Token']
-  _G.SourceToken = ao.env.Process.Tags['Source-Token']
-  _G.Name = ao.env.Process.Tags['Token-Name']
-  _G.Ticker = ao.env.Process.Tags['Token-Ticker']
-  _G.Logo = ao.env.Process.Tags['Token-Logo']
+  Name = ao.env.Process.Tags['Token-Name']
+  Ticker = ao.env.Process.Tags['Token-Ticker']
+  Denomination = tonumber(ao.env.Process.Tags['Token-Denomination'])
+  Logo = ao.env.Process.Tags['Token-Logo']
+
+  Balances = Balances or {}
+
+  -- subledger-only globals
+  ParentToken = ao.env.Process.Tags['Parent-Token']
+  SourceToken = ao.env.Process.Tags['Source-Token']
 end
+
+Subledgers = Subledgers or {}
+SubledgersPendingInit = SubledgersPendingInit or {}
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
@@ -144,7 +155,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     local SubledgerTags = {}
     if Subledgers and Subledgers[msg.Recipient] then
       SubledgerTags = {
-        ['Source-Token'] = SourceToken,
+        ['Source-Token'] = SourceToken or ao.id,
         ['Parent-Token'] = ParentToken,
       }
     end
@@ -272,7 +283,9 @@ Handlers.add('creditNotice', Handlers.utils.hasMatchingTag('Action', 'Credit-Not
     Balances[msg.Sender] = utils.add(Balances[msg.Sender], msg.Quantity)
     ao.send({
       Target = msg.Sender,
-      Data = Colors.gray .. "Successfully credited " .. Colors.blue .. msg.Quantity .. Colors.gray .. " to subledger " .. Colors.green .. ao.id .. Colors.reset
+      Data = Colors.gray ..
+          "Successfully credited " ..
+          Colors.blue .. msg.Quantity .. Colors.gray .. " to subledger " .. Colors.green .. ao.id .. Colors.reset
     })
   else
     ao.send({
@@ -305,10 +318,6 @@ Handlers.add('withdraw', Handlers.utils.hasMatchingTag('Action', 'Withdraw'), fu
 end)
 
 -- Subledger specific handlers
-ProcessCode = require('subledger_code')
-Subledgers = Subledgers or {}
-
-SubledgersPendingInit = SubledgersPendingInit or {}
 
 -- Spawning subledger process
 Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Subledger'), function(msg)
@@ -317,17 +326,18 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
   ao.spawn(ao.env.Module.Id, {
     Data = "",
     Tags = {
-      ['Source-Token'] = SourceToken,
+      ['Source-Token'] = SourceToken or ao.id,
       ['Parent-Token'] = ao.id,
       ['Token-Name'] = Name,
       ['Token-Ticker'] = Ticker,
       ['Token-Logo'] = Logo,
+      ['Token-Denomination'] = tostring(Denomination),
       ['Deployer'] = msg.From,
       ['Original-Message-Id'] = msg.Id,
     }
   })
 
-  ao.send({Target = msg.From, Action = "Spawning-Subledger", ['Original-Message-Id'] = msg.Id})
+  ao.send({ Target = msg.From, Action = "Spawning-Subledger", ['Original-Message-Id'] = msg.Id })
 end)
 
 Handlers.add("NotifySpawn", Handlers.utils.hasMatchingTag("Action", "Spawned"), function(msg)
@@ -343,7 +353,7 @@ Handlers.add("NotifySpawn", Handlers.utils.hasMatchingTag("Action", "Spawned"), 
   print("Spawned.")
 end)
 
-Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Subledgers"), function (msg)
+Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Subledgers"), function(msg)
   local processIds = {}
   for i, subledger in ipairs(SubledgersPendingInit) do
     table.insert(processIds, subledger.processId)
@@ -352,7 +362,7 @@ Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Sub
   ao.send({
     Target = ao.id,
     Action = "Eval",
-    Data = ProcessCode,
+    Data = subledgerCode,
     Assignments = processIds
   })
 
