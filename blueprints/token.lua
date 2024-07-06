@@ -155,7 +155,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     local SubledgerTags = {}
     if Subledgers and Subledgers[msg.Recipient] then
       SubledgerTags = {
-        ['Source-Token'] = SourceToken,
+        ['Source-Token'] = SourceToken or ao.id,
         ['Parent-Token'] = ParentToken,
       }
     end
@@ -326,7 +326,7 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
   ao.spawn(ao.env.Module.Id, {
     Data = "",
     Tags = {
-      ['Source-Token'] = SourceToken,
+      ['Source-Token'] = SourceToken or ao.id,
       ['Parent-Token'] = ao.id,
       ['Token-Name'] = Name,
       ['Token-Ticker'] = Ticker,

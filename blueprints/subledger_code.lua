@@ -150,7 +150,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     local SubledgerTags = {}
     if Subledgers and Subledgers[msg.Recipient] then
       SubledgerTags = {
-        ['Source-Token'] = SourceToken,
+        ['Source-Token'] = SourceToken or ao.id,
         ['Parent-Token'] = ParentToken,
       }
     end
