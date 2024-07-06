@@ -272,7 +272,9 @@ Handlers.add('creditNotice', Handlers.utils.hasMatchingTag('Action', 'Credit-Not
     Balances[msg.Sender] = utils.add(Balances[msg.Sender], msg.Quantity)
     ao.send({
       Target = msg.Sender,
-      Data = Colors.gray .. "Successfully credited " .. Colors.blue .. msg.Quantity .. Colors.gray .. " to subledger " .. Colors.green .. ao.id .. Colors.reset
+      Data = Colors.gray ..
+          "Successfully credited " ..
+          Colors.blue .. msg.Quantity .. Colors.gray .. " to subledger " .. Colors.green .. ao.id .. Colors.reset
     })
   else
     ao.send({
@@ -327,7 +329,7 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
     }
   })
 
-  ao.send({Target = msg.From, Action = "Spawning-Subledger", ['Original-Message-Id'] = msg.Id})
+  ao.send({ Target = msg.From, Action = "Spawning-Subledger", ['Original-Message-Id'] = msg.Id })
 end)
 
 Handlers.add("NotifySpawn", Handlers.utils.hasMatchingTag("Action", "Spawned"), function(msg)
@@ -343,7 +345,7 @@ Handlers.add("NotifySpawn", Handlers.utils.hasMatchingTag("Action", "Spawned"), 
   print("Spawned.")
 end)
 
-Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Subledgers"), function (msg)
+Handlers.add("InitSubledgers", Handlers.utils.hasMatchingTag("Action", "Init-Subledgers"), function(msg)
   local processIds = {}
   for i, subledger in ipairs(SubledgersPendingInit) do
     table.insert(processIds, subledger.processId)
