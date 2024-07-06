@@ -64,9 +64,12 @@ if not ao.env.Process.Tags['Parent-Token'] then
   _G.Ticker = Ticker or 'PNTS'
   _G.Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 else
-  _G.Balances = {}
+  _G.Balances = Balances or {}
   _G.ParentToken = ao.env.Process.Tags['Parent-Token']
   _G.SourceToken = ao.env.Process.Tags['Source-Token']
+  _G.Name = ao.env.Process.Tags['Token-Name']
+  _G.Ticker = ao.env.Process.Tags['Token-Ticker']
+  _G.Logo = ao.env.Process.Tags['Token-Logo']
 end
 
 --[[
@@ -316,6 +319,9 @@ Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Su
     Tags = {
       ['Source-Token'] = SourceToken,
       ['Parent-Token'] = ao.id,
+      ['Token-Name'] = Name,
+      ['Token-Ticker'] = Ticker,
+      ['Token-Logo'] = Logo,
       ['Deployer'] = msg.From,
       ['Original-Message-Id'] = msg.Id,
     }

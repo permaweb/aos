@@ -48,7 +48,6 @@ local utils = {
   end
 }
 
-
 --[[
      Initialize State
 
@@ -66,9 +65,12 @@ if not ao.env.Process.Tags['Parent-Token'] then
   _G.Ticker = Ticker or 'PNTS'
   _G.Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 else
-  _G.Balances = {}
+  _G.Balances = Balances or {}
   _G.ParentToken = ao.env.Process.Tags['Parent-Token']
   _G.SourceToken = ao.env.Process.Tags['Source-Token']
+  _G.Name = ao.env.Process.Tags['Token-Name']
+  _G.Ticker = ao.env.Process.Tags['Token-Ticker']
+  _G.Logo = ao.env.Process.Tags['Token-Logo']
 end
 
 --[[
@@ -302,7 +304,6 @@ Handlers.add('withdraw', Handlers.utils.hasMatchingTag('Action', 'Withdraw'), fu
     Quantity = msg.Quantity
   })
 end)
-
 
 ]===]
 
