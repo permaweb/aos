@@ -58,18 +58,18 @@ Variant = "0.0.3"
 -- token should be idempotent and not change previous state updates
 Denomination = Denomination or 12
 if not ao.env.Process.Tags['Parent-Token'] then
-  _G.Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
-  _G.TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
-  _G.Name = Name or 'Points Coin'
-  _G.Ticker = Ticker or 'PNTS'
-  _G.Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+  Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
+  TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
+  Name = Name or 'Points Coin'
+  Ticker = Ticker or 'PNTS'
+  Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 else
-  _G.Balances = Balances or {}
-  _G.ParentToken = ao.env.Process.Tags['Parent-Token']
-  _G.SourceToken = ao.env.Process.Tags['Source-Token']
-  _G.Name = ao.env.Process.Tags['Token-Name']
-  _G.Ticker = ao.env.Process.Tags['Token-Ticker']
-  _G.Logo = ao.env.Process.Tags['Token-Logo']
+  Balances = Balances or {}
+  ParentToken = ao.env.Process.Tags['Parent-Token']
+  SourceToken = ao.env.Process.Tags['Source-Token']
+  Name = ao.env.Process.Tags['Token-Name']
+  Ticker = ao.env.Process.Tags['Token-Ticker']
+  Logo = ao.env.Process.Tags['Token-Logo']
 end
 
 --[[
