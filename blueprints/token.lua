@@ -57,21 +57,28 @@ Variant = "0.0.3"
 
 -- token should be idempotent and not change previous state updates
 if not ao.env.Process.Tags['Parent-Token'] then
-  Denomination = Denomination or 12
-  Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
-  TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
   Name = Name or 'Points Coin'
   Ticker = Ticker or 'PNTS'
+  Denomination = Denomination or 12
   Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+
+  Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
+  TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 else
-  Denomination = ao.env.Process.Tags['Token-Denomination']
-  Balances = Balances or {}
-  ParentToken = ao.env.Process.Tags['Parent-Token']
-  SourceToken = ao.env.Process.Tags['Source-Token']
   Name = ao.env.Process.Tags['Token-Name']
   Ticker = ao.env.Process.Tags['Token-Ticker']
+  Denomination = ao.env.Process.Tags['Token-Denomination']
   Logo = ao.env.Process.Tags['Token-Logo']
+
+  Balances = Balances or {}
+
+  -- subledger-only globals
+  ParentToken = ao.env.Process.Tags['Parent-Token']
+  SourceToken = ao.env.Process.Tags['Source-Token']
 end
+
+Subledgers = Subledgers or {}
+SubledgersPendingInit = SubledgersPendingInit or {}
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
@@ -309,9 +316,6 @@ end)
 
 -- Subledger specific handlers
 ProcessCode = require('subledger_code')
-Subledgers = Subledgers or {}
-
-SubledgersPendingInit = SubledgersPendingInit or {}
 
 -- Spawning subledger process
 Handlers.add('SpawnSubledger', Handlers.utils.hasMatchingTag('Action', 'Spawn-Subledger'), function(msg)
