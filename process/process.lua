@@ -86,7 +86,10 @@ function Tab(msg)
 end
 
 function Prompt()
-  return "aos> "
+  return Colors.green .. Name .. Colors.reset
+    .. "@" .. Colors.blue .. "aos" .. Colors.reset
+    .. "[Inbox:" .. Colors.red .. tostring(#Inbox) .. Colors.reset
+    .. "]> "
 end
 
 function print(a)
