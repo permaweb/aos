@@ -3,6 +3,7 @@ local handlers = { _version = "0.0.5" }
 handlers.utils = require('.handlers-utils')
 handlers.list = {}
 handlers.onceNonce = 0
+handlers.coroutines = {}
 
 local function findIndexByProp(array, prop, value)
   for index, object in ipairs(array) do
@@ -39,6 +40,18 @@ function handlers.generateResolver(resolveSpec)
         end
     end
   end
+end
+
+-- Returns the next message that matches the pattern
+-- This function uses Lua's coroutines under-the-hood to add a handler, pause,
+-- and then resume the current coroutine. This allows us to effectively block
+-- processing of one message until another is received that matches the pattern.
+function handlers.receive(pattern)
+  local self = coroutine.running()
+  Handlers.once(pattern, function (msg)
+      coroutine.resume(self, msg)
+  end)
+  return coroutine.yield(pattern)
 end
 
 function handlers.once(...)

@@ -248,8 +248,22 @@ function process.handle(msg, ao)
       ao.send(newMsg)
     end
 
-  local status, result = pcall(Handlers.evaluate, msg, ao.env)
-  
+  local co = coroutine.create(
+    function()
+      return pcall(Handlers.evaluate, msg, ao.env)
+    end
+  )
+  local _, status, result = coroutine.resume(co)
+
+  -- Make sure we have a reference to the coroutine if it will wake up.
+  -- Simultaneously, prune any dead coroutines so that they can be
+  -- freed by the garbage collector.
+  table.insert(Handlers.coroutines, co)
+  for i, x in ipairs(Handlers.coroutines) do
+    if coroutine.status(x) == "dead" then
+      table.remove(Handlers.coroutines, i)
+    end
+  end
 
   if not status then
     if (msg.Action == "Eval") then
