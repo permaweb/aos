@@ -22,7 +22,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
         console.timeEnd('send')
         console.log("\n")
       }
-      spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)} ${chalk.gray("state transformations]")}`
+      spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)}${chalk.gray("...]")}`
       if (process.env.DEBUG) console.time('read')
       return x
     })

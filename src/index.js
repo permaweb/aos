@@ -128,7 +128,7 @@ if (!argv['watch']) {
         })
 
         spinner.start();
-        spinner.suffixText = chalk.gray("[Loading Lua...]")
+        spinner.suffixText = chalk.gray("[Connecting to process...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
 
@@ -139,7 +139,7 @@ if (!argv['watch']) {
       }
 
       if (!id) {
-        console.error(chalk.red("Error! Could not find Process ID"))
+        console.error(chalk.red("Error! Could not find process ID."))
         process.exit(0)
       }
       version(id)
@@ -420,13 +420,13 @@ async function connect(jwk, id) {
   })
 
   spinner.start();
-  spinner.suffixText = chalk.gray("[Connecting to your process...]")
+  spinner.suffixText = chalk.gray("[Connecting to process...]")
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   for (var i = 0; i < 50; i++) {
     if (promptResult?.Output?.data?.prompt === undefined) {
-      spinner.suffixText = chalk.red("[Booting up your AOS process...]")
+      spinner.suffixText = chalk.red("[Connecting to process...]")
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
     } else {
