@@ -143,6 +143,10 @@ function Spawn(...)
   return res
 end
 
+function Receive(match)
+  return Handlers.receive(match)
+end
+
 function Assign(assignment)
   _ao.assign(assignment)
   print("Assignment added to outbox.")
