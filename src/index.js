@@ -158,9 +158,9 @@ if (!argv['watch']) {
         await installUpdate(update, path.join(__dirname, "../"))
       }
 
-      if (process.env.DEBUG) console.time(chalk.gray('connecting'))
+      if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
       globalThis.prompt = await connect(jwk, id, luaData)
-      if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
+      if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
       // check loading files flag
       await handleLoadArgs(jwk, id)
 
@@ -333,7 +333,7 @@ if (!argv['watch']) {
           line = patch()
         }
 
-        if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
+        if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
         spinner.start();
@@ -376,9 +376,7 @@ if (!argv['watch']) {
         }
 
         if (process.env.DEBUG) {
-          console.log("\n")
-          console.timeEnd(chalk.gray('elapsed'))
-          console.log("\n")
+          console.timeEnd(chalk.gray('Elapsed'))
         }
 
         if (cron) {
@@ -426,7 +424,7 @@ async function connect(jwk, id) {
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   for (var i = 0; i < 50; i++) {
     if (promptResult?.Output?.data?.prompt === undefined) {
-      spinner.suffixText = chalk.red("[Connecting to process...]")
+      spinner.suffixText = chalk.red("[Connecting to process....]")
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
     } else {
