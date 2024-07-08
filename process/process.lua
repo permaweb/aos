@@ -94,7 +94,7 @@ function print(a)
     a = stringify.format(a)
   end
   
-  pcall(function () 
+  pcall(function ()
     local data = a
     if _ao.outbox.Output.data then
       data =  _ao.outbox.Output.data .. "\n" .. a
