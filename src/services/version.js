@@ -15,10 +15,10 @@ export function version(id) {
   console.log(chalk.gray('Type ".load-blueprint chat" to join the community chat and ask questions!'))
   //console.log(chalk.gray('Type ".load-blueprint token" to create Social Token\n'))
   console.log(chalk.gray(`
-OS Version: ${pkg.version}. 2024`))
+AOS Client Version: ${pkg.version}. 2024`))
   if (id) {
     console.log(chalk.gray('Type "Ctrl-C" twice to exit\n'))
-    console.log(`${chalk.gray("aos process: ")} ${chalk.green(id)}`)
+    console.log(`${chalk.gray("Your AOS process: ")} ${chalk.green(id)}`)
     console.log('')
   }
 }
@@ -82,7 +82,7 @@ export async function installUpdate(update, rootDir) {
     terminal: true
   })
   const line = await rl.question(
-    '✨ New version ' +
+    '✨ New AOS client version ' +
     chalk.green(update.version) +
     ' available. Would you like to update [Y/n]? '
   )
@@ -110,6 +110,7 @@ export async function installUpdate(update, rootDir) {
     console.log(chalk.green(
       'Updated ' + pkg.version + ' → ' + update.version
     ))
+    console.log(chalk.green('Restart your client to start using the new version.'))
     process.exit(0)
   } catch {
     console.log(chalk.red('ERROR: Failed to install update'))
