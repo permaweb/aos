@@ -2,19 +2,19 @@ import chalk from 'chalk'
 
 export function replHelp() {
   console.log(`
-${chalk.green('aos Console')}
+${chalk.green('AOS Client Functions')}
 
 ${chalk.blue('Documentation:')} https://cookbook_ao.g8way.io
 
-${chalk.green('Commands:')}
+${chalk.green('Client commands:')}
 
-  ${chalk.green('.load [file]')}                  Loads local lua file into connected Process
+  ${chalk.green('.load [file]')}                  Loads local Lua file into the process
   ${chalk.green('.load-blueprint [blueprint]')}   Loads a blueprint from the blueprints repository
-  ${chalk.green('.monitor')}                      Starts monitoring cron messages for this Process
-  ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this Process
-  ${chalk.green('.editor')}                       Simple code editor for writing multi-line lua expressions
+  ${chalk.green('.monitor')}                      Starts monitoring cron messages for this process
+  ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this process
+  ${chalk.green('.editor')}                       Simple code editor for writing multi-line Lua expressions
+  ${chalk.green('.exit')}                         Close the client
   ${chalk.green('.help')}                         Print this help screen
-  ${chalk.green('.exit')}                         Quit console
   `)
 }
 
