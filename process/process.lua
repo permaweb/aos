@@ -145,7 +145,8 @@ end
 
 function Assign(assignment)
   _ao.assign(assignment)
-  return 'assignment added to outbox'
+  print("Assignment added to outbox.")
+  return 'Assignment added to outbox.'
 end
 
 Seeded = Seeded or false
