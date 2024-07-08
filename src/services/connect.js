@@ -36,7 +36,7 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
 
   const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
     .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('retrying' + retries) : console.log(chalk.gray('.'))
+      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
       retries += "."
       return _
     })

@@ -337,7 +337,7 @@ if (!argv['watch']) {
         printLive()
 
         spinner.start();
-        spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+        spinner.suffixText = chalk.gray("[Dispatching message...]")
 
 
         // create message and publish to ao
@@ -370,7 +370,7 @@ if (!argv['watch']) {
             rl.setPrompt(globalThis.prompt)
           } else {
             if (!output) {
-              console.log(chalk.red('An unknown error occurred'))
+              console.log(chalk.red('An unknown error occurred.'))
             }
           }
         }
@@ -405,7 +405,8 @@ if (!argv['watch']) {
         if (argv['load']) {
           console.log(e.message)
         } else {
-          console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+          console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
+          process.exit(1)
         }
 
       }
@@ -419,14 +420,14 @@ async function connect(jwk, id) {
   })
 
   spinner.start();
-  spinner.suffixText = chalk.gray("[Connecting to Process...]")
+  spinner.suffixText = chalk.gray("[Connecting to your process...]")
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   for (var i = 0; i < 50; i++) {
     if (promptResult?.Output?.data?.prompt === undefined) {
-      spinner.suffixText = chalk.red("[Retrying...]")
-      await new Promise(resolve => setTimeout(resolve, 1000 * i))
+      spinner.suffixText = chalk.red("[Booting up your AOS process...]")
+      await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
     } else {
       break;
