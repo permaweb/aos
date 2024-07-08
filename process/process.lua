@@ -106,17 +106,41 @@ function print(a)
 end
 
 function Send(msg)
-  _ao.send(msg)
-  return 'message added to outbox'
+  if not msg.Target then
+    print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
+  end
+  local fullMsg = _ao.send(msg)
+  local res = {
+    onReply = fullMsg.onReply,
+    receive = fullMsg.receive
+  }
+  print("Message added to outbox.")
+  return res
 end
 
-function Spawn(module, msg)
-  if not msg then
-    msg = {}
+function Spawn(...)
+  local module, spawnMsg
+
+  if select("#", ...) == 1 then
+    spawnMsg = select(1, ...)
+    module = _ao._module
+  else
+    module = select(1, ...)
+    spawnMsg = select(2, ...)
   end
 
-  _ao.spawn(module, msg)
-  return 'spawn process request'
+  if not spawnMsg then
+    spawnMsg = {}
+  end
+
+  local spawnRes = _ao.spawn(module, spawnMsg)
+  local res = {
+    after = spawnRes.after,
+    receive = spawnRes.receive
+  }
+
+  print("Spawn process request added to outbox.")
+  return res
 end
 
 function Assign(assignment)
