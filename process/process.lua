@@ -334,6 +334,11 @@ function process.handle(msg, ao)
     return ao.result({ }) 
   end
 
+  if ao.isAssignment(msg) and not ao.isAssignable(msg) then
+    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+    return ao.result({ })
+  end
 
   Handlers.add("_eval",
     function (msg)
