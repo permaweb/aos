@@ -75,6 +75,7 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(msg)
   ao.send({
     Target = msg.From,
+    ['Response-For'] = 'Info',
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
@@ -102,6 +103,7 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), func
 
   ao.send({
     Target = msg.From,
+    ['Response-For'] = 'Balance',
     Balance = bal,
     Ticker = Ticker,
     Account = msg.Tags.Recipient or msg.From,
@@ -114,7 +116,13 @@ end)
    ]]
 --
 Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Balances'),
-  function(msg) ao.send({ Target = msg.From, Data = json.encode(Balances) }) end)
+  function(msg)
+    ao.send({
+      Target = msg.From,
+      ['Response-For'] = 'Balances',
+      Data = json.encode(Balances)
+    })
+  end)
 
 --[[
      Transfer
@@ -220,6 +228,7 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Suppl
   ao.send({
     Target = msg.From,
     Action = 'Total-Supply',
+    ['Response-For'] = 'Total-Supply',
     Data = TotalSupply,
     Ticker = Ticker
   })
