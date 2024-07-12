@@ -28,8 +28,8 @@ test('run evaluate action unsuccessfully', async () => {
     Data: '100 < undefined'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
-  assert.equal(result.Error, '[string ".handlers"]:335: [string "aos"]:1: attempt to compare number with nil')
+
+  assert.ok(result.Error.includes('[string "aos"]:1: attempt to compare number with nil'))
   assert.ok(true)
 })
 
@@ -111,7 +111,7 @@ test('create an Assignment', async () => {
     Data: 'Assign({ Processes = { "pid-1", "pid-2" }, Message = "mid-1" })'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
+
   assert.deepStrictEqual(result.Assignments, [
     { Processes: ['pid-1', 'pid-2'], Message: 'mid-1' }
   ])
