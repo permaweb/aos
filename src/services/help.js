@@ -2,51 +2,50 @@ import chalk from 'chalk'
 
 export function replHelp() {
   console.log(`
-${chalk.green('aos Console')}
+${chalk.green('AOS Client Functions')}
 
 ${chalk.blue('Documentation:')} https://cookbook_ao.g8way.io
 
-${chalk.green('Commands:')}
+${chalk.green('Client commands:')}
 
-  ${chalk.green('.load [file]')}                  Loads local lua file into connected Process
+  ${chalk.green('.load [file]')}                  Loads local Lua file into the process
   ${chalk.green('.load-blueprint [blueprint]')}   Loads a blueprint from the blueprints repository
-  ${chalk.green('.monitor')}                      Starts monitoring cron messages for this Process
-  ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this Process
-  ${chalk.green('.editor')}                       Simple code editor for writing multi-line lua expressions
+  ${chalk.green('.monitor')}                      Starts monitoring cron messages for this process
+  ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this process
+  ${chalk.green('.editor')}                       Simple code editor for writing multi-line Lua expressions
+  ${chalk.green('.exit')}                         Close the client
   ${chalk.green('.help')}                         Print this help screen
-  ${chalk.green('.exit')}                         Quit console
   `)
 }
 
 export function help() {
   console.log(`
-${chalk.green('aos Console')}
+${chalk.green('Welcome to the AOS client! AOS allows you to build and interact with AO processes.')}
 
-${chalk.blue('Documentation:')} https://cookbook_ao.g8way.io
+${chalk.blue('Full AOS documentation:')} https://cookbook_ao.g8way.io
 
-${chalk.green('Usage:')} aos [name] [OPTIONS]
+${chalk.green('Usage:')} aos [name] [options]
 
 ${chalk.green('Options:')}
 
-  ${chalk.green('--get-blueprints [dir]')}   Download Blueprint Lua Scripts to your current working directory
-  ${chalk.green('--cron [Interval]')}        Setup automated messages for your process for a given interval ie (1-minute, 5-minutes)
-  ${chalk.green('--load [file]')}            Load a lua source file into your process more than 1 is supported
-  ${chalk.green('--data [file]')}            Load a data file when creating process
-  ${chalk.green('--tag-name [name]')}        Tag Name for Process when Spawn more than 1 is supported
-  ${chalk.green('--tag-value [value]')}      Tag Value for Process when Spawning grouped with tag-name
-  ${chalk.green('--wallet [file]')}          Wallet to use for Process Managment a default wallet is created for you.
-  ${chalk.green('--module=[TXID]')}          The module source to use to spin up Process
-  ${chalk.green('--list')}                   Lists the processes for a given wallet
-  ${chalk.green('--watch=[PROCESSID]')}.     Watch a process
-  ${chalk.green('--monitor')}.               Monitor and Push Cron Outbox Messages and Spawns
-  ${chalk.green('--help')}                   Shows help page
-  ${chalk.green('--version')}                Shows Console Version
-  ${chalk.green('--gateway-url')}            Set the Gateway URL
-  ${chalk.green('--cu-url')}                 Set the Computer Unit URL
-  ${chalk.green('--mu-url')}                 Set the Messenger Unit URL
-
-${chalk.green('name')}                       Name is the Process name you want to spawn or connect to, if you do not
-                           specify a name then "default" will be used.
+  ${chalk.green('[name]')}                    The name of the process you want to spawn or connect to.
+                            If you do not specify a name then "default" will be used.
+  ${chalk.green('--wallet [file]')}           Set the wallet to interact with your process. By Default one is created for you at ~/.aos.json
+  ${chalk.green('--watch=[process]')}         Watch the console of a process, even if you are not the owner.
+  ${chalk.green('--load [file]')}             Load Lua source file(s) into your process.
+  ${chalk.green('--list')}                    Lists the processes for your wallet.
+  ${chalk.green('--data [file]')}             Set a file as the data when spawning a new process.
+  ${chalk.green('--tag-name [name]')}         Set a tag name for your process when spawning. Pair with --tag-value.
+  ${chalk.green('--tag-value [value]')}       Set a tag value for your process when spawning. Pair with --tag-name.
+  ${chalk.green('--module=[TXID]')}           The module ID to use when spawning a process.
+  ${chalk.green('--cron [frequency]-[unit]')} Setup automated messages for your process for a given interval. For example: 1-minute, 30-second.
+  ${chalk.green('--monitor')}                 Monitor and push cron outbox messages and spawns.
+  ${chalk.green('--get-blueprints [dir]')}    Download blueprint Lua scripts to your current working directory.
+  ${chalk.green('--gateway-url')}             Set Arweave gateway location.
+  ${chalk.green('--cu-url')}                  Set Computer Unit location.
+  ${chalk.green('--mu-url')}                  Set Messenger Unit location
+  ${chalk.green('--version')}                 Show AOS client version number
+  ${chalk.green('--help')}                    Shows this help page.
 `)
 
 }

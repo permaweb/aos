@@ -4,7 +4,7 @@ import chalk from 'chalk'
 export async function evaluate(line, processId, wallet, services, spinner) {
   return of()
     .map(_ => {
-      if (process.env.DEBUG) console.time('send')
+      if (process.env.DEBUG) console.time('Send')
       return _
     })
     .chain(() => services.sendMessage({
@@ -18,12 +18,11 @@ export async function evaluate(line, processId, wallet, services, spinner) {
     .map(x => {
       //console.log(x)
       if (process.env.DEBUG) {
-        console.log("\n")
-        console.timeEnd('send')
-        console.log("\n")
+        console.log("")
+        console.timeEnd('Send')
       }
-      spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)} ${chalk.gray("state transformations]")}`
-      if (process.env.DEBUG) console.time('read')
+      spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(x)}${chalk.gray("...]")}`
+      if (process.env.DEBUG) console.time('Read')
       return x
     })
 
@@ -49,9 +48,8 @@ export async function evaluate(line, processId, wallet, services, spinner) {
     .bichain(services.readResult, Resolved)
     .map(x => {
       if (process.env.DEBUG) {
-        console.log("\n")
-        console.timeEnd('read')
-        console.log("\n")
+        console.log("")
+        console.timeEnd('Read')
       }
       return x
     })

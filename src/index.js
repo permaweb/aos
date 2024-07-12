@@ -128,7 +128,7 @@ if (!argv['watch']) {
         })
 
         spinner.start();
-        spinner.suffixText = chalk.gray("[Loading Lua...]")
+        spinner.suffixText = chalk.gray("[Connecting to process...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
 
@@ -139,7 +139,7 @@ if (!argv['watch']) {
       }
 
       if (!id) {
-        console.error(chalk.red("Error! Could not find Process ID"))
+        console.error(chalk.red("Error! Could not find process ID."))
         process.exit(0)
       }
       version(id)
@@ -158,9 +158,9 @@ if (!argv['watch']) {
         await installUpdate(update, path.join(__dirname, "../"))
       }
 
-      if (process.env.DEBUG) console.time(chalk.gray('connecting'))
+      if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
       globalThis.prompt = await connect(jwk, id, luaData)
-      if (process.env.DEBUG) console.timeEnd(chalk.gray('connecting'))
+      if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
       // check loading files flag
       await handleLoadArgs(jwk, id)
 
@@ -333,11 +333,11 @@ if (!argv['watch']) {
           line = patch()
         }
 
-        if (process.env.DEBUG) console.time(chalk.gray('elapsed'))
+        if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
         spinner.start();
-        spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+        spinner.suffixText = chalk.gray("[Dispatching message...]")
 
 
         // create message and publish to ao
@@ -370,15 +370,13 @@ if (!argv['watch']) {
             rl.setPrompt(globalThis.prompt)
           } else {
             if (!output) {
-              console.log(chalk.red('An unknown error occurred'))
+              console.log(chalk.red('An unknown error occurred.'))
             }
           }
         }
 
         if (process.env.DEBUG) {
-          console.log("\n")
-          console.timeEnd(chalk.gray('elapsed'))
-          console.log("\n")
+          console.timeEnd(chalk.gray('Elapsed'))
         }
 
         if (cron) {
@@ -405,7 +403,8 @@ if (!argv['watch']) {
         if (argv['load']) {
           console.log(e.message)
         } else {
-          console.log(chalk.red('An Error occurred trying to boot AOS. Please check your access points, if the problem persists contact support.'))
+          console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
+          process.exit(1)
         }
 
       }
@@ -419,14 +418,14 @@ async function connect(jwk, id) {
   })
 
   spinner.start();
-  spinner.suffixText = chalk.gray("[Connecting to Process...]")
+  spinner.suffixText = chalk.gray("[Connecting to process...]")
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   for (var i = 0; i < 50; i++) {
     if (promptResult?.Output?.data?.prompt === undefined) {
-      spinner.suffixText = chalk.red("[Retrying...]")
-      await new Promise(resolve => setTimeout(resolve, 1000 * i))
+      spinner.suffixText = chalk.red("[Connecting to process....]")
+      await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
     } else {
       break;
