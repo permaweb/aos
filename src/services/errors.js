@@ -13,6 +13,11 @@ import path from 'path'
  * @returns {AOSError}
  */
 export function parseError(error) {
+  // if we have not been given any error information, return a generic message
+  if(!error || Object.keys(error).length === 0) {
+    return {lineNumber: 0, errorMessage: "No message given by process."}
+  }
+
   // parse error message
   const errorMessage = error.replace(
     /\[string "[a-zA-Z0-9_.-]*"\]:[0-9]*: /g,
