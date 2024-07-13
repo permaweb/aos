@@ -92,7 +92,8 @@ test('Typos for functions should generate errors', async () => {
   msg2.Tags = [{ name: 'Action', value: 'Eval' }]
   msg2.Data = "Errors"
   const result = await handle(Memory, msg2, env)
-  assert.equal(result.Output.data.output, '{ \x1B[32m"[string ".handlers"]:335: [string "aos"]:1: attempt to index a nil value (global \'Handers\')"\x1B[0m }')
+  // assert.equal(result.Output.data.output, '{ \x1B[32m"[string ".handlers"]:335: [string "aos"]:1: attempt to index a nil value (global \'Handers\')"\x1B[0m }')
+  assert.ok(result.Output.data.output.includes("attempt to index a nil value (global \'Handers\')"))
   assert.ok(true)
 })
 

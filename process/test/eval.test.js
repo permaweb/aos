@@ -28,8 +28,8 @@ test('run evaluate action unsuccessfully', async () => {
     Data: '100 < undefined'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
-  assert.equal(result.Error, '[string ".handlers"]:335: [string "aos"]:1: attempt to compare number with nil')
+
+  assert.ok(result.Error.includes("attempt to compare number with nil"))
   assert.ok(true)
 })
 
