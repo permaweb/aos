@@ -1,3 +1,13 @@
+--[[
+  Author: ItsJackAnton
+  Twitter: ItsJackAnton
+  Discord: ItsJackAnton
+
+  Made: 30/Jun/2024
+
+  Description: AO Blueprint Token Extension V2.
+]]--
+
 local bint = require('.bint')(256)
 local ao = require('ao')
 --[[
@@ -21,6 +31,13 @@ local ao = require('ao')
 
     - Mint(Quantity: number): if the Sender matches the Process Owner, then mint the desired Quantity of tokens, adding
         them the Processes' balance
+
+    - Transactions(TxHeight: optional number, Count: optional number): it will reply back with an array of transactions.
+        "TxHeight" is the first transaction added to the array, by default "TxHeight" is set to the last transaction's height.
+        "Count" is the number of transaction you want to include in the array, by default it is set to 1. 
+        Ex: Let's say there is a total of 5 registered transactions. if "TxHeight" was set 4 and "Count" was set to 2, 
+        then it will reply back an array containg transaction 3 and 4. It started adding transactions from 
+        transaction of height 4 and continued backwards until it added a total of 2 transactions out of 5 transactions.
 ]]
 --
 local json = require('json')
@@ -53,7 +70,7 @@ local utils = {
      ao.id is equal to the Process.Id
    ]]
 --
-Variant = "0.0.3"
+Variant = "0.0.4"
 
 -- token should be idempotent and not change previous state updates
 Denomination = Denomination or 12
@@ -62,6 +79,8 @@ TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 Name = Name or 'Points Coin'
 Ticker = Ticker or 'PNTS'
 Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+Transactions = Transactions or {} 
+
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
@@ -132,6 +151,11 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
     Balances[msg.Recipient] = utils.add(Balances[msg.Recipient], msg.Quantity)
 
+    -- Store transaction
+    local newTxHeight = #Transactions + 1;
+    local tx = { from = msg.From, recipient = msg.Recipient, quantity = msg.Quantity, blockHeight = msg['Block-Height'], txHeight =  newTxHeight}
+    Transactions[newTxHeight] = tx;
+
     --[[
          Only send the notifications to the Sender and Recipient
          if the Cast tag is not set on the Transfer message
@@ -172,6 +196,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
       ao.send(debitNotice)
       ao.send(creditNotice)
     end
+
   else
     ao.send({
       Target = msg.From,
@@ -196,6 +221,12 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
+
+    -- Store transaction
+    local newTxHeight = #Transactions + 1;
+    local tx = { recipient = msg.From, quantity = msg.Quantity, blockHeight = msg['Block-Height'], txHeight =  newTxHeight}
+    Transactions[newTxHeight] = tx;
+
     ao.send({
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
@@ -235,8 +266,54 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
   Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
   TotalSupply = utils.subtract(TotalSupply, msg.Quantity)
 
+  -- Store transaction
+  local newTxHeight = #Transactions + 1;
+  local tx = { from = msg.From, quantity = msg.Quantity, blockHeight = msg['Block-Height'], txHeight =  newTxHeight}
+  Transactions[newTxHeight] = tx;
+
   ao.send({
     Target = msg.From,
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   })
+end)
+
+--[[
+ Transactions
+]] --
+Handlers.add('transactions', Handlers.utils.hasMatchingTag('Action', 'Transactions'), function(msg)
+
+  local txHash = msg.TxHeight or #Transactions;
+  local count = msg.Count or 1;
+
+  if type(txHash) == "string" then txHash = tonumber(txHash) or #Transactions end
+  if type(count) == "string" then count = tonumber(count) or 1 end
+
+  assert(txHash <= #Transactions, 'TxHash is out of scope.')
+  assert(txHash > 0, 'Count must be greater than 0.')
+  assert(count > 0, 'Count must be greater than 0.')
+  assert(#Transactions > 0, 'No transaction has been registered yet.')
+
+  -- set up "startAt" and "stopAt"
+  local startAt = txHash;
+  local stopAt = startAt - (count - 1)
+
+  -- If "stopAt" is less than 1 then we force it to be 1.
+  if stopAt < 1 then stopAt = 1 end
+
+  -- query all transactions found inside the scope of "startAt" and "stopAt"
+  local query = {};
+
+  for i = startAt, stopAt, -1 do
+    query[#query + 1] = Transactions[i];
+  end
+
+  -- Setup reply
+  local response = {
+    Target = msg.From,
+    Action = 'Fetched-Transactions',
+    Data = json.encode(query)
+  }
+
+  -- Reply
+  ao.send(response)
 end)
