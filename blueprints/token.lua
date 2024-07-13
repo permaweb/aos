@@ -11,9 +11,7 @@
 local bint = require('.bint')(256)
 local ao = require('ao')
 --[[
-  Token Blueprint Version: V2.
-
-  This module is an extencion of the the ao Standard Token implementation that can be found here: https://github.com/permaweb/aos/blob/main/blueprints/token.lua
+  This module implements the ao Standard Token Specification.
 
   Terms:
     Sender: the wallet or Process that sent the Message
@@ -33,24 +31,13 @@ local ao = require('ao')
 
     - Mint(Quantity: number): if the Sender matches the Process Owner, then mint the desired Quantity of tokens, adding
         them the Processes' balance
-    
-    - Approve(Spender: string, Quantity: number): approve someone else to spend on your belhalf
 
-    - Approval(Allower: string, Spender: string): it returns how much the "Spender" can spend on behalf of the "Allower"
-
-    - Approvals(Allower: string): it returns all the spenders and how much they can spend on behalf of a specified "Allower"
-
-    - TransferFrom(Allower: string, Spender: string, Quantity: numeric): it allows an user or process to transfer on behalf of some other user or process.
-
-    What is new?
-    1- Extracted the transfer logic from the transfer handler to re-use the transfer logic in the "TransferFrom" handler.
-    2- Implemented the "Approve" handler
-    3- Implemented the "Approval" handler
-    3- Implemented the "Approvals" handler
-    4- Implemented the "TransferFrom" handler
-
-    Summary:
-    Now users and processes can approve someone else to spend tokens on their behalf.
+    - Transactions(TxHeight: optional number, Count: optional number): it will reply back with an array of transactions.
+        "TxHeight" is the first transaction added to the array, by default "TxHeight" is set to the last transaction's height.
+        "Count" is the number of transaction you want to include in the array, by default it is set to 1. 
+        Ex: Let's say there is a total of 5 registered transactions. if "TxHeight" was set 4 and "Count" was set to 2, 
+        then it will reply back an array containg transaction 3 and 4. It started adding transactions from 
+        transaction of height 4 and continued backwards until it added a total of 2 transactions out of 5 transactions.
 ]]
 --
 local json = require('json')
@@ -83,16 +70,17 @@ local utils = {
      ao.id is equal to the Process.Id
    ]]
 --
-Variant = "0.0.3"
+Variant = "0.0.4"
 
 -- token should be idempotent and not change previous state updates
 Denomination = Denomination or 12
 Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
-Allowance = Allowance or { }
 TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 Name = Name or 'Points Coin'
 Ticker = Ticker or 'PNTS'
 Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+Transactions = Transactions or {} 
+
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
@@ -109,8 +97,7 @@ Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(m
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
-    Denomination = tostring(Denomination),
-    -- Data = Colors.gray .. "Name: \"" .. Name .. "\" | Ticker: \"" .. Ticker .. "\" | Logo: \"" .. Logo .. "\" | Denomination: \"" .. Denomination .. "\"" .. Colors.reset;
+    Denomination = tostring(Denomination)
   })
 end)
 
@@ -152,13 +139,22 @@ Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Balances'),
      Transfer
    ]]
 --
-local transfer = function (from, to, quantity, msg);
-  if not Balances[from] then Balances[from] = "0" end
-  if not Balances[to] then Balances[to] = "0" end
+Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
+  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
+  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
+  assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
 
-  if bint(quantity) <= bint(Balances[from]) then
-    Balances[from] = utils.subtract(Balances[from], quantity)
-    Balances[to] = utils.add(Balances[to], quantity)
+  if not Balances[msg.From] then Balances[msg.From] = "0" end
+  if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
+
+  if bint(msg.Quantity) <= bint(Balances[msg.From]) then
+    Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
+    Balances[msg.Recipient] = utils.add(Balances[msg.Recipient], msg.Quantity)
+
+    -- Store transaction
+    local newTxHeight = #Transactions + 1;
+    local tx = { from = msg.From, recipient = msg.Recipient, quantity = msg.Quantity, blockHeight = msg['Block-Height'], txHeight =  newTxHeight}
+    Transactions[newTxHeight] = tx;
 
     --[[
          Only send the notifications to the Sender and Recipient
@@ -168,23 +164,23 @@ local transfer = function (from, to, quantity, msg);
     if not msg.Cast then
       -- Debit-Notice message template, that is sent to the Sender of the transfer
       local debitNotice = {
-        Target = from,
+        Target = msg.From,
         Action = 'Debit-Notice',
-        Recipient = to,
-        Quantity = quantity,
+        Recipient = msg.Recipient,
+        Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You transferred " ..
-            Colors.blue .. quantity .. Colors.gray .. " to " .. Colors.green .. to .. Colors.reset
+            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
       }
       -- Credit-Notice message template, that is sent to the Recipient of the transfer
       local creditNotice = {
-        Target = to,
+        Target = msg.Recipient,
         Action = 'Credit-Notice',
-        Sender = from,
-        Quantity = quantity,
+        Sender = msg.From,
+        Quantity = msg.Quantity,
         Data = Colors.gray ..
             "You received " ..
-            Colors.blue .. quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
+            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
       }
 
       -- Add forwarded tags to the credit and debit notice messages
@@ -200,6 +196,7 @@ local transfer = function (from, to, quantity, msg);
       ao.send(debitNotice)
       ao.send(creditNotice)
     end
+
   else
     ao.send({
       Target = msg.From,
@@ -208,107 +205,6 @@ local transfer = function (from, to, quantity, msg);
       Error = 'Insufficient Balance!'
     })
   end
-end;
-
-
-Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
-  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
-
-  transfer(msg.From, msg.Recipient, msg.Quantity, msg);
-end)
-
---[[
-  Approve
-]]--
-
-Handlers.add('approve', Handlers.utils.hasMatchingTag('Action', 'Approve'), function(msg)
-  assert(type(msg.Spender) == 'string', 'Recipient is required!')
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-
-  Allowance[msg.From] = Allowance[msg.From] or {}
-
-  local spenders = Allowance[msg.From]
-
-  spenders[msg.Spender] = spenders[msg.Spender] or "0"
-  spenders[msg.Spender] = utils.add(spenders[msg.Spender], msg.Quantity)
-
-  Handlers.utils.reply("You have allowed +" .. msg.Quantity .. " to: " .. msg.Spender .. "\nSpender can use up to: " .. spenders[msg.Spender])(msg)
-end)
-
---[[
-  Approval
-]]--
-
-Handlers.add('approval', Handlers.utils.hasMatchingTag('Action', 'Approval'), function(msg)
-  assert(type(msg.Allower) == 'string', 'Allower is required!')
-  assert(type(msg.Spender) == 'string', 'Spender is required!')
-
-  if not Allowance[msg.Allower] then
-    
-    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
-
-    return
-  end
-
-  local spenders = Allowance[msg.Allower]
-
-  if not spenders[msg.Spender] then
-
-    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
-
-    return
-  end
-
-  Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. spenders[msg.Spender] .. " from: \'" .. msg.Allower .. "\'")(msg)
-end)
-
---[[
-  Approvals
-]]--
-
-Handlers.add('approvals', Handlers.utils.hasMatchingTag('Action', 'Approvals'), function(msg)
-  assert(type(msg.Allower) == 'string', 'Allower is required!')
-
-  if not Allowance[msg.Allower] then
-    
-    Handlers.utils.reply("Spender: \'" .. msg.Spender .. "\' can spend a total of: " .. 0 .. " from: \'" .. msg.Allower .. "\'")(msg)
-
-    return
-  end
-
-  local spenders = Allowance[msg.Allower]
-
-  Handlers.utils.reply("Spenders: " .. json.encode(spenders))(msg)
-end)
-
---[[
-  TransferFrom
-]]--
-
-Handlers.add('transferFrom', Handlers.utils.hasMatchingTag('Action', 'TransferFrom'), function(msg)
-  assert(type(msg.Allower) == 'string', 'Allower is required!')
-  assert(type(msg.Recipient) == 'string', 'Recipient is required!')
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(Allowance[msg.Allower] ~= nil, 'Allower has not allowed you to handle anything!')
-  assert(Allowance[msg.Allower][msg.From] ~= nil, 'Allower has not allowed you to handle anything!')
-  assert(bint.__le(bint(msg.Quantity), bint(Allowance[msg.Allower][msg.From])), 'Quantity must greather or equal to ' .. tostring(Allowance[msg.Allower][msg.From])..", current cuantity: " .. msg.Quantity)
-  
-  Allowance[msg.From] = Allowance[msg.Allower] or {}
-
-  local spenders = Allowance[msg.Allower]
-
-  spenders[msg.Spender] = spenders[msg.Spender] or "0"
-  spenders[msg.Spender] = utils.subtract(spenders[msg.Spender], msg.Quantity)
-
-  if spenders[msg.Spender] == "0" then
-
-    spenders[msg.Spender] = nil;
-
-  end
-
-  transfer(msg.Allower, msg.Recipient, msg.Quantity, msg);
 end)
 
 --[[
@@ -325,6 +221,12 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
+
+    -- Store transaction
+    local newTxHeight = #Transactions + 1;
+    local tx = { recipient = msg.From, quantity = msg.Quantity, blockHeight = msg['Block-Height'], txHeight =  newTxHeight}
+    Transactions[newTxHeight] = tx;
+
     ao.send({
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
@@ -368,4 +270,46 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
     Target = msg.From,
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   })
+end)
+
+--[[
+ Transactions
+]] --
+Handlers.add('transactions', Handlers.utils.hasMatchingTag('Action', 'Transactions'), function(msg)
+
+
+  local txHash = msg.TxHeight or #Transactions;
+  local count = msg.Count or 1;
+
+  if type(txHash) == "string" then txHash = tonumber(txHash) or #Transactions end
+  if type(count) == "string" then count = tonumber(count) or 1 end
+
+  assert(txHash <= #Transactions, 'TxHash is out of scope.')
+  assert(txHash > 0, 'Count must be greater than 0.')
+  assert(count > 0, 'Count must be greater than 0.')
+  assert(#Transactions > 0, 'No transaction has been registered yet.')
+
+  -- set up "startAt" and "stopAt"
+  local startAt = txHash;
+  local stopAt = startAt - (count - 1)
+
+  -- If "stopAt" is less than 1 then we force it to be 1.
+  if stopAt < 1 then stopAt = 1 end
+
+  -- query all transactions found inside the scope of "startAt" and "stopAt"
+  local query = {};
+
+  for i = startAt, stopAt, -1 do
+    query[#query + 1] = Transactions[i];
+  end
+
+  -- Setup reply
+  local response = {
+    Target = msg.From,
+    Action = 'Fetched-Transactions',
+    Data = json.encode(query)
+  }
+
+  -- Reply
+  ao.send(response)
 end)
