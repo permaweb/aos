@@ -17,18 +17,27 @@ if (os.platform() === 'win32') {
   __dirname = __dirname.replace(/\\/g, "/").replace(/^[A-Za-z]:\//, "/")
 }
 export function update() {
-  const luaFiles = fs.readdirSync(__dirname + "/../../process")
-    .filter(n => /\.lua$/.test(n))
-    //.filter((n, i) => i === 0)
+  // let luaFiles = fs.readdirSync(__dirname + "../../process")
+  //   .filter(n => /\.lua$/.test(n))
+  //   //'assignment.lua', 'handlers-utils.lua', 'handlers.lua'
+  //   .filter((n) => ['utils.lua', 'process.lua', 'assignment.lua', 'handlers-utils.lua', 'handlers.lua'].includes(n))
+  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
     .map(name => {
-      const code = fs.readFileSync(__dirname + "/../../process/" + name, 'utf-8')
+      const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
-
       return template(mod, code)
     })
     .concat(patch())
-    .concat("print([[\nUpdated AOS to version]] .. require('.process')._version)")
+    .concat("print([[\nUpdated AOS to version ]] .. require('.process')._version)")
     .join('\n\n')
+
+  luaFiles = `
+if not Utils.includes('.crypto.init', Utils.keys(_G.package.loaded)) then
+  -- if crypto.init is not installed then return a noop
+  _G.package.loaded['.crypto.init'] = { _version = "0.0.0", status = "Not Implemented" }
+end
+
+  ` + luaFiles
 
   return luaFiles + '\nreturn ao.outbox.Output.data '
 }
