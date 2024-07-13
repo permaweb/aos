@@ -59,6 +59,5 @@ test('test authorities', async () => {
     Data: '1 + 1'
   }
   const result = await handle(null, msg, env)
-  //console.log(JSON.stringify(result.Messages[0], null, 2))
   assert.ok(result.Output.data.includes('Message is not trusted! From: BAM - Owner: BEEP'))
 })
