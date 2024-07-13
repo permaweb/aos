@@ -18,8 +18,13 @@ Dump = require('.dump')
 Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
+local assignment = require('.assignment')
 local _ao = require('ao')
-local process = { _version = "0.2.0" }
+
+-- Implement assignable polyfills on _ao
+assignment.init(_ao)
+
+local process = { _version = "0.2.1" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -97,7 +102,7 @@ function print(a)
     a = stringify.format(a)
   end
   
-  pcall(function () 
+  pcall(function ()
     local data = a
     if _ao.outbox.Output.data then
       data =  _ao.outbox.Output.data .. "\n" .. a
@@ -109,22 +114,40 @@ function print(a)
 end
 
 function Send(msg)
+  if not msg.Target then
+    print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
+  end
   _ao.send(msg)
-  return 'message added to outbox'
+  return "Message added to outbox."
 end
 
-function Spawn(module, msg)
-  if not msg then
-    msg = {}
+function Spawn(...)
+  local module, spawnMsg
+
+  if select("#", ...) == 1 then
+    spawnMsg = select(1, ...)
+    module = _ao._module
+  else
+    module = select(1, ...)
+    spawnMsg = select(2, ...)
   end
 
-  _ao.spawn(module, msg)
-  return 'spawn process request'
+  if not spawnMsg then
+    spawnMsg = {}
+  end
+  _ao.spawn(module, spawnMsg)
+  return "Spawn process request added to outbox."
+  
+end
+
+function Receive(match)
+  return Handlers.receive(match)
 end
 
 function Assign(assignment)
   _ao.assign(assignment)
-  return 'assignment added to outbox'
+  print("Assignment added to outbox.")
+  return 'Assignment added to outbox.'
 end
 
 Seeded = Seeded or false
@@ -213,8 +236,13 @@ function process.handle(msg, ao)
     return ao.result({ }) 
   end
 
+  if ao.isAssignment(msg) and not ao.isAssignable(msg) then
+    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+    return ao.result({ })
+  end
 
-  Handlers.add("_eval", 
+  Handlers.add("_eval",
     function (msg)
       return msg.Action == "Eval" and Owner == msg.From
     end,
@@ -222,9 +250,7 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  
   local status, result = pcall(Handlers.evaluate, msg, ao.env)
-  
 
   if not status then
     if (msg.Action == "Eval") then

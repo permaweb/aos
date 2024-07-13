@@ -35,6 +35,7 @@ import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
+import * as os from './commands/os.js'
 
 const argv = minimist(process.argv.slice(2))
 let luaData = ""
@@ -330,7 +331,7 @@ if (!argv['watch']) {
         }
 
         if (line === '.update') {
-          line = patch()
+          line = os.update()
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
