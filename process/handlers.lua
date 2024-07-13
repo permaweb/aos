@@ -1,7 +1,12 @@
 local handlers = { _version = "0.0.3" }
 
 handlers.utils = require('.handlers-utils')
-handlers.list = Handlers.list or {}
+-- if update we need to keep defined handlers
+if Handlers then
+  handlers.list = Handlers.list or {}
+else
+  handlers.list = {}
+end
 
 local function findIndexByProp(array, prop, value)
   for index, object in ipairs(array) do

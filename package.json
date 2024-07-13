@@ -29,7 +29,7 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "5HN897FKVrYn72lzi6KRxoaP3jX8UCyQhj6cbuFMcNA"
+    "module": "NMkuGC8XPJuxK5iF8deqEx0y3O1skGehhDmFEUSeBrQ"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"

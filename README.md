@@ -6,7 +6,7 @@
 
 Status: Preview
 Version: 1.12.0  
-Module: `5HN897FKVrYn72lzi6KRxoaP3jX8UCyQhj6cbuFMcNA`
+Module: `NMkuGC8XPJuxK5iF8deqEx0y3O1skGehhDmFEUSeBrQ`
 
 ## Requirements
 
