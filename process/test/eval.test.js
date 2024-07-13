@@ -29,7 +29,7 @@ test('run evaluate action unsuccessfully', async () => {
   }
   const result = await handle(null, msg, env)
 
-  assert.ok(result.Error.includes('[string "aos"]:1: attempt to compare number with nil'))
+  assert.ok(result.Error.includes("attempt to compare number with nil"))
   assert.ok(true)
 })
 

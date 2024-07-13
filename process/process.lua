@@ -18,8 +18,13 @@ Dump = require('.dump')
 Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
+local assignment = require('.assignment')
 local _ao = require('ao')
-local process = { _version = "0.2.0" }
+
+-- Implement assignable polyfills on _ao
+assignment.init(_ao)
+
+local process = { _version = "0.2.1" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -112,13 +117,8 @@ function Send(msg)
   if not msg.Target then
     print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
   end
-  local fullMsg = _ao.send(msg)
-  local res = {
-    onReply = fullMsg.onReply,
-    receive = fullMsg.receive
-  }
-  print("Message added to outbox.")
-  return res
+  _ao.send(msg)
+  return "Message added to outbox."
 end
 
 function Spawn(...)
@@ -135,15 +135,9 @@ function Spawn(...)
   if not spawnMsg then
     spawnMsg = {}
   end
-
-  local spawnRes = _ao.spawn(module, spawnMsg)
-  local res = {
-    after = spawnRes.after,
-    receive = spawnRes.receive
-  }
-
-  print("Spawn process request added to outbox.")
-  return res
+  _ao.spawn(module, spawnMsg)
+  return "Spawn process request added to outbox."
+  
 end
 
 function Receive(match)
@@ -242,6 +236,11 @@ function process.handle(msg, ao)
     return ao.result({ }) 
   end
 
+  if ao.isAssignment(msg) and not ao.isAssignable(msg) then
+    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+    return ao.result({ })
+  end
 
   Handlers.add("_eval",
     function (msg)
@@ -251,51 +250,7 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  
-  msg.reply =
-    function(replyMsg)
-      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
-      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
-      replyMsg["X-Origin"] = msg["X-Origin"] or nil
-
-      return ao.send(replyMsg)
-    end
-  
-  msg.forward =
-    function(target, forwardMsg)
-      -- Clone the message and add forwardMsg tags
-      local newMsg =  ao.sanitize(msg)
-      forwardMsg = forwardMsg or {}
-
-      for k,v in pairs(forwardMsg) do
-        newMsg[k] = v
-      end
-
-      -- Set forward-specific tags
-      newMsg.Target = target
-      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
-      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
-      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
-
-      ao.send(newMsg)
-    end
-
-  local co = coroutine.create(
-    function()
-      return pcall(Handlers.evaluate, msg, ao.env)
-    end
-  )
-  local _, status, result = coroutine.resume(co)
-
-  -- Make sure we have a reference to the coroutine if it will wake up.
-  -- Simultaneously, prune any dead coroutines so that they can be
-  -- freed by the garbage collector.
-  table.insert(Handlers.coroutines, co)
-  for i, x in ipairs(Handlers.coroutines) do
-    if coroutine.status(x) == "dead" then
-      table.remove(Handlers.coroutines, i)
-    end
-  end
+  local status, result = pcall(Handlers.evaluate, msg, ao.env)
 
   if not status then
     if (msg.Action == "Eval") then
