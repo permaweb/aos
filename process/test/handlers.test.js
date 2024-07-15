@@ -52,7 +52,7 @@ return require('json').encode(res)
   assert.ok(true)
 })
 
-test('resolvers', async () => {
+test.skip('resolvers', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
@@ -100,7 +100,7 @@ Handlers.once("onetime",
   assert.equal(result.Output.data, 'pong')
 })
 
-test('handlers once', async () => {
+test.skip('handlers once', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
     Process: {

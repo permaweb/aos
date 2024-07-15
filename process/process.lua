@@ -140,11 +140,11 @@ function Spawn(...)
   
 end
 
-function Receive(match)
-  return Handlers.receive(match)
-end
-
 function Assign(assignment)
+  if not _ao.assign then
+    print("Assign is not implemented.")
+    return "Assign is not implemented."
+  end
   _ao.assign(assignment)
   print("Assignment added to outbox.")
   return 'Assignment added to outbox.'
@@ -257,29 +257,16 @@ function process.handle(msg, ao)
       table.insert(Errors, result)
       return { Error = result }
     end 
-      --table.insert(Errors, result)
-      --ao.outbox.Output.data = ""
-      if msg.Action then
-        print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
-      else
-        print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
-      end
-      print(Colors.green .. result .. Colors.reset)
-      print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
-      return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
-      -- if error in handler accept the msg and set Errors
-      
-      -- return {
-      --   Output = { 
-      --     data = { 
-      --       prompt = Prompt(), 
-      --       json = 'undefined', 
-      --       output = result 
-      --     }
-      --   }, 
-      --   Messages = {}, 
-      --   Spawns = {}
-      -- }
+    --table.insert(Errors, result)
+    --ao.outbox.Output.data = ""
+    if msg.Action then
+      print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
+    else
+      print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
+    end
+    print(Colors.green .. result .. Colors.reset)
+    print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
+    return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
   return ao.result({ })
 end

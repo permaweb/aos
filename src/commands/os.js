@@ -17,29 +17,43 @@ if (os.platform() === 'win32') {
   __dirname = __dirname.replace(/\\/g, "/").replace(/^[A-Za-z]:\//, "/")
 }
 export function update() {
-  const luaFiles = fs.readdirSync(__dirname + "/../../process")
+  let luaFiles = fs.readdirSync(__dirname + "../../process")
     .filter(n => /\.lua$/.test(n))
-    //.filter((n, i) => i === 7)
+    // let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
     .map(name => {
-      const code = fs.readFileSync(__dirname + "/../../process/" + name, 'utf-8')
+      const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
-
       return template(mod, code)
     })
     .concat(patch())
+    .concat("print([[\nUpdated AOS to version ]] .. require('.process')._version)")
     .join('\n\n')
 
-  return luaFiles + '\nreturn ao.outbox.Output.data'
+  luaFiles = `
+if not Utils.includes('.crypto.init', Utils.keys(_G.package.loaded)) then
+  -- if crypto.init is not installed then return a noop
+  _G.package.loaded['.crypto.init'] = { _version = "0.0.0", status = "Not Implemented" }
+  return [[
+Phase I Completed
+Since you have an older version of AOS, you need to update twice. 
+
+Please run [.update] again
+  ]]
+end
+
+  `
+    + luaFiles
+
+  return luaFiles + '\nreturn ao.outbox.Output.data '
 }
 
 function template(mod, code) {
   return `
-local function load_${mod.replace("-", "_")} () 
+local function load_${mod.replace("-", "_")}() 
   ${code}
 end
-_G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")} ()
-print('loaded ${mod}')
-
+_G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")}()
+-- print("loaded ${mod}")
   `
 }
 
@@ -62,6 +76,6 @@ function patch() {
       end
     )
   end
-  print("Added Patch Handler")
+  -- print("Added Patch Handler")
   `
 }

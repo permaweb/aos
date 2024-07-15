@@ -22,7 +22,7 @@ export function readResult(params) {
     new Promise((resolve) => setTimeout(() => resolve(params), 500))
   )().chain(fromPromise(() => connect(getInfo()).result(params)))
     // log the error messages most seem related to 503
-    //.bimap(_ => (console.log(_), _), _ => (console.log(_), _))
+    // .bimap(_ => (console.log(_), _), _ => (console.log(_), _))
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
