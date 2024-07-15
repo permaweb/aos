@@ -198,6 +198,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
     ao.send({
       Target = msg.From,
+      Action = "Mint-Notice",
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
     })
   else
@@ -237,6 +238,7 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
 
   ao.send({
     Target = msg.From,
+    Action = "Burn-Notice",
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   })
 end)
