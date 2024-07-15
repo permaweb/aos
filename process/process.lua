@@ -191,6 +191,9 @@ function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
   
+  -- set os.time to return msg.Timestamp
+  os.time = function () return msg.Timestamp end
+
   -- tagify msg
   msg.TagArray = msg.Tags
   msg.Tags = Tab(msg)
