@@ -200,6 +200,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     local mintNotice = {
       Target = msg.From,
       Action = "Mint-Notice",
+      Quantity = msg.Quantity,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
     }
 
@@ -251,6 +252,7 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
   local burnNotice = {
     Target = msg.From,
     Action = "Burn-Notice",
+    Quantity = msg.Quantity,
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   }
 
