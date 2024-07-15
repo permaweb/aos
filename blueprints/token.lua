@@ -196,11 +196,23 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
-    ao.send({
+
+    local mintNotice = {
       Target = msg.From,
       Action = "Mint-Notice",
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
-    })
+    }
+
+    -- Add forwarded tags to the mint notice messages
+    for tagName, tagValue in pairs(msg) do
+      -- Tags beginning with "X-" are forwarded
+      if string.sub(tagName, 1, 2) == "X-" then
+        mintNotice[tagName] = tagValue
+      end
+    end
+
+    ao.send(mintNotice)
+
   else
     ao.send({
       Target = msg.From,
@@ -236,9 +248,19 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
   Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
   TotalSupply = utils.subtract(TotalSupply, msg.Quantity)
 
-  ao.send({
+  local burnNotice = {
     Target = msg.From,
     Action = "Burn-Notice",
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
-  })
+  }
+
+  -- Add forwarded tags to the burn notice messages
+  for tagName, tagValue in pairs(msg) do
+    -- Tags beginning with "X-" are forwarded
+    if string.sub(tagName, 1, 2) == "X-" then
+      burnNotice[tagName] = tagValue
+    end
+  end
+
+  ao.send(burnNotice)
 end)
