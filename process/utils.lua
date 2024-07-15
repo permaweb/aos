@@ -1,4 +1,4 @@
-local utils = { _version = "0.0.3" }
+local utils = { _version = "0.0.4" }
 
 -- Pattern Matcher Function
 function utils.matchesPattern(msg, pattern)
@@ -24,10 +24,15 @@ function utils.matchesPattern(msg, pattern)
       end
       -- if the patternMatchSpec is a function, then it is executed on the tag value
       if type(patternMatchSpec) == "function" then
-        if patternMatchSpec(msg[key], msg) then
-          matched = true
-        else
+        local status, result = pcall(patternMatchSpec, msg[key], msg)
+        if not status then
+          print('ERROR: ' .. result)
           return false
+        end
+        if not result or result == false then
+          matched = false
+        else
+          return true
         end
       end
       -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
