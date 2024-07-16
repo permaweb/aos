@@ -16,10 +16,17 @@ let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 if (os.platform() === 'win32') {
   __dirname = __dirname.replace(/\\/g, "/").replace(/^[A-Za-z]:\//, "/")
 }
+
+export function dry() {
+  console.log('not implemented')
+  return ""
+
+}
+
 export function update() {
-  let luaFiles = fs.readdirSync(__dirname + "../../process")
-    .filter(n => /\.lua$/.test(n))
-    // let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
+  //let luaFiles = fs.readdirSync(__dirname + "../../process")
+  //  .filter(n => /\.lua$/.test(n))
+  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
     .map(name => {
       const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
@@ -44,7 +51,10 @@ end
   `
     + luaFiles
 
-  return luaFiles + '\nreturn ao.outbox.Output.data '
+
+  luaFiles = luaFiles + '\nreturn ao.outbox.Output.data '
+
+  return luaFiles
 }
 
 function template(mod, code) {
