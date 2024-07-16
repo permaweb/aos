@@ -1,4 +1,63 @@
-local utils = { _version = "0.0.2" }
+local utils = { _version = "0.0.4" }
+
+-- Pattern Matcher Function
+function utils.matchesPattern(msg, pattern)
+  if type(pattern) == 'function' then
+    return pattern(msg)
+  -- If the pattern is a table, step through every key/value pair in the pattern and check if the msg matches
+  -- Supported match types:
+  --   - Exact string match
+  --   - Lua gmatch string
+  --   - '_' (wildcard: Message has tag, but can be any value)
+  --   - Function execution on the tag, optionally using the msg as the second argument
+  end
+  if type(pattern) == 'table' then
+    for key, patternMatchSpec in pairs(pattern) do
+      local matched = false
+      -- If the key is not in the message, then it does not match
+      if(not msg[key]) then
+        return false
+      end
+      -- if the patternMatchSpec is a wildcard, then it always matches
+      if patternMatchSpec == '_' then
+        matched = true
+      end
+      -- if the patternMatchSpec is a function, then it is executed on the tag value
+      if type(patternMatchSpec) == "function" then
+        local status, result = pcall(patternMatchSpec, msg[key], msg)
+        if not status then
+          print('ERROR: ' .. result)
+          return false
+        end
+        if not result or result == false then
+          matched = false
+        else
+          return true
+        end
+      end
+      -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
+      -- and exact string match mode
+      if not matched and string.match(patternMatchSpec, "[%^%$%(%)%%%.%[%]%*%+%?]") then
+        if string.match(msg[key], patternMatchSpec) then
+          matched = true
+        end
+      else
+        if msg[key] == patternMatchSpec then
+          matched = true
+        end
+      end
+      -- if the patternMatchSpec is not matched, then the msg does not match
+      if not matched then
+        return false
+      end
+    end
+    return true
+  end
+  if type(pattern) == 'string' and msg.Action == pattern then
+    return true
+  end
+  return false
+end
 
 local function isArray(table)
   if type(table) == "table" then
