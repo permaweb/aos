@@ -24,7 +24,7 @@ local _ao = require('ao')
 -- Implement assignable polyfills on _ao
 assignment.init(_ao)
 
-local process = { _version = "0.2.1" }
+local process = { _version = "0.2.2" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -140,6 +140,10 @@ function Spawn(...)
   
 end
 
+function Receive(match)
+  return Handlers.receive(match)
+end
+
 function Assign(assignment)
   if not _ao.assign then
     print("Assign is not implemented.")
@@ -250,7 +254,50 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  local status, result = pcall(Handlers.evaluate, msg, ao.env)
+  msg.reply =
+    function(replyMsg)
+      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
+      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      replyMsg["X-Origin"] = msg["X-Origin"] or nil
+
+      return ao.send(replyMsg)
+    end
+  
+  msg.forward =
+    function(target, forwardMsg)
+      -- Clone the message and add forwardMsg tags
+      local newMsg =  ao.sanitize(msg)
+      forwardMsg = forwardMsg or {}
+
+      for k,v in pairs(forwardMsg) do
+        newMsg[k] = v
+      end
+
+      -- Set forward-specific tags
+      newMsg.Target = target
+      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
+      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
+
+      ao.send(newMsg)
+    end
+
+  local co = coroutine.create(
+    function()
+      return pcall(Handlers.evaluate, msg, ao.env)
+    end
+  )
+  local _, status, result = coroutine.resume(co)
+
+  -- Make sure we have a reference to the coroutine if it will wake up.
+  -- Simultaneously, prune any dead coroutines so that they can be
+  -- freed by the garbage collector.
+  table.insert(Handlers.coroutines, co)
+  for i, x in ipairs(Handlers.coroutines) do
+    if coroutine.status(x) == "dead" then
+      table.remove(Handlers.coroutines, i)
+    end
+  end
 
   if not status then
     if (msg.Action == "Eval") then
@@ -268,6 +315,7 @@ function process.handle(msg, ao)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
     return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
+  collectgarbage('collect')
   return ao.result({ })
 end
 
