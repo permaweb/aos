@@ -1,14 +1,17 @@
 local handlers = { _version = "0.0.5" }
+local coroutine = require('coroutine')
 
 handlers.utils = require('.handlers-utils')
 -- if update we need to keep defined handlers
 if Handlers then
   handlers.list = Handlers.list or {}
+  handlers.coroutines = Handlers.coroutines or {}
 else
   handlers.list = {}
+  handlers.coroutines = {}
+
 end
 handlers.onceNonce = 0
-handlers.coroutines = {}
 
 
 local function findIndexByProp(array, prop, value)
@@ -239,7 +242,7 @@ function handlers.evaluate(msg, env)
   local handled = false
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
-
+  
   for _, o in ipairs(handlers.list) do
     if o.name ~= "_default" then
       local match = handlers.matchesPattern(msg, o.pattern)

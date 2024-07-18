@@ -3,6 +3,7 @@ local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
 local crypto = require('.crypto.init')
+local coroutine = require('coroutine')
 
 Colors = {
   red = "\27[31m",
@@ -232,7 +233,7 @@ function process.handle(msg, ao)
   Errors = Errors or {}
   -- clear Outbox
   ao.clearOutbox()
-
+  
   -- Only trust messages from a signed owner or an Authority
   if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
     Send({Target = msg.From, Data = "Message is not trusted by this process!"})

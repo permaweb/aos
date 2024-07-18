@@ -33,6 +33,7 @@ export function update() {
       return template(mod, code)
     })
     .concat(patch())
+    .concat(patch2())
     .concat("print([[\nUpdated AOS to version ]] .. require('.process')._version)")
     .join('\n\n')
 
@@ -64,6 +65,18 @@ local function load_${mod.replace("-", "_")}()
 end
 _G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")}()
 -- print("loaded ${mod}")
+  `
+}
+
+function patch2() {
+  return `
+Handlers.prepend("sec-patch-7-18-2024", function (msg)
+  return ao.isAssignment(msg) and not ao.isAssignable(msg)
+end, function (msg) 
+  Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+  print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+end)
+
   `
 }
 
