@@ -155,7 +155,7 @@ export async function live(id, watch) {
 
         const results = await connect(getInfo()).results(params)
 
-        const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
+        let edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {
             return true
           }
@@ -164,6 +164,10 @@ export async function live(id, watch) {
           }
           return false
         }))
+
+        // Sort the edges by ordinate value to ensure they are printed in the correct order.
+        // TODO: Handle sorting with Cron jobs, considering nonces and timestamps. Review cursor usage for compatibility with future CU implementations.
+        edges = edges.sort((a, b) => JSON.parse(atob(a.cursor)).ordinate - JSON.parse(atob(b.cursor)).ordinate);
 
         // --- peek on previous line and if delete line if last prompt.
         // --- key event can detect 
