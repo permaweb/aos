@@ -122,8 +122,12 @@ function Send(msg)
   if not msg.Target then
     print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
   end
-  _ao.send(msg)
-  return "Message added to outbox."
+  local result = _ao.send(msg)
+  return {
+    output = "Message added to outbox",
+    receive = result.receive,
+    onReply = result.onReply
+  }
 end
 
 function Spawn(...)
@@ -140,9 +144,12 @@ function Spawn(...)
   if not spawnMsg then
     spawnMsg = {}
   end
-  _ao.spawn(module, spawnMsg)
-  return "Spawn process request added to outbox."
-  
+  local result = _ao.spawn(module, spawnMsg)
+  return {
+    output = "Spawn process request added to outbox",
+    after = result.after,
+    receive = result.receive
+  }  
 end
 
 function Receive(match)
