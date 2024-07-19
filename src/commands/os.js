@@ -70,7 +70,7 @@ _G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")}()
 
 function patch2() {
   return `
-Handlers.prepend("sec-patch-7-18-2024", function (msg)
+Handlers.prepend("Assignment-Check", function (msg)
   return ao.isAssignment(msg) and not ao.isAssignable(msg)
 end, function (msg) 
   Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
