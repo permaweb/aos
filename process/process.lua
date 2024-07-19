@@ -3,6 +3,7 @@ local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
 local crypto = require('.crypto.init')
+local coroutine = require('coroutine')
 
 Colors = {
   red = "\27[31m",
@@ -18,8 +19,13 @@ Dump = require('.dump')
 Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
+local assignment = require('.assignment')
 local _ao = require('ao')
-local process = { _version = "0.2.0" }
+
+-- Implement assignable polyfills on _ao
+assignment.init(_ao)
+
+local process = { _version = "0.2.2" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -97,34 +103,60 @@ function print(a)
     a = stringify.format(a)
   end
   
-  pcall(function () 
-    local data = a
-    if _ao.outbox.Output.data then
-      data =  _ao.outbox.Output.data .. "\n" .. a
-    end
-    _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
-  end)
+  local data = a
+  if _ao.outbox.Output.data then
+    data =  _ao.outbox.Output.data .. "\n" .. a
+  end
+  _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
+
+  -- Only supported for newer version of AOS
+  if HANDLER_PRINT_LOGS then 
+    table.insert(HANDLER_PRINT_LOGS, a)
+    return nil
+  end
 
   return tostring(a)
 end
 
 function Send(msg)
+  if not msg.Target then
+    print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
+  end
   _ao.send(msg)
-  return 'message added to outbox'
+  return "Message added to outbox."
 end
 
-function Spawn(module, msg)
-  if not msg then
-    msg = {}
+function Spawn(...)
+  local module, spawnMsg
+
+  if select("#", ...) == 1 then
+    spawnMsg = select(1, ...)
+    module = _ao._module
+  else
+    module = select(1, ...)
+    spawnMsg = select(2, ...)
   end
 
-  _ao.spawn(module, msg)
-  return 'spawn process request'
+  if not spawnMsg then
+    spawnMsg = {}
+  end
+  _ao.spawn(module, spawnMsg)
+  return "Spawn process request added to outbox."
+  
+end
+
+function Receive(match)
+  return Handlers.receive(match)
 end
 
 function Assign(assignment)
+  if not _ao.assign then
+    print("Assign is not implemented.")
+    return "Assign is not implemented."
+  end
   _ao.assign(assignment)
-  return 'assignment added to outbox'
+  print("Assignment added to outbox.")
+  return 'Assignment added to outbox.'
 end
 
 Seeded = Seeded or false
@@ -190,6 +222,7 @@ end
 function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
+  HANDLER_PRINT_LOGS = {}
   
   -- set os.time to return msg.Timestamp
   os.time = function () return msg.Timestamp end
@@ -216,8 +249,13 @@ function process.handle(msg, ao)
     return ao.result({ }) 
   end
 
+  if ao.isAssignment(msg) and not ao.isAssignable(msg) then
+    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+    return ao.result({ })
+  end
 
-  Handlers.add("_eval", 
+  Handlers.add("_eval",
     function (msg)
       return msg.Action == "Eval" and Owner == msg.From
     end,
@@ -225,40 +263,86 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
+  msg.reply =
+    function(replyMsg)
+      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
+      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      replyMsg["X-Origin"] = msg["X-Origin"] or nil
+
+      return ao.send(replyMsg)
+    end
   
-  local status, result = pcall(Handlers.evaluate, msg, ao.env)
-  
+  msg.forward =
+    function(target, forwardMsg)
+      -- Clone the message and add forwardMsg tags
+      local newMsg =  ao.sanitize(msg)
+      forwardMsg = forwardMsg or {}
+
+      for k,v in pairs(forwardMsg) do
+        newMsg[k] = v
+      end
+
+      -- Set forward-specific tags
+      newMsg.Target = target
+      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
+      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
+
+      ao.send(newMsg)
+    end
+
+  local co = coroutine.create(
+    function()
+      return pcall(Handlers.evaluate, msg, ao.env)
+    end
+  )
+  local _, status, result = coroutine.resume(co)
+
+  -- Make sure we have a reference to the coroutine if it will wake up.
+  -- Simultaneously, prune any dead coroutines so that they can be
+  -- freed by the garbage collector.
+  table.insert(Handlers.coroutines, co)
+  for i, x in ipairs(Handlers.coroutines) do
+    if coroutine.status(x) == "dead" then
+      table.remove(Handlers.coroutines, i)
+    end
+  end
 
   if not status then
     if (msg.Action == "Eval") then
       table.insert(Errors, result)
       return { Error = result }
     end 
-      --table.insert(Errors, result)
-      --ao.outbox.Output.data = ""
-      if msg.Action then
-        print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
-      else
-        print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
-      end
-      print(Colors.green .. result .. Colors.reset)
-      print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
-      return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
-      -- if error in handler accept the msg and set Errors
-      
-      -- return {
-      --   Output = { 
-      --     data = { 
-      --       prompt = Prompt(), 
-      --       json = 'undefined', 
-      --       output = result 
-      --     }
-      --   }, 
-      --   Messages = {}, 
-      --   Spawns = {}
-      -- }
+    --table.insert(Errors, result)
+    --ao.outbox.Output.data = ""
+    if msg.Action then
+      print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
+    else
+      print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
+    end
+    print(Colors.green .. result .. Colors.reset)
+    print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
+    return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
-  return ao.result({ })
+
+  
+
+  collectgarbage('collect')
+  if msg.Action == "Eval" then
+    local response = ao.result({ 
+      Output = {
+        data = table.concat(HANDLER_PRINT_LOGS, "\n"),
+        prompt = Prompt(),
+        test = Dump(HANDLER_PRINT_LOGS)
+      }
+    })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  else
+    local response = ao.result({ Output = { data = table.concat(HANDLER_PRINT_LOGS, "\n"), prompt = Prompt(), print = true } })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  end
 end
 
 return process

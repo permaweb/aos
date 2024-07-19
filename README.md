@@ -5,8 +5,8 @@
 </picture>
 
 Status: Preview
-Version: 1.11.3  
-Module: `Pq2Zftrqut0hdisH_MC2pDOT6S4eQFoxGsFUzR6r350`
+Version: 1.12.0  
+Module: `cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo`
 
 ## Requirements
 
@@ -87,3 +87,75 @@ of the testnet period. After the testnet phase is over, the code will be made
 available under either a new
 [evolutionary forking](https://arweave.medium.com/arweave-is-an-evolutionary-protocol-e072f5e69eaa)
 license, or a traditional OSS license (GPLv3/v2, MIT, etc).
+
+## Advanced AOS Development Guide
+
+### Requirements
+
+* Docker
+* Nodejs
+
+### Setup
+
+```
+curl -L https://install_ao.g8way.io | bash
+```
+
+> Follow install instructions
+
+change console directory to process
+
+```
+cd process
+```
+
+### Build WASM Module
+
+```
+ao build
+```
+
+### Develop using os loader
+
+Making changes and debugging can be a challege with aos modules.
+
+```
+node ../src/index.js
+aos> .update
+```
+
+Will load the current changes into a process. This workflow will allow you to make changes and update the os verify changes. Rinse Repeat.
+
+
+### Run AOS Tests
+
+```
+yarn
+yarn test
+```
+
+### Deploy WASM Module
+
+> NOTE: you will need a keyfile with turbo credits from ardrive.io
+> Add keyfile to $HOME/.wallet.json file
+
+```
+yarn deploy
+```
+
+### Copy the new module id
+
+Create a new aos with module id
+
+```
+$MODULE={moduleId}
+aos new1 --module=$MODULE
+```
+
+### Deploy a new version of AOS Console
+
+in the project directory
+Update package.json with new Module ID and new Version. Use semantic versioning.
+Update README.md with new Module ID and new Version
+
+

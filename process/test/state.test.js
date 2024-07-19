@@ -19,6 +19,7 @@ test('check state properties for aos', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     From: 'FOOBAR',
     ['Block-Height']: "1000",
@@ -30,7 +31,8 @@ test('check state properties for aos', async () => {
     Data: 'print("name: " .. Name .. ", owner: " .. Owner)'
   }
   const result = await handle(null, msg, env)
-  assert.equal(result.Output?.data.output, 'name: Thomas, owner: FOOBAR')
+
+  assert.equal(result.Output?.data, 'name: Thomas, owner: FOOBAR')
   assert.ok(true)
 })
 
@@ -59,6 +61,5 @@ test('test authorities', async () => {
     Data: '1 + 1'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
-  assert.equal(result.Output.data, 'Message is not trusted! From: BAM - Owner: BEEP')
+  assert.ok(result.Output.data.includes('Message is not trusted! From: BAM - Owner: BEEP'))
 })

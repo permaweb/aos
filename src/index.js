@@ -35,6 +35,7 @@ import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
+import * as os from './commands/os.js'
 
 const argv = minimist(process.argv.slice(2))
 let luaData = ""
@@ -132,8 +133,8 @@ if (!argv['watch']) {
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
 
-        if (result.Output?.data?.output) {
-          console.log(result.Output?.data?.output)
+        if (result.Output?.data) {
+          console.log(result.Output?.data)
         }
         process.exit(0)
       }
@@ -330,7 +331,7 @@ if (!argv['watch']) {
         }
 
         if (line === '.update') {
-          line = patch()
+          line = os.update()
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
@@ -344,8 +345,8 @@ if (!argv['watch']) {
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-
         // log output
+        // console.log(output)
         spinner.stop()
 
         if (result?.Error || result?.error) {
@@ -364,9 +365,14 @@ if (!argv['watch']) {
         } else {
 
           if (output?.data) {
-            console.log(output.data?.output)
-
-            globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
+            // handle backwards compatibility for AOS
+            if (output.data.output) {
+              console.log(output.data.output)
+              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
+            } else {
+              console.log(output.data)
+              globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
+            }
             rl.setPrompt(globalThis.prompt)
           } else {
             if (!output) {
@@ -421,22 +427,29 @@ async function connect(jwk, id) {
   spinner.suffixText = chalk.gray("[Connecting to process...]")
 
   // need to check if a process is registered or create a process
-  let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
+  let promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
+  let _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (var i = 0; i < 50; i++) {
-    if (promptResult?.Output?.data?.prompt === undefined) {
+    if (_prompt === undefined) {
       spinner.suffixText = chalk.red("[Connecting to process....]")
       await new Promise(resolve => setTimeout(resolve, 500 * i))
-      promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
+      promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
+      console.log({ promptResult })
+      _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break;
     }
   }
   spinner.stop();
-  if (promptResult?.Output?.data?.prompt === undefined) {
+  if (_prompt === undefined) {
     console.log('Could not connect to process! Exiting...')
     process.exit(1);
   }
-  return promptResult?.Output?.data?.prompt
+
+  if (promptResult.Output.data?.output !== "0.2.2" && promptResult.Output.data !== "0.2.2") {
+    console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+  }
+  return _prompt
 }
 
 async function handleLoadArgs(jwk, id) {

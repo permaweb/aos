@@ -11,6 +11,7 @@ test('magictable to wrap send to convert data to json', async () => {
   const env = {
     Process: {
       Id: 'AOS',
+
       Owner: 'FOOBAR',
       Tags: [
         { name: 'Name', value: 'Thomas' }
@@ -19,6 +20,7 @@ test('magictable to wrap send to convert data to json', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -26,7 +28,7 @@ test('magictable to wrap send to convert data to json', async () => {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: 'Send({ Target = "TEST", Data = { foo = "bar" }})'
+    Data: 'Send({ Target = "AOS", Data = { foo = "bar" }})'
   }
   const result = await handle(null, msg, env)
   assert.equal(result.Messages[0].Data, '{"foo":"bar"}')
@@ -37,7 +39,7 @@ test('magictable to wrap send to convert data to json', async () => {
     Object.assign({}, msg, { Tags: [{ name: 'Action', value: 'Eval' }], Data: 'Inbox[1].Data.foo' }),
     env
   )
-  assert.equal(inboxResult.Output.data.output, 'bar')
+  assert.equal(inboxResult.Output.data, 'bar')
 })
 
 test('magictable to wrap swap to convert data to json', async () => {
@@ -53,6 +55,7 @@ test('magictable to wrap swap to convert data to json', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",

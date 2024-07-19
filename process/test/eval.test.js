@@ -18,6 +18,7 @@ test('run evaluate action unsuccessfully', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -28,8 +29,8 @@ test('run evaluate action unsuccessfully', async () => {
     Data: '100 < undefined'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
-  assert.equal(result.Error, '[string ".handlers"]:335: [string "aos"]:1: attempt to compare number with nil')
+
+  assert.ok(result.Error.includes("attempt to compare number with nil"))
   assert.ok(true)
 })
 
@@ -46,6 +47,7 @@ test('run evaluate action successfully', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -56,7 +58,7 @@ test('run evaluate action successfully', async () => {
     Data: '1 + 1'
   }
   const result = await handle(null, msg, env)
-  assert.equal(result.Output?.data.output, 2)
+  assert.equal(result.Output?.data, '2')
   assert.ok(true)
 })
 
@@ -73,6 +75,7 @@ test('print hello world', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -80,10 +83,11 @@ test('print hello world', async () => {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: 'print("Hello World")'
+    Data: `print("Hello World")`
+
   }
   const result = await handle(null, msg, env)
-  assert.equal(result.Output?.data.output, "Hello World")
+  assert.equal(result.Output?.data, "Hello World")
   assert.ok(true)
 })
 
@@ -93,6 +97,7 @@ test('create an Assignment', async () => {
   const env = {
     Process: {
       Id: 'AOS',
+
       Owner: 'FOOBAR',
       Tags: [
         { name: 'Name', value: 'Thomas' }
@@ -101,6 +106,7 @@ test('create an Assignment', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -111,7 +117,7 @@ test('create an Assignment', async () => {
     Data: 'Assign({ Processes = { "pid-1", "pid-2" }, Message = "mid-1" })'
   }
   const result = await handle(null, msg, env)
-  console.log(result)
+
   assert.deepStrictEqual(result.Assignments, [
     { Processes: ['pid-1', 'pid-2'], Message: 'mid-1' }
   ])
