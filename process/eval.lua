@@ -20,11 +20,13 @@ return function (ao)
       ao.outbox.Error = e
       return 
     end
+    --table.insert(HANDLER_PRINT_LOGS, type(output) == "table" and stringify.format(output) or output)
+    table.insert(HANDLER_PRINT_LOGS, output)
     -- set result in outbox.Output 
-    ao.outbox.Output = { data = { 
-      json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",
-      output = type(output) == "table" and stringify.format(output) or output, 
-      prompt = Prompt() 
-    }}
+    -- ao.outbox.Output = {  
+    --   json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",
+    --   data = type(output) == "table" and stringify.format(output) or output, 
+    --   prompt = Prompt() 
+    -- }
   end 
 end

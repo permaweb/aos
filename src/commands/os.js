@@ -24,9 +24,9 @@ export function dry() {
 }
 
 export function update() {
-  //let luaFiles = fs.readdirSync(__dirname + "../../process")
-  //  .filter(n => /\.lua$/.test(n))
-  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
+  // let luaFiles = fs.readdirSync(__dirname + "../../process")
+  //   .filter(n => /\.lua$/.test(n))
+  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'eval.lua', 'process.lua']
     .map(name => {
       const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")

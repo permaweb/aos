@@ -21,6 +21,7 @@ Handlers = require('.handlers')
 local stringify = require(".stringify")
 local assignment = require('.assignment')
 local _ao = require('ao')
+HANDLER_PRINT_LOGS = {}
 
 -- Implement assignable polyfills on _ao
 assignment.init(_ao)
@@ -103,13 +104,14 @@ function print(a)
     a = stringify.format(a)
   end
   
-  pcall(function ()
-    local data = a
-    if _ao.outbox.Output.data then
-      data =  _ao.outbox.Output.data .. "\n" .. a
-    end
-    _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
-  end)
+  --pcall(function ()
+  table.insert(HANDLER_PRINT_LOGS, a)
+  -- local data = a
+  -- if _ao.outbox.Output.data then
+  --   data =  _ao.outbox.Output.data .. "\n" .. a
+  -- end
+  -- _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
+  --end)
 
   return tostring(a)
 end
@@ -233,7 +235,7 @@ function process.handle(msg, ao)
   Errors = Errors or {}
   -- clear Outbox
   ao.clearOutbox()
-  
+
   -- Only trust messages from a signed owner or an Authority
   if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
     Send({Target = msg.From, Data = "Message is not trusted by this process!"})
@@ -316,8 +318,24 @@ function process.handle(msg, ao)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
     return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
+
+  
+
   collectgarbage('collect')
-  return ao.result({ })
+  if msg.Action == "Eval" then
+    local response = ao.result({ 
+      Output = {
+        data = table.concat(HANDLER_PRINT_LOGS, "\n"),
+        prompt = Prompt()
+      }
+    })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  else
+    local response = ao.result({ Output = { data = table.concat(HANDLER_PRINT_LOGS, "\n"), prompt = Prompt(), print = true } })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  end
 end
 
 return process

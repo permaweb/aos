@@ -345,7 +345,6 @@ if (!argv['watch']) {
         const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-
         // log output
         spinner.stop()
 
@@ -365,9 +364,9 @@ if (!argv['watch']) {
         } else {
 
           if (output?.data) {
-            console.log(output.data?.output)
+            console.log(output.data)
 
-            globalThis.prompt = output.data?.prompt ? output.data?.prompt : globalThis.prompt
+            globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             rl.setPrompt(globalThis.prompt)
           } else {
             if (!output) {
@@ -424,7 +423,7 @@ async function connect(jwk, id) {
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
   for (var i = 0; i < 50; i++) {
-    if (promptResult?.Output?.data?.prompt === undefined) {
+    if (promptResult?.Output?.prompt === undefined) {
       spinner.suffixText = chalk.red("[Connecting to process....]")
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
@@ -433,11 +432,11 @@ async function connect(jwk, id) {
     }
   }
   spinner.stop();
-  if (promptResult?.Output?.data?.prompt === undefined) {
+  if (promptResult?.Output?.prompt === undefined) {
     console.log('Could not connect to process! Exiting...')
     process.exit(1);
   }
-  return promptResult?.Output?.data?.prompt
+  return promptResult?.Output?.prompt
 }
 
 async function handleLoadArgs(jwk, id) {
