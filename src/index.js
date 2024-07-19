@@ -365,12 +365,14 @@ if (!argv['watch']) {
         } else {
 
           if (output?.data) {
+            // handle backwards compatibility for AOS
             if (output.data.output) {
               console.log(output.data.output)
+              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
             } else {
               console.log(output.data)
+              globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             }
-            globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             rl.setPrompt(globalThis.prompt)
           } else {
             if (!output) {
@@ -442,6 +444,10 @@ async function connect(jwk, id) {
   if (_prompt === undefined) {
     console.log('Could not connect to process! Exiting...')
     process.exit(1);
+  }
+
+  if (promptResult.Output.data?.output !== "0.2.2" && promptResult.Output.data !== "0.2.2") {
+    console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
   }
   return _prompt
 }
