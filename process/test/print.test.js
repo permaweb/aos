@@ -19,6 +19,7 @@ test('multi print feature', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -26,10 +27,13 @@ test('multi print feature', async () => {
     Tags: [
       { name: 'Action', value: 'Eval' }
     ],
-    Data: 'print("one") .. print("two")'
+    Data: `
+print("one") 
+print("two")
+`
   }
   const result = await handle(null, msg, env)
-  assert.equal(result.Output?.data.output, 'onetwo')
+  assert.equal(result.Output?.data, 'one\ntwo')
   assert.ok(true)
 })
 
@@ -46,6 +50,7 @@ test('multi print feature via handler', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -77,6 +82,7 @@ test('Typos for functions should generate errors', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -92,7 +98,7 @@ test('Typos for functions should generate errors', async () => {
   msg2.Tags = [{ name: 'Action', value: 'Eval' }]
   msg2.Data = "Errors"
   const result = await handle(Memory, msg2, env)
-  assert.ok(result.Output.data.output.includes("attempt to index a nil value (global \'Handers\')"))
+  assert.ok(result.Output.data.includes("attempt to index a nil value (global \'Handers\')"))
 })
 
 test('Print Errors in Handlers', async () => {
@@ -108,6 +114,7 @@ test('Print Errors in Handlers', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",

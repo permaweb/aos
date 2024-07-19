@@ -6,7 +6,7 @@ import fs from 'fs'
 const wasm = fs.readFileSync('./process.wasm')
 const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
 
-test.skip('handlers receive', async () => {
+test('handlers receive', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
@@ -19,6 +19,7 @@ test.skip('handlers receive', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -41,6 +42,7 @@ return require('json').encode(res)
   // ---
   const m = {
     Target: 'AOS',
+    From: 'FRED',
     Owner: 'FRED',
     Tags: [{
       name: 'X-Reference', value: '1'
@@ -52,7 +54,7 @@ return require('json').encode(res)
   assert.ok(true)
 })
 
-test.skip('resolvers', async () => {
+test('resolvers', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
@@ -65,6 +67,7 @@ test.skip('resolvers', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -89,6 +92,7 @@ Handlers.once("onetime",
   // ---
   const ping = {
     Target: 'AOS',
+    From: 'FRED',
     Owner: 'FRED',
     Tags: [
       { name: 'Action', value: 'ping' }
@@ -100,7 +104,7 @@ Handlers.once("onetime",
   assert.equal(result.Output.data, 'pong')
 })
 
-test.skip('handlers once', async () => {
+test('handlers once', async () => {
   const handle = await AoLoader(wasm, options)
   const env = {
     Process: {
@@ -113,6 +117,7 @@ test.skip('handlers once', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -133,6 +138,7 @@ Handlers.once("onetime",
   const { Memory } = await handle(null, msg, env)
   // ---
   const ping = {
+    From: 'FRED',
     Target: 'AOS',
     Owner: 'FRED',
     Tags: [],
@@ -160,6 +166,7 @@ test('ping pong', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -181,6 +188,7 @@ Handlers.add("ping",
   // ---
   const ping = {
     Target: 'AOS',
+    From: 'FRED',
     Owner: 'FRED',
     Tags: [],
     Data: 'ping'
@@ -203,6 +211,7 @@ test('handler pipeline', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -245,11 +254,12 @@ Handlers.add("three",
   // ---
   const ping = {
     Target: 'AOS',
+    From: 'FRED',
     Owner: 'FRED',
     Tags: [],
     Data: 'ping'
   }
   const result = await handle(Memory, ping, env)
-  assert.equal(result.Output.data, 'one\ntwo\n\x1B[90mNew Message From \x1B[32munknown\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m')
+  assert.equal(result.Output.data, 'one\ntwo\n\x1B[90mNew Message From \x1B[32mFRE...RED\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m')
   assert.ok(true)
 })

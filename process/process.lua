@@ -3,6 +3,7 @@ local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
 local crypto = require('.crypto.init')
+local coroutine = require('coroutine')
 
 Colors = {
   red = "\27[31m",
@@ -24,7 +25,7 @@ local _ao = require('ao')
 -- Implement assignable polyfills on _ao
 assignment.init(_ao)
 
-local process = { _version = "0.2.1" }
+local process = { _version = "0.2.2" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -102,13 +103,17 @@ function print(a)
     a = stringify.format(a)
   end
   
-  pcall(function ()
-    local data = a
-    if _ao.outbox.Output.data then
-      data =  _ao.outbox.Output.data .. "\n" .. a
-    end
-    _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
-  end)
+  local data = a
+  if _ao.outbox.Output.data then
+    data =  _ao.outbox.Output.data .. "\n" .. a
+  end
+  _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
+
+  -- Only supported for newer version of AOS
+  if HANDLER_PRINT_LOGS then 
+    table.insert(HANDLER_PRINT_LOGS, a)
+    return nil
+  end
 
   return tostring(a)
 end
@@ -138,6 +143,10 @@ function Spawn(...)
   _ao.spawn(module, spawnMsg)
   return "Spawn process request added to outbox."
   
+end
+
+function Receive(match)
+  return Handlers.receive(match)
 end
 
 function Assign(assignment)
@@ -213,6 +222,7 @@ end
 function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
+  HANDLER_PRINT_LOGS = {}
   
   -- tagify msg
   msg.TagArray = msg.Tags
@@ -250,7 +260,50 @@ function process.handle(msg, ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
   -- call evaluate from handlers passing env
-  local status, result = pcall(Handlers.evaluate, msg, ao.env)
+  msg.reply =
+    function(replyMsg)
+      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
+      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      replyMsg["X-Origin"] = msg["X-Origin"] or nil
+
+      return ao.send(replyMsg)
+    end
+  
+  msg.forward =
+    function(target, forwardMsg)
+      -- Clone the message and add forwardMsg tags
+      local newMsg =  ao.sanitize(msg)
+      forwardMsg = forwardMsg or {}
+
+      for k,v in pairs(forwardMsg) do
+        newMsg[k] = v
+      end
+
+      -- Set forward-specific tags
+      newMsg.Target = target
+      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
+      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
+
+      ao.send(newMsg)
+    end
+
+  local co = coroutine.create(
+    function()
+      return pcall(Handlers.evaluate, msg, ao.env)
+    end
+  )
+  local _, status, result = coroutine.resume(co)
+
+  -- Make sure we have a reference to the coroutine if it will wake up.
+  -- Simultaneously, prune any dead coroutines so that they can be
+  -- freed by the garbage collector.
+  table.insert(Handlers.coroutines, co)
+  for i, x in ipairs(Handlers.coroutines) do
+    if coroutine.status(x) == "dead" then
+      table.remove(Handlers.coroutines, i)
+    end
+  end
 
   if not status then
     if (msg.Action == "Eval") then
@@ -268,7 +321,25 @@ function process.handle(msg, ao)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
     return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
-  return ao.result({ })
+
+  
+
+  collectgarbage('collect')
+  if msg.Action == "Eval" then
+    local response = ao.result({ 
+      Output = {
+        data = table.concat(HANDLER_PRINT_LOGS, "\n"),
+        prompt = Prompt(),
+        test = Dump(HANDLER_PRINT_LOGS)
+      }
+    })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  else
+    local response = ao.result({ Output = { data = table.concat(HANDLER_PRINT_LOGS, "\n"), prompt = Prompt(), print = true } })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  end
 end
 
 return process

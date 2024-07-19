@@ -24,15 +24,16 @@ export function dry() {
 }
 
 export function update() {
-  //let luaFiles = fs.readdirSync(__dirname + "../../process")
-  //  .filter(n => /\.lua$/.test(n))
-  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'process.lua']
+  // let luaFiles = fs.readdirSync(__dirname + "../../process")
+  //   .filter(n => /\.lua$/.test(n))
+  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'eval.lua', 'process.lua']
     .map(name => {
       const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
       return template(mod, code)
     })
     .concat(patch())
+    .concat(patch2())
     .concat("print([[\nUpdated AOS to version ]] .. require('.process')._version)")
     .join('\n\n')
 
@@ -64,6 +65,18 @@ local function load_${mod.replace("-", "_")}()
 end
 _G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")}()
 -- print("loaded ${mod}")
+  `
+}
+
+function patch2() {
+  return `
+Handlers.prepend("Assignment-Check", function (msg)
+  return ao.isAssignment(msg) and not ao.isAssignable(msg)
+end, function (msg) 
+  Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+  print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
+end)
+
   `
 }
 

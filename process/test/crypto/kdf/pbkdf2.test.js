@@ -35,6 +35,7 @@ test('run pbkdf2 successfully', async () => {
 	`;
 	const msg = {
 		Target: 'AOS',
+		From: 'FOOBAR',
 		Owner: 'FOOBAR',
 		['Block-Height']: '1000',
 		Id: '1234xyxfoo',
@@ -44,6 +45,6 @@ test('run pbkdf2 successfully', async () => {
 	};
 
 	const result = await handle(null, msg, env);
-	assert.equal(result.Output?.data.output, results);
+	assert.equal(result.Output?.data, results);
 	assert.ok(true);
 });

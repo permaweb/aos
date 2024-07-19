@@ -39,7 +39,7 @@ test('magictable to wrap send to convert data to json', async () => {
     Object.assign({}, msg, { Tags: [{ name: 'Action', value: 'Eval' }], Data: 'Inbox[1].Data.foo' }),
     env
   )
-  assert.equal(inboxResult.Output.data.output, 'bar')
+  assert.equal(inboxResult.Output.data, 'bar')
 })
 
 test('magictable to wrap swap to convert data to json', async () => {
