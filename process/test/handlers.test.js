@@ -300,6 +300,7 @@ Handlers.add("timestamp",
   const currentTimestamp = Date.now();
   const timestamp = {
     Target: 'AOS',
+    From: 'FRED',
     Owner: 'FRED',
     Tags: [],
     Data: 'timestamp',
