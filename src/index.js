@@ -346,6 +346,7 @@ if (!argv['watch']) {
           .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
         // log output
+        // console.log(output)
         spinner.stop()
 
         if (result?.Error || result?.error) {
@@ -364,8 +365,11 @@ if (!argv['watch']) {
         } else {
 
           if (output?.data) {
-            console.log(output.data)
-
+            if (output.data.output) {
+              console.log(output.data.output)
+            } else {
+              console.log(output.data)
+            }
             globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             rl.setPrompt(globalThis.prompt)
           } else {

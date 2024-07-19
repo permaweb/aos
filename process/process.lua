@@ -21,7 +21,6 @@ Handlers = require('.handlers')
 local stringify = require(".stringify")
 local assignment = require('.assignment')
 local _ao = require('ao')
-HANDLER_PRINT_LOGS = {}
 
 -- Implement assignable polyfills on _ao
 assignment.init(_ao)
@@ -104,14 +103,16 @@ function print(a)
     a = stringify.format(a)
   end
   
-  --pcall(function ()
-  table.insert(HANDLER_PRINT_LOGS, a)
-  -- local data = a
-  -- if _ao.outbox.Output.data then
-  --   data =  _ao.outbox.Output.data .. "\n" .. a
-  -- end
-  -- _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
-  --end)
+  -- Only supported for newer version of AOS
+  if HANDLER_PRINT_LOGS then 
+    table.insert(HANDLER_PRINT_LOGS, a)
+  end
+
+  local data = a
+  if _ao.outbox.Output.data then
+    data =  _ao.outbox.Output.data .. "\n" .. a
+  end
+  _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
 
   return tostring(a)
 end
@@ -220,6 +221,7 @@ end
 function process.handle(msg, ao)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
+  HANDLER_PRINT_LOGS = {}
   
   -- tagify msg
   msg.TagArray = msg.Tags
