@@ -35,6 +35,7 @@ test('run md4 hash successfully', async () => {
         `;
 		const msg = {
 			Target: 'AOS',
+			From: 'FOOBAR',
 			Owner: 'FOOBAR',
 			['Block-Height']: '1000',
 			Id: '1234xyxfoo',
@@ -44,7 +45,7 @@ test('run md4 hash successfully', async () => {
 		};
 
 		const result = await handle(null, msg, env);
-		assert.equal(result.Output?.data.output, e[1]);
+		assert.equal(result.Output?.data, e[1]);
 		assert.ok(true);
 	}
 	await testCase(cases[0]);

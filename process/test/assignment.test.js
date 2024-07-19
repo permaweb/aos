@@ -23,6 +23,7 @@ describe('add the assignable MatchSpec', async () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -48,6 +49,7 @@ describe('add the assignable MatchSpec', async () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -74,6 +76,7 @@ describe('add the assignable MatchSpec', async () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -99,6 +102,7 @@ describe('add the assignable MatchSpec', async () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -125,6 +129,7 @@ describe('remove the assignable MatchSpec', () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -155,6 +160,7 @@ describe('remove the assignable MatchSpec', () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -185,6 +191,7 @@ describe('remove the assignable MatchSpec', () => {
 
     const msg = {
       Target: 'AOS',
+      From: 'FOOBAR',
       Owner: 'FOOBAR',
       'Block-Height': '1000',
       Id: '1234xyxfoo',
@@ -338,7 +345,7 @@ describe('run handles on assignment based on assignables configured', () => {
     }
 
     const result = await handle(Memory, msg, env)
-    assert.deepStrictEqual(result.Output.data.output, 4)
+    assert.deepStrictEqual(result.Output.data, '4')
   })
 
   test('assignables do NOT allow specific assignment', async () => {

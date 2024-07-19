@@ -103,16 +103,17 @@ function print(a)
     a = stringify.format(a)
   end
   
-  -- Only supported for newer version of AOS
-  if HANDLER_PRINT_LOGS then 
-    table.insert(HANDLER_PRINT_LOGS, a)
-  end
-
   local data = a
   if _ao.outbox.Output.data then
     data =  _ao.outbox.Output.data .. "\n" .. a
   end
   _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
+
+  -- Only supported for newer version of AOS
+  if HANDLER_PRINT_LOGS then 
+    table.insert(HANDLER_PRINT_LOGS, a)
+    return nil
+  end
 
   return tostring(a)
 end
@@ -328,7 +329,8 @@ function process.handle(msg, ao)
     local response = ao.result({ 
       Output = {
         data = table.concat(HANDLER_PRINT_LOGS, "\n"),
-        prompt = Prompt()
+        prompt = Prompt(),
+        test = Dump(HANDLER_PRINT_LOGS)
       }
     })
     HANDLER_PRINT_LOGS = {} -- clear logs

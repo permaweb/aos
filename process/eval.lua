@@ -22,12 +22,14 @@ return function (ao)
     end
     if HANDLER_PRINT_LOGS then
       table.insert(HANDLER_PRINT_LOGS, type(output) == "table" and stringify.format(output) or output)
+    else 
+      -- set result in outbox.Output (Left for backwards compatibility)
+      ao.outbox.Output = {  
+        json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",
+        data = type(output) == "table" and stringify.format(output) or output, 
+        prompt = Prompt() 
+      }
+
     end
-    -- set result in outbox.Output (Left for backwards compatibility)
-    ao.outbox.Output = {  
-      json = type(output) == "table" and pcall(function () return json.encode(output) end) and output or "undefined",
-      data = type(output) == "table" and stringify.format(output) or output, 
-      prompt = Prompt() 
-    }
   end 
 end

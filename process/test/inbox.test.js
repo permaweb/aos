@@ -19,6 +19,7 @@ test.skip('inbox unbounded', async () => {
   }
   const msg = {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -34,6 +35,7 @@ test.skip('inbox unbounded', async () => {
   }
   const count = await handle(memory, {
     Target: 'AOS',
+    From: 'FOOBAR',
     Owner: 'FOOBAR',
     ['Block-Height']: "1000",
     Id: "1234xyxfoo",
@@ -42,7 +44,7 @@ test.skip('inbox unbounded', async () => {
     Data: '#Inbox'
   }, env)
   //assert.equal(count.Error, 'Error')
-  assert.equal(count.Output?.data?.output, "10000")
+  assert.equal(count.Output?.data, "10000")
   assert.ok(true)
 })
 

@@ -35,6 +35,7 @@ test('run sha2 hash successfully', async () => {
 	`;
 	const msg = {
 		Target: 'AOS',
+		From: 'FOOBAR',
 		Owner: 'FOOBAR',
 		['Block-Height']: '1000',
 		Id: '1234xyxfoo',
@@ -44,6 +45,6 @@ test('run sha2 hash successfully', async () => {
 	};
 
 	const result = await handle(null, msg, env);
-	assert.equal(result.Output?.data.output, results.join(', '));
+	assert.equal(result.Output?.data, results.join(', '));
 	assert.ok(true);
 });
