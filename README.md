@@ -5,8 +5,8 @@
 </picture>
 
 Status: Preview
-Version: 1.12.0  
-Module: `cNlipBptaF9JeFAf4wUmpi43EojNanIBos3EfNrEOWo`
+Version: 1.12.1  
+Module: `ofLpB9yOkZq-d-bSS6DbOpIvK4xRy6g2_hTrf9Pm3XM`
 
 ## Requirements
 
