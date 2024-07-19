@@ -155,7 +155,7 @@ export async function live(id, watch) {
 
         const results = await connect(getInfo()).results(params)
 
-        const edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
+        let edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {
             return true
           }
