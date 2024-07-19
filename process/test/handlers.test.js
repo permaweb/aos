@@ -263,3 +263,49 @@ Handlers.add("three",
   assert.equal(result.Output.data, 'one\ntwo\n\x1B[90mNew Message From \x1B[32mFRE...RED\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m')
   assert.ok(true)
 })
+
+test('timestamp', async () => {
+  const handle = await AoLoader(wasm, options)
+  const env = {
+    Process: {
+      Id: 'AOS',
+      Owner: 'FOOBAR',
+      Tags: [
+        { name: 'Name', value: 'Thomas' }
+      ]
+    }
+  }
+  const msg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: `
+Handlers.add("timestamp", 
+  Handlers.utils.hasMatchingData("timestamp"), 
+  function (Msg) 
+    print(os.time())
+  end
+)
+    `
+  }
+  // load handler
+  const { Memory } = await handle(null, msg, env)
+  // ---
+  const currentTimestamp = Date.now();
+  const timestamp = {
+    Target: 'AOS',
+    Owner: 'FRED',
+    Tags: [],
+    Data: 'timestamp',
+    Timestamp: currentTimestamp
+  }
+  const result = await handle(Memory, timestamp, env)
+  assert.equal(result.Output.data, currentTimestamp)
+  assert.ok(true)
+})

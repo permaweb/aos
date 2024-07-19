@@ -224,6 +224,9 @@ function process.handle(msg, ao)
   initializeState(msg, ao.env)
   HANDLER_PRINT_LOGS = {}
   
+  -- set os.time to return msg.Timestamp
+  os.time = function () return msg.Timestamp end
+
   -- tagify msg
   msg.TagArray = msg.Tags
   msg.Tags = Tab(msg)
