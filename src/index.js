@@ -133,8 +133,8 @@ if (!argv['watch']) {
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
         spinner.stop()
 
-        if (result.Output?.data?.output) {
-          console.log(result.Output?.data?.output)
+        if (result.Output?.data) {
+          console.log(result.Output?.data)
         }
         process.exit(0)
       }
@@ -421,22 +421,25 @@ async function connect(jwk, id) {
   spinner.suffixText = chalk.gray("[Connecting to process...]")
 
   // need to check if a process is registered or create a process
-  let promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
+  let promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
+  let _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (var i = 0; i < 50; i++) {
-    if (promptResult?.Output?.prompt === undefined) {
+    if (_prompt === undefined) {
       spinner.suffixText = chalk.red("[Connecting to process....]")
       await new Promise(resolve => setTimeout(resolve, 500 * i))
-      promptResult = await evaluate("1984", id, jwk, { sendMessage, readResult }, spinner)
+      promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
+      console.log({ promptResult })
+      _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break;
     }
   }
   spinner.stop();
-  if (promptResult?.Output?.prompt === undefined) {
+  if (_prompt === undefined) {
     console.log('Could not connect to process! Exiting...')
     process.exit(1);
   }
-  return promptResult?.Output?.prompt
+  return _prompt
 }
 
 async function handleLoadArgs(jwk, id) {
