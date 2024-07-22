@@ -16,7 +16,7 @@ import { register } from './register.js'
 
 // services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
-import { address } from './services/address.js'
+import { address, isAddress } from './services/address.js'
 import {
   spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive
 } from './services/connect.js'
@@ -113,7 +113,7 @@ if (!argv['watch']) {
       }
       return Resolved(jwk)
     })
-    .chain(jwk => register(jwk, { address, spawnProcess, gql })
+    .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
       .map(id => ({ jwk, id }))
     )
     .toPromise()
