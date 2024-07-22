@@ -78,7 +78,7 @@ export function register(jwk, services) {
       value: String(argv["tag-value"] || "")
     }]
   }
-  if (isAddress(name)) {
+  if (services.isAddress(name)) {
     return of(name)
   }
 
