@@ -43,7 +43,7 @@ function handlers.generateResolver(resolveSpec)
       return resolveSpec(msg)
     else
         for matchSpec, func in pairs(resolveSpec) do
-            if handlers.matchesPattern(msg, matchSpec) then
+            if handlers.matchesSpec(msg, matchSpec) then
                 return func(msg)
             end
         end
@@ -184,54 +184,66 @@ function handlers.remove(name)
   
 end
 
-function handlers.matchesPattern(msg, pattern)
-  if type(pattern) == 'function' then
-    return pattern(msg)
-  -- If the pattern is a table, step through every key/value pair in the pattern and check if the msg matches
-  -- Supported match types:
+function handlers.matchesPattern(pattern, value, msg)
+  -- If the key is not in the message, then it does not match
+  if(not pattern) then
+    return false
+  end
+  -- if the patternMatchSpec is a wildcard, then it always matches
+  if pattern == '_' then
+    return true
+  end
+  -- if the patternMatchSpec is a function, then it is executed on the tag value
+  if type(pattern) == "function" then
+    if pattern(value, msg) then
+      return true
+    else
+      return false
+    end
+  end
+  -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
+  -- and exact string match mode
+  if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
+    if string.match(value, pattern) then
+      return true
+    end
+  else
+    if value == pattern then
+      return true
+    end
+  end
+
+  -- if the pattern is a table, recursively check if any of its sub-patterns match
+  if type(pattern) == 'table' then
+    for _, subPattern in pairs(pattern) do
+      if handlers.matchesPattern(subPattern, value, msg) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+function handlers.matchesSpec(msg, spec)
+  if type(spec) == 'function' then
+    return spec(msg)
+  -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
+  -- Supported pattern types:
   --   - Exact string match
   --   - Lua gmatch string
   --   - '_' (wildcard: Message has tag, but can be any value)
   --   - Function execution on the tag, optionally using the msg as the second argument
+  --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
   end
-  if type(pattern) == 'table' then
-    for key, patternMatchSpec in pairs(pattern) do
-      local matched = false
-      -- If the key is not in the message, then it does not match
-      if(not msg[key]) then
-        return false
-      end
-      -- if the patternMatchSpec is a wildcard, then it always matches
-      if patternMatchSpec == '_' then
-        matched = true
-      end
-      -- if the patternMatchSpec is a function, then it is executed on the tag value
-      if type(patternMatchSpec) == "function" then
-        if patternMatchSpec(msg[key], msg) then
-          matched = true
-        else
-          return false
-        end
-      end
-      -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-      -- and exact string match mode
-      if not matched and string.match(patternMatchSpec, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-        if string.match(msg[key], patternMatchSpec) then
-          matched = true
-        end
-      else
-        if msg[key] == patternMatchSpec then
-          matched = true
-        end
-      end
-      -- if the patternMatchSpec is not matched, then the msg does not match
-      if not matched then
+  if type(spec) == 'table' then
+    for key, pattern in pairs(spec) do
+      if not handlers.matchesPattern(pattern, msg[key], msg) then
         return false
       end
     end
     return true
   end
-  if type(pattern) == 'string' and msg.Action == pattern then
+  if type(spec) == 'string' and msg.Action == spec then
     return true
   end
   return false
@@ -245,7 +257,7 @@ function handlers.evaluate(msg, env)
   
   for _, o in ipairs(handlers.list) do
     if o.name ~= "_default" then
-      local match = handlers.matchesPattern(msg, o.pattern)
+      local match = handlers.matchesSpec(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
         error("Pattern result is not valid, it MUST be string, number, or boolean")
       end
