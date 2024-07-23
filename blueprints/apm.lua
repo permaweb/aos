@@ -10,10 +10,10 @@
 ---------------------------------------------------------------------------
 -- APM Registry source code: https://github.com/ankushKun/ao-package-manager
 -- Web UI for browsing & publishing packages: https://apm.betteridea.dev
--- Built with ❤️ by BetterIDEa
+-- Built with ❤️ by BetterIDEa Team
 
 local apm_id = "UdPDhw5S7pByV3pVqwyr1qzJ8mR8ktzi9olgsdsyZz4"
-local version = "1.0.2"
+local version = "1.1.0"
 
 json = require("json")
 base64 = require(".base64")
@@ -51,19 +51,19 @@ function split_package_name(query)
 
     -- check if vendor is provided
     vendor, pkgname = query:match("@(%w+)/([%w%-%_]+)")
-
     if not vendor then
         vendor = "@apm"
         pkgname = query
     else
         vendor = "@" .. vendor
     end
-
     return vendor, pkgname, version
 end
 
 function hexdecode(hex)
-    return (hex:gsub("%x%x", function(digits) return string.char(tonumber(digits, 16)) end))
+    return (hex:gsub("%x%x", function(digits)
+        return string.char(tonumber(digits, 16))
+    end))
 end
 
 -- function to generate package data
@@ -97,8 +97,6 @@ function generate_package_data(name, Vendor, version, readme, description, main,
             end
         end
     end
-
-
     return {
         Name = name or "",
         Version = version or "1.0.0",
@@ -111,7 +109,9 @@ function generate_package_data(name, Vendor, version, readme, description, main,
             RepositoryUrl = repo_url or "",
             Items = items or {
                 {
-                    meta = { name = "main.lua" },
+                    meta = {
+                        name = "main.lua"
+                    },
                     data = [[
                         local M = {}
                         function M.hello()
@@ -142,7 +142,6 @@ function PublishAssignDownloadResponseHandler(msg)
         name = vendor .. "/" .. name
     end
     local main = PkgData.Main
-
     local main_src
     for _, item in ipairs(items) do
         -- item.data = base64.decode(item.data)
@@ -150,36 +149,50 @@ function PublishAssignDownloadResponseHandler(msg)
             main_src = item.data
         end
     end
-
     assert(main_src, "❌ Unable to find " .. main .. " file to load")
     main_src = string.gsub(main_src, '^%s*(.-)%s*$', '%1') -- remove leading/trailing space
-
     print("ℹ️ Attempting to load " .. name .. "@" .. version .. " package")
-
     local func, err = load(string.format([[
         local function _load()
             %s
         end
         _G.package.loaded["%s"] = _load()
     ]], main_src, name))
-
     if not func then
         print(err)
         error("Error compiling load function: ")
     end
-
     func()
     print("📦 Package has been loaded, you can now import it using require function")
     APM.installed[name] = version
 end
 
-Handlers.add(
-    "APM.PublishAssignDownloadResponseHandler",
-    Handlers.utils.hasMatchingTag("Action", "APM.Publish"),
+Handlers.add("APM.PublishAssignDownloadResponseHandler", Handlers.utils.hasMatchingTag("Action", "APM.Publish"),
     function(msg)
         handle_run(PublishAssignDownloadResponseHandler, msg)
-    end
-)
+    end)
+
+function DownloadResponseHandler(msg)
+    local pkgID = msg.Data
+    local sender = msg.From
+    assert(sender == APM.ID, "Invalid package source process")
+    assert(type(pkgID) == "string", "Invalid package ID")
+    local assignable_name = msg.AssignableName
+    print("📦 Downloading package " .. pkgID .. " | " .. assignable_name)
+    ao.addAssignable(assignable_name, {
+        Id = pkgID
+    })
+    Assign({
+        Message = pkgID,
+        Processes = {
+            ao.id
+        }
+    })
+end
+
+Handlers.add("APM.DownloadResponse", Handlers.utils.hasMatchingTag("Action", "APM.DownloadResponse"), function(msg)
+    handle_run(DownloadResponseHandler, msg)
+end)
 
 ----------------------------------------
 
@@ -187,26 +200,19 @@ function RegisterVendorResponseHandler(msg)
     print(msg.Data)
 end
 
-Handlers.add(
-    "APM.RegisterVendorResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.RegisterVendorResponse"),
+Handlers.add("APM.RegisterVendorResponse", Handlers.utils.hasMatchingTag("Action", "APM.RegisterVendorResponse"),
     function(msg)
         handle_run(RegisterVendorResponseHandler, msg)
-    end
-)
+    end)
 ----------------------------------------
 
 function PublishResponseHandler(msg)
     print(msg.Data)
 end
 
-Handlers.add(
-    "APM.PublishResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.PublishResponse"),
-    function(msg)
-        handle_run(PublishResponseHandler, msg)
-    end
-)
+Handlers.add("APM.PublishResponse", Handlers.utils.hasMatchingTag("Action", "APM.PublishResponse"), function(msg)
+    handle_run(PublishResponseHandler, msg)
+end)
 
 ----------------------------------------
 
@@ -214,19 +220,14 @@ function InfoResponseHandler(msg)
     print(msg.Data)
 end
 
-Handlers.add(
-    "APM.InfoResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.InfoResponse"),
-    function(msg)
-        handle_run(InfoResponseHandler, msg)
-    end
-)
+Handlers.add("APM.InfoResponse", Handlers.utils.hasMatchingTag("Action", "APM.InfoResponse"), function(msg)
+    handle_run(InfoResponseHandler, msg)
+end)
 
 ----------------------------------------
 
 function SearchResponseHandler(msg)
     local data = json.decode(msg.Data)
-
     local p = "\n"
     for _, pkg in ipairs(data) do
         p = p .. pkg.Vendor .. "/" .. pkg.Name .. " - " .. pkg.Description .. "\n"
@@ -234,19 +235,14 @@ function SearchResponseHandler(msg)
     print(p)
 end
 
-Handlers.add(
-    "APM.SearchResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.SearchResponse"),
-    function(msg)
-        handle_run(SearchResponseHandler, msg)
-    end
-)
+Handlers.add("APM.SearchResponse", Handlers.utils.hasMatchingTag("Action", "APM.SearchResponse"), function(msg)
+    handle_run(SearchResponseHandler, msg)
+end)
 
 ----------------------------------------
 
 function GetPopularResponseHandler(msg)
     local data = json.decode(msg.Data)
-
     local p = "\n"
     for _, pkg in ipairs(data) do
         -- p = p .. pkg.Vendor .. "/" .. pkg.Name .. " - " .. (pkg.Description or pkg.Owner) .. "  " .. pkg.RepositoryUrl .. "\n"
@@ -259,19 +255,15 @@ function GetPopularResponseHandler(msg)
         if pkg.RepositoryUrl then
             p = p .. pkg.RepositoryUrl .. "\n"
         else
-            p = p .. "No Repo Url" .. "\n"
+            p = p .. "No Repo Url\n"
         end
     end
     print(p)
 end
 
-Handlers.add(
-    "APM.GetPopularResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.GetPopularResponse"),
-    function(msg)
-        handle_run(GetPopularResponseHandler, msg)
-    end
-)
+Handlers.add("APM.GetPopularResponse", Handlers.utils.hasMatchingTag("Action", "APM.GetPopularResponse"), function(msg)
+    handle_run(GetPopularResponseHandler, msg)
+end)
 
 ----------------------------------------
 
@@ -279,13 +271,9 @@ function TransferResponseHandler(msg)
     print(msg.Data)
 end
 
-Handlers.add(
-    "APM.TransferResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.TransferResponse"),
-    function(msg)
-        handle_run(TransferResponseHandler, msg)
-    end
-)
+Handlers.add("APM.TransferResponse", Handlers.utils.hasMatchingTag("Action", "APM.TransferResponse"), function(msg)
+    handle_run(TransferResponseHandler, msg)
+end)
 
 ----------------------------------------
 
@@ -293,13 +281,9 @@ function UpdateNoticeHandler(msg)
     print(msg.Data)
 end
 
-Handlers.add(
-    "APM.UpdateNotice",
-    Handlers.utils.hasMatchingTag("Action", "APM.UpdateNotice"),
-    function(msg)
-        handle_run(UpdateNoticeHandler, msg)
-    end
-)
+Handlers.add("APM.UpdateNotice", Handlers.utils.hasMatchingTag("Action", "APM.UpdateNotice"), function(msg)
+    handle_run(UpdateNoticeHandler, msg)
+end)
 
 ----------------------------------------
 
@@ -308,39 +292,30 @@ function UpdateClientResponseHandler(msg)
     local pkg = json.decode(msg.Data)
     local items = json.decode(hexdecode(pkg.Items))
     local main_src
-
     for _, item in ipairs(items) do
         if item.meta.name == pkg.Main then
             main_src = item.data
         end
     end
-
     assert(main_src, "❌ Unable to find main.lua file to load")
-
     print("ℹ️ Attempting to load client " .. pkg.Version)
-
     local func, err = load(string.format([[
             %s
 
     ]], main_src, pkg.Version))
-
     if not func then
         print(err)
         error("Error compiling load function: ")
     end
-
     print(func())
     APM._version = pkg.Version
     print(Colors.green .. "✨ Client has been updated to " .. pkg.Version .. Colors.reset)
 end
 
-Handlers.add(
-    "APM.UpdateClientResponse",
-    Handlers.utils.hasMatchingTag("Action", "APM.UpdateClientResponse"),
+Handlers.add("APM.UpdateClientResponse", Handlers.utils.hasMatchingTag("Action", "APM.UpdateClientResponse"),
     function(msg)
         handle_run(UpdateClientResponseHandler, msg)
-    end
-)
+    end)
 
 
 ----------------------------------------
@@ -403,21 +378,18 @@ end
 
 function APM.search(query)
     assert(type(query) == "string", "Query must be a string")
-
     Send({
         Target = APM.ID,
         Action = "APM.Search",
         Data = query,
         Version = APM._version
     })
-
     return "📤 Searching for packages"
 end
 
 function APM.transfer(name, recipient)
     assert(type(name) == "string", "Name must be a string")
     assert(type(recipient) == "string", "Recipient must be a string")
-
     Send({
         Target = APM.ID,
         Action = "APM.Transfer",
@@ -436,7 +408,6 @@ function APM.install(name)
     -- pkgname@x.y.z
     -- pkgname
     -- @vendor/pkgname
-
     Send({
         Target = APM.ID,
         Action = "APM.Download",
@@ -448,14 +419,11 @@ end
 
 function APM.uninstall(name)
     assert(type(name) == "string", "Name must be a string")
-
     if not APM.installed[name] then
         return "❌ Package is not installed"
     end
-
     _G.package.loaded[name] = nil
     APM.installed[name] = nil
-
     return "📦 Package has been uninstalled"
 end
 
