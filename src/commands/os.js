@@ -53,7 +53,7 @@ end
     + luaFiles
 
 
-  luaFiles = luaFiles + '\nreturn ao.outbox.Output.data '
+  luaFiles = luaFiles + '\n'
 
   return luaFiles
 }

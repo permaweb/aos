@@ -30,7 +30,8 @@
   },
   "aos": {
     "module": "yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU",
-    "sqlite": "Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8"
+    "sqlite": "Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8",
+    "version": "0.2.2.rc1"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"
