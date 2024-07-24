@@ -42,7 +42,7 @@ local utils = {
     return tostring(bint(a))
   end,
   toNumber = function(a)
-    return tonumber(a)
+    return bint.tonumber(a)
   end
 }
 
