@@ -25,6 +25,7 @@ import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
 import { getErrorOrigin, outputError, parseError } from './services/errors.js'
+import { getPkg } from './services/get-pkg.js'
 
 // commands
 import { load } from './commands/load.js'
@@ -70,6 +71,10 @@ if (argv['help']) {
 if (argv['version']) {
   version()
   process.exit(0)
+}
+
+if (argv['sqlite']) {
+  process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
 if (argv['module'] && argv['module'].length === 43) {
@@ -296,8 +301,31 @@ if (!argv['watch']) {
           editorData = ""
           editorMode = false;
           rl.setPrompt(globalThis.prompt)
+        }
 
+        if (editorMode && line === ".delete") {
+          let lines = editorData.split('\n')
+          lines.pop()
+          lines.pop()
+          editorData = lines.join('\n') + '\n'
+          readline.moveCursor(process.stdout, 0, -1)
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
 
+          readline.moveCursor(process.stdout, 0, -1)
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
+
+          return
+        }
+
+        if (editorMode && line === ".print") {
+          console.log(editorData)
+          editorData = ""
+          editorMode = false
+          rl.setPrompt(globalThis.prompt)
+          rl.prompt(true)
+          return
         }
 
         if (editorMode && line === ".cancel") {

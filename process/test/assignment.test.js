@@ -255,7 +255,6 @@ describe('determine whether the msg is an assignment or not', () => {
     }
 
     const result = await handle(Memory, msg, env)
-
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { id: '1234xyxfoo', isAssignment: true })
   })
 
