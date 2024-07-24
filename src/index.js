@@ -74,6 +74,7 @@ if (argv['version']) {
 }
 
 if (argv['sqlite']) {
+  console.log(argv)
   process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
@@ -473,8 +474,8 @@ async function connect(jwk, id) {
     console.log('Could not connect to process! Exiting...')
     process.exit(1);
   }
-
-  if (promptResult.Output.data?.output !== "0.2.2" && promptResult.Output.data !== "0.2.2") {
+  let aosVersion = getPkg().aos.version
+  if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
     console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
   }
   return _prompt

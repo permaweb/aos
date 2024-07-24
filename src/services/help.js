@@ -44,7 +44,7 @@ ${chalk.green('Options:')}
   ${chalk.green('--gateway-url')}             Set Arweave gateway location.
   ${chalk.green('--cu-url')}                  Set Computer Unit location.
   ${chalk.green('--mu-url')}                  Set Messenger Unit location
-  ${chalk.green('--sqlite')}                  Spawn AOS process using sqlite3 AOS Module
+  ${chalk.green('--sqlite')}                  Spawn AOS process using sqlite3 AOS Module ie [[ aos [name] --sqlite ]]
   ${chalk.green('--version')}                 Show AOS client version number
   ${chalk.green('--help')}                    Shows this help page.
 `)
