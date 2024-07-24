@@ -8,6 +8,9 @@ Status: Preview rc1
 Version: 1.12.1  
 Module: `yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU`
 
+Sqlite-Module: `Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8`
+
+
 ## Requirements
 
 - [NodeJS](https://nodejs.org) version 20+
@@ -68,6 +71,7 @@ aos [name]
 | `--gateway-url [url]`                         | The gateway-url flag allows you to specify a custom Gateway to connect to.                                                                                                                                                         | 0-1      |
 | `--cu-url [url]`                              | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1      |
 | `--mu-url [url]`                                | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
+| `--sqlite` | 0-1 | Use sqlite aos module when spawning new process |
 
 ### Commands
 

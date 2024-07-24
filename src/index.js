@@ -25,6 +25,7 @@ import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
 import { checkForUpdate, installUpdate, version } from './services/version.js'
 import { getErrorOrigin, outputError, parseError } from './services/errors.js'
+import { getPkg } from './services/get-pkg.js'
 
 // commands
 import { load } from './commands/load.js'
@@ -70,6 +71,10 @@ if (argv['help']) {
 if (argv['version']) {
   version()
   process.exit(0)
+}
+
+if (argv['sqlite']) {
+  process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
 if (argv['module'] && argv['module'].length === 43) {

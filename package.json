@@ -29,7 +29,8 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU"
+    "module": "yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU",
+    "sqlite": "Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"
