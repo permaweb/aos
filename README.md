@@ -4,9 +4,9 @@
   <img alt="logo">
 </picture>
 
-Status: Preview
+Status: Preview rc1
 Version: 1.12.1  
-Module: `RBQYxHB6-DYcPqh0neOHbkmk852mycPKZf1aaYBx3PE`
+Module: `yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU`
 
 ## Requirements
 

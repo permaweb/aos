@@ -296,8 +296,31 @@ if (!argv['watch']) {
           editorData = ""
           editorMode = false;
           rl.setPrompt(globalThis.prompt)
+        }
 
+        if (editorMode && line === ".delete") {
+          let lines = editorData.split('\n')
+          lines.pop()
+          lines.pop()
+          editorData = lines.join('\n') + '\n'
+          readline.moveCursor(process.stdout, 0, -1)
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
 
+          readline.moveCursor(process.stdout, 0, -1)
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
+
+          return
+        }
+
+        if (editorMode && line === ".print") {
+          console.log(editorData)
+          editorData = ""
+          editorMode = false
+          rl.setPrompt(globalThis.prompt)
+          rl.prompt(true)
+          return
         }
 
         if (editorMode && line === ".cancel") {

@@ -11,7 +11,7 @@
     "start": "node src/index.js",
     "test": "node --test test",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
-    "deploy": "npx -y ardrive-cli upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId"
+    "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId"
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.48",
@@ -29,7 +29,7 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "RBQYxHB6-DYcPqh0neOHbkmk852mycPKZf1aaYBx3PE"
+    "module": "yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"

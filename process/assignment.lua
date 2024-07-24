@@ -84,7 +84,7 @@ function Assignment.init (ao)
   -- @treturn boolean isAssignable
   ao.isAssignable = ao.isAssignable or function (msg)
     for _, assignable in pairs(ao.assignables) do
-      if utils.matchesPattern(msg, assignable.pattern) then return true end
+      if utils.matchesSpec(msg, assignable.pattern) then return true end
     end
 
     -- If assignables is empty, the the above loop will noop,
