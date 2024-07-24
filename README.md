@@ -162,4 +162,10 @@ in the project directory
 Update package.json with new Module ID and new Version. Use semantic versioning.
 Update README.md with new Module ID and new Version
 
+### Update aos-sqlite with latest
+
+* commit to main branch
+* go to aos-sqlite and build new Module
+* deploy module and update package.json aos sqlite
+
 
