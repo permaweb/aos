@@ -78,7 +78,7 @@ export function register(jwk, services) {
       value: String(argv["tag-value"] || "")
     }]
   }
-  if (name.length === 43) {
+  if (services.isAddress(name)) {
     return of(name)
   }
 

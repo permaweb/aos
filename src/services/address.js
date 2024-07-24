@@ -14,3 +14,7 @@ const arweave = Arweave.init({
 export function address(jwk) {
   return fromPromise(() => arweave.wallets.jwkToAddress(jwk))()
 }
+
+export function isAddress(candidate) {
+  return (/^([a-zA-Z0-9_-]{43})$/).test(candidate)
+}
