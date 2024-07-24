@@ -35,7 +35,7 @@ export function createExecutableFromProject(project) {
   // filter out repeated modules with different import names
   // and construct the executable Lua code
   // (the main file content is handled separately)
-  for (let i = 0; i < project.length - 1; i++) {
+  for (let i = 0; i < project.length - 1; i++) {
     const mod = project[i]
 
     const existing = contents.find((m) => m.path === mod.path)
@@ -92,7 +92,7 @@ export function createProjectStructure(mainFile) {
     // modules that were not read don't exist locally
     // aos assumes that these modules have already been
     // loaded into the process, or they're default modules
-    (mod) => mod.content !== undefined
+    (mod) => mod.content !== undefined
   )
 }
 
