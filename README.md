@@ -5,8 +5,8 @@
 </picture>
 
 Status: Preview rc1
-Version: 1.12.1  
-Module: `yTyqRSfbD6BuiDra9jDNjq8TLe7rhneDcmQ64CkmkdU`
+Version: 2.0.0  
+Module: `BeSoxUfhmb09dYSs3YviIVnCrNQv5aYUnZZBxTyOCKQ`
 
 Sqlite-Module: `Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8`
 

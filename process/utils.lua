@@ -41,8 +41,6 @@ function utils.matchesPattern(pattern, value, msg)
     end
   end
 
-  
-
   return false
 end
 
@@ -59,13 +57,16 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
+      if not msg[key] then
+        return false
+      end
       if not utils.matchesPattern(pattern, msg[key], msg) then
         return false
       end
     end
     return true
   end
-  if type(spec) == 'string' and msg.Action == spec then
+  if type(spec) == 'string' and msg.Action and msg.Action == spec then
     return true
   end
   return false
@@ -123,6 +124,7 @@ utils.concat = utils.curry(function (a, b)
       result[#result + 1] = b[i]
   end
   return result
+  --return table.concat(a,b)
 end, 2)
 
 --- reduce applies a function to a table
