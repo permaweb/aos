@@ -237,12 +237,6 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
     })
-    ao.send({
-      Target = ao.id,
-      Event = "Mint",
-      Quantity = msg.Quantity,
-      TotalSupply = TotalSupply
-    })
     Events.mint(msg.Quantity, msg.From)
   else
     ao.send({
