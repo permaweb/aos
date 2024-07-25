@@ -64,6 +64,42 @@ Ticker = Ticker or 'PNTS'
 Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 
 --[[
+     Define Events
+   ]]
+--
+local emitEvent = function(name, payload)
+  payload.Target = ao.id
+  payload.Event = name
+  ao.send(payload)
+end
+Events = Events or {
+  mint = function(quantity, account)
+    emitEvent('Mint', {
+        Quantity = quantity,
+        Account = account,
+        TotalSupply = TotalSupply
+    })
+  end,
+  burn = function(quantity, account)
+    emitEvent('Burn', {
+        Quantity = quantity,
+        Account = account,
+        TotalSupply = TotalSupply
+    })
+  end,
+  transfer = function(quantity, sender, recipient)
+    emitEvent('Transfer', {
+        Quantity = quantity,
+        Sender = sender,
+        Recipient = recipient,
+        ['Sender-Balance'] = Balances[sender],
+        ['Recipient-Balance'] = Balances[recipient]
+    })
+  end
+}
+
+
+--[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
    ]]
 --
@@ -171,6 +207,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
       -- Send Debit-Notice and Credit-Notice
       ao.send(debitNotice)
       ao.send(creditNotice)
+      Events.transfer(msg.Quantity, msg.From, msg.Recipient)
     end
   else
     ao.send({
@@ -200,6 +237,13 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
       Target = msg.From,
       Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
     })
+    ao.send({
+      Target = ao.id,
+      Event = "Mint",
+      Quantity = msg.Quantity,
+      TotalSupply = TotalSupply
+    })
+    Events.mint(msg.Quantity, msg.From)
   else
     ao.send({
       Target = msg.From,
@@ -239,4 +283,5 @@ Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(m
     Target = msg.From,
     Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
   })
+  Events.burn(msg.Quantity, msg.From)
 end)
