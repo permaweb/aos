@@ -5,10 +5,10 @@
 </picture>
 
 Status: Preview rc1
-Version: 2.0.0  
+Version: 2.0.0-rc1  
 Module: `BeSoxUfhmb09dYSs3YviIVnCrNQv5aYUnZZBxTyOCKQ`
 
-Sqlite-Module: `Jx6FyZ99VbtT34ICVcUKONzYmX5syr2DstyCo8NGJc8`
+Sqlite-Module: `MNzsMY9_IKMr9envSbZDl0xMDy0QclGD5cC_l5R3Iwo`
 
 
 ## Requirements
@@ -164,8 +164,14 @@ Update README.md with new Module ID and new Version
 
 ### Update aos-sqlite with latest
 
-* commit to main branch
-* go to aos-sqlite and build new Module
-* deploy module and update package.json aos sqlite
+```
+cd process
+docker run -v .:/src p3rmaw3b/aos-sqlite:0.0.0 emcc-lua
+yarn 
+yarn test
+yarn deploy-sqlite
+```
+
+copy module id to package.json and readme
 
 
