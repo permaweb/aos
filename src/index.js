@@ -38,7 +38,8 @@ import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
 
-const argv = minimist(process.argv.slice(2))
+const argv = minimist(process.argv.splice(2))
+
 let luaData = ""
 if (!process.stdin.isTTY) {
 
@@ -74,7 +75,6 @@ if (argv['version']) {
 }
 
 if (argv['sqlite']) {
-  console.log(argv)
   process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
