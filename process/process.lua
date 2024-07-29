@@ -332,9 +332,6 @@ function process.handle(msg, ao)
     return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
   end
 
-  
-
-  collectgarbage('collect')
   if msg.Action == "Eval" then
     local response = ao.result({ 
       Output = {
