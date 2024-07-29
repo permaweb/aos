@@ -17,7 +17,6 @@ export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = ({ jwk, address, name, spawnTags }) => {
     const argv = minimist(process.argv.slice(2))
-    
     return services.gql(queryForAOS(name, AOS_MODULE), { owners: [address, argv.address || ""] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(

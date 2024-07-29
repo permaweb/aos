@@ -38,7 +38,7 @@ import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
 
-const argv = minimist(process.argv.splice(2))
+const argv = minimist(process.argv.slice(2))
 
 let luaData = ""
 if (!process.stdin.isTTY) {
@@ -394,12 +394,14 @@ if (!argv['watch']) {
         } else {
 
           if (output?.data) {
-            // handle backwards compatibility for AOS
-            if (output.data.output) {
+            if (output.data.hasOwnProperty('output')) {
               console.log(output.data.output)
-              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
             } else {
               console.log(output.data)
+            }
+            if (output.data.hasOwnProperty('prompt')) {
+              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
+            } else {
               globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             }
             rl.setPrompt(globalThis.prompt)
