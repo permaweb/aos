@@ -7,27 +7,93 @@
 
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
 import * as utils from './hyper-utils.js'
+import prompts from 'prompts'
 import minimist from 'minimist'
 import { getPkg } from './services/get-pkg.js'
 import fs from 'fs'
 import path from 'path'
 
+const promptUser = (results) => {
+  const choices = results.map((res, i) => {
+    const format = res.node.tags.find((t) => t.name === 'Module-Format')?.value ?? 'Unknown Format'
+    const date = new Date(res.node.block.timestamp * 1000)
+    const title = `${i + 1} - ${format} - ${res.node.id} - ${date.toLocaleString()}`
+
+    return {title, value: res.node.id}
+  })
+
+  return prompts({
+    type: 'select',
+    name: 'module',
+    message: 'Please select a module',
+    choices,
+    instructions: false
+  })
+    .then(r => r.module)
+    .catch(() => Promise.reject({ ok: false, error: 'No module selected' }))
+}
+
 export function register(jwk, services) {
-  const AOS_MODULE = process.env.AOS_MODULE || getPkg().aos.module
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
-  const findProcess = ({ jwk, address, name, spawnTags }) => {
+  const findProcess = ({ jwk, address, name, spawnTags, module }) => {
+
     const argv = minimist(process.argv.slice(2))
-    return services.gql(queryForAOS(name, AOS_MODULE), { owners: [address, argv.address || ""] })
+
+    return services
+      .gql(queryForAOS(name, module), { owners: [address, argv.address || ""] })
       .map(utils.path(['data', 'transactions', 'edges']))
       .bichain(
-        _ => Rejected({ ok: false }),
-        results => results.length > 0 ? Resolved(results.reverse()) : Rejected({ ok: true, jwk, address, name, spawnTags })
+        _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }),
+        results => results?.length > 0
+            ? Resolved(results.reverse())
+            /**
+             * No process was found that matches the name, module and owners
+             * But no catastrophic error occured. 
+             * 
+             * By rejecting with 'ok: true' we are signaling that a 
+             * new process should be spawned with the given criteria
+             */
+            : Rejected({ ok: true, jwk, address, name, spawnTags, module })
+        
       )
   }
 
-  const createProcess = ({ ok, jwk, address, name, spawnTags }) => {
+  const selectModule = (results) =>
+    of(results).chain((results) => {
+      if (!results?.length) {
+        return Rejected({ ok: false, error: 'No module found with provided name.' })
+      }
+
+      return of(results)
+        .chain((results) => {
+          if (results.length === 1) {
+            return Resolved(results[0].node.id)
+          }
+
+          return Rejected(results)
+        })
+        .bichain(fromPromise(promptUser), Resolved)
+    })
+  
+
+  const findModule = args => {
+    const AOS_MODULE = process.env.AOS_MODULE;
+    const AOS_MODULE_NAME = process.env.AOS_MODULE_NAME;
+
+    if (!AOS_MODULE && !AOS_MODULE_NAME) return Resolved({ ...args, module: getPkg().aos.module });
+    if (AOS_MODULE) return Resolved({ ...args, module: AOS_MODULE });
+
+    return services
+      .gql(findAoModuleByName(), { name: args.module })
+      .map(utils.path(['data', 'transactions', 'edges']))
+      .chain(selectModule)
+      .map((moduleId) => ({ ...args, ok: true, module: moduleId }))
+  }
+
+  const createProcess = (ctx) => {
+    const { ok, name, spawnTags, module, error } = ctx
     if (!ok) {
-      return Rejected({ error: 'GRAPHQL Error trying to locate process.' })
+      return Rejected({ error: error || 'Unknown error occured' })
     }
     let data = "1984"
     let tags = [
@@ -56,7 +122,7 @@ export function register(jwk, services) {
 
     return services.spawnProcess({
       wallet: jwk,
-      src: AOS_MODULE,
+      src: module,
       tags,
       data
     })
@@ -81,11 +147,12 @@ export function register(jwk, services) {
     return of(name)
   }
 
-  return of({ jwk, name, spawnTags })
+  return of({ jwk, name, spawnTags, module: argv.module })
     .chain(getAddress)
+    .chain(findModule)
     .chain(findProcess)
     .bichain(createProcess, alreadyRegistered)
-
+    
 }
 
 // function queryForTransfered(name) {
@@ -116,7 +183,7 @@ export function register(jwk, services) {
 //   `
 // }
 
-function queryForAOS(name, AOS_MODULE) {
+function queryForAOS(name, module) {
   return `query ($owners: [String!]!) {
     transactions(
       first: 1,
@@ -124,12 +191,40 @@ function queryForAOS(name, AOS_MODULE) {
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
         { name: "Type", values: ["Process"]},
-        { name: "Name", values: ["${name}"]}
+        { name: "Name", values: ["${name}"]},
+        { name: "Module", values: ["${module}"]}
       ]
     ) {
       edges {
         node {
           id
+        }
+      }
+    }
+  }`
+}
+
+function findAoModuleByName() {
+  return `query FindAoModuleByName($name: String!) {
+    transactions(
+      tags: [
+        { name: "Type", values: ["Module"] },
+        { name: "Data-Protocol", values: ["ao"] },
+        { name: "Name", values: [$name] }
+      ],
+      sort: HEIGHT_DESC,
+      first: 100
+    ) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+          block {
+            timestamp
+          }
         }
       }
     }

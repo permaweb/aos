@@ -5,7 +5,6 @@ import minimist from 'minimist'
 import ora from 'ora'
 import chalk from 'chalk'
 import path from 'path'
-import { errors } from './errors.js'
 import * as url from 'url'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
@@ -35,7 +34,6 @@ import { unmonitor } from './commands/unmonitor.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
-import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
 
 const argv = minimist(process.argv.slice(2))
@@ -78,9 +76,22 @@ if (argv['sqlite']) {
   process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
-if (argv['module'] && argv['module'].length === 43) {
-  process.env.AOS_MODULE = argv['module']
-}
+/**
+ * A module can be specified when spawning a process using AOS
+ * that value can be the id of the module, or a colloquial 'name' for the module
+ * 
+ * this code assumes that the provided value is a TXid if the length matches what a TXid should be
+ * otherwise, we set the env variable AOS_MODULE_NAME
+ * 
+ * https://github.com/permaweb/aos/issues/310
+ */
+ if (argv['module']) {
+  if (argv['module'].length === 43) {
+    process.env.AOS_MODULE = argv['module']
+  } else {
+    process.env.AOS_MODULE_NAME = argv['module']
+  }
+} 
 
 let cron = null
 let history = []
