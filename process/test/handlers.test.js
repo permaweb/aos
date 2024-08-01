@@ -308,3 +308,49 @@ Handlers.add("timestamp",
   assert.equal(result.Output.data, currentTimestamp)
   assert.ok(true)
 })
+
+test('test pattern, fn handler', async () => {
+  const handle = await AoLoader(wasm, options)
+  const env = {
+    Process: {
+      Id: 'AOS',
+      Owner: 'FOOBAR',
+      Tags: [
+        { name: 'Name', value: 'Thomas' }
+      ]
+    }
+  }
+  const msg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: `
+Handlers.add("Balance", 
+  function (msg) 
+    msg.reply({Data = "1000"})
+  end
+)
+    `
+  }
+  // load handler
+  const { Memory } = await handle(null, msg, env)
+  // ---
+  const currentTimestamp = Date.now();
+  const balance = {
+    Target: 'AOS',
+    From: 'FRED',
+    Owner: 'FRED',
+    Tags: [{ name: 'Action', value: 'Balance' }],
+    Data: 'timestamp',
+    Timestamp: currentTimestamp
+  }
+  const result = await handle(Memory, balance, env)
+  assert.equal(result.Messages[0].Data, "1000")
+  assert.ok(true)
+})
