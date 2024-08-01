@@ -20,25 +20,25 @@ Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
 local assignment = require('.assignment')
-local _ao = require('ao')
+ao = require('.ao')
 
 -- Implement assignable polyfills on _ao
-assignment.init(_ao)
+assignment.init(ao)
 
 local process = { _version = "2.0.0.rc1" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
-local aosend = _ao.send 
-local aospawn = _ao.spawn
-_ao.send = function (msg)
+local aosend = ao.send 
+local aospawn = ao.spawn
+ao.send = function (msg)
   if msg.Data and type(msg.Data) == 'table' then
     msg['Content-Type'] = 'application/json'
     msg.Data = require('json').encode(msg.Data)
   end
   return aosend(msg)
 end
-_ao.spawn = function (module, msg) 
+ao.spawn = function (module, msg) 
   if msg.Data and type(msg.Data) == 'table' then
     msg['Content-Type'] = 'application/json'
     msg.Data = require('json').encode(msg.Data)
@@ -104,10 +104,10 @@ function print(a)
   end
   
   local data = a
-  if _ao.outbox.Output.data then
-    data =  _ao.outbox.Output.data .. "\n" .. a
+  if ao.outbox.Output.data then
+    data =  ao.outbox.Output.data .. "\n" .. a
   end
-  _ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
+  ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
 
   -- Only supported for newer version of AOS
   if HANDLER_PRINT_LOGS then 
@@ -122,7 +122,7 @@ function Send(msg)
   if not msg.Target then
     print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
   end
-  local result = _ao.send(msg)
+  local result = ao.send(msg)
   return {
     output = "Message added to outbox",
     receive = result.receive,
@@ -135,7 +135,7 @@ function Spawn(...)
 
   if select("#", ...) == 1 then
     spawnMsg = select(1, ...)
-    module = _ao._module
+    module = ao._module
   else
     module = select(1, ...)
     spawnMsg = select(2, ...)
@@ -144,7 +144,7 @@ function Spawn(...)
   if not spawnMsg then
     spawnMsg = {}
   end
-  local result = _ao.spawn(module, spawnMsg)
+  local result = ao.spawn(module, spawnMsg)
   return {
     output = "Spawn process request added to outbox",
     after = result.after,
@@ -157,11 +157,11 @@ function Receive(match)
 end
 
 function Assign(assignment)
-  if not _ao.assign then
+  if not ao.assign then
     print("Assign is not implemented.")
     return "Assign is not implemented."
   end
-  _ao.assign(assignment)
+  ao.assign(assignment)
   print("Assignment added to outbox.")
   return 'Assignment added to outbox.'
 end
@@ -226,7 +226,11 @@ function Version()
   print("version: " .. process._version)
 end
 
-function process.handle(msg, ao)
+function process.handle(msg, env)
+  ao.init(env)
+  -- relocate custom tags to root message
+  msg = ao.normalize(msg)
+  -- set process id
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
   HANDLER_PRINT_LOGS = {}

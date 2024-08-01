@@ -228,7 +228,6 @@ Handlers.add("one",
     print("one")
   end
 )
-
 Handlers.add("two", 
   function (Msg)
     return "continue"
@@ -246,7 +245,6 @@ Handlers.add("three",
     print("three")
   end
 )
-
     `
   }
   // load handler
