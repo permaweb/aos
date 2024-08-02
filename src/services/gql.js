@@ -33,14 +33,14 @@ function queryArweave(body) {
       }
       return res
     })
-    .then(res => res.json())
     .then(result => {
       if (result.data === null) {
-        throw new Error(`(${res.status}) ${res.statusText} - GQL ERROR`)
+        throw new Error(`(${result.status}) ${result.statusText} - GQL ERROR`)
       }
       return result
       
     })
+    .then(res => res.json())
 
 
   )()
