@@ -29,7 +29,7 @@ Handlers.stake = function(msg)
   Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
   Stakers[msg.From].unstake_at = height + delay
   print("Successfully Staked " .. msg.Tags.Quantity)
-  ao.send({Target = msg.From, Data = "Successfully Staked " .. msg.Tags.Quantity})
+  msg.reply({ Data = "Successfully Staked " .. msg.Tags.Quantity})
 end
 
 -- Unstake Action Handler
@@ -41,7 +41,7 @@ Handlers.unstake = function(msg)
       amount = msg.Quantity,
       release_at = stakerInfo.unstake_at
   }
-  ao.send({Target = msg.From, Data = "Successfully unstaked " .. msg.Tags.Quantity})
+  msg.reply({ Data = "Successfully unstaked " .. msg.Tags.Quantity})
 end
 
 -- Finalization Handler
@@ -68,8 +68,8 @@ local function continue(fn)
   end
 end
 
-Handlers.add('staking.balances', Handlers.utils.hasMatchingTag('Action', 'Stakers'),
-  function(msg) Send({ Target = msg.From, Data = require('json').encode(Stakers) }) end)
+Handlers.add('staking.balances', 'Stakers',
+  function(msg) msg.reply({ Data = require('json').encode(Stakers) }) end)
 -- Registering Handlers
 Handlers.add("staking.stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)

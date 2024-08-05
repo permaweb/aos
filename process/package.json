@@ -10,7 +10,7 @@
   "scripts": {
     "build": "ao build",
     "test": "node --test --experimental-wasm-memory64",
-    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1",
-    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1 -t AOS-Type -v AOS-SQLITE"
+    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1.2 -t Name -v AOS",
+    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1.2 -t Name -v AOS-SQLITE"
   }
 }

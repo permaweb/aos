@@ -4,11 +4,11 @@
   <img alt="logo">
 </picture>
 
-Status: Preview rc1.1
-Version: 2.0.0-rc1.1  
-Module: `xT0ogTeagEGuySbKuUoo_NaWeeBv1fZ4MqgDdKVKY0U`
+Status: Preview rc1.2
+Version: 2.0.0-rc1.2 
+Module: `8YqbTlPG2Q08x7MP1F4iwnPmVmRfFU95CyWpseWXAOU`
 
-Sqlite-Module: `sFNHeYzhHfP9vV9CPpqZMU-4Zzq_qKGKwlwMZozWi2Y`
+Sqlite-Module: `C4bxMlK8d_wQ-QpXIIZLU8UWXu6Sd8PDJw7HN3nNE2I`
 
 
 ## Requirements
