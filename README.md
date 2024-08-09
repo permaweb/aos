@@ -6,7 +6,7 @@
 
 Status: Preview rc2
 Version: 2.0.0-rc2
-Module: `xkOMcVN0GLWXmmYz0rsQZsByt6tvXAp6J17Yy1V2bHM`
+Module: `PSPMkkFrJzYI2bQbkmeEQ5ONmeR-FJZu0fNQoSCU1-I`
 
 Sqlite-Module: `C4bxMlK8d_wQ-QpXIIZLU8UWXu6Sd8PDJw7HN3nNE2I`
 
