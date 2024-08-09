@@ -2,7 +2,7 @@ Members = Members or {}
 
 Handlers.add(
   "register",
-  Handlers.utils.hasMatchingTag("Action", "Register"),
+  "Register",
   function (msg)
     local found = false
     for _, member in ipairs(Members) do
@@ -23,7 +23,7 @@ Handlers.add(
 
 Handlers.add(
   "unregister",
-  Handlers.utils.hasMatchingTag("Action", "Unregister"),
+  "Unregister",
   function (msg)
     local found = false
     for i, v in ipairs(Members) do
@@ -42,7 +42,7 @@ Handlers.add(
 
 Handlers.add(
   "broadcast",
-  Handlers.utils.hasMatchingTag("Action", "Broadcast"),
+  "Broadcast",
   function (msg)
     local haveSentRecords = {}
     for _, recipient in ipairs(Members) do
