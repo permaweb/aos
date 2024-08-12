@@ -103,8 +103,6 @@ jobs:
       - name: 🤖 Setup ao dev-cli
         run: |
           curl -fsSL https://install_ao.g8way.io | bash
-          export PATH="${AO_INSTALL:-$HOME/.ao}/bin:$PATH"
-          which ao
 
       - name: 👀 Env
         run: |
@@ -124,9 +122,63 @@ jobs:
         run: |
           yarn
 
-      - name: Placeholder
+      # Build aos
+      - name: Build aos Module
+        id: aos_module
+        working-directory: process
         run: |
-          echo "::warning::TODO: Implement Release"
+          echo "TODO: BUILD AOS MODULE"
+
+          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT 
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos Module
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos.wasm
+          path: ${{ steps.aos_module.outputs.aos_module_path }}
+          retention-days: 10
+
+      # Build aos-sqlite
+      - name: 🗄️ Build aos SQLite Module
+        id: aos_sqlite_module
+        if: inputs.sqlite
+        working-directory: process
+        run: |
+          echo "TODO: BUILD AOS MODULE"
+
+          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT 
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos SQLite Module
+        if: inputs.sqlite
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos-sqlite.wasm
+          path: ${{ steps.aos_sqlite_module.outputs.aos_module_path }}
+          retention-days: 10
+
+      # Build aos-llama
+      - name: 🦙 Build aos Llama Module
+        id: aos_llama_module
+        if: inputs.llama
+        working-directory: process
+        run: |
+          echo "TODO: BUILD AOS MODULE"
+
+          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos Llama Module
+        if: inputs.llama
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos-llama.wasm
+          path: ${{ steps.aos_llama_module.outputs.aos_module_path }}
+          retention-days: 10
 
       # TODO: update manifests with new version and txids
 
