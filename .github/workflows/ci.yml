@@ -63,7 +63,7 @@ jobs:
       - name: 🤖 Setup ao dev-cli
         run: |
           curl -fsSL https://install_ao.g8way.io | bash
-          export PATH="$AO_INSTALL:-$HOME/.ao/bin:$PATH"
+          export PATH="${AO_INSTALL:-$HOME/.ao}/bin:$PATH"
           which ao
 
       - name: 📥 Download deps
@@ -105,7 +105,7 @@ jobs:
       - name: 🤖 Setup ao dev-cli
         run: |
           curl -fsSL https://install_ao.g8way.io | bash
-          export PATH="$AO_INSTALL:-$HOME/.ao/bin:$PATH"
+          export PATH="${AO_INSTALL:-$HOME/.ao}/bin:$PATH"
           which ao
 
       - name: 👀 Env
