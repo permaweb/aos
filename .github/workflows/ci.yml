@@ -90,9 +90,10 @@ jobs:
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          ref: main
+        # TODO: will need when we add automatically bumping based on semver, later
+        # with:
+        #   fetch-depth: 0
+        #   ref: main
 
       - name: ⎔ Setup node
         uses: actions/setup-node@v4
@@ -125,12 +126,15 @@ jobs:
       # Build aos
       - name: Build aos Module
         id: aos_module
-        working-directory: process
         run: |
-          echo "TODO: BUILD AOS MODULE"
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
 
-          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
-          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT 
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
 
       # TODO: instead upload to Arweave as ao Module DataItem
       - name: 🗃 Upload aos Module
@@ -144,12 +148,16 @@ jobs:
       - name: 🗄️ Build aos SQLite Module
         id: aos_sqlite_module
         if: inputs.sqlite
-        working-directory: process
         run: |
-          echo "TODO: BUILD AOS MODULE"
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
 
-          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
-          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT 
+          cp -r modules/sqlite3/. process/
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
 
       # TODO: instead upload to Arweave as ao Module DataItem
       - name: 🗃 Upload aos SQLite Module
@@ -164,11 +172,15 @@ jobs:
       - name: 🦙 Build aos Llama Module
         id: aos_llama_module
         if: inputs.llama
-        working-directory: process
         run: |
-          echo "TODO: BUILD AOS MODULE"
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
 
-          AOS_MODULE_PATH="TODO_PATH_TO_WASM"
+          cp -r modules/llama/. ./process/
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
           echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
 
       # TODO: instead upload to Arweave as ao Module DataItem
