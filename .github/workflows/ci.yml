@@ -28,6 +28,7 @@ jobs:
   test-console:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -51,6 +52,7 @@ jobs:
   test-process:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: ⬇️ Checkout repo
         uses: actions/checkout@v4
@@ -85,6 +87,7 @@ jobs:
     # Releases are performed via a workflow dispatch
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     concurrency:
       group: release
     steps:
