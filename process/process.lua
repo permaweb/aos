@@ -20,12 +20,16 @@ Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
 local assignment = require('.assignment')
-ao = require('.ao')
-
+ao = nil
+if _G.package.loaded['.ao'] then
+  ao = require('.ao')
+elseif _G.package.loaded['ao'] then
+  ao = require('ao')
+end
 -- Implement assignable polyfills on _ao
 assignment.init(ao)
 
-local process = { _version = "2.0.0.rc1" }
+local process = { _version = "2.0.0.rc2" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -226,7 +230,14 @@ function Version()
   print("version: " .. process._version)
 end
 
-function process.handle(msg, env)
+function process.handle(msg, _)
+  env = nil
+  if _.Process then
+    env = _
+  else
+    env = _.env
+  end
+
   ao.init(env)
   -- relocate custom tags to root message
   msg = ao.normalize(msg)

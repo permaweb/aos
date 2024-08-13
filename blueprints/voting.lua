@@ -10,6 +10,7 @@ Handlers.vote = function(msg)
   assert(quantity > 0, "No staked tokens to vote")
   Votes[target] = Votes[target] or { yay = 0, nay = 0, deadline = deadline }
   Votes[target][side] = Votes[target][side] + quantity
+  
 end
 
 -- Finalization Handler
@@ -41,4 +42,4 @@ end
 Handlers.add("vote",
   continue(Handlers.utils.hasMatchingTag("Action", "Vote")), Handlers.vote)
 -- Finalization handler should be called for every message
-Handlers.add("finalize", function (msg) return -1 end, finalizationHandler)
+Handlers.add("finalize", function (msg) return "continue" end, finalizationHandler)
