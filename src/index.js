@@ -396,6 +396,8 @@ if (!argv['watch']) {
           if (output?.data) {
             if (output.data.hasOwnProperty('output')) {
               console.log(output.data.output)
+            } else if (output.data.hasOwnProperty('prompt')) {
+              console.log('')
             } else {
               console.log(output.data)
             }
