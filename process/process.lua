@@ -309,7 +309,10 @@ function process.handle(msg, _)
       newMsg["Reply-To"] = msg["Reply-To"] or msg.From
       newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
       newMsg["X-Origin"] = msg["X-Origin"] or msg.From
-
+      -- clear functions
+      newMsg.reply = nil
+      newMsg.forward = nil 
+      
       ao.send(newMsg)
     end
 
