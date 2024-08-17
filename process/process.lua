@@ -29,7 +29,7 @@ end
 -- Implement assignable polyfills on _ao
 assignment.init(ao)
 
-local process = { _version = "2.0.0.rc2" }
+local process = { _version = "2.0.0" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table

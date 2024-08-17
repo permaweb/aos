@@ -6,9 +6,11 @@
 
 Status: Preview rc2
 Version: 2.0.0-rc2
-Module: `PSPMkkFrJzYI2bQbkmeEQ5ONmeR-FJZu0fNQoSCU1-I`
+Module: `ffvkmPM1jW71hFlBpVbaIapBa_Wl6UIwfdTkDNqsKNw`
 
 Sqlite-Module: `C4bxMlK8d_wQ-QpXIIZLU8UWXu6Sd8PDJw7HN3nNE2I`
+
+Llama-Module: `Eb_Ol0yQsmAaM_KUzbTKbrwJ0Pi3zAq2s9WEegqhr6I`
 
 
 ## Requirements
