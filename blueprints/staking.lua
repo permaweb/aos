@@ -38,7 +38,7 @@ Handlers.unstake = function(msg)
   assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Tags.Quantity), "Insufficient staked amount")
   stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Tags.Quantity)
   Unstaking[msg.From] = {
-      amount = msg.Quantity,
+      amount = msg.Tags.Quantity,
       release_at = stakerInfo.unstake_at
   }
   msg.reply({ Data = "Successfully unstaked " .. msg.Tags.Quantity})
