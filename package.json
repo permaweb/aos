@@ -1,7 +1,7 @@
 {
   "type": "module",
   "name": "@permaweb/aos",
-  "version": "2.0.0-rc2",
+  "version": "2.0.0",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
   "repository": "https://github.com/permaweb/aos.git",
@@ -29,9 +29,9 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "PSPMkkFrJzYI2bQbkmeEQ5ONmeR-FJZu0fNQoSCU1-I",
-    "sqlite": "C4bxMlK8d_wQ-QpXIIZLU8UWXu6Sd8PDJw7HN3nNE2I",
-    "version": "2.0.0.rc2"
+    "module": "zx6_08gJzKNXxLCplINj6TPv9-ElRgeRqr9F6riRBK8",
+    "sqlite": "CJ-iZL7RKNA43UZr3l6J5M8JegMP9RldoCoVge_vRuI",
+    "version": "2.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"

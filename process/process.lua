@@ -29,7 +29,7 @@ end
 -- Implement assignable polyfills on _ao
 assignment.init(ao)
 
-local process = { _version = "2.0.0.rc2" }
+local process = { _version = "2.0.0" }
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
@@ -336,7 +336,8 @@ function process.handle(msg, _)
   if not status then
     if (msg.Action == "Eval") then
       table.insert(Errors, result)
-      return { Error = result }
+      local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
+      return { Error = printData .. '\n\n' .. result }
     end 
     --table.insert(Errors, result)
     --ao.outbox.Output.data = ""
