@@ -1,6 +1,10 @@
 import fs from 'fs';
+import path from 'path';
+import os from 'os';
 
-const historyFilePath = (processId) => `${processId}.history`;
+const historyFilePath = (processId) => {
+    return path.join(os.homedir(), `.${processId}.history`);
+};
 
 export const readHistory = (processId) => {
   const filePath = historyFilePath(processId);
