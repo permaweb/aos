@@ -7,6 +7,7 @@ import chalk from 'chalk'
 import path from 'path'
 import { errors } from './errors.js'
 import * as url from 'url'
+import process from 'node:process';
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -37,6 +38,7 @@ import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
+import { readHistory, writeHistory } from './services/history-service.js'
 
 const argv = minimist(process.argv.slice(2))
 
@@ -83,7 +85,6 @@ if (argv['module'] && argv['module'].length === 43) {
 }
 
 let cron = null
-let history = []
 
 if (argv['watch'] && argv['watch'].length === 43) {
   live(argv['watch'], true).then(res => {
@@ -127,6 +128,8 @@ if (!argv['watch']) {
       let editorMode = false
       let editorData = ""
       let editorPrompt = ""
+
+      let history = readHistory(id)
 
       if (luaData.length > 0 && argv['load']) {
         const spinner = ora({
@@ -427,6 +430,15 @@ if (!argv['watch']) {
         rl.prompt(true)
         return
       })
+
+      process.on('SIGINT', function () {
+        // save the input history when the user exits
+        if (id) {
+          writeHistory(id, history)
+        }
+        process.exit(0)
+      })
+    
       //}
 
       //repl()
