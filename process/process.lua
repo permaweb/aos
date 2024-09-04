@@ -106,6 +106,18 @@ function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
   end
+  --[[
+In order to print non string types we need to convert to string
+  ]]
+  if type(a) == "boolean" then
+    a = Colors.blue .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "nil" then
+    a = Colors.red .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "number" then
+    a = Colors.green .. tostring(a) .. Colors.reset
+  end
   
   local data = a
   if ao.outbox.Output.data then
