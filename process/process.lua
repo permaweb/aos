@@ -349,7 +349,7 @@ function process.handle(msg, _)
     if (msg.Action == "Eval") then
       table.insert(Errors, result)
       local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
-      return { Error = printData .. '\n\n' .. result }
+      return { Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result }
     end 
     --table.insert(Errors, result)
     --ao.outbox.Output.data = ""

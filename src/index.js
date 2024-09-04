@@ -14,12 +14,13 @@ import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 // actions
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
+import { dryEval } from './dry-eval.js'
 
 // services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
 } from './services/connect.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
@@ -42,6 +43,7 @@ import { readHistory, writeHistory } from './services/history-service.js'
 
 const argv = minimist(process.argv.slice(2))
 
+let dryRunMode = false
 let luaData = ""
 if (!process.stdin.isTTY) {
 
@@ -140,6 +142,7 @@ if (!argv['watch']) {
         spinner.start();
         spinner.suffixText = chalk.gray("[Connecting to process...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+
         spinner.stop()
 
         if (result.Output?.data) {
@@ -242,6 +245,19 @@ if (!argv['watch']) {
           cron.stop()
           rl.prompt(true)
           return
+        }
+
+        if (!editorMode && line == ".dryrun") {
+          dryRunMode = !dryRunMode
+          if (dryRunMode) {
+            console.log(chalk.green('dryrun mode engaged'))
+            rl.setPrompt(chalk.red('*') + globalThis.prompt)
+          } else {
+            console.log(chalk.red('dryrun mode disengaged'))
+            rl.setPrompt(globalThis.prompt.replace('*', ''))
+          }
+          rl.prompt(true)
+          return;
         }
 
         if (!editorMode && line == ".monitor") {
@@ -374,8 +390,15 @@ if (!argv['watch']) {
 
 
         // create message and publish to ao
-        const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-          .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+        let result = null
+        if (dryRunMode) {
+          result = await dryEval(line, id, jwk, { dryrun }, spinner)
+            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+        } else {
+          result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+        }
+
         const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
         // log output
         // console.log(output)
@@ -409,7 +432,7 @@ if (!argv['watch']) {
             } else {
               globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
             }
-            rl.setPrompt(globalThis.prompt)
+            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           } else {
             if (!output) {
               console.log(chalk.red('An unknown error occurred.'))
@@ -438,7 +461,7 @@ if (!argv['watch']) {
         }
         process.exit(0)
       })
-    
+
       //}
 
       //repl()

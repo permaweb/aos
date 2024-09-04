@@ -7,6 +7,9 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { uniqBy, prop, keys } from 'ramda'
+import Arweave from 'arweave'
+
+const arweave = Arweave.init({})
 
 
 const pkg = getPkg()
@@ -28,6 +31,14 @@ export function readResult(params) {
     ),
       Resolved
     )
+}
+
+export function dryrun({ processId, wallet, tags, data }, spinnner) {
+  return fromPromise(() =>
+    arweave.wallets.jwkToAddress(wallet).then(Owner =>
+      connect(getInfo()).dryrun({ process: processId, Owner, tags, data })
+    )
+  )()
 }
 
 export function sendMessage({ processId, wallet, tags, data }, spinner) {
