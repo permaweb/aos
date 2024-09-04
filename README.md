@@ -4,13 +4,13 @@
   <img alt="logo">
 </picture>
 
-Status: Preview rc2
-Version: 2.0.0-rc2
-Module: `ffvkmPM1jW71hFlBpVbaIapBa_Wl6UIwfdTkDNqsKNw`
 
-Sqlite-Module: `C4bxMlK8d_wQ-QpXIIZLU8UWXu6Sd8PDJw7HN3nNE2I`
+Version: 2.0.0
+Module: `GHfE2KUbj0nyh6Wdz2Z6tnn4Iid0elkWzATApO_hJ68`
 
-Llama-Module: `Eb_Ol0yQsmAaM_KUzbTKbrwJ0Pi3zAq2s9WEegqhr6I`
+Sqlite-Module: `nV8MCmdMbPWXd7pKMP-a5Zr9eqkzZOrqecQTCT0KvHg`
+
+Llama-Module: `1HhovIWiPIyhVaYKSVoHtwyT_k15I7KKqdNFqYQvfW4`
 
 
 ## Requirements
