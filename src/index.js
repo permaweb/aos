@@ -498,7 +498,7 @@ async function connect(jwk, id) {
 }
 
 async function handleLoadArgs(jwk, id) {
-  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(load).join('\n')
+  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(line => load(line)[0]).join('\n')
   if (loadCode) {
     const spinner = ora({
       spinner: 'dots',
