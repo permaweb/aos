@@ -6,12 +6,9 @@
 
 
 Version: 2.0.0
-Module: `pvXvNCa-svBhc1ovojvqFn3YlWiP2fZiWR7gKvEGOPQ`
+Module: `C61NgrJDuhwGUsFca1rgfE7ehAKSdgOqPj6aYYy5u4s`
 
-Sqlite-Module: `wnpdcrIi1bJ9IV7sOAgjqaRVXRZx42pSQ3aDJKhcQQs`
-
-Llama-Module: `1HhovIWiPIyhVaYKSVoHtwyT_k15I7KKqdNFqYQvfW4`
-
+Sqlite-Module: `02BiXxlw3okihf8o-Rep2z32EDjgj1uAsOB9tMEcyAs`
 
 ## Requirements
 

@@ -278,13 +278,17 @@ function process.handle(msg, _)
 
   -- Only trust messages from a signed owner or an Authority
   if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
-    Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    end
     print('Message is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ }) 
   end
 
   if ao.isAssignment(msg) and not ao.isAssignable(msg) then
-    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    end
     print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ })
   end
