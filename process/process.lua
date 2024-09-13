@@ -284,6 +284,16 @@ function process.handle(msg, _)
     require('.eval')(ao)
   )
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
+
+  -- Added for aop6 boot loader
+  -- See: https://github.com/permaweb/aos/issues/342
+  Handlers.once("_boot",
+    function (msg)
+      return msg.Tags.Type == "Process" and Owner == msg.From
+    end,
+    require('.boot')(ao)
+  )
+
   -- call evaluate from handlers passing env
   msg.reply =
     function(replyMsg)

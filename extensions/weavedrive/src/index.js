@@ -25,7 +25,14 @@ module.exports = function weaveDrive(mod, FS) {
       }
 
       // Create the file in the emscripten FS
-      // TODO: might make sense to create the `data` folder here if does not exist
+
+      // This check/mkdir was added for AOP 6 Boot loader because create is
+      // called first because were only loading Data, we needed to create
+      // the directory. See: https://github.com/permaweb/aos/issues/342
+      if(!FS.analyzePath('/data/').exists){
+        FS.mkdir('/data/');
+      }
+      
       var node = FS.createFile('/', 'data/' + id, properties, true, false);
       // Set initial parameters
       var bytesLength = await fetch(`${mod.ARWEAVE}/${id}`, { method: 'HEAD' }).then(res => res.headers.get('Content-Length'))
@@ -312,6 +319,11 @@ module.exports = function weaveDrive(mod, FS) {
         // CAUTION: If the module is initiated with `mode = test` we don't check availability.
         return true
       }
+
+      // Check if we are attempting to load the On-Boot id, if so allow it
+      // this was added for AOP 6 Boot loader See: https://github.com/permaweb/aos/issues/342
+      const bootTag = mod.Process.Tags.find((t) => t.name === 'On-Boot')?.value;
+      if (bootTag && (bootTag === ID)) return true;
 
       // Check that this module or process set the WeaveDrive tag on spawn
       const blockHeight = mod.blockHeight
