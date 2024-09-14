@@ -1,6 +1,7 @@
-Variant = "0.0.3"
+Variant = "0.0.4"
 Stakers = Stakers or {}
 Unstaking = Unstaking or {}
+UnstakeDelay = UnstakeDelay or 670
 local bint = require('.bint')(256)
 
 --[[
@@ -21,13 +22,12 @@ local utils = {
 -- Stake Action Handler
 Handlers.stake = function(msg)
   local quantity = bint(msg.Tags.Quantity)
-  local delay = tonumber(msg.Tags.UnstakeDelay)
   local height = tonumber(msg['Block-Height'])
   assert(Balances[msg.From] and bint(Balances[msg.From]) >= quantity, "Insufficient balance to stake")
   Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity) 
   Stakers[msg.From] = Stakers[msg.From] or { amount = "0" }
   Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
-  Stakers[msg.From].unstake_at = height + delay
+  Stakers[msg.From].unstake_at = height + UnstakeDelay
   print("Successfully Staked " .. msg.Tags.Quantity)
   msg.reply({ Data = "Successfully Staked " .. msg.Tags.Quantity})
 end
@@ -49,7 +49,7 @@ local finalizationHandler = function(msg)
   local currentHeight = tonumber(msg['Block-Height'])
   -- Process unstaking
   for address, unstakeInfo in pairs(Unstaking) do
-      if currentHeight >= unstakeInfo.release_at or currentHeight == nil then -- nil rule makes sure it is processed
+      if currentHeight >= unstakeInfo.release_at or unstakeInfo.release_at == nil then
           Balances[address] = utils.add(Balances[address] or "0", unstakeInfo.amount)
           Unstaking[address] = nil
       end
@@ -68,14 +68,20 @@ local function continue(fn)
   end
 end
 
-Handlers.add('staking.balances', 'Stakers',
-  function(msg) msg.reply({ Data = require('json').encode(Stakers) }) end)
+Handlers.add('staking.balances', Handlers.utils.hasMatchingTag("Action", 'Stakers'),
+  function(msg) 
+    if msg.reply then
+      msg.reply({ Data = require('json').encode(Stakers) })
+    else
+      Send({Target = msg.From, Data = require('json').encode(Stakers) }) 
+    end
+  end)
 -- Registering Handlers
 Handlers.add("staking.stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)
 Handlers.add("staking.unstake",
   continue(Handlers.utils.hasMatchingTag("Action", "Unstake")), Handlers.unstake)
 -- Finalization handler should be called for every message
--- continue to let messages pass-through and .prepend to the stack so it updates it's Block-Height and finalizes Unstaking
+-- changed to continue to let messages pass-through
 Handlers.prepend("staking.finalize", function (msg) return "continue" end, finalizationHandler)
 
