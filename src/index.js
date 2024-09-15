@@ -252,7 +252,7 @@ if (!argv['watch']) {
           dryRunMode = !dryRunMode
           if (dryRunMode) {
             console.log(chalk.green('dryrun mode engaged'))
-            rl.setPrompt(chalk.red('*') + globalThis.prompt)
+            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           } else {
             console.log(chalk.red('dryrun mode disengaged'))
             rl.setPrompt(globalThis.prompt.replace('*', ''))
@@ -321,7 +321,7 @@ if (!argv['watch']) {
           line = editorData
           editorData = ""
           editorMode = false;
-          rl.setPrompt(globalThis.prompt)
+          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
         }
 
         if (editorMode && line === ".delete") {
@@ -344,7 +344,8 @@ if (!argv['watch']) {
           console.log(editorData)
           editorData = ""
           editorMode = false
-          rl.setPrompt(globalThis.prompt)
+          //rl.setPrompt(globalThis.prompt)
+          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           rl.prompt(true)
           return
         }
@@ -352,7 +353,8 @@ if (!argv['watch']) {
         if (editorMode && line === ".cancel") {
           editorData = ""
           editorMode = false;
-          rl.setPrompt(globalThis.prompt)
+          //rl.setPrompt(globalThis.prompt)
+          rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
 
 
           // rl.close()
@@ -542,7 +544,8 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
       } else {
         globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
       }
-      rl.setPrompt(globalThis.prompt)
+      rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+      // rl.setPrompt(globalThis.prompt)
     } else {
       if (!output) {
         console.log(chalk.red('An unknown error occurred.'))
