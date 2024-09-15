@@ -361,7 +361,7 @@ if (!argv['watch']) {
           pad(id, async (err, content) => {
             if (!err) {
               // console.log(content)
-              await doEvaluate(content, id, jwk, spinner, rl)
+              await doEvaluate(content, id, jwk, spinner, rl, loadedModules)
             }
             rl.resume();
             rl.prompt(true);
@@ -383,7 +383,7 @@ if (!argv['watch']) {
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
-        await doEvaluate(line, id, jwk, spinner, rl)
+        await doEvaluate(line, id, jwk, spinner, rl, loadedModules)
 
         if (process.env.DEBUG) {
           console.timeEnd(chalk.gray('Elapsed'))
@@ -482,7 +482,7 @@ async function handleLoadArgs(jwk, id) {
   }
 }
 
-async function doEvaluate(line, id, jwk, spinner, rl) {
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules) {
   spinner.start();
   spinner.suffixText = chalk.gray("[Dispatching message...]")
 
