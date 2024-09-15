@@ -9,7 +9,8 @@ export async function dryEval(line, processId, wallet, services, spinner) {
     })
     .chain(() => services.dryrun({
       processId: processId,
-      wallet: wallet, tags: [
+      wallet: wallet, 
+      tags: [
         { name: 'Action', value: 'Eval' }
       ],
       data: line
@@ -30,7 +31,7 @@ export async function dryEval(line, processId, wallet, services, spinner) {
     .map(x => {
       if (process.env.DEBUG) {
         console.log("")
-        console.timeEnd('Read')
+        console.timeEnd('Send')
       }
       return x
     })
