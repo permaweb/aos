@@ -49,7 +49,7 @@ local finalizationHandler = function(msg)
   local currentHeight = tonumber(msg['Block-Height'])
   -- Process unstaking
   for address, unstakeInfo in pairs(Unstaking) do
-      if currentHeight >= unstakeInfo.release_at or unstakeInfo.release_at == nil then
+      if unstakeInfo.release_at == nil or currentHeight >= unstakeInfo.release_at then
           Balances[address] = utils.add(Balances[address] or "0", unstakeInfo.amount)
           Unstaking[address] = nil
       end
