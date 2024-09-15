@@ -40,6 +40,7 @@ import { list } from './services/list.js'
 import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
 import { readHistory, writeHistory } from './services/history-service.js'
+import { pad } from './commands/pad.js'
 
 const argv = minimist(process.argv.slice(2))
 
@@ -371,6 +372,19 @@ if (!argv['watch']) {
           return;
         }
 
+        if (line === ".pad") {
+          rl.pause()
+          pad(id, async (err, content) => {
+            if (!err) {
+              // console.log(content)
+              await doEvaluate(content, id, jwk, spinner, rl, loadedModules)
+            }
+            rl.resume();
+            rl.prompt(true);
+          })
+          return;
+        }
+
         if (line === ".exit") {
           cron.stop();
           console.log("Exiting...");
@@ -385,60 +399,7 @@ if (!argv['watch']) {
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
-        spinner.start();
-        spinner.suffixText = chalk.gray("[Dispatching message...]")
-
-
-        // create message and publish to ao
-        let result = null
-        if (dryRunMode) {
-          result = await dryEval(line, id, jwk, { dryrun }, spinner)
-            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-        } else {
-          result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-        }
-
-        const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-        // log output
-        // console.log(output)
-        spinner.stop()
-
-        if (result?.Error || result?.error) {
-          const error = parseError(result.Error || result.error)
-
-          if (error) {
-            // get what file the error comes from,
-            // if the line was loaded
-            const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
-
-            // print error
-            outputError(line, error, errorOrigin)
-          } else {
-            console.log(chalk.red(result.Error || result.error));
-          }
-        } else {
-
-          if (output?.data) {
-            if (output.data.hasOwnProperty('output')) {
-              console.log(output.data.output)
-            } else if (output.data.hasOwnProperty('prompt')) {
-              console.log('')
-            } else {
-              console.log(output.data)
-            }
-            if (output.data.hasOwnProperty('prompt')) {
-              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
-            } else {
-              globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
-            }
-            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
-          } else {
-            if (!output) {
-              console.log(chalk.red('An unknown error occurred.'))
-            }
-          }
-        }
+        await doEvaluate(line, id, jwk, spinner, rl, loadedModules)
 
         if (process.env.DEBUG) {
           console.timeEnd(chalk.gray('Elapsed'))
@@ -529,10 +490,67 @@ async function handleLoadArgs(jwk, id) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-
+    
+        // create message and publish to ao
+        let result = null
+        if (dryRunMode) {
+          result = await dryEval(line, id, jwk, { dryrun }, spinner)
+            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+        } else {
+          result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+    }
     spinner.stop()
 
   }
+}
+
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules) {
+  spinner.start();
+  spinner.suffixText = chalk.gray("[Dispatching message...]")
+
+
+  // create message and publish to ao
+  const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+    .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+
+  const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+  // log output
+  // console.log(output)
+  spinner.stop()
+
+  if (result?.Error || result?.error) {
+    const error = parseError(result.Error || result.error)
+    if (error) {
+      // get what file the error comes from,
+      // if the line was loaded
+      const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
+
+      // print error
+      outputError(line, error, errorOrigin)
+    } else {
+      console.log(chalk.red(result.Error || result.error));
+    }
+  } else {
+    if (output?.data) {
+      if (output.data.hasOwnProperty('output')) {
+        console.log(output.data.output)
+      } else if (output.data.hasOwnProperty('prompt')) {
+        console.log('')
+      } else {
+        console.log(output.data)
+      }
+      if (output.data.hasOwnProperty('prompt')) {
+        globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
+      } else {
+        globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
+      }
+      rl.setPrompt(globalThis.prompt)
+    } else {
+      if (!output) {
+        console.log(chalk.red('An unknown error occurred.'))
+      }
+    }
+  }
+  return;
 }
