@@ -377,7 +377,7 @@ if (!argv['watch']) {
           pad(id, async (err, content) => {
             if (!err) {
               // console.log(content)
-              await doEvaluate(content, id, jwk, spinner, rl, loadedModules)
+              await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
             }
             rl.resume();
             rl.prompt(true);
@@ -399,7 +399,7 @@ if (!argv['watch']) {
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
-        await doEvaluate(line, id, jwk, spinner, rl, loadedModules)
+        await doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
 
         if (process.env.DEBUG) {
           console.timeEnd(chalk.gray('Elapsed'))
@@ -490,30 +490,27 @@ async function handleLoadArgs(jwk, id) {
     })
     spinner.start()
     spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
-    
-        // create message and publish to ao
-        let result = null
-        if (dryRunMode) {
-          result = await dryEval(line, id, jwk, { dryrun }, spinner)
-            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-        } else {
-          result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-            .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-    }
+    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+
     spinner.stop()
 
   }
 }
 
-async function doEvaluate(line, id, jwk, spinner, rl, loadedModules) {
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
   spinner.start();
   spinner.suffixText = chalk.gray("[Dispatching message...]")
 
-
   // create message and publish to ao
-  const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-    .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-
+  let result = null
+  if (dryRunMode) {
+    result = await dryEval(line, id, jwk, { dryrun }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+  } else {
+    result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+  }
   const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
   // log output
   // console.log(output)
