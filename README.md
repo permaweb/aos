@@ -72,6 +72,7 @@ aos [name]
 | `--cu-url [url]`                              | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1      |
 | `--mu-url [url]`                                | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
 | `--sqlite` | 0-1 | Use sqlite aos module when spawning new process |
+| `--data [filepath]` | 0-1 | Set file contents as the data field of your Process. Will run when the process boots up if the On-Boot tag is set to Data, if On-Boot is set to Data make sure the file contains valid lua code |
 
 ### Commands
 
@@ -83,6 +84,20 @@ When running the console, you can type `dot` commands to instruct the console to
 | `.load`                  | This command allows you to load a lua source file from your local directory                                                                  |
 | `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                               |
 | `.exit`                  | This command will exit you console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                 |
+
+### Boot Loading
+
+When booting up a new aos you can specify a script as the Data field of your process and use the On-Boot tag to run at startup. If On-Boot is set to Data, the script can be read from a local file
+
+```sh
+aos boottest --tag-name="On-Boot" --tag-value="Data" --data=../bootup.lua
+```
+
+Or On-Boot can be a tx id, which must also contain a valid lua script.
+
+```sh
+aos boottest --tag-name="On-Boot" --tag-value="arweavetxid"
+```
 
 ## License
 
