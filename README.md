@@ -6,9 +6,9 @@
 
 
 Version: 2.0.0
-Module: `C61NgrJDuhwGUsFca1rgfE7ehAKSdgOqPj6aYYy5u4s`
+Module: `wAn9sElcBV6IfcxyySc6QnYGQCrlFnps88Y5zMxLsYY`
 
-Sqlite-Module: `02BiXxlw3okihf8o-Rep2z32EDjgj1uAsOB9tMEcyAs`
+Sqlite-Module: `A1lO7VyrR2Jh4mcQ_EzKQWGUfN118oFHT5fvf4wyU_8`
 
 ## Requirements
 

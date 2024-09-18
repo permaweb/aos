@@ -29,9 +29,9 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "C61NgrJDuhwGUsFca1rgfE7ehAKSdgOqPj6aYYy5u4s",
-    "sqlite": "02BiXxlw3okihf8o-Rep2z32EDjgj1uAsOB9tMEcyAs",
-    "llama": "1HhovIWiPIyhVaYKSVoHtwyT_k15I7KKqdNFqYQvfW4",
+    "module": "wAn9sElcBV6IfcxyySc6QnYGQCrlFnps88Y5zMxLsYY",
+    "sqlite": "A1lO7VyrR2Jh4mcQ_EzKQWGUfN118oFHT5fvf4wyU_8",
+    "llama": "QuxilALgsYUwM4lkr7XD9cL9nrzo6lr8mOFmQUix9z4",
     "version": "2.0.0"
   },
   "devDependencies": {
