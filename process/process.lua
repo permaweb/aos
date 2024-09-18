@@ -364,9 +364,10 @@ function process.handle(msg, _)
     end
     print(Colors.green .. result .. Colors.reset)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
-    return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
+    local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
+    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
   end
-
+  
   if msg.Action == "Eval" then
     local response = ao.result({ 
       Output = {
