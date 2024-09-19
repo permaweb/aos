@@ -148,6 +148,47 @@ return require('json').encode({ A = #results, B = #results2 })
   assert.equal(res.A, res.B)
 })
 
+// test weavedrive feature of acceptint multiple gateways
+test('read block, multi url', async () => {
+  const handle = await AoLoader(wasm, { 
+    ...options, 
+    ARWEAVE_URLS: ['https://arweave.net', 'https://g8way.io'] 
+  })
+  const result = await handle(memory, {
+    ...Msg,
+    Data: `
+    return #require('WeaveDrive').getBlock('1439784').txs
+`
+  }, { Process, Module })
+  memory = result.Memory
+})
+
+
+test('read tx, multi url', async () => {
+  const handle = await AoLoader(wasm, { 
+    ...options, 
+    ARWEAVE_URLS: ['https://arweave.net', 'https://g8way.io'] 
+  })
+  const result = await handle(memory, {
+    ...Msg,
+    Data: `
+local results = {}
+local drive = require('WeaveDrive')
+local txs = drive 
+  .getBlock('1439784').txs
+for i=1,#txs do
+  local tx = drive.getTx(txs[i])
+end
+
+return results
+    `
+  }, { Process, Module })
+  memory = result.Memory
+  console.log(result)
+  assert.ok(true)
+})
+
+
 let memoryBootLoader = null
 
  /*

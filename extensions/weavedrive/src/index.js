@@ -16,6 +16,27 @@ module.exports = function weaveDrive(mod, FS) {
       FS.streams[fd].node.cache = new Uint8Array(0)
     },
 
+    async customFetch(path, options) {
+      if(mod.ARWEAVE_URLS && mod.ARWEAVE_URLS.length > 0) {
+        /**
+         * Try a list of gateways instead of a single one
+         */
+        for (const url of mod.ARWEAVE_URLS) {
+          const response = await fetch(`${url}${path}`, options)
+          if (response.ok) {
+            return response
+          }
+        }
+        /**
+         * None succeeded so fall back to mod.ARWEAVE so that
+         * if this fails we return a proper error response
+         */
+        return await fetch(`${mod.ARWEAVE}${path}`, options)
+      } else {
+        return await fetch(`${mod.ARWEAVE}${path}`, options)
+      }
+    },
+
     async create(id) {
       var properties = { isDevice: false, contents: null }
 
@@ -35,7 +56,7 @@ module.exports = function weaveDrive(mod, FS) {
       
       var node = FS.createFile('/', 'data/' + id, properties, true, false);
       // Set initial parameters
-      var bytesLength = await fetch(`${mod.ARWEAVE}/${id}`, { method: 'HEAD' }).then(res => res.headers.get('Content-Length'))
+      var bytesLength = await this.customFetch(`/${id}`, { method: 'HEAD' }).then(res => res.headers.get('Content-Length'))
       node.total_size = Number(bytesLength)
       node.cache = new Uint8Array(0)
       node.position = 0;
@@ -50,15 +71,16 @@ module.exports = function weaveDrive(mod, FS) {
       return stream;
     },
     async createBlockHeader(id) {
+      const customFetch = this.customFetch
       // todo: add a bunch of retries
       async function retry(x) {
         return new Promise(r => {
           setTimeout(function () {
-            r(fetch(`${mod.ARWEAVE}/block/height/${id}`))
+            r(customFetch(`/block/height/${id}`))
           }, x * 10000)
         })
       }
-      var result = await fetch(`${mod.ARWEAVE}/block/height/${id}`)
+      var result = await this.customFetch(`/block/height/${id}`)
         .then(res => !res.ok ? retry(1) : res)
         .then(res => !res.ok ? retry(2) : res)
         .then(res => !res.ok ? retry(3) : res)
@@ -73,6 +95,7 @@ module.exports = function weaveDrive(mod, FS) {
       return stream;
     },
     async createTxHeader(id) {
+      const customFetch = this.customFetch
       async function toAddress(owner) {
         return Arweave.utils.bufferTob64Url(
           await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
@@ -81,12 +104,12 @@ module.exports = function weaveDrive(mod, FS) {
       async function retry(x) {
         return new Promise(r => {
           setTimeout(function () {
-            r(fetch(`${mod.ARWEAVE}/tx/${id}`))
+            r(customFetch(`/tx/${id}`))
           }, x * 10000)
         })
       }
       // todo: add a bunch of retries
-      var result = await fetch(`${mod.ARWEAVE}/tx/${id}`)
+      var result = await this.customFetch(`/tx/${id}`)
         .then(res => !res.ok ? retry(1) : res)
         .then(res => !res.ok ? retry(2) : res)
         .then(res => !res.ok ? retry(3) : res)
@@ -204,7 +227,7 @@ module.exports = function weaveDrive(mod, FS) {
       //console.log("WeaveDrive: fd: ", fd, " Read length: ", to_read, " Reading ahead:", to - to_read - stream.position)
 
       // Fetch with streaming
-      const response = await fetch(`${mod.ARWEAVE}/${stream.node.name}`, {
+      const response = await this.customFetch(`/${stream.node.name}`, {
         method: "GET",
         redirect: "follow",
         headers: { "Range": `bytes=${stream.position}-${to}` }
