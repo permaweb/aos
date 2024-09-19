@@ -13,6 +13,7 @@ ${chalk.green('Client commands:')}
   ${chalk.green('.monitor')}                      Starts monitoring cron messages for this process
   ${chalk.green('.unmonitor')}                    Stops monitoring cron messages for this process
   ${chalk.green('.editor')}                       Simple code editor for writing multi-line Lua expressions
+  ${chalk.green('.dryrun')}                       Toggle dryrun mode that sends every command as a dryrun and never saves memory
   ${chalk.green('.exit')}                         Close the client
   ${chalk.green('.help')}                         Print this help screen
   `)

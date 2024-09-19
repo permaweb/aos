@@ -96,7 +96,8 @@ export function outputError(line, error, origin) {
   const lineNumberPlaceholder = ' '.repeat(lineNumber.toString().length)
 
   console.log(
-    chalk.bold(chalk.red('error') + ':\n' + error.errorMessage) +
+    '\n' +
+    chalk.bold(error.errorMessage) +
     '\n' +
     (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
     chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +

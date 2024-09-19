@@ -106,6 +106,18 @@ function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
   end
+  --[[
+In order to print non string types we need to convert to string
+  ]]
+  if type(a) == "boolean" then
+    a = Colors.blue .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "nil" then
+    a = Colors.red .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "number" then
+    a = Colors.green .. tostring(a) .. Colors.reset
+  end
   
   local data = a
   if ao.outbox.Output.data then
@@ -266,13 +278,17 @@ function process.handle(msg, _)
 
   -- Only trust messages from a signed owner or an Authority
   if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
-    Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    end
     print('Message is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ }) 
   end
 
   if ao.isAssignment(msg) and not ao.isAssignable(msg) then
-    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    end
     print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ })
   end
@@ -337,7 +353,7 @@ function process.handle(msg, _)
     if (msg.Action == "Eval") then
       table.insert(Errors, result)
       local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
-      return { Error = printData .. '\n\n' .. result }
+      return { Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result }
     end 
     --table.insert(Errors, result)
     --ao.outbox.Output.data = ""
@@ -348,9 +364,10 @@ function process.handle(msg, _)
     end
     print(Colors.green .. result .. Colors.reset)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
-    return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
+    local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
+    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
   end
-
+  
   if msg.Action == "Eval" then
     local response = ao.result({ 
       Output = {
