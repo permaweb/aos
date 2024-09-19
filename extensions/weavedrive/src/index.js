@@ -17,11 +17,15 @@ module.exports = function weaveDrive(mod, FS) {
     },
 
     async customFetch(path, options) {
-      if(mod.ARWEAVE_URLS && mod.ARWEAVE_URLS.length > 0) {
+      let urlList = null
+      if(mod.ARWEAVE.includes(',')) {
+        urlList = mod.ARWEAVE.split(',').map(url => url.trim())
+      }
+      if(urlList && urlList.length > 0) {
         /**
          * Try a list of gateways instead of a single one
          */
-        for (const url of mod.ARWEAVE_URLS) {
+        for (const url of urlList) {
           const response = await fetch(`${url}${path}`, options)
           if (response.ok) {
             return response

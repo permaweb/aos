@@ -152,7 +152,7 @@ return require('json').encode({ A = #results, B = #results2 })
 test('read block, multi url', async () => {
   const handle = await AoLoader(wasm, { 
     ...options, 
-    ARWEAVE_URLS: ['https://arweave.net', 'https://g8way.io'] 
+    ARWEAVE: 'https://arweave.net,https://g8way.io'
   })
   const result = await handle(memory, {
     ...Msg,
@@ -167,7 +167,7 @@ test('read block, multi url', async () => {
 test('read tx, multi url', async () => {
   const handle = await AoLoader(wasm, { 
     ...options, 
-    ARWEAVE_URLS: ['https://arweave.net', 'https://g8way.io'] 
+    ARWEAVE: 'https://arweave.net,https://g8way.io'
   })
   const result = await handle(memory, {
     ...Msg,
