@@ -73,7 +73,7 @@ Handlers.add('staking.balances', Handlers.utils.hasMatchingTag("Action", 'Staker
     if msg.reply then
       msg.reply({ Data = require('json').encode(Stakers) })
     else
-      Send({Target = msg.From, Data = require('json').encode(Stakers) }) 
+      msg.reply({ Data = require('json').encode(Stakers) }) 
     end
   end)
 -- Registering Handlers
