@@ -299,7 +299,18 @@ function process.handle(msg, _)
     end,
     require('.eval')(ao)
   )
+
+  -- Added for aop6 boot loader
+  -- See: https://github.com/permaweb/aos/issues/342
+  Handlers.once("_boot",
+    function (msg)
+      return msg.Tags.Type == "Process" and Owner == msg.From
+    end,
+    require('.boot')(ao)
+  )
+
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
+
   -- call evaluate from handlers passing env
   msg.reply =
     function(replyMsg)
@@ -376,6 +387,25 @@ function process.handle(msg, _)
         test = Dump(HANDLER_PRINT_LOGS)
       }
     })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  elseif msg.Tags.Type == "Process" and Owner == msg.From then 
+    local response = nil
+  
+    -- detect if there was any output from the boot loader call
+    for _, value in pairs(HANDLER_PRINT_LOGS) do
+      if value ~= "" then
+        -- there was output from the Boot Loader eval so we want to print it
+        response = ao.result({ Output = { data = table.concat(HANDLER_PRINT_LOGS, "\n"), prompt = Prompt(), print = true } })
+        break
+      end
+    end
+  
+    if response == nil then 
+      -- there was no output from the Boot Loader eval, so we shouldn't print it
+      response = ao.result({ Output = { data = "", prompt = Prompt() } })
+    end
+
     HANDLER_PRINT_LOGS = {} -- clear logs
     return response
   else
