@@ -79,7 +79,25 @@ function handlers.once(...)
   handlers.add(name, pattern, handle, 1)
 end
 
-function handlers.add(name, pattern, handle, maxRuns)
+function handlers.add(...)
+  local name, pattern, handle, maxRuns
+  local args = select("#", ...)
+  if args == 2 then
+    name = select(1, ...)
+    pattern = select(1, ...)
+    handle = select(2, ...)
+    maxRuns = nil
+  elseif args == 3 then
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = nil
+  else 
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = select(4, ...)
+  end
   assertAddArgs(name, pattern, handle, maxRuns)
   
   handle = handlers.generateResolver(handle)
@@ -99,7 +117,25 @@ function handlers.add(name, pattern, handle, maxRuns)
   return #handlers.list
 end
 
-function handlers.append(name, pattern, handle, maxRuns)
+function handlers.append(...)
+  local name, pattern, handle, maxRuns
+  local args = select("#", ...)
+  if args == 2 then
+    name = select(1, ...)
+    pattern = select(1, ...)
+    handle = select(2, ...)
+    maxRuns = nil
+  elseif args == 3 then
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = nil
+  else 
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = select(4, ...)
+  end
   assertAddArgs(name, pattern, handle, maxRuns)
   
   handle = handlers.generateResolver(handle)
@@ -118,7 +154,25 @@ function handlers.append(name, pattern, handle, maxRuns)
   
 end
 
-function handlers.prepend(name, pattern, handle, maxRuns)
+function handlers.prepend(...)
+  local name, pattern, handle, maxRuns
+  local args = select("#", ...)
+  if args == 2 then
+    name = select(1, ...)
+    pattern = select(1, ...)
+    handle = select(2, ...)
+    maxRuns = nil
+  elseif args == 3 then
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = nil
+  else 
+    name = select(1, ...)
+    pattern = select(2, ...)
+    handle = select(3, ...)
+    maxRuns = select(4, ...)
+  end
   assertAddArgs(name, pattern, handle, maxRuns)
 
   handle = handlers.generateResolver(handle)

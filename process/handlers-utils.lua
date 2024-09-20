@@ -1,7 +1,7 @@
-local _utils = { _version = "0.0.1" }
+local _utils = { _version = "0.0.2" }
 
 local _ = require('.utils')
-local ao = require("ao")
+local ao = require(".ao")
 
 function _utils.hasMatchingTag(name, value)
   assert(type(name) == 'string' and type(value) == 'string', 'invalid arguments: (name : string, value : string)')
@@ -37,10 +37,10 @@ function _utils.reply(input)
   assert(type(input) == 'table' or type(input) == 'string', 'invalid arguments: (input : table or string)')
   return function (msg)
     if type(input) == 'string' then
-      ao.send({Target = msg.From, Data = input})
+      msg.reply({ Data = input})
       return
     end
-    ao.send({Target = msg.From, Tags = input })
+    msg.reply(input)
   end
 end
 

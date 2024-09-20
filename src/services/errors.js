@@ -14,8 +14,8 @@ import path from 'path'
  */
 export function parseError(error) {
   // if we have not been given any error information, return a generic message
-  if(!error || Object.keys(error).length === 0) {
-    return {lineNumber: 0, errorMessage: "No message given by process."}
+  if (!error || Object.keys(error).length === 0) {
+    return { lineNumber: 0, errorMessage: "No message given by process." }
   }
 
   // parse error message
@@ -34,7 +34,7 @@ export function parseError(error) {
       lineNumber,
       errorMessage
     }
-  } 
+  }
 
   // (it's going to be the last ":linenumber:")
   const lineNumber = parseInt(lineNumbers[lineNumbers.length - 1].replace(/:/g, ''))
@@ -96,7 +96,8 @@ export function outputError(line, error, origin) {
   const lineNumberPlaceholder = ' '.repeat(lineNumber.toString().length)
 
   console.log(
-    chalk.bold(chalk.red('error') + ': ' + error.errorMessage) +
+    '\n' +
+    chalk.bold(error.errorMessage) +
     '\n' +
     (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
     chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +

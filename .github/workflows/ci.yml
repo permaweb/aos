@@ -1,0 +1,203 @@
+name: ✨ Build & Release AOS
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+  # Perform a release using a workflow dispatch
+  workflow_dispatch:
+    inputs:
+      sqlite:
+        description: 'Build a aos-sqlite module?'
+        required: true
+        type: boolean
+      llama:
+        description: 'Build a aos-llama module?'
+        required: true
+        type: boolean
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  test-console:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 📥 Download deps
+        run: |
+          yarn
+
+      - name: ⚡ Run Tests
+        run: |
+          # yarn test
+          echo "::warning::TODO: Fix aos Console tests. Skipping for now..."
+        env:
+          CI: true
+
+  test-process:
+    if: github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: 🤖 Setup ao dev-cli
+        run: |
+          curl -fsSL https://install_ao.g8way.io | bash
+
+      - name: 📥 Download deps
+        working-directory: process
+        run: |
+          yarn
+
+      - name: 🏗 Build Module
+        working-directory: process
+        run: |
+          /home/runner/.ao/bin/ao build
+
+      - name: ⚡ Run Tests
+        working-directory: process
+        run: |
+          yarn test
+        env:
+          CI: true
+
+  release:
+    # Releases are performed via a workflow dispatch
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: release
+    steps:
+      - name: ⬇️ Checkout repo
+        uses: actions/checkout@v4
+        # TODO: will need when we add automatically bumping based on semver, later
+        # with:
+        #   fetch-depth: 0
+        #   ref: main
+
+      - name: ⎔ Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: "https://registry.npmjs.org"
+
+      - name: 🤖 Setup ao dev-cli
+        run: |
+          curl -fsSL https://install_ao.g8way.io | bash
+
+      - name: 👀 Env
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Git ref:    ${{ github.ref }}"
+          echo "GH actor:   ${{ github.actor }}"
+          echo "SHA:        ${{ github.sha }}"
+          VER=`node --version`; echo "Node ver:   $VER"
+          VER=`npm --version`; echo "npm ver:    $VER"
+
+      - name: 🤓 Set Git User
+        run: |
+          git config --global user.name "${{ github.actor }}"
+          git config --global user.email "${{ github.actor }}@users.noreply.github.com"
+
+      - name: 📥 Download deps
+        run: |
+          yarn
+
+      # Build aos
+      - name: Build aos Module
+        id: aos_module
+        run: |
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
+
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos Module
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos.wasm
+          path: ${{ steps.aos_module.outputs.aos_module_path }}
+          retention-days: 10
+
+      # Build aos-sqlite
+      - name: 🗄️ Build aos SQLite Module
+        id: aos_sqlite_module
+        if: inputs.sqlite
+        run: |
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
+
+          cp -r modules/sqlite3/. process/
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos SQLite Module
+        if: inputs.sqlite
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos-sqlite.wasm
+          path: ${{ steps.aos_sqlite_module.outputs.aos_module_path }}
+          retention-days: 10
+
+      # Build aos-llama
+      - name: 🦙 Build aos Llama Module
+        id: aos_llama_module
+        if: inputs.llama
+        run: |
+          if [ -d "process/libs" ]; then rm -rf process/libs; fi
+          if [ -e "process/process.wasm" ]; then rm -f process/process.wasm; fi
+          if [ -e "process/config.yml" ]; then rm -f process/config.yml; fi
+
+          cp -r modules/llama/. ./process/
+          (cd process && /home/runner/.ao/bin/ao build)
+
+          AOS_MODULE_PATH="$PWD/process/process.wasm"
+          echo "aos_module_path=${AOS_MODULE_PATH}" >> $GITHUB_OUTPUT
+
+      # TODO: instead upload to Arweave as ao Module DataItem
+      - name: 🗃 Upload aos Llama Module
+        if: inputs.llama
+        uses: actions/upload-artifact@v4
+        with:
+          name: aos-llama.wasm
+          path: ${{ steps.aos_llama_module.outputs.aos_module_path }}
+          retention-days: 10
+
+      # TODO: update manifests with new version and txids
+
+      # - name: ⬆️ Push
+      #   run: |
+      #     git push
+      #     git push --tags

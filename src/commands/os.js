@@ -26,7 +26,7 @@ export function dry() {
 export function update() {
   // let luaFiles = fs.readdirSync(__dirname + "../../process")
   //   .filter(n => /\.lua$/.test(n))
-  let luaFiles = ['utils.lua', 'assignment.lua', 'handlers.lua', 'eval.lua', 'process.lua']
+  let luaFiles = ['stringify.lua', 'ao.lua', 'utils.lua', 'assignment.lua', 'handlers-utils.lua', 'handlers.lua', 'eval.lua', 'process.lua']
     .map(name => {
       const code = fs.readFileSync(__dirname + "../../process/" + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
@@ -38,6 +38,7 @@ export function update() {
     .join('\n\n')
 
   luaFiles = `
+
 if not Utils.includes('.crypto.init', Utils.keys(_G.package.loaded)) then
   -- if crypto.init is not installed then return a noop
   _G.package.loaded['.crypto.init'] = { _version = "0.0.0", status = "Not Implemented" }
@@ -54,6 +55,13 @@ end
 
 
   luaFiles = luaFiles + '\n'
+
+  luaFiles = luaFiles + `
+-- set ao alias if ao does not exist
+if not _G.package.loaded['ao'] then
+  _G.package.loaded['ao'] = _G.package.loaded['.ao'] 
+end 
+  \n`
 
   return luaFiles
 }

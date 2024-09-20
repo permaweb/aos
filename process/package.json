@@ -5,12 +5,13 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@permaweb/ao-loader": "^0.0.35"
+    "@permaweb/ao-loader": "^0.0.36"
   },
   "scripts": {
     "build": "ao build",
     "test": "node --test --experimental-wasm-memory64",
-    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1",
-    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0.rc1 -t AOS-Type -v AOS-SQLITE"
+    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0 -t Name -v xl",
+    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0 -t Name -v sqlite-xl",
+    "deploy-llama": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 16-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.0 -t Name -v llama-xxl -t Extension -v WeaveDrive"
   }
 }

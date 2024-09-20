@@ -1,5 +1,4 @@
 local bint = require('.bint')(256)
-local ao = require('ao')
 --[[
   This module implements the ao Standard Token Specification.
 
@@ -72,9 +71,8 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
      Info
    ]]
 --
-Handlers.add('info', Handlers.utils.hasMatchingTag('Action', 'Info'), function(msg)
-  ao.send({
-    Target = msg.From,
+Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
+  msg.reply({
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
@@ -86,7 +84,7 @@ end)
      Balance
    ]]
 --
-Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), function(msg)
+Handlers.add('balance', Handlers.utils.hasMatchingTag("Action", "Balance"), function(msg)
   local bal = '0'
 
   -- If not Recipient is provided, then return the Senders balance
@@ -99,28 +97,42 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag('Action', 'Balance'), func
   elseif Balances[msg.From] then
     bal = Balances[msg.From]
   end
-
-  ao.send({
-    Target = msg.From,
-    Balance = bal,
-    Ticker = Ticker,
-    Account = msg.Tags.Recipient or msg.From,
-    Data = bal
-  })
+  if msg.reply then
+    msg.reply({
+      Balance = bal,
+      Ticker = Ticker,
+      Account = msg.Tags.Recipient or msg.From,
+      Data = bal
+    })
+  else
+    Send({
+      Target = msg.From,
+      Balance = bal,
+      Ticker = Ticker,
+      Account = msg.Tags.Recipient or msg.From,
+      Data = bal
+    })
+  end
 end)
 
 --[[
      Balances
    ]]
 --
-Handlers.add('balances', Handlers.utils.hasMatchingTag('Action', 'Balances'),
-  function(msg) ao.send({ Target = msg.From, Data = json.encode(Balances) }) end)
+Handlers.add('balances', Handlers.utils.hasMatchingTag("Action", "Balances"),
+  function(msg) 
+    if msg.reply then
+      msg.reply({ Data = json.encode(Balances) })
+    else 
+      Send({Target = msg.From, Data = json.encode(Balances) }) 
+    end
+  end)
 
 --[[
      Transfer
    ]]
 --
-Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), function(msg)
+Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), function(msg)
   assert(type(msg.Recipient) == 'string', 'Recipient is required!')
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
@@ -140,7 +152,6 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
     if not msg.Cast then
       -- Debit-Notice message template, that is sent to the Sender of the transfer
       local debitNotice = {
-        Target = msg.From,
         Action = 'Debit-Notice',
         Recipient = msg.Recipient,
         Quantity = msg.Quantity,
@@ -169,16 +180,28 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag('Action', 'Transfer'), fu
       end
 
       -- Send Debit-Notice and Credit-Notice
-      ao.send(debitNotice)
-      ao.send(creditNotice)
+      if msg.reply then
+        msg.reply(debitNotice)
+      else
+        Send(debitNotice)
+      end
+      Send(creditNotice)
     end
   else
-    ao.send({
-      Target = msg.From,
-      Action = 'Transfer-Error',
-      ['Message-Id'] = msg.Id,
-      Error = 'Insufficient Balance!'
-    })
+    if msg.reply then
+      msg.reply({
+        Action = 'Transfer-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Insufficient Balance!'
+      })
+    else
+      Send({
+        Target = msg.From,
+        Action = 'Transfer-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Insufficient Balance!'
+      })
+    end
   end
 end)
 
@@ -186,7 +209,7 @@ end)
     Mint
    ]]
 --
-Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(msg)
+Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(msg)
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint(0) < bint(msg.Quantity), 'Quantity must be greater than zero!')
 
@@ -196,17 +219,31 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag('Action', 'Mint'), function(m
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
-    ao.send({
-      Target = msg.From,
-      Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
-    })
+    if msg.reply then
+      msg.reply({
+        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+      })
+    else
+      Send({
+        Target = msg.From,
+        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+      })
+    end
   else
-    ao.send({
-      Target = msg.From,
-      Action = 'Mint-Error',
-      ['Message-Id'] = msg.Id,
-      Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
-    })
+    if msg.reply then
+      msg.reply({
+        Action = 'Mint-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
+      })
+    else
+      Send({
+        Target = msg.From,
+        Action = 'Mint-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
+      })
+    end
   end
 end)
 
@@ -214,29 +251,38 @@ end)
      Total Supply
    ]]
 --
-Handlers.add('totalSupply', Handlers.utils.hasMatchingTag('Action', 'Total-Supply'), function(msg)
+Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply"), function(msg)
   assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
-
-  ao.send({
-    Target = msg.From,
-    Action = 'Total-Supply',
-    Data = TotalSupply,
-    Ticker = Ticker
-  })
+  if msg.reply then
+    msg.reply({
+      Action = 'Total-Supply',
+      Data = TotalSupply,
+      Ticker = Ticker
+    })
+  else
+    Send({
+      Target = msg.From,
+      Action = 'Total-Supply',
+      Data = TotalSupply,
+      Ticker = Ticker
+    })
+  end
 end)
 
 --[[
  Burn
 ]] --
-Handlers.add('burn', Handlers.utils.hasMatchingTag('Action', 'Burn'), function(msg)
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(bint(msg.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
+Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
+  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
+  assert(bint(msg.Tags.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
 
-  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
-  TotalSupply = utils.subtract(TotalSupply, msg.Quantity)
-
-  ao.send({
-    Target = msg.From,
-    Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
-  })
+  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity)
+  TotalSupply = utils.subtract(TotalSupply, msg.Tags.Quantity)
+  if msg.reply then
+    msg.reply({
+      Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset
+    })
+  else
+    Send({Target = msg.From,  Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset })
+  end
 end)
