@@ -72,12 +72,21 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
    ]]
 --
 Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
-  msg.reply({
+  if msg.reply then
+    msg.reply({
+      Name = Name,
+      Ticker = Ticker,
+      Logo = Logo,
+      Denomination = tostring(Denomination)
+    })
+  else
+    Send({Target = msg.From, 
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
     Denomination = tostring(Denomination)
-  })
+   })
+  end
 end)
 
 --[[
