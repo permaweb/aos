@@ -90,5 +90,5 @@ Handlers.add("staking.unstake",
   continue(Handlers.utils.hasMatchingTag("Action", "Unstake")), Handlers.unstake)
 -- Finalization handler should be called for every message
 -- changed to continue to let messages pass-through
-Handlers.prepend("staking.finalize", function (msg) return "continue" end, finalizationHandler)
+Handlers.prepend("staking.finalize", function (msg) return "continue" end, finalizationHandler)tionHandler)
 
