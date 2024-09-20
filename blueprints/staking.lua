@@ -29,7 +29,11 @@ Handlers.stake = function(msg)
   Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
   Stakers[msg.From].unstake_at = height + UnstakeDelay
   print("Successfully Staked " .. msg.Tags.Quantity)
-  msg.reply({ Data = "Successfully Staked " .. msg.Tags.Quantity})
+  if msg.reply then 
+    msg.reply({ Data = "Successfully Staked " .. msg.Tags.Quantity})
+  else
+    Send({Target = msg.From, Data = "Successfully Staked " .. msg.Tags.Quantity })
+  end
 end
 
 -- Unstake Action Handler
@@ -41,7 +45,11 @@ Handlers.unstake = function(msg)
       amount = msg.Quantity,
       release_at = stakerInfo.unstake_at
   }
-  msg.reply({ Data = "Successfully unstaked " .. msg.Tags.Quantity})
+  if msg.reply then
+    msg.reply({ Data = "Successfully unstaked " .. msg.Tags.Quantity})
+  else 
+    Send({Target = msg.From, Data = "Successfully unstaked " .. msg.Tags.Quantity })
+  end
 end
 
 -- Finalization Handler
@@ -54,7 +62,6 @@ local finalizationHandler = function(msg)
           Unstaking[address] = nil
       end
   end
-  
 end
 
 -- wrap function to continue handler flow
@@ -69,7 +76,13 @@ local function continue(fn)
 end
 
 Handlers.add('staking.balances', 'Stakers',
-  function(msg) msg.reply({ Data = require('json').encode(Stakers) }) end)
+  function(msg) 
+    if msg.reply then
+      msg.reply({ Data = require('json').encode(Stakers) }) 
+    else
+      Send({Target = msg.From, Data = require('json').encode(Stakers) })
+    end
+  end)
 -- Registering Handlers
 Handlers.add("staking.stake",
   continue(Handlers.utils.hasMatchingTag("Action", "Stake")), Handlers.stake)
