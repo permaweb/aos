@@ -106,6 +106,18 @@ function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
   end
+  --[[
+In order to print non string types we need to convert to string
+  ]]
+  if type(a) == "boolean" then
+    a = Colors.blue .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "nil" then
+    a = Colors.red .. tostring(a) .. Colors.reset
+  end
+  if type(a) == "number" then
+    a = Colors.green .. tostring(a) .. Colors.reset
+  end
   
   local data = a
   if ao.outbox.Output.data then
@@ -266,13 +278,17 @@ function process.handle(msg, _)
 
   -- Only trust messages from a signed owner or an Authority
   if msg.From ~= msg.Owner and not ao.isTrusted(msg) then
-    Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Message is not trusted by this process!"})
+    end
     print('Message is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ }) 
   end
 
   if ao.isAssignment(msg) and not ao.isAssignable(msg) then
-    Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    if msg.From ~= ao.id then
+      Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+    end
     print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
     return ao.result({ })
   end
@@ -283,7 +299,18 @@ function process.handle(msg, _)
     end,
     require('.eval')(ao)
   )
+
+  -- Added for aop6 boot loader
+  -- See: https://github.com/permaweb/aos/issues/342
+  Handlers.once("_boot",
+    function (msg)
+      return msg.Tags.Type == "Process" and Owner == msg.From
+    end,
+    require('.boot')(ao)
+  )
+
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
+
   -- call evaluate from handlers passing env
   msg.reply =
     function(replyMsg)
@@ -337,7 +364,7 @@ function process.handle(msg, _)
     if (msg.Action == "Eval") then
       table.insert(Errors, result)
       local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
-      return { Error = printData .. '\n\n' .. result }
+      return { Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result }
     end 
     --table.insert(Errors, result)
     --ao.outbox.Output.data = ""
@@ -348,9 +375,10 @@ function process.handle(msg, _)
     end
     print(Colors.green .. result .. Colors.reset)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
-    return ao.result({ Messages = {}, Spawns = {}, Assignments = {} })
+    local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
+    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
   end
-
+  
   if msg.Action == "Eval" then
     local response = ao.result({ 
       Output = {
@@ -359,6 +387,25 @@ function process.handle(msg, _)
         test = Dump(HANDLER_PRINT_LOGS)
       }
     })
+    HANDLER_PRINT_LOGS = {} -- clear logs
+    return response
+  elseif msg.Tags.Type == "Process" and Owner == msg.From then 
+    local response = nil
+  
+    -- detect if there was any output from the boot loader call
+    for _, value in pairs(HANDLER_PRINT_LOGS) do
+      if value ~= "" then
+        -- there was output from the Boot Loader eval so we want to print it
+        response = ao.result({ Output = { data = table.concat(HANDLER_PRINT_LOGS, "\n"), prompt = Prompt(), print = true } })
+        break
+      end
+    end
+  
+    if response == nil then 
+      -- there was no output from the Boot Loader eval, so we shouldn't print it
+      response = ao.result({ Output = { data = "", prompt = Prompt() } })
+    end
+
     HANDLER_PRINT_LOGS = {} -- clear logs
     return response
   else

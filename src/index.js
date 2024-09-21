@@ -5,7 +5,6 @@ import minimist from 'minimist'
 import ora from 'ora'
 import chalk from 'chalk'
 import path from 'path'
-import { errors } from './errors.js'
 import * as url from 'url'
 import process from 'node:process';
 
@@ -14,12 +13,13 @@ import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 // actions
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
+import { dryEval } from './dry-eval.js'
 
 // services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
 } from './services/connect.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
@@ -36,12 +36,13 @@ import { unmonitor } from './commands/unmonitor.js'
 import { loadBlueprint } from './commands/blueprints.js'
 import { help, replHelp } from './services/help.js'
 import { list } from './services/list.js'
-import { patch } from './commands/patch.js'
 import * as os from './commands/os.js'
 import { readHistory, writeHistory } from './services/history-service.js'
+import { pad } from './commands/pad.js'
 
 const argv = minimist(process.argv.slice(2))
 
+let dryRunMode = false
 let luaData = ""
 if (!process.stdin.isTTY) {
 
@@ -80,9 +81,22 @@ if (argv['sqlite']) {
   process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
-if (argv['module'] && argv['module'].length === 43) {
-  process.env.AOS_MODULE = argv['module']
-}
+/**
+ * A module can be specified when spawning a process using AOS
+ * that value can be the id of the module, or a colloquial 'name' for the module
+ * 
+ * this code assumes that the provided value is a TXid if the length matches what a TXid should be
+ * otherwise, we set the env variable AOS_MODULE_NAME
+ * 
+ * https://github.com/permaweb/aos/issues/310
+ */
+ if (argv['module']) {
+  if (argv['module'].length === 43) {
+    process.env.AOS_MODULE = argv['module']
+  } else {
+    process.env.AOS_MODULE_NAME = argv['module']
+  }
+} 
 
 let cron = null
 
@@ -140,6 +154,7 @@ if (!argv['watch']) {
         spinner.start();
         spinner.suffixText = chalk.gray("[Connecting to process...]")
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+
         spinner.stop()
 
         if (result.Output?.data) {
@@ -244,6 +259,19 @@ if (!argv['watch']) {
           return
         }
 
+        if (!editorMode && line == ".dryrun") {
+          dryRunMode = !dryRunMode
+          if (dryRunMode) {
+            console.log(chalk.green('dryrun mode engaged'))
+            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+          } else {
+            console.log(chalk.red('dryrun mode disengaged'))
+            rl.setPrompt(globalThis.prompt.replace('*', ''))
+          }
+          rl.prompt(true)
+          return;
+        }
+
         if (!editorMode && line == ".monitor") {
           const result = await monitor(jwk, id, { monitorProcess }).catch(err => chalk.gray('⚡️ could not monitor process!'))
           console.log(chalk.green(result))
@@ -304,7 +332,7 @@ if (!argv['watch']) {
           line = editorData
           editorData = ""
           editorMode = false;
-          rl.setPrompt(globalThis.prompt)
+          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
         }
 
         if (editorMode && line === ".delete") {
@@ -327,7 +355,8 @@ if (!argv['watch']) {
           console.log(editorData)
           editorData = ""
           editorMode = false
-          rl.setPrompt(globalThis.prompt)
+          //rl.setPrompt(globalThis.prompt)
+          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           rl.prompt(true)
           return
         }
@@ -335,7 +364,8 @@ if (!argv['watch']) {
         if (editorMode && line === ".cancel") {
           editorData = ""
           editorMode = false;
-          rl.setPrompt(globalThis.prompt)
+          //rl.setPrompt(globalThis.prompt)
+          rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
 
 
           // rl.close()
@@ -355,6 +385,19 @@ if (!argv['watch']) {
           return;
         }
 
+        if (line === ".pad") {
+          rl.pause()
+          pad(id, async (err, content) => {
+            if (!err) {
+              // console.log(content)
+              await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
+            }
+            rl.resume();
+            rl.prompt(true);
+          })
+          return;
+        }
+
         if (line === ".exit") {
           cron.stop();
           console.log("Exiting...");
@@ -369,53 +412,7 @@ if (!argv['watch']) {
         if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
         printLive()
 
-        spinner.start();
-        spinner.suffixText = chalk.gray("[Dispatching message...]")
-
-
-        // create message and publish to ao
-        const result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-          .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-        const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-        // log output
-        // console.log(output)
-        spinner.stop()
-
-        if (result?.Error || result?.error) {
-          const error = parseError(result.Error || result.error)
-
-          if (error) {
-            // get what file the error comes from,
-            // if the line was loaded
-            const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
-
-            // print error
-            outputError(line, error, errorOrigin)
-          } else {
-            console.log(chalk.red(result.Error || result.error));
-          }
-        } else {
-
-          if (output?.data) {
-            if (output.data.hasOwnProperty('output')) {
-              console.log(output.data.output)
-            } else if (output.data.hasOwnProperty('prompt')) {
-              console.log('')
-            } else {
-              console.log(output.data)
-            }
-            if (output.data.hasOwnProperty('prompt')) {
-              globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
-            } else {
-              globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
-            }
-            rl.setPrompt(globalThis.prompt)
-          } else {
-            if (!output) {
-              console.log(chalk.red('An unknown error occurred.'))
-            }
-          }
-        }
+        await doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
 
         if (process.env.DEBUG) {
           console.timeEnd(chalk.gray('Elapsed'))
@@ -438,7 +435,7 @@ if (!argv['watch']) {
         }
         process.exit(0)
       })
-    
+
       //}
 
       //repl()
@@ -498,7 +495,7 @@ async function connect(jwk, id) {
 }
 
 async function handleLoadArgs(jwk, id) {
-  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(load).join('\n')
+  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(line => load(line)[0]).join('\n')
   if (loadCode) {
     const spinner = ora({
       spinner: 'dots',
@@ -512,4 +509,59 @@ async function handleLoadArgs(jwk, id) {
     spinner.stop()
 
   }
+}
+
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
+  spinner.start();
+  spinner.suffixText = chalk.gray("[Dispatching message...]")
+
+  // create message and publish to ao
+  let result = null
+  if (dryRunMode) {
+    result = await dryEval(line, id, jwk, { dryrun }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+  } else {
+    result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+  }
+  const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+  // log output
+  // console.log(output)
+  spinner.stop()
+
+  if (result?.Error || result?.error) {
+    const error = parseError(result.Error || result.error)
+    if (error) {
+      // get what file the error comes from,
+      // if the line was loaded
+      const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
+
+      // print error
+      outputError(line, error, errorOrigin)
+    } else {
+      console.log(chalk.red(result.Error || result.error));
+    }
+  } else {
+    if (output?.data) {
+      if (output.data.hasOwnProperty('output')) {
+        console.log(output.data.output)
+      } else if (output.data.hasOwnProperty('prompt')) {
+        console.log('')
+      } else {
+        console.log(output.data)
+      }
+      if (output.data.hasOwnProperty('prompt')) {
+        globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
+      } else {
+        globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
+      }
+      rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+      // rl.setPrompt(globalThis.prompt)
+    } else {
+      if (!output) {
+        console.log(chalk.red('An unknown error occurred.'))
+      }
+    }
+  }
+  return;
 }

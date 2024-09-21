@@ -24,13 +24,15 @@
     "node-cron": "^3.0.3",
     "ora": "^7.0.1",
     "pretty-file-tree": "^1.0.1",
+    "prompts": "^2.4.2",
     "semver": "^7.5.4",
     "tar-stream": "^3.1.7",
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "zx6_08gJzKNXxLCplINj6TPv9-ElRgeRqr9F6riRBK8",
-    "sqlite": "CJ-iZL7RKNA43UZr3l6J5M8JegMP9RldoCoVge_vRuI",
+    "module": "bkjb55i07GUCUSWROtKK4HU1mBS_X0TyH3M5jMV6aPg",
+    "sqlite": "aGVVWHldKA7GBlI_w7Qp_agO6aKjCoOTPA1G2OlluXE",
+    "llama": "oamLI-KZ1Q9MxNxWwLcqXYavpwKYf1EX1BpEofb6418",
     "version": "2.0.0"
   },
   "devDependencies": {

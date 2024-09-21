@@ -305,7 +305,7 @@ Handlers.add("timestamp",
     Timestamp: currentTimestamp
   }
   const result = await handle(Memory, timestamp, env)
-  assert.equal(result.Output.data, currentTimestamp)
+  assert.equal(result.Output.data, "\x1B[32m" + currentTimestamp + "\x1B[0m")
   assert.ok(true)
 })
 

@@ -71,20 +71,29 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
      Info
    ]]
 --
-Handlers.add('info', "Info", function(msg)
-  msg.reply({
+Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
+  if msg.reply then
+    msg.reply({
+      Name = Name,
+      Ticker = Ticker,
+      Logo = Logo,
+      Denomination = tostring(Denomination)
+    })
+  else
+    Send({Target = msg.From, 
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
     Denomination = tostring(Denomination)
-  })
+   })
+  end
 end)
 
 --[[
      Balance
    ]]
 --
-Handlers.add('balance', "Balance", function(msg)
+Handlers.add('balance', Handlers.utils.hasMatchingTag("Action", "Balance"), function(msg)
   local bal = '0'
 
   -- If not Recipient is provided, then return the Senders balance
@@ -97,27 +106,42 @@ Handlers.add('balance', "Balance", function(msg)
   elseif Balances[msg.From] then
     bal = Balances[msg.From]
   end
-
-  msg.reply({
-    Balance = bal,
-    Ticker = Ticker,
-    Account = msg.Tags.Recipient or msg.From,
-    Data = bal
-  })
+  if msg.reply then
+    msg.reply({
+      Balance = bal,
+      Ticker = Ticker,
+      Account = msg.Tags.Recipient or msg.From,
+      Data = bal
+    })
+  else
+    Send({
+      Target = msg.From,
+      Balance = bal,
+      Ticker = Ticker,
+      Account = msg.Tags.Recipient or msg.From,
+      Data = bal
+    })
+  end
 end)
 
 --[[
      Balances
    ]]
 --
-Handlers.add('balances', "Balances",
-  function(msg) msg.reply({ Data = json.encode(Balances) }) end)
+Handlers.add('balances', Handlers.utils.hasMatchingTag("Action", "Balances"),
+  function(msg) 
+    if msg.reply then
+      msg.reply({ Data = json.encode(Balances) })
+    else 
+      Send({Target = msg.From, Data = json.encode(Balances) }) 
+    end
+  end)
 
 --[[
      Transfer
    ]]
 --
-Handlers.add('transfer', "Transfer", function(msg)
+Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), function(msg)
   assert(type(msg.Recipient) == 'string', 'Recipient is required!')
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
@@ -165,15 +189,28 @@ Handlers.add('transfer', "Transfer", function(msg)
       end
 
       -- Send Debit-Notice and Credit-Notice
-      msg.reply(debitNotice)
+      if msg.reply then
+        msg.reply(debitNotice)
+      else
+        Send(debitNotice)
+      end
       Send(creditNotice)
     end
   else
-    msg.reply({
-      Action = 'Transfer-Error',
-      ['Message-Id'] = msg.Id,
-      Error = 'Insufficient Balance!'
-    })
+    if msg.reply then
+      msg.reply({
+        Action = 'Transfer-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Insufficient Balance!'
+      })
+    else
+      Send({
+        Target = msg.From,
+        Action = 'Transfer-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Insufficient Balance!'
+      })
+    end
   end
 end)
 
@@ -181,7 +218,7 @@ end)
     Mint
    ]]
 --
-Handlers.add('mint', "Mint", function(msg)
+Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(msg)
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint(0) < bint(msg.Quantity), 'Quantity must be greater than zero!')
 
@@ -191,15 +228,31 @@ Handlers.add('mint', "Mint", function(msg)
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
-    msg.reply({
-      Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
-    })
+    if msg.reply then
+      msg.reply({
+        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+      })
+    else
+      Send({
+        Target = msg.From,
+        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+      })
+    end
   else
-    msg.reply({
-      Action = 'Mint-Error',
-      ['Message-Id'] = msg.Id,
-      Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
-    })
+    if msg.reply then
+      msg.reply({
+        Action = 'Mint-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
+      })
+    else
+      Send({
+        Target = msg.From,
+        Action = 'Mint-Error',
+        ['Message-Id'] = msg.Id,
+        Error = 'Only the Process Id can mint new ' .. Ticker .. ' tokens!'
+      })
+    end
   end
 end)
 
@@ -207,27 +260,38 @@ end)
      Total Supply
    ]]
 --
-Handlers.add('totalSupply', "Total-Supply", function(msg)
+Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply"), function(msg)
   assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
-
-  msg.reply({
-    Action = 'Total-Supply',
-    Data = TotalSupply,
-    Ticker = Ticker
-  })
+  if msg.reply then
+    msg.reply({
+      Action = 'Total-Supply',
+      Data = TotalSupply,
+      Ticker = Ticker
+    })
+  else
+    Send({
+      Target = msg.From,
+      Action = 'Total-Supply',
+      Data = TotalSupply,
+      Ticker = Ticker
+    })
+  end
 end)
 
 --[[
  Burn
 ]] --
-Handlers.add('burn', 'Burn', function(msg)
-  assert(type(msg.Quantity) == 'string', 'Quantity is required!')
-  assert(bint(msg.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
+Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
+  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
+  assert(bint(msg.Tags.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
 
-  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
-  TotalSupply = utils.subtract(TotalSupply, msg.Quantity)
-
-  msg.reply({
-    Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Quantity .. Colors.reset
-  })
+  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity)
+  TotalSupply = utils.subtract(TotalSupply, msg.Tags.Quantity)
+  if msg.reply then
+    msg.reply({
+      Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset
+    })
+  else
+    Send({Target = msg.From,  Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset })
+  end
 end)

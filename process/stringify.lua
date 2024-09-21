@@ -19,7 +19,7 @@ function stringify.isSimpleArray(tbl)
   return true
 end
 
-function stringify.format(tbl, indent)
+function stringify.format(tbl, indent, visited)
   indent = indent or 0
   local toIndent = string.rep(" ", indent)
   local toIndentChild = string.rep(" ", indent + 2)
@@ -59,7 +59,13 @@ function stringify.format(tbl, indent)
     end
     if not isArray then
       if type(v) == "table" then
-        v = stringify.format(v, indent + 2)
+        visited = visited or {}
+        if visited[v] then
+            return "<circular reference>"
+        end
+        visited[v] = true
+
+        v = stringify.format(v, indent + 2, visited)
       elseif type(v) == "string" then
         v = colors.green .. '"' .. v .. '"' .. colors.reset
       else

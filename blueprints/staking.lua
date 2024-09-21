@@ -29,7 +29,7 @@ Handlers.stake = function(msg)
   Stakers[msg.From].amount = utils.add(Stakers[msg.From].amount, msg.Tags.Quantity)  
   Stakers[msg.From].unstake_at = height + UnstakeDelay
   print("Successfully Staked " .. msg.Tags.Quantity)
-  if msg.reply then 
+  if msg.reply then
     msg.reply({ Data = "Successfully Staked " .. msg.Tags.Quantity})
   else
     Send({Target = msg.From, Data = "Successfully Staked " .. msg.Tags.Quantity })
@@ -42,12 +42,12 @@ Handlers.unstake = function(msg)
   assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Tags.Quantity), "Insufficient staked amount")
   stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Tags.Quantity)
   Unstaking[msg.From] = {
-      amount = msg.Quantity,
+      amount = msg.Tags.Quantity,
       release_at = stakerInfo.unstake_at
   }
   if msg.reply then
     msg.reply({ Data = "Successfully unstaked " .. msg.Tags.Quantity})
-  else 
+  else
     Send({Target = msg.From, Data = "Successfully unstaked " .. msg.Tags.Quantity })
   end
 end
@@ -75,12 +75,12 @@ local function continue(fn)
   end
 end
 
-Handlers.add('staking.balances', 'Stakers',
+Handlers.add('staking.balances', Handlers.utils.hasMatchingTag("Action", 'Stakers'),
   function(msg) 
     if msg.reply then
-      msg.reply({ Data = require('json').encode(Stakers) }) 
+      msg.reply({ Data = require('json').encode(Stakers) })
     else
-      Send({Target = msg.From, Data = require('json').encode(Stakers) })
+      Send({Target = msg.From, Data = require('json').encode(Stakers) }) 
     end
   end)
 -- Registering Handlers
