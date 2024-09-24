@@ -1,11 +1,10 @@
 {
   "name": "@permaweb/weavedrive",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "main": "./dist/index.cjs",
   "license": "MIT",
   "devDependencies": {
-    "@permaweb/ao-loader": "^0.0.35",
-    "@permaweb/weavedrive": "^0.0.2",
+    "@permaweb/ao-loader": "^0.0.36",
     "esbuild": "^0.21.1"
   }
 }
