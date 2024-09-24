@@ -243,13 +243,13 @@ function Version()
 end
 
 function process.handle(msg, _)
-  env = nil
+  local env = nil
   if _.Process then
     env = _
   else
     env = _.env
   end
-
+  
   ao.init(env)
   -- relocate custom tags to root message
   msg = ao.normalize(msg)
@@ -345,7 +345,7 @@ function process.handle(msg, _)
 
   local co = coroutine.create(
     function()
-      return pcall(Handlers.evaluate, msg, ao.env)
+      return pcall(Handlers.evaluate, msg, env)
     end
   )
   local _, status, result = coroutine.resume(co)
