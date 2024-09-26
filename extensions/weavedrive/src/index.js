@@ -127,7 +127,88 @@ module.exports = function weaveDrive(mod, FS) {
       var stream = FS.open('/tx/' + id, 'r');
       return stream;
     },
+    async createDataItemTxHeader(id) {
+      const gqlQuery = this.gqlQuery
+      async function toAddress(owner) {
+        return Arweave.utils.bufferTob64Url(
+          await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
+        );
+      }
+      async function retry(x) {
+        return new Promise(r => {
+          setTimeout(function () {
+            r(gqlQuery(`/tx/${id}`))
+          }, x * 10000)
+        })
+      }
 
+      const gqlExists = await this.gqlExists()
+      if (!gqlExists) {
+        return 'GQL Not Found!'
+      }
+      var GET_TRANSACTION_QUERY = `
+        query GetTransactions ($transactionIds: [ID!]!) {
+          transactions(ids: $transactionIds) {
+            edges {
+              node {
+                id
+                anchor
+                data {
+                  size
+                }
+                signature
+                recipient 
+                owner {
+                  address 
+                  key
+                }
+                fee {
+                  ar 
+                  winston
+                }
+                quantity {
+                  winston
+                  ar
+                }
+                tags {
+                  name 
+                  value 
+                }
+                bundledIn {
+                  id
+                }
+                block { 
+                  id
+                  timestamp
+                  height
+                  previous
+                }
+              }
+            }
+          }
+        }`
+      var variables = { transactionIds: [id] }
+      // todo: add a bunch of retries
+      var result = await this.gqlQuery(GET_TRANSACTION_QUERY, variables)
+        .then(res => !res.ok ? retry(1) : res)
+        .then(res => !res.ok ? retry(2) : res)
+        .then(res => !res.ok ? retry(3) : res)
+        .then(res => !res.ok ? retry(4) : res)
+        .then(res => res.json())
+        .then(res => res.data.transactions.edges[0].node)
+        .then(async entry => {
+          return { 
+            format: 3,
+            ...entry
+          }
+        })
+        .then(x => JSON.stringify(x));
+        
+        var node = FS.createDataFile('/', 'txDataItem/' + id, result, true, false);
+        var stream = FS.open('/txDataItem/' + id, 'r');
+
+        return stream;
+    },
     async open(filename) {
       const pathCategory = filename.split('/')[1];
       const id = filename.split('/')[2];
@@ -135,27 +216,32 @@ module.exports = function weaveDrive(mod, FS) {
       if (pathCategory === 'tx') {
         FS.createPath('/', 'tx', true, false);
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              return FS.streams[i].fd;
-            }
-          }
-          return 0;
+          var stream = FS.open(filename, 'r');
+          if (stream.fd) return stream.fd
+          return 0
         } else {
           const stream = await this.createTxHeader(id);
           return stream.fd;
         }
 
       }
+      if (pathCategory === 'txDataItem') {
+        FS.createPath('/', 'txDataItem', true, false);
+        if (FS.analyzePath(filename).exists) {
+          var stream = FS.open(filename, 'r');
+          if (stream.fd) return stream.fd
+          return 0
+        } else {
+          const stream = await this.createDataItemTxHeader(id);
+          return stream.fd;
+        }
+      }
       if (pathCategory === 'block') {
         FS.createPath('/', 'block', true, false);
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              return FS.streams[i].fd;
-            }
-          }
-          return 0;
+          var stream = FS.open(filename, 'r');
+          if (stream.fd) return stream.fd
+          return 0
         } else {
           const stream = await this.createBlockHeader(id);
           return stream.fd;
@@ -164,12 +250,8 @@ module.exports = function weaveDrive(mod, FS) {
 
       if (pathCategory === 'data') {
         if (FS.analyzePath(filename).exists) {
-          for (var i = 0; i < FS.streams.length; i++) {
-            if (FS.streams[i].node.name === id) {
-              //console.log("JS: Found file: ", filename, " fd: ", FS.streams[i].fd);
-              return FS.streams[i].fd;
-            }
-          }
+          var stream = FS.open(filename, 'r');
+          if (stream.fd) return stream.fd
           console.log("JS: File not found: ", filename);
           return 0;
         }
@@ -189,7 +271,6 @@ module.exports = function weaveDrive(mod, FS) {
         return 0;
       }
     },
-
     async read(fd, raw_dst_ptr, raw_length) {
 
       // Note: The length and dst_ptr are 53 bit integers in JS, so this _should_ be ok into a large memspace.
@@ -468,6 +549,61 @@ module.exports = function weaveDrive(mod, FS) {
       const results = await mod.arweave.api.post('/graphql', query);
       const json = JSON.parse(results)
       return json.data.transactions.edges.length > 0
+    },
+    
+    async gqlExists() {
+      const query = `query {
+        transactions(
+          first: 1
+        ) {
+          pageInfo {
+            hasNextPage
+          }
+        }
+      }
+      `
+      
+      const gqlExists = await this.gqlQuery(query, {}).then((res) => res.ok)
+      return gqlExists
+    },
+
+    async gqlQuery(query, variables) {
+      let urlList = null
+      const headers = new Headers({})
+      headers.append("content-type", "application/json")
+      if (mod.ARWEAVE.includes(',')) {
+        urlList = mod.ARWEAVE.split(',').map(url => url.trim())
+      }
+      if (urlList && urlList.length > 0) {
+        /**
+         * Try a list of gateways instead of a single one
+         */
+        for (const url of urlList) {
+          const response = await fetch(`${url}/graphql`, {
+            method: 'POST',
+            body: JSON.stringify({ query, variables }),
+            headers
+          })
+          if (response.ok) {
+            return response
+          }
+        }
+        /**
+         * None succeeded so fall back to mod.ARWEAVE so that
+         * if this fails we return a proper error response
+         */
+        return await fetch(`${mod.ARWEAVE}/graphql`, {
+          method: 'POST',
+          body: JSON.stringify({ query, variables }),
+          headers
+        })
+      } else {
+        return await fetch(`${mod.ARWEAVE}/graphql`, {
+          method: 'POST',
+          body: JSON.stringify({ query, variables }),
+          headers
+        })
+      }
     }
   }
 }

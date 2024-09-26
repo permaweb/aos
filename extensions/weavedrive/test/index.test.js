@@ -3,7 +3,7 @@ const fs = require('fs')
 const { test } = require('node:test')
 const assert = require('assert')
 const weaveDrive = require('../src/index.js')
-const wasm = fs.readFileSync('./aosqlite.wasm')
+const wasm = fs.readFileSync('./process.wasm')
 const bootLoaderWasm = fs.readFileSync('./bootloader.wasm')
 
 let memory = null
@@ -14,7 +14,8 @@ const Module = {
   Tags: [
     { name: 'Data-Protocol', value: 'ao'},
     { name: 'Variant', value: 'ao.TN.1'},
-    { name: 'Type', value: 'Module'}
+    { name: 'Type', value: 'Module'},
+    { name: 'Authority', value: 'PROCESS' }
   ]
 }
 
@@ -25,7 +26,9 @@ const Process = {
     { name: 'Data-Protocol', value: 'ao' },
     { name: 'Variant', value: 'ao.TN.1' },
     { name: 'Type', value: 'Process' },
-    { name: 'Extension', value: 'WeaveDrive' }
+    { name: 'Extension', value: 'WeaveDrive' },
+    { name: 'Module', value: 'MODULE' },
+    { name: 'Authority', value: 'PROCESS' },
   ]
 }
 
@@ -82,10 +85,8 @@ test('read block', async () => {
 `
   }, { Process, Module })
   memory = result.Memory
-  console.log(result.Output.data.output)
-  assert.equal(result.Output.data.output, '63')
+  assert.equal(result.Output.data, '63')
 })
-
 
 test('read tx', async () => {
   const handle = await AoLoader(wasm, options)
@@ -109,7 +110,6 @@ return results
     `
   }, { Process, Module })
   memory = result.Memory
-  console.log(result.Output.data.output)
   assert.ok(true)
 })
 
@@ -119,7 +119,7 @@ test('read twice', async function () {
     ...Msg,
     Data: `
 local drive = require('WeaveDrive')
-function getTxs(txs)
+function getTxs()
   local results = {}
   local txs = drive 
     .getBlock('1439783').txs
@@ -135,15 +135,13 @@ function getTxs(txs)
   end
   return results
 end
-local block = drive.getBlock('1439782')
-local results = getTxs(block.txs) 
-local results2 = getTxs(block.txs)
-
+local results = getTxs() 
+local results2 = getTxs()
 return require('json').encode({ A = #results, B = #results2 }) 
     `
   }, { Process, Module })
   memory = result.Memory
-  const res = JSON.parse(result.Output.data.output)
+  const res = JSON.parse(result.Output.data)
 
   assert.equal(res.A, res.B)
 })
@@ -184,10 +182,44 @@ return results
     `
   }, { Process, Module })
   memory = result.Memory
-  console.log(result)
   assert.ok(true)
 })
 
+test('read data item tx', async () => {
+  const handle = await AoLoader(wasm, options)
+  const result = await handle(memory, {
+    ...Msg,
+    Data: `
+local results = {}
+local drive = require('WeaveDrive')
+local result = drive.getDataItem('Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
+
+return result
+    `
+  }, { Process, Module })
+  const data = JSON.parse(result.Output.data)
+  assert.equal(data.format, 3)
+  assert.equal(data.id, 'Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
+  assert.equal(data.block.height, 1290333)
+})
+
+test('read data item tx, no gql', async () => {
+  const handle = await AoLoader(wasm, {
+    ...options,
+    ARWEAVE: 'https://example.com'
+  })
+  const result = await handle(memory, {
+    ...Msg,
+    Data: `
+local results = {}
+local drive = require('WeaveDrive')
+local result = drive.getDataItem('Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
+return result
+    `
+  }, { Process, Module })
+  memory = result.Memory
+  assert.equal(result.Output.data, '')
+})
 
 let memoryBootLoader = null
 
