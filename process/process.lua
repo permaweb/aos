@@ -4,6 +4,8 @@ local json = require('json')
 local chance = require('.chance')
 local crypto = require('.crypto.init')
 local coroutine = require('coroutine')
+-- set alias ao for .ao library
+if not _G.package.loaded['ao'] then _G.package.loaded['ao'] = require('.ao') end
 
 Colors = {
   red = "\27[31m",
