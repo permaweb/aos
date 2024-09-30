@@ -45,4 +45,18 @@ function drive.getData(txId)
   return contents
 end
 
+function drive.getDataItem(txId)
+  local file = io.open('/tx2/' .. txId)
+  if not file then
+    return nil, "File not found!"
+  end
+  if file == 'GQL Not Found!' then
+    return nil, 'GraphQL not Found!'
+  end
+  local contents = file:read(
+    file:seek('end')
+  )
+  file:close()
+  return contents
+end
 return drive
