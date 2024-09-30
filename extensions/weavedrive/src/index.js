@@ -204,8 +204,8 @@ module.exports = function weaveDrive(mod, FS) {
         })
         .then(x => JSON.stringify(x));
         
-        var node = FS.createDataFile('/', 'txDataItem/' + id, result, true, false);
-        var stream = FS.open('/txDataItem/' + id, 'r');
+        var node = FS.createDataFile('/', 'tx2/' + id, result, true, false);
+        var stream = FS.open('/tx2/' + id, 'r');
 
         return stream;
     },
@@ -225,8 +225,8 @@ module.exports = function weaveDrive(mod, FS) {
         }
 
       }
-      if (pathCategory === 'txDataItem') {
-        FS.createPath('/', 'txDataItem', true, false);
+      if (pathCategory === 'tx2') {
+        FS.createPath('/', 'tx2', true, false);
         if (FS.analyzePath(filename).exists) {
           var stream = FS.open(filename, 'r');
           if (stream.fd) return stream.fd
