@@ -50,9 +50,6 @@ function drive.getDataItem(txId)
   if not file then
     return nil, "File not found!"
   end
-  if file == 'GQL Not Found!' then
-    return nil, 'GraphQL not Found!'
-  end
   local contents = file:read(
     file:seek('end')
   )

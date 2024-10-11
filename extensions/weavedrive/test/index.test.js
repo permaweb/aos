@@ -203,6 +203,25 @@ return result
   assert.equal(data.block.height, 1290333)
 })
 
+test('read data item tx, no result', async () => {
+  const handle = await AoLoader(wasm, options)
+  const result = await handle(memory, {
+    ...Msg,
+    Data: `
+local address = 'foo-address'
+local results = {}
+local drive = require('WeaveDrive')
+local result = drive.getDataItem(address)
+
+return result
+    `
+  }, { Process, Module })
+
+  memory = result.Memory
+  console.log({ result })
+  assert.equal(result.Output.data, '')
+})
+
 test('read data item tx, no gql', async () => {
   const handle = await AoLoader(wasm, {
     ...options,

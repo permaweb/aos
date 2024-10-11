@@ -129,15 +129,52 @@ module.exports = function weaveDrive(mod, FS) {
     },
     async createDataItemTxHeader(id) {
       const gqlQuery = this.gqlQuery
-      async function toAddress(owner) {
-        return Arweave.utils.bufferTob64Url(
-          await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
-        );
-      }
+      var GET_TRANSACTION_QUERY = `
+      query GetTransactions ($transactionIds: [ID!]!) {
+        transactions(ids: $transactionIds) {
+          edges {
+            node {
+              id
+              anchor
+              data {
+                size
+              }
+              signature
+              recipient 
+              owner {
+                address 
+                key
+              }
+              fee {
+                ar 
+                winston
+              }
+              quantity {
+                winston
+                ar
+              }
+              tags {
+                name 
+                value 
+              }
+              bundledIn {
+                id
+              }
+              block { 
+                id
+                timestamp
+                height
+                previous
+              }
+            }
+          }
+        }
+      }`
+    var variables = { transactionIds: [id] }
       async function retry(x) {
         return new Promise(r => {
           setTimeout(function () {
-            r(gqlQuery(`/tx/${id}`))
+            r(gqlQuery(GET_TRANSACTION_QUERY, variables))
           }, x * 10000)
         })
       }
@@ -146,48 +183,7 @@ module.exports = function weaveDrive(mod, FS) {
       if (!gqlExists) {
         return 'GQL Not Found!'
       }
-      var GET_TRANSACTION_QUERY = `
-        query GetTransactions ($transactionIds: [ID!]!) {
-          transactions(ids: $transactionIds) {
-            edges {
-              node {
-                id
-                anchor
-                data {
-                  size
-                }
-                signature
-                recipient 
-                owner {
-                  address 
-                  key
-                }
-                fee {
-                  ar 
-                  winston
-                }
-                quantity {
-                  winston
-                  ar
-                }
-                tags {
-                  name 
-                  value 
-                }
-                bundledIn {
-                  id
-                }
-                block { 
-                  id
-                  timestamp
-                  height
-                  previous
-                }
-              }
-            }
-          }
-        }`
-      var variables = { transactionIds: [id] }
+
       // todo: add a bunch of retries
       var result = await this.gqlQuery(GET_TRANSACTION_QUERY, variables)
         .then(res => !res.ok ? retry(1) : res)
@@ -195,16 +191,24 @@ module.exports = function weaveDrive(mod, FS) {
         .then(res => !res.ok ? retry(3) : res)
         .then(res => !res.ok ? retry(4) : res)
         .then(res => res.json())
-        .then(res => res.data.transactions.edges[0].node)
+        .then(res => {
+          return res?.data?.transactions?.edges?.[0]?.node ? res.data.transactions.edges[0].node : 'No results'
+        })
         .then(async entry => {
-          return { 
+          return typeof(entry) == 'string' ? entry : { 
             format: 3,
             ...entry
           }
         })
-        .then(x => JSON.stringify(x));
+        .then(x => {
+          return typeof(x) == 'string' ? x : JSON.stringify(x)
+        });
         
-        var node = FS.createDataFile('/', 'tx2/' + id, result, true, false);
+
+        if (result === 'No results') {
+          return result
+        }
+        FS.createDataFile('/', 'tx2/' + id, result, true, false);
         var stream = FS.open('/tx2/' + id, 'r');
 
         return stream;
@@ -233,7 +237,8 @@ module.exports = function weaveDrive(mod, FS) {
           return 0
         } else {
           const stream = await this.createDataItemTxHeader(id);
-          return stream.fd;
+          if (stream.fd) return stream.fd
+          return 0
         }
       }
       if (pathCategory === 'block') {
@@ -247,7 +252,6 @@ module.exports = function weaveDrive(mod, FS) {
           return stream.fd;
         }
       }
-
       if (pathCategory === 'data') {
         if (FS.analyzePath(filename).exists) {
           var stream = FS.open(filename, 'r');
