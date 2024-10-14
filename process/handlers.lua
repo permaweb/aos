@@ -235,7 +235,9 @@ function handlers.remove(name)
   end
 
   local idx = findIndexByProp(handlers.list, "name", name)
-  table.remove(handlers.list, idx)
+  if idx ~= nil and idx > 0 then
+    table.remove(handlers.list, idx)
+  end
   
 end
 
