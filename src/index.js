@@ -532,6 +532,8 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
   if (result?.Error || result?.error) {
     const error = parseError(result.Error || result.error)
     if (error) {
+      // When loading, '\n\n' is prepended to the file. This creates a 2 line offset. Fix it here.
+      error.lineNumber -= 2
       // get what file the error comes from,
       // if the line was loaded
       const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
