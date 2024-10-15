@@ -535,7 +535,6 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
       // get what file the error comes from,
       // if the line was loaded
       const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
-
       // print error
       outputError(line, error, errorOrigin)
     } else {
