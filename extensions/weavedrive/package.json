@@ -7,6 +7,9 @@
     "build": "node build.js",
     "test": "node --experimental-wasm-memory64 --test"
   },
+  "files": [
+    "./dist"
+  ],
   "dependencies": {
     "arweave": "^1.15.5"
   },
