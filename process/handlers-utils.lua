@@ -44,13 +44,12 @@ function _utils.reply(input)
   end
 end
 
-function _utils.continue(fn)
-  assert(type(fn) == 'function', 'invalid arguments: (fn : function)')
+function _utils.continue(pattern)
   return function (msg)
-    local patternResult = fn(msg)
+    local match = _.matchesSpec(msg, pattern)
 
-    if not patternResult or patternResult == 0 or patternResult == "skip" then
-      return patternResult
+    if not match or match == 0 or match == "skip" then
+      return match
     end
     return 1
   end
