@@ -76,6 +76,10 @@ _G.package.loaded[".${mod}"] = load_${mod.replace("-", "_")}()
   `
 }
 
+function patch3() {
+  
+}
+
 function patch2() {
   return `
 Handlers.prepend("Assignment-Check", function (msg)
