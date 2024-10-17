@@ -1,2 +1,5 @@
-preset: 'xxl'
+stack_size: 268435456
+initial_memory: 838860800
+maximum_memory: 4294967296
 keep_js: true
+target: 64
