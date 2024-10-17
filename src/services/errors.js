@@ -69,13 +69,12 @@ export function getErrorOrigin(loadedModules, lineNumber) {
   let currentLine = 0
 
   for (let i = 0; i < loadedModules.length; i++) {
-    // get module line count
-    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1
-
+    // get module line count, add 2 for '\n\n' offset
+    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1 + 2
     if (currentLine + lineCount >= lineNumber) {
       return {
         file: loadedModules[i].path,
-        line: lineNumber - currentLine - i * 2
+        line: lineNumber - currentLine - (i + 1) * 2
       }
     }
 
@@ -92,18 +91,28 @@ export function getErrorOrigin(loadedModules, lineNumber) {
  * @param {ErrorOrigin|undefined} origin
  */
 export function outputError(line, error, origin) {
-  const lineNumber = origin?.line || error.lineNumber
+  // Subtract 2 lines as the line does not includes the '\n\n' offset
+  const lineNumber = (origin?.line || error.lineNumber - 2)
   const lineNumberPlaceholder = ' '.repeat(lineNumber.toString().length)
 
-  console.log(
-    '\n' +
-    chalk.bold(error.errorMessage) +
-    '\n' +
-    (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
-    chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +
-    line.split('\n')[error.lineNumber - 1] +
-    '\n' +
-    chalk.blue(` ${lineNumberPlaceholder} |\n`) +
-    chalk.dim('This error occurred while aos was evaluating the submitted code.')
-  )
+  if (origin) {
+    console.log(
+      '\n' +
+      chalk.bold(error.errorMessage) +
+      '\n' +
+      (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
+      chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +
+      line.split('\n')[lineNumber + 1] +
+      '\n' +
+      chalk.blue(` ${lineNumberPlaceholder} |\n`) +
+      chalk.dim('This error occurred while aos was evaluating the submitted code.')
+    )
+  } else {
+    console.log(
+      '\n' +
+      chalk.bold(`Error on line ${lineNumber}: ${error.errorMessage}`) +
+      '\n' +
+      chalk.dim('This error occurred while aos was evaluating the submitted code.')
+    )
+  }
 }
