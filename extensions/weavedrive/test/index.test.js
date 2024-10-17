@@ -12,9 +12,9 @@ const Module = {
   Id: "MODULE",
   Owner: "OWNER",
   Tags: [
-    { name: 'Data-Protocol', value: 'ao'},
-    { name: 'Variant', value: 'ao.TN.1'},
-    { name: 'Type', value: 'Module'},
+    { name: 'Data-Protocol', value: 'ao' },
+    { name: 'Variant', value: 'ao.TN.1' },
+    { name: 'Type', value: 'Module' },
     { name: 'Authority', value: 'PROCESS' }
   ]
 }
@@ -48,15 +48,22 @@ const Msg = {
 }
 
 const options = {
-    format: 'wasm64-unknown-emscripten-draft_2024_02_15',
-    WeaveDrive: weaveDrive,
-    ARWEAVE: 'https://arweave.net',
-    mode: "test",
-    blockHeight: 1000,
-    spawn: {
-      "Scheduler": "TEST_SCHED_ADDR"
-    },
-    process: Process
+  format: 'wasm64-unknown-emscripten-draft_2024_02_15',
+  WeaveDrive: weaveDrive,
+  ARWEAVE: 'https://arweave.net',
+  mode: "test",
+  blockHeight: 1000,
+  spawn: {
+    tags: {
+      "Scheduler": "TEST_SCHED_ADDR",
+      "On-Boot": "Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA"
+    }
+  },
+  module: {
+    tags: {
+
+    }
+  }
 }
 
 test('load client source', async () => {
@@ -148,8 +155,8 @@ return require('json').encode({ A = #results, B = #results2 })
 
 // test weavedrive feature of acceptint multiple gateways
 test('read block, multi url', async () => {
-  const handle = await AoLoader(wasm, { 
-    ...options, 
+  const handle = await AoLoader(wasm, {
+    ...options,
     ARWEAVE: 'https://arweave.net,https://g8way.io'
   })
   const result = await handle(memory, {
@@ -163,8 +170,8 @@ test('read block, multi url', async () => {
 
 
 test('read tx, multi url', async () => {
-  const handle = await AoLoader(wasm, { 
-    ...options, 
+  const handle = await AoLoader(wasm, {
+    ...options,
     ARWEAVE: 'https://arweave.net,https://g8way.io'
   })
   const result = await handle(memory, {
@@ -242,10 +249,10 @@ return result
 
 let memoryBootLoader = null
 
- /*
-  * The Process is also the first message when aop 6 boot loader
-  * is enabled in the network
-  */
+/*
+ * The Process is also the first message when aop 6 boot loader
+ * is enabled in the network
+ */
 const ProcessBootLoaderData = {
   Id: 'PROCESS',
   Owner: 'PROCESS',
@@ -261,6 +268,7 @@ const ProcessBootLoaderData = {
   ],
   Data: `
 Test = 1
+print("Test " .. Test)
     `,
   From: 'PROCESS',
   Module: 'MODULE',
@@ -268,13 +276,14 @@ Test = 1
   Timestamp: Date.now()
 }
 
-const optionsBootLoaderData = { ...options, Process: ProcessBootLoaderData, mode: null}
+const optionsBootLoaderData = { ...options, mode: null }
 
 test('boot loader set to Data', async function () {
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderData)
-  await handle(memoryBootLoader, {
+  const result = await handle(memoryBootLoader, {
     ...ProcessBootLoaderData
   }, { Process: ProcessBootLoaderData, Module })
+  assert.equal(result.Output.data, 'Test 1')
 })
 
 const ProcessBootLoaderTx = {
@@ -299,11 +308,12 @@ Test = 1
   Timestamp: Date.now()
 }
 
-const optionsBootLoaderTx = { ...options, Process: ProcessBootLoaderTx, mode: null}
+const optionsBootLoaderTx = { ...options, mode: null }
 
 test('boot loader set to tx id', async function () {
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderTx)
-  await handle(memoryBootLoader, {
+  const result = await handle(memoryBootLoader, {
     ...ProcessBootLoaderTx
   }, { Process: ProcessBootLoaderTx, Module })
+  assert.equal(result.Output.data, '')
 })
