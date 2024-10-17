@@ -18,10 +18,10 @@ module.exports = function weaveDrive(mod, FS) {
 
     async customFetch(path, options) {
       let urlList = null
-      if(mod.ARWEAVE.includes(',')) {
+      if (mod.ARWEAVE.includes(',')) {
         urlList = mod.ARWEAVE.split(',').map(url => url.trim())
       }
-      if(urlList && urlList.length > 0) {
+      if (urlList && urlList.length > 0) {
         /**
          * Try a list of gateways instead of a single one
          */
@@ -54,10 +54,10 @@ module.exports = function weaveDrive(mod, FS) {
       // This check/mkdir was added for AOP 6 Boot loader because create is
       // called first because were only loading Data, we needed to create
       // the directory. See: https://github.com/permaweb/aos/issues/342
-      if(!FS.analyzePath('/data/').exists){
+      if (!FS.analyzePath('/data/').exists) {
         FS.mkdir('/data/');
       }
-      
+
       var node = FS.createFile('/', 'data/' + id, properties, true, false);
       // Set initial parameters
       var bytesLength = await this.customFetch(`/${id}`, { method: 'HEAD' }).then(res => res.headers.get('Content-Length'))
@@ -170,7 +170,7 @@ module.exports = function weaveDrive(mod, FS) {
           }
         }
       }`
-    var variables = { transactionIds: [id] }
+      var variables = { transactionIds: [id] }
       async function retry(x) {
         return new Promise(r => {
           setTimeout(function () {
@@ -195,23 +195,23 @@ module.exports = function weaveDrive(mod, FS) {
           return res?.data?.transactions?.edges?.[0]?.node ? res.data.transactions.edges[0].node : 'No results'
         })
         .then(async entry => {
-          return typeof(entry) == 'string' ? entry : { 
+          return typeof (entry) == 'string' ? entry : {
             format: 3,
             ...entry
           }
         })
         .then(x => {
-          return typeof(x) == 'string' ? x : JSON.stringify(x)
+          return typeof (x) == 'string' ? x : JSON.stringify(x)
         });
-        
 
-        if (result === 'No results') {
-          return result
-        }
-        FS.createDataFile('/', 'tx2/' + id, result, true, false);
-        var stream = FS.open('/tx2/' + id, 'r');
 
-        return stream;
+      if (result === 'No results') {
+        return result
+      }
+      FS.createDataFile('/', 'tx2/' + id, result, true, false);
+      var stream = FS.open('/tx2/' + id, 'r');
+
+      return stream;
     },
     async open(filename) {
       const pathCategory = filename.split('/')[1];
@@ -434,7 +434,7 @@ module.exports = function weaveDrive(mod, FS) {
 
       // Check if we are attempting to load the On-Boot id, if so allow it
       // this was added for AOP 6 Boot loader See: https://github.com/permaweb/aos/issues/342
-      const bootTag = mod.Process.Tags.find((t) => t.name === 'On-Boot')?.value;
+      const bootTag = mod.spawn.tags['On-Boot'];
       if (bootTag && (bootTag === ID)) return true;
 
       // Check that this module or process set the WeaveDrive tag on spawn
@@ -554,7 +554,7 @@ module.exports = function weaveDrive(mod, FS) {
       const json = JSON.parse(results)
       return json.data.transactions.edges.length > 0
     },
-    
+
     async gqlExists() {
       const query = `query {
         transactions(
@@ -566,7 +566,7 @@ module.exports = function weaveDrive(mod, FS) {
         }
       }
       `
-      
+
       const gqlExists = await this.gqlQuery(query, {}).then((res) => res.ok)
       return gqlExists
     },
