@@ -47,6 +47,8 @@ const Msg = {
   Timestamp: Date.now()
 }
 
+const BootLoadedFromTx = 'Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA'
+
 const options = {
   format: 'wasm64-unknown-emscripten-draft_2024_02_15',
   WeaveDrive: weaveDrive,
@@ -54,15 +56,13 @@ const options = {
   mode: "test",
   blockHeight: 1000,
   spawn: {
-    tags: {
-      "Scheduler": "TEST_SCHED_ADDR",
-      "On-Boot": "Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA"
-    }
+    tags: [
+      { name: 'Scheduler', value: 'TEST_SCHED_ADDR' },
+      { name: 'On-Boot', value: BootLoadedFromTx }
+    ],
   },
   module: {
-    tags: {
-
-    }
+    tags: []
   }
 }
 
@@ -295,7 +295,7 @@ const ProcessBootLoaderTx = {
     { name: 'Variant', value: 'ao.TN.1' },
     { name: 'Type', value: 'Process' },
     { name: 'Extension', value: 'WeaveDrive' },
-    { name: 'On-Boot', value: 'Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA' },
+    { name: 'On-Boot', value: BootLoadedFromTx },
     { name: 'Module', value: 'MODULE' },
     { name: 'Authority', value: 'PROCESS' }
   ],
@@ -312,8 +312,21 @@ const optionsBootLoaderTx = { ...options, mode: null }
 
 test('boot loader set to tx id', async function () {
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderTx)
-  const result = await handle(memoryBootLoader, {
+  const { Memory } = await handle(memoryBootLoader, {
     ...ProcessBootLoaderTx
   }, { Process: ProcessBootLoaderTx, Module })
-  assert.equal(result.Output.data, '')
+
+  /**
+   * Now access a value set by the On-Boot tx's
+   * evaluation
+   */
+  const result = await handle(Memory, {
+    ...Msg,
+    Owner: 'PROCESS',
+    Target: 'PROCESS',
+    From: 'PROCESS',
+    Data: 'Ticker'
+  }, { Process: ProcessBootLoaderTx, Module })
+
+  assert.equal(result.Output.data, '<TICKER>')
 })

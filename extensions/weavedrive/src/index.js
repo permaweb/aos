@@ -434,7 +434,7 @@ module.exports = function weaveDrive(mod, FS) {
 
       // Check if we are attempting to load the On-Boot id, if so allow it
       // this was added for AOP 6 Boot loader See: https://github.com/permaweb/aos/issues/342
-      const bootTag = mod.spawn.tags['On-Boot'];
+      const bootTag = this.getTagValue('On-Boot', mod.spawn.tags)
       if (bootTag && (bootTag === ID)) return true;
 
       // Check that this module or process set the WeaveDrive tag on spawn
@@ -452,28 +452,34 @@ module.exports = function weaveDrive(mod, FS) {
       const modes = ["Assignments", "Individual", "Library"]
       // Get the Availability-Type from the spawned process's Module or Process item
       // First check the module for its defaults
-      const moduleMode = mod.module.tags['Availability-Type']
-        ? mod.module.tags['Availability-Type']
+      const moduleAvailabilityType = this.getTagValue('Availability-Type', mod.module.tags)
+      const moduleMode = moduleAvailabilityType
+        ? moduleAvailabilityType
         : "Assignments" // Default to assignments
 
       // Now check the process's spawn item. These settings override Module item settings.
-      const processMode = mod.spawn.tags['Availability-Type']
-        ? mod.spawn.tags['Availability-Type']
+      const processAvailabilityType = this.getTagValue('Availability-Type', mod.spawn.tags)
+      const processMode = processAvailabilityType
+        ? processAvailabilityType
         : moduleMode
 
       if (!modes.includes(processMode)) {
         throw `Unsupported WeaveDrive mode: ${processMode}`
       }
 
-      var attestors = [mod.spawn.tags["Scheduler"]]
-      attestors.push(this.getTagValues("Attestor", mod.spawn.tags))
+      const attestors = this.serializeStringArr(
+        [
+          this.getTagValue('Scheduler', mod.spawn.tags),
+          ...this.getTagValues("Attestor", mod.spawn.tags)
+        ]
+      )
 
       // Init a set of GraphQL queries to run in order to find a valid attestation
       // Every WeaveDrive process has at least the "Assignments" availability check form.
       const assignmentsHaveID = await this.queryHasResult(
         `query {
           transactions(
-            owners:["${mod.spawn.tags["Scheduler"]}"],
+            owners: ${attestors},
             block: {min: 0, max: ${blockHeight}},
             tags: [
               { name: "Data-Protocol", values: ["ao"] },
@@ -501,7 +507,7 @@ module.exports = function weaveDrive(mod, FS) {
         const individualsHaveID = await this.queryHasResult(
           `query {
             transactions(
-              owners:["${mod.spawn.tags["Scheduler"]}"],
+              owners: ${attestors},
               block: {min: 0, max: ${blockHeight}},
               tags: [
                 { name: "Data-Protocol", values: ["WeaveDrive"],
@@ -539,14 +545,23 @@ module.exports = function weaveDrive(mod, FS) {
       return false
     },
 
+    serializeStringArr (arr = []) {
+      return`[${arr.map((s) => `"${s}"`).join(', ')}]`
+    },
+
     getTagValues(key, tags) {
       var values = []
       for (i = 0; i < tags.length; i++) {
-        if (tags[i].key == key) {
+        if (tags[i].name == key) {
           values.push(tags[i].value)
         }
       }
       return values
+    },
+
+    getTagValue (key, tags) {
+      const values = this.getTagValues(key, tags)
+      return values.pop()
     },
 
     async queryHasResult(query) {
