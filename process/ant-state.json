@@ -1,0 +1,1437 @@
+{
+  "packages": {
+    ".crypto.util.hex": {
+      "stringToHex": ".crypto.util.hex",
+      "hexToString": ".crypto.util.hex"
+    },
+    ".process": {
+      "_version": "2.0.0",
+      "handle": ".process"
+    },
+    ".common.records": {
+      "getRecords": "function records.getRecords()\n\treturn json.encode(Records)\nend\n",
+      "setRecord": "function records.setRecord(name, transactionId, ttlSeconds)\n\tlocal nameValidity, nameValidityError = pcall(utils.validateUndername, name)\n\tassert(nameValidity ~= false, nameValidityError)\n\tlocal targetIdValidity, targetValidityError = pcall(utils.validateArweaveId, transactionId)\n\tassert(targetIdValidity ~= false, targetValidityError)\n\tlocal ttlSecondsValidity, ttlValidityError = pcall(utils.validateTTLSeconds, ttlSeconds)\n\tassert(ttlSecondsValidity ~= false, ttlValidityError)\n\n\tlocal recordsCount = #Records\n\n\tif recordsCount >= 10000 then\n\t\terror(\"Max records limit of 10,000 reached, please delete some records to make space\")\n\tend\n\n\tRecords[name] = {\n\t\ttransactionId = transactionId,\n\t\tttlSeconds = ttlSeconds,\n\t}\n\n\treturn json.encode({\n\t\ttransactionId = transactionId,\n\t\tttlSeconds = ttlSeconds,\n\t})\nend\n",
+      "removeRecord": "function records.removeRecord(name)\n\tlocal nameValidity, nameValidityError = pcall(utils.validateUndername, name)\n\tassert(nameValidity ~= false, nameValidityError)\n\tRecords[name] = nil\n\treturn json.encode({ message = \"Record deleted\" })\nend\n",
+      "getRecord": "function records.getRecord(name)\n\tutils.validateUndername(name)\n\tassert(Records[name] ~= nil, \"Record does not exist\")\n\n\treturn json.encode(Records[name])\nend\n"
+    },
+    "debug": {
+      "setlocal": "",
+      "gethook": "",
+      "setuservalue": "",
+      "getlocal": "",
+      "debug": "",
+      "getregistry": "",
+      "getuservalue": "",
+      "getmetatable": "",
+      "upvaluejoin": "",
+      "getupvalue": "",
+      "getinfo": "",
+      "upvalueid": "",
+      "sethook": "",
+      "setmetatable": "",
+      "setupvalue": "",
+      "traceback": ""
+    },
+    ".crypto.cipher.morus": {
+      "decrypt": ".crypto.cipher.morus",
+      "variant": "Morus-1280",
+      "encrypt": ".crypto.cipher.morus",
+      "state_update": ".crypto.cipher.morus",
+      "key_size": 32,
+      "nonce_size": 16
+    },
+    ".common.main": {
+      "init": "function ant.init()\n\t-- main.lua\n\t-- utils\n\tlocal json = require(\".common.json\")\n\tlocal utils = require(\".common.utils\")\n\tlocal camel = utils.camelCase\n\t-- spec modules\n\tlocal balances = require(\".common.balances\")\n\tlocal initialize = require(\".common.initialize\")\n\tlocal records = require(\".common.records\")\n\tlocal controllers = require(\".common.controllers\")\n\n\tOwner = Owner or ao.env.Process.Owner\n\tBalances = Balances or { [Owner] = 1 }\n\tControllers = Controllers or { Owner }\n\n\tName = Name or \"Arweave Name Token\"\n\tTicker = Ticker or \"ANT\"\n\tLogo = Logo or \"Sie_26dvgyok0PZD_-iQAFOhOd5YxDTkczOLoqTTL_A\"\n\tDenomination = Denomination or 0\n\tTotalSupply = TotalSupply or 1\n\tInitialized = Initialized or false\n\t-- INSERT placeholder used by build script to inject the appropriate ID\n\tSourceCodeTxId = SourceCodeTxId or \"__INSERT_SOURCE_CODE_ID__\"\n\tAntRegistryId = AntRegistryId or ao.env.Process.Tags[\"ANT-Registry-Id\"] or nil\n\n\tlocal ActionMap = {\n\t\t-- write\n\t\tAddController = \"Add-Controller\",\n\t\tRemoveController = \"Remove-Controller\",\n\t\tSetRecord = \"Set-Record\",\n\t\tRemoveRecord = \"Remove-Record\",\n\t\tSetName = \"Set-Name\",\n\t\tSetTicker = \"Set-Ticker\",\n\t\t--- initialization method for bootstrapping the contract from other platforms ---\n\t\tInitializeState = \"Initialize-State\",\n\t\t-- read\n\t\tControllers = \"Controllers\",\n\t\tRecord = \"Record\",\n\t\tRecords = \"Records\",\n\t\tState = \"State\",\n\t\tEvolve = \"Evolve\",\n\t}\n\n\tlocal TokenSpecActionMap = {\n\t\tInfo = \"Info\",\n\t\tBalances = \"Balances\",\n\t\tBalance = \"Balance\",\n\t\tTransfer = \"Transfer\",\n\t\tTotalSupply = \"Total-Supply\",\n\t\tCreditNotice = \"Credit-Notice\",\n\t\t-- not implemented\n\t\tMint = \"Mint\",\n\t\tBurn = \"Burn\",\n\t}\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Transfer),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Transfer),\n\t\tfunction(msg)\n\t\t\tlocal recipient = msg.Tags.Recipient\n\t\t\tlocal function checkAssertions()\n\t\t\t\tutils.validateOwner(msg.From)\n\t\t\tend\n\n\t\t\tlocal inputStatus, inputResult = pcall(checkAssertions)\n\n\t\t\tif not inputStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Transfer-Notice\", Error = \"Transfer-Error\" },\n\t\t\t\t\tData = tostring(inputResult),\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\t\t\tlocal transferStatus, transferResult = pcall(balances.transfer, recipient)\n\n\t\t\tif not transferStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Transfer-Notice\", Error = \"Transfer-Error\" },\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = tostring(transferResult),\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\telseif not msg.Cast then\n\t\t\t\tao.send(utils.notices.debit(msg))\n\t\t\t\tao.send(utils.notices.credit(msg))\n\t\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\t\t\treturn\n\t\t\tend\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tData = transferResult,\n\t\t\t})\n\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Balance),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Balance),\n\t\tfunction(msg)\n\t\t\tlocal balStatus, balRes = pcall(balances.balance, msg.Tags.Recipient or msg.From)\n\t\t\tif not balStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Balance-Notice\", Error = \"Balance-Error\" },\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = tostring(balRes),\n\t\t\t\t})\n\t\t\telse\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Balance-Notice\",\n\t\t\t\t\tBalance = tostring(balRes),\n\t\t\t\t\tTicker = Ticker,\n\t\t\t\t\tAddress = msg.Tags.Recipient or msg.From,\n\t\t\t\t\tData = balRes,\n\t\t\t\t})\n\t\t\tend\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Balances),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Balances),\n\t\tfunction(msg)\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Balances-Notice\",\n\t\t\t\tData = balances.balances(),\n\t\t\t})\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.TotalSupply),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.TotalSupply),\n\t\tfunction(msg)\n\t\t\tassert(msg.From ~= ao.id, \"Cannot call Total-Supply from the same process!\")\n\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Total-Supply-Notice\",\n\t\t\t\tData = TotalSupply,\n\t\t\t\tTicker = Ticker,\n\t\t\t})\n\t\tend\n\t)\n\n\tHandlers.add(camel(TokenSpecActionMap.Info), utils.hasMatchingTag(\"Action\", TokenSpecActionMap.Info), function(msg)\n\t\tlocal info = {\n\t\t\tName = Name,\n\t\t\tTicker = Ticker,\n\t\t\t[\"Total-Supply\"] = tostring(TotalSupply),\n\t\t\tLogo = Logo,\n\t\t\tDenomination = tostring(Denomination),\n\t\t\tOwner = Owner,\n\t\t\tHandlers = utils.getHandlerNames(Handlers),\n\t\t\t[\"Source-Code-TX-ID\"] = SourceCodeTxId,\n\t\t}\n\t\tao.send({\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Info-Notice\",\n\t\t\tTags = info,\n\t\t\tData = json.encode(info),\n\t\t})\n\tend)\n\n\t-- ActionMap (ANT Spec)\n\n\tHandlers.add(camel(ActionMap.AddController), utils.hasMatchingTag(\"Action\", ActionMap.AddController), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Add-Controller-Notice\",\n\t\t\t\tError = \"Add-Controller-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\tData = permissionErr,\n\t\t\t})\n\t\tend\n\t\tlocal controllerStatus, controllerRes = pcall(controllers.setController, msg.Tags.Controller)\n\t\tif not controllerStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Add-Controller-Notice\",\n\t\t\t\tError = \"Add-Controller-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\tData = controllerRes,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\t\tao.send({ Target = msg.From, Action = \"Add-Controller-Notice\", Data = controllerRes })\n\t\tutils.notices.notifyState(msg, AntRegistryId)\n\tend)\n\n\tHandlers.add(\n\t\tcamel(ActionMap.RemoveController),\n\t\tutils.hasMatchingTag(\"Action\", ActionMap.RemoveController),\n\t\tfunction(msg)\n\t\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\t\tif assertHasPermission == false then\n\t\t\t\treturn ao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Remove-Controller-Notice\",\n\t\t\t\t\tData = permissionErr,\n\t\t\t\t\tError = \"Remove-Controller-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\tend\n\t\t\tlocal removeStatus, removeRes = pcall(controllers.removeController, msg.Tags.Controller)\n\t\t\tif not removeStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Remove-Controller-Notice\",\n\t\t\t\t\tData = removeRes,\n\t\t\t\t\tError = \"Remove-Controller-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tao.send({ Target = msg.From, Action = \"Remove-Controller-Notice\", Data = removeRes })\n\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\tend\n\t)\n\n\tHandlers.add(camel(ActionMap.Controllers), utils.hasMatchingTag(\"Action\", ActionMap.Controllers), function(msg)\n\t\tao.send({ Target = msg.From, Action = \"Controllers-Notice\", Data = controllers.getControllers() })\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetRecord), utils.hasMatchingTag(\"Action\", ActionMap.SetRecord), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Record-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal tags = msg.Tags\n\t\tlocal name, transactionId, ttlSeconds =\n\t\t\tstring.lower(tags[\"Sub-Domain\"]), tags[\"Transaction-Id\"], tonumber(tags[\"TTL-Seconds\"])\n\n\t\tlocal setRecordStatus, setRecordResult = pcall(records.setRecord, name, transactionId, ttlSeconds)\n\t\tif not setRecordStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Record-Notice\",\n\t\t\t\tData = setRecordResult,\n\t\t\t\tError = \"Set-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tao.send({ Target = msg.From, Action = \"Set-Record-Notice\", Data = setRecordResult })\n\tend)\n\n\tHandlers.add(camel(ActionMap.RemoveRecord), utils.hasMatchingTag(\"Action\", ActionMap.RemoveRecord), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({ Target = msg.From, Action = \"Invalid-Remove-Record-Notice\", Data = permissionErr })\n\t\tend\n\t\tlocal name = string.lower(msg.Tags[\"Sub-Domain\"])\n\t\tlocal removeRecordStatus, removeRecordResult = pcall(records.removeRecord, name)\n\t\tif not removeRecordStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Remove-Record-Notice\",\n\t\t\t\tData = removeRecordResult,\n\t\t\t\tError = \"Remove-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\telse\n\t\t\tao.send({ Target = msg.From, Data = removeRecordResult })\n\t\tend\n\tend)\n\n\tHandlers.add(camel(ActionMap.Record), utils.hasMatchingTag(\"Action\", ActionMap.Record), function(msg)\n\t\tlocal name = string.lower(msg.Tags[\"Sub-Domain\"])\n\t\tlocal nameStatus, nameRes = pcall(records.getRecord, name)\n\t\tif not nameStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Record-Notice\",\n\t\t\t\tData = nameRes,\n\t\t\t\tError = \"Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tlocal recordNotice = {\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Record-Notice\",\n\t\t\tName = name,\n\t\t\tData = nameRes,\n\t\t}\n\n\t\t-- Add forwarded tags to the credit and debit notice messages\n\t\tfor tagName, tagValue in pairs(msg) do\n\t\t\t-- Tags beginning with \"X-\" are forwarded\n\t\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\t\trecordNotice[tagName] = tagValue\n\t\t\tend\n\t\tend\n\n\t\t-- Send Record-Notice\n\t\tao.send(recordNotice)\n\tend)\n\n\tHandlers.add(camel(ActionMap.Records), utils.hasMatchingTag(\"Action\", ActionMap.Records), function(msg)\n\t\tlocal records = records.getRecords()\n\n\t\t-- Credit-Notice message template, that is sent to the Recipient of the transfer\n\t\tlocal recordsNotice = {\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Records-Notice\",\n\t\t\tData = records,\n\t\t}\n\n\t\t-- Add forwarded tags to the records notice messages\n\t\tfor tagName, tagValue in pairs(msg) do\n\t\t\t-- Tags beginning with \"X-\" are forwarded\n\t\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\t\trecordsNotice[tagName] = tagValue\n\t\t\tend\n\t\tend\n\n\t\t-- Send Records-Notice\n\t\tao.send(recordsNotice)\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetName), utils.hasMatchingTag(\"Action\", ActionMap.SetName), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Name-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Name-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal nameStatus, nameRes = pcall(balances.setName, msg.Tags.Name)\n\t\tif not nameStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Name-Notice\",\n\t\t\t\tData = nameRes,\n\t\t\t\tError = \"Set-Name-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\t\tao.send({ Target = msg.From, Action = \"Set-Name-Notice\", Data = nameRes })\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetTicker), utils.hasMatchingTag(\"Action\", ActionMap.SetTicker), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Ticker-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Ticker-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal tickerStatus, tickerRes = pcall(balances.setTicker, msg.Tags.Ticker)\n\t\tif not tickerStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Ticker-Notice\",\n\t\t\t\tData = tickerRes,\n\t\t\t\tError = \"Set-Ticker-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tao.send({ Target = msg.From, Action = \"Set-Ticker-Notice\", Data = tickerRes })\n\tend)\n\n\tHandlers.add(\n\t\tcamel(ActionMap.InitializeState),\n\t\tutils.hasMatchingTag(\"Action\", ActionMap.InitializeState),\n\t\tfunction(msg)\n\t\t\tassert(msg.From == Owner, \"Only the owner can initialize the state\")\n\t\t\tlocal initStatus, result = pcall(initialize.initializeANTState, msg.Data)\n\n\t\t\tif not initStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Initialize-State-Notice\",\n\t\t\t\t\tData = result,\n\t\t\t\t\tError = \"Initialize-State-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\telse\n\t\t\t\tao.send({ Target = msg.From, Action = \"Initialize-State-Notice\", Data = result })\n\t\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\t\tend\n\t\tend\n\t)\n\tHandlers.add(camel(ActionMap.State), utils.hasMatchingTag(\"Action\", ActionMap.State), function(msg)\n\t\tutils.notices.notifyState(msg, msg.From)\n\tend)\n\n\tHandlers.prepend(\n\t\tcamel(ActionMap.Evolve),\n\t\tHandlers.utils.continue(utils.hasMatchingTag(\"Action\", \"Eval\")),\n\t\tfunction(msg)\n\t\t\tlocal srcCodeTxId = msg.Tags[\"Source-Code-TX-ID\"]\n\t\t\tif not srcCodeTxId then\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tif Owner ~= msg.From then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Evolve-Notice\",\n\t\t\t\t\tError = \"Evolve-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = \"Only the Owner [\" .. Owner or \"no owner set\" .. \"] can call Evolve\",\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tlocal srcCodeTxIdStatus, srcCodeTxIdResult = pcall(utils.validateArweaveId, srcCodeTxId)\n\t\t\tif srcCodeTxIdStatus and not srcCodeTxIdStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Evolve-Notice\",\n\t\t\t\t\tError = \"Evolve-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = \"Source-Code-TX-ID is required\",\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\t\t\tSourceCodeTxId = srcCodeTxId\n\t\tend\n\t)\nend\n"
+    },
+    ".base64": {
+      "makedecoder": ".base64",
+      "decode": ".base64",
+      "encode": ".base64",
+      "makeencoder": ".base64"
+    },
+    ".handlers": {
+      "coroutines": [],
+      "once": ".handlers",
+      "list": {
+        "1": {
+          "pattern": ".handlers-utils",
+          "name": "evolve",
+          "handle": ".handlers"
+        },
+        "2": {
+          "pattern": ".process",
+          "name": "_eval",
+          "handle": ".handlers"
+        },
+        "3": {
+          "pattern": {
+            "Action": "Program-State"
+          },
+          "name": "_programState",
+          "handle": ".handlers"
+        },
+        "4": {
+          "pattern": ".process",
+          "handle": ".handlers",
+          "name": "_boot",
+          "maxRuns": 1
+        },
+        "5": {
+          "pattern": ".process",
+          "name": "_default",
+          "handle": ".handlers"
+        },
+        "6": {
+          "pattern": ".handlers-utils",
+          "name": "transfer",
+          "handle": ".handlers"
+        },
+        "7": {
+          "pattern": ".handlers-utils",
+          "name": "balance",
+          "handle": ".handlers"
+        },
+        "8": {
+          "pattern": ".handlers-utils",
+          "name": "balances",
+          "handle": ".handlers"
+        },
+        "9": {
+          "pattern": ".handlers-utils",
+          "name": "totalSupply",
+          "handle": ".handlers"
+        },
+        "10": {
+          "pattern": ".handlers-utils",
+          "name": "info",
+          "handle": ".handlers"
+        },
+        "11": {
+          "pattern": ".handlers-utils",
+          "name": "addController",
+          "handle": ".handlers"
+        },
+        "12": {
+          "pattern": ".handlers-utils",
+          "name": "removeController",
+          "handle": ".handlers"
+        },
+        "13": {
+          "pattern": ".handlers-utils",
+          "name": "controllers",
+          "handle": ".handlers"
+        },
+        "14": {
+          "pattern": ".handlers-utils",
+          "name": "setRecord",
+          "handle": ".handlers"
+        },
+        "15": {
+          "pattern": ".handlers-utils",
+          "name": "removeRecord",
+          "handle": ".handlers"
+        },
+        "16": {
+          "pattern": ".handlers-utils",
+          "name": "record",
+          "handle": ".handlers"
+        },
+        "17": {
+          "pattern": ".handlers-utils",
+          "name": "records",
+          "handle": ".handlers"
+        },
+        "18": {
+          "pattern": ".handlers-utils",
+          "name": "setName",
+          "handle": ".handlers"
+        },
+        "19": {
+          "pattern": ".handlers-utils",
+          "name": "setTicker",
+          "handle": ".handlers"
+        },
+        "20": {
+          "pattern": ".handlers-utils",
+          "name": "initializeState",
+          "handle": ".handlers"
+        },
+        "21": {
+          "pattern": ".handlers-utils",
+          "name": "state",
+          "handle": ".handlers"
+        }
+      },
+      "before": ".handlers",
+      "onceNonce": 0,
+      "utils": {
+        "hasMatchingTag": ".handlers-utils",
+        "hasMatchingData": ".handlers-utils",
+        "_version": "0.0.2",
+        "hasMatchingTagOf": ".handlers-utils",
+        "reply": ".handlers-utils",
+        "continue": ".handlers-utils"
+      },
+      "receive": ".handlers",
+      "generateResolver": ".handlers",
+      "add": ".handlers",
+      "append": ".handlers",
+      "evaluate": ".handlers",
+      "_version": "0.0.5",
+      "after": ".handlers",
+      "remove": ".handlers",
+      "prepend": ".handlers"
+    },
+    ".crypto.init": {
+      "utils": {
+        "bit": {
+          "arshift": "",
+          "bnot": "",
+          "bxor": "",
+          "bor": "",
+          "btest": "",
+          "lshift": "",
+          "lrotate": "",
+          "extract": "",
+          "band": "",
+          "rrotate": "",
+          "replace": "",
+          "rshift": ""
+        },
+        "stream": {
+          "toString": ".crypto.util.stream",
+          "toHex": ".crypto.util.stream",
+          "toArray": ".crypto.util.stream",
+          "fromString": ".crypto.util.stream",
+          "fromHex": ".crypto.util.stream",
+          "fromArray": ".crypto.util.stream"
+        },
+        "_version": "0.0.1",
+        "array": {
+          "concat": ".crypto.util.array",
+          "readFromQueue": ".crypto.util.array",
+          "toStream": ".crypto.util.array",
+          "fromHex": ".crypto.util.array",
+          "toHex": ".crypto.util.array",
+          "slice": ".crypto.util.array",
+          "fromStream": ".crypto.util.array",
+          "toString": ".crypto.util.array",
+          "permute": ".crypto.util.array",
+          "writeToQueue": ".crypto.util.array",
+          "XOR": ".crypto.util.array",
+          "truncate": ".crypto.util.array",
+          "size": ".crypto.util.array",
+          "substitute": ".crypto.util.array",
+          "fromString": ".crypto.util.array",
+          "copy": ".crypto.util.array"
+        },
+        "hex": "<circular reference>",
+        "queue": ".crypto.util.queue"
+      },
+      "cipher": {
+        "norx": {
+          "variant": "NORX 64-4-1",
+          "nonce_size": 32,
+          "key_size": 32,
+          "decrypt": ".crypto.cipher.norx",
+          "encrypt": ".crypto.cipher.norx"
+        },
+        "issac": {
+          "random": ".crypto.cipher.issac",
+          "getRandomChar": ".crypto.cipher.issac",
+          "encrypt": ".crypto.cipher.issac",
+          "decrypt": ".crypto.cipher.issac",
+          "seedIsaac": ".crypto.cipher.issac",
+          "getRandom": ".crypto.cipher.issac"
+        },
+        "aes": {
+          "encrypt": ".crypto.cipher.aes",
+          "decrypt": ".crypto.cipher.aes"
+        },
+        "morus": "<circular reference>",
+        "_version": "0.0.1"
+      },
+      "random": ".crypto.cipher.issac",
+      "_version": "0.0.1",
+      "kdf": {
+        "_version": "0.0.1",
+        "pbkdf2": ".crypto.kdf.pbkdf2"
+      },
+      "digest": {
+        "sha2_512": ".crypto.digest.sha2_512",
+        "md5": ".crypto.digest.md5",
+        "md4": ".crypto.digest.md4",
+        "sha3_256": "",
+        "sha3_512": "",
+        "sha1": ".crypto.digest.sha1",
+        "keccak256": "",
+        "keccak512": "",
+        "_version": "0.0.1",
+        "md2": ".crypto.digest.md2",
+        "sha2_256": ".crypto.digest.sha2_256",
+        "blake2b": ".crypto.digest.blake2b"
+      },
+      "mac": {
+        "_version": "0.0.1",
+        "createHmac": ".crypto.mac.hmac"
+      }
+    },
+    ".common.initialize": {
+      "initializeANTState": "function initialize.initializeANTState(state)\n\tlocal encoded = json.decode(state)\n\tlocal balances = encoded.balances\n\tlocal controllers = encoded.controllers\n\tlocal records = encoded.records\n\tlocal name = encoded.name\n\tlocal ticker = encoded.ticker\n\tlocal owner = encoded.owner\n\tassert(type(name) == \"string\", \"name must be a string\")\n\tassert(type(ticker) == \"string\", \"ticker must be a string\")\n\tassert(type(balances) == \"table\", \"balances must be a table\")\n\tfor k, v in pairs(balances) do\n\t\tbalances[k] = tonumber(v)\n\tend\n\tassert(type(controllers) == \"table\", \"controllers must be a table\")\n\tassert(type(records) == \"table\", \"records must be a table\")\n\tassert(type(owner) == \"string\", \"owner must be a string\")\n\tfor k, v in pairs(records) do\n\t\tutils.validateUndername(k)\n\t\tassert(type(v) == \"table\", \"records values must be tables\")\n\t\tutils.validateArweaveId(v.transactionId)\n\t\tutils.validateTTLSeconds(v.ttlSeconds)\n\tend\n\n\tName = name\n\tTicker = ticker\n\tBalances = balances\n\tControllers = controllers\n\tRecords = records\n\tInitialized = true\n\tOwner = owner\n\n\treturn json.encode({\n\t\tname = Name,\n\t\tticker = Ticker,\n\t\tbalances = Balances,\n\t\tcontrollers = Controllers,\n\t\trecords = Records,\n\t\towner = Owner,\n\t\tinitialized = Initialized,\n\t})\nend\n",
+      "initializeProcessState": "function initialize.initializeProcessState(msg, env)\n\tErrors = Errors or {}\n\tInbox = Inbox or {}\n\n\t-- temporary fix for Spawn\n\tif not Owner then\n\t\tlocal _from = findObject(env.Process.Tags, \"name\", \"From-Process\")\n\t\tif _from then\n\t\t\tOwner = _from.value\n\t\telse\n\t\t\tOwner = msg.From\n\t\tend\n\tend\n\n\tif not Name then\n\t\tlocal taggedName = findObject(env.Process.Tags, \"name\", \"Name\")\n\t\tif taggedName then\n\t\t\tName = taggedName.value\n\t\telse\n\t\t\tName = \"ANT\"\n\t\tend\n\tend\nend\n"
+    },
+    ".crypto.digest.blake2b": ".crypto.digest.blake2b",
+    ".chance": {
+      "random": ".chance",
+      "seed": ".chance",
+      "integer": ".chance"
+    },
+    ".crypto.util.array": "<circular reference>",
+    ".common.balances": {
+      "setName": "function balances.setName(name)\n\tassert(type(name) == \"string\", \"Name must be a string\")\n\tName = name\n\treturn json.encode({ name = Name })\nend\n",
+      "balance": "function balances.balance(address)\n\tutils.validateArweaveId(address)\n\tlocal balance = Balances[address] or 0\n\treturn balance\nend\n",
+      "balances": "function balances.balances()\n\treturn json.encode(Balances)\nend\n",
+      "walletHasSufficientBalance": "function balances.walletHasSufficientBalance(wallet)\n\treturn Balances[wallet] ~= nil and Balances[wallet] > 0\nend\n",
+      "setTicker": "function balances.setTicker(ticker)\n\tassert(type(ticker) == \"string\", \"Ticker must be a string\")\n\tTicker = ticker\n\treturn json.encode({ ticker = Ticker })\nend\n",
+      "transfer": "function balances.transfer(to)\n\tutils.validateArweaveId(to)\n\tBalances = { [to] = 1 }\n\tOwner = to\n\tControllers = {}\n\treturn json.encode({ [to] = 1 })\nend\n"
+    },
+    ".common.controllers": {
+      "setController": "function controllers.setController(controller)\n\tutils.validateArweaveId(controller)\n\n\tfor _, c in ipairs(Controllers) do\n\t\tassert(c ~= controller, \"Controller already exists\")\n\tend\n\n\ttable.insert(Controllers, controller)\n\treturn json.encode(Controllers)\nend\n",
+      "getControllers": "function controllers.getControllers()\n\treturn json.encode(Controllers)\nend\n",
+      "removeController": "function controllers.removeController(controller)\n\tutils.validateArweaveId(controller)\n\tlocal controllerExists = false\n\n\tfor i, v in ipairs(Controllers) do\n\t\tif v == controller then\n\t\t\ttable.remove(Controllers, i)\n\t\t\tcontrollerExists = true\n\t\t\tbreak\n\t\tend\n\tend\n\n\tassert(controllerExists ~= nil, \"Controller does not exist\")\n\treturn json.encode(Controllers)\nend\n"
+    },
+    "ao": {
+      "removeAssignable": ".assignment",
+      "isAssignable": ".assignment",
+      "reference": 0,
+      "outbox": {
+        "Messages": [],
+        "Spawns": [],
+        "Output": [],
+        "Assignments": []
+      },
+      "sanitize": ".ao",
+      "send": ".process",
+      "result": ".ao",
+      "_version": "0.0.6",
+      "init": ".ao",
+      "spawn": ".process",
+      "authorities": {
+        "1": "BOOP"
+      },
+      "id": "AOS",
+      "normalize": ".ao",
+      "nonExtractableTags": {
+        "1": "Data-Protocol",
+        "2": "Variant",
+        "3": "From-Process",
+        "4": "From-Module",
+        "5": "Type",
+        "6": "From",
+        "7": "Owner",
+        "8": "Anchor",
+        "9": "Target",
+        "10": "Data",
+        "11": "Tags"
+      },
+      "log": ".ao",
+      "isAssignment": "",
+      "assignables": [],
+      "env": {
+        "Process": {
+          "Owner": "FOOBAR",
+          "Id": "AOS",
+          "TagArray": {
+            "1": {
+              "name": "Name",
+              "value": "Thomas"
+            },
+            "2": {
+              "name": "Authority",
+              "value": "BOOP"
+            }
+          },
+          "Tags": {
+            "Name": "Thomas",
+            "Authority": "BOOP"
+          }
+        }
+      },
+      "nonForwardableTags": {
+        "1": "Data-Protocol",
+        "2": "Variant",
+        "3": "From-Process",
+        "4": "From-Module",
+        "5": "Type",
+        "6": "From",
+        "7": "Owner",
+        "8": "Anchor",
+        "9": "Target",
+        "10": "Tags",
+        "11": "TagArray",
+        "12": "Hash-Chain",
+        "13": "Timestamp",
+        "14": "Nonce",
+        "15": "Epoch",
+        "16": "Signature",
+        "17": "Forwarded-By",
+        "18": "Pushed-For",
+        "19": "Read-Only",
+        "20": "Cron",
+        "21": "Block-Height",
+        "22": "Reference",
+        "23": "Id",
+        "24": "Reply-To"
+      },
+      "_module": "",
+      "clearOutbox": ".ao",
+      "assign": ".ao",
+      "addAssignable": ".assignment",
+      "clone": ".ao",
+      "isTrusted": ".ao"
+    },
+    ".crypto.digest.md2": ".crypto.digest.md2",
+    ".crypto.padding.zero": ".crypto.padding.zero",
+    ".crypto.kdf.init": "<circular reference>",
+    "json": {
+      "_version": "0.2.0",
+      "encode": "",
+      "decode": "json"
+    },
+    ".crypto.cipher.mode.ecb": {
+      "Cipher": ".crypto.cipher.mode.ecb",
+      "Decipher": ".crypto.cipher.mode.ecb"
+    },
+    "os": {
+      "tmpname": "",
+      "setlocale": "",
+      "getenv": "",
+      "time": ".process",
+      "rename": "",
+      "execute": "",
+      "difftime": "",
+      "exit": "",
+      "date": "",
+      "remove": "",
+      "clock": ""
+    },
+    ".crypto.cipher.mode.cbc": {
+      "Cipher": ".crypto.cipher.mode.cbc",
+      "Decipher": ".crypto.cipher.mode.cbc"
+    },
+    ".crypto.cipher.mode.ctr": {
+      "Cipher": ".crypto.cipher.mode.ctr",
+      "Decipher": ".crypto.cipher.mode.ctr"
+    },
+    ".crypto.digest.md4": ".crypto.digest.md4",
+    ".crypto.cipher.norx": "<circular reference>",
+    ".crypto.util.queue": ".crypto.util.queue",
+    ".crypto.mac.hmac": {
+      "hmac": ".crypto.mac.hmac",
+      "HMAC": ".crypto.mac.hmac"
+    },
+    "table": {
+      "unpack": "",
+      "insert": "",
+      "pack": "",
+      "remove": "",
+      "sort": "",
+      "move": "",
+      "concat": ""
+    },
+    "utf8": {
+      "charpattern": "[\u0000-�-�][�-�]*",
+      "codepoint": "",
+      "char": "",
+      "offset": "",
+      "len": "",
+      "codes": ""
+    },
+    ".stringify": {
+      "isSimpleArray": ".stringify",
+      "format": ".stringify",
+      "_version": "0.0.1"
+    },
+    ".crypto.cipher.mode.ofb": {
+      "Cipher": ".crypto.cipher.mode.ofb",
+      "Decipher": ".crypto.cipher.mode.ofb"
+    },
+    ".crypto.cipher.issac": "<circular reference>",
+    ".crypto.util.init": "<circular reference>",
+    ".crypto.cipher.mode.cfb": {
+      "Cipher": ".crypto.cipher.mode.cfb",
+      "Decipher": ".crypto.cipher.mode.cfb"
+    },
+    ".ao": "<circular reference>",
+    ".dump": ".dump",
+    ".crypto.cipher.init": "<circular reference>",
+    ".boot": ".boot",
+    ".utils": {
+      "values": ".utils",
+      "propEq": ".utils",
+      "parseValue": ".utils",
+      "map": ".utils",
+      "reverse": ".utils",
+      "reduce": ".utils",
+      "keys": ".utils",
+      "_version": "0.0.5",
+      "find": ".utils",
+      "getProgramState": ".utils",
+      "filter": ".utils",
+      "matchesPattern": ".utils",
+      "prop": ".utils",
+      "compose": ".utils",
+      "concat": ".utils",
+      "parseCoroutine": ".utils",
+      "parseFunctionCode": ".utils",
+      "curry": ".utils",
+      "matchesSpec": ".utils",
+      "includes": ".utils"
+    },
+    "math": {
+      "deg": "",
+      "acos": "",
+      "log10": "",
+      "tan": "",
+      "ldexp": "",
+      "log": "",
+      "atan": "",
+      "sin": "",
+      "asin": "",
+      "abs": "",
+      "exp": "",
+      "ult": "",
+      "type": "",
+      "min": "",
+      "sqrt": "",
+      "sinh": "",
+      "tanh": "",
+      "cos": "",
+      "huge": "inf",
+      "random": ".process",
+      "atan2": "",
+      "cosh": "",
+      "max": "",
+      "frexp": "",
+      "tointeger": "",
+      "pi": 3.1415926535898,
+      "modf": "",
+      "fmod": "",
+      "rad": "",
+      "mininteger": -9223372036854800000,
+      "randomseed": "",
+      "floor": "",
+      "ceil": "",
+      "maxinteger": 9223372036854800000,
+      "pow": ""
+    },
+    ".crypto.digest.init": "<circular reference>",
+    ".pretty": {
+      "_version": "0.0.1",
+      "tprint": ".pretty"
+    },
+    ".crypto.digest.sha2_256": {
+      "sha2_256": ".crypto.digest.sha2_256",
+      "SHA2_256": ".crypto.digest.sha2_256"
+    },
+    ".crypto.digest.md5": ".crypto.digest.md5",
+    "bit32": "<circular reference>",
+    ".crypto.digest.sha2_512": ".crypto.digest.sha2_512",
+    ".default": ".default",
+    "coroutine": {
+      "wrap": "",
+      "create": "",
+      "running": "",
+      "resume": "",
+      "status": "",
+      "yield": "",
+      "isyieldable": ""
+    },
+    ".common.constants": {
+      "MIN_TTL_SECONDS": 900,
+      "MAX_UNDERNAME_LENGTH": 61,
+      "UNDERNAME_DOES_NOT_EXIST_MESSAGE": "Name does not exist in the ANT!",
+      "UNDERNAME_REGEXP": "^(?:@|[a-zA-Z0-9][a-zA-Z0-9-_]{0,59}[a-zA-Z0-9])$",
+      "INVALID_ARWEAVE_ID_MESSAGE": "Invalid Arweave ID",
+      "MAX_TTL_SECONDS": 3600,
+      "ARWEAVE_ID_REGEXP": "^[a-zA-Z0-9-_]{43}$",
+      "INVALID_TTL_MESSAGE": "Invalid TTL. TLL must be an integer between 900 and 3600 seconds"
+    },
+    ".crypto.util.bit": "<circular reference>",
+    ".crypto.cipher.aes256": {
+      "encrypt": ".crypto.cipher.aes256",
+      "blockSize": 16,
+      "decrypt": ".crypto.cipher.aes256"
+    },
+    ".crypto.digest.sha1": {
+      "sha1": ".crypto.digest.sha1",
+      "SHA1": ".crypto.digest.sha1"
+    },
+    ".crypto.cipher.aes": "<circular reference>",
+    "io": {
+      "lines": "",
+      "flush": "",
+      "open": "",
+      "stderr": "<userdata>",
+      "write": "",
+      "read": "",
+      "input": "",
+      "type": "",
+      "close": "",
+      "popen": "",
+      "output": "",
+      "tmpfile": "",
+      "stdout": "<userdata>",
+      "stdin": "<userdata>"
+    },
+    ".crypto.util.stream": "<circular reference>",
+    ".eval": ".eval",
+    "string": {
+      "byte": "",
+      "char": "",
+      "gmatch": "",
+      "packsize": "",
+      "lower": "",
+      "dump": "",
+      "reverse": "",
+      "unpack": "",
+      "find": "",
+      "rep": "",
+      "upper": "",
+      "match": "",
+      "sub": "",
+      "pack": "",
+      "format": "",
+      "len": "",
+      "gsub": ""
+    },
+    ".crypto.mac.init": "<circular reference>",
+    ".handlers-utils": "<circular reference>",
+    ".crypto.cipher.aes128": {
+      "encrypt": ".crypto.cipher.aes128",
+      "blockSize": 16,
+      "decrypt": ".crypto.cipher.aes128"
+    },
+    ".assignment": {
+      "_version": "0.1.0",
+      "init": ".assignment"
+    },
+    ".crypto.digest.sha3": {
+      "sha3_512": "",
+      "keccak256": "",
+      "sha3_256": "",
+      "keccak512": ""
+    },
+    ".crypto.kdf.pbkdf2": {
+      "PBKDF2": ".crypto.kdf.pbkdf2",
+      "pbkdf2": ".crypto.kdf.pbkdf2"
+    },
+    ".common.utils": {
+      "getHandlerNames": "function utils.getHandlerNames(handlers)\n\tlocal names = {}\n\tfor _, handler in ipairs(handlers.list) do\n\t\ttable.insert(names, handler.name)\n\tend\n\treturn names\nend\n",
+      "values": "utils.values = function(t)\n\tassert(type(t) == \"table\", \"argument needs to be a table\")\n\tlocal values = {}\n\tfor _, value in pairs(t) do\n\t\ttable.insert(values, value)\n\tend\n\treturn values\nend\n",
+      "validateArweaveId": "function utils.validateArweaveId(id)\n\tlocal valid = string.match(id, constants.ARWEAVE_ID_REGEXP) == nil\n\n\tassert(valid == true, constants.INVALID_ARWEAVE_ID_MESSAGE)\nend\n",
+      "hasMatchingTag": "function utils.hasMatchingTag(tag, value)\n\treturn Handlers.utils.hasMatchingTag(tag, value)\nend\n",
+      "propEq": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "_version": "0.0.1",
+      "map": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "reverse": "utils.reverse = function(data)\n\tassert(type(data) == \"table\", \"argument needs to be a table that is an array\")\n\treturn utils.reduce(function(result, v, i)\n\t\tresult[#data - i + 1] = v\n\t\treturn result\n\tend, {}, data)\nend\n",
+      "compose": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "camelCase": "function utils.camelCase(str)\n\t-- Remove any leading or trailing spaces\n\tstr = string.gsub(str, \"^%s*(.-)%s*$\", \"%1\")\n\n\t-- Convert PascalCase to camelCase\n\tstr = string.gsub(str, \"^%u\", string.lower)\n\n\t-- Handle kebab-case, snake_case, and space-separated words\n\tstr = string.gsub(str, \"[-_%s](%w)\", function(s)\n\t\treturn string.upper(s)\n\tend)\n\n\treturn str\nend\n",
+      "notices": {
+        "credit": "function utils.notices.credit(msg)\n\tlocal notice = {\n\t\tTarget = msg.Recipient,\n\t\tAction = \"Credit-Notice\",\n\t\tSender = msg.From,\n\t\tQuantity = tostring(1),\n\t}\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tnotice[tagName] = tagValue\n\t\tend\n\tend\n\n\treturn notice\nend\n",
+        "debit": "function utils.notices.debit(msg)\n\tlocal notice = {\n\t\tTarget = msg.From,\n\t\tAction = \"Debit-Notice\",\n\t\tRecipient = msg.Recipient,\n\t\tQuantity = tostring(1),\n\t}\n\t-- Add forwarded tags to the credit and debit notice messages\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tnotice[tagName] = tagValue\n\t\tend\n\tend\n\n\treturn notice\nend\n",
+        "sendNotices": "function utils.notices.sendNotices(notices)\n\tfor _, notice in ipairs(notices) do\n\t\tao.send(notice)\n\tend\nend\n",
+        "notifyState": "function utils.notices.notifyState(msg, target)\n\tif not target then\n\t\tprint(\"No target specified for state notice\")\n\t\treturn\n\tend\n\tlocal state = {\n\t\tRecords = Records,\n\t\tControllers = Controllers,\n\t\tBalances = Balances,\n\t\tOwner = Owner,\n\t\tName = Name,\n\t\tTicker = Ticker,\n\t\tLogo = Logo,\n\t\tDenomination = Denomination,\n\t\tTotalSupply = TotalSupply,\n\t\tInitialized = Initialized,\n\t\t[\"Source-Code-TX-ID\"] = SourceCodeTxId,\n\t}\n\n\t-- Add forwarded tags to the records notice messages\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tstate[tagName] = tagValue\n\t\tend\n\tend\n\n\tao.send({ Target = target, Action = \"State-Notice\", Data = json.encode(state) })\nend\n"
+      },
+      "reduce": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "find": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "prop": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "filter": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "concat": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+      "reply": "function utils.reply(msg)\n\tHandlers.utils.reply(msg)\nend\n",
+      "validateUndername": "function utils.validateUndername(name)\n\tlocal valid = string.match(name, constants.UNDERNAME_REGEXP) == nil\n\tassert(valid ~= false, constants.UNDERNAME_DOES_NOT_EXIST_MESSAGE)\nend\n",
+      "validateOwner": "function utils.validateOwner(caller)\n\tlocal isOwner = false\n\tif Owner == caller or Balances[caller] or ao.env.Process.Id == caller then\n\t\tisOwner = true\n\tend\n\tassert(isOwner, \"Sender is not the owner.\")\nend\n",
+      "curry": "utils.curry = function(fn, arity)\n\tassert(type(fn) == \"function\", \"function is required as first argument\")\n\tarity = arity or debug.getinfo(fn, \"u\").nparams\n\tif arity < 2 then\n\t\treturn fn\n\tend\n\n\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\nend\n",
+      "validateTTLSeconds": "function utils.validateTTLSeconds(ttl)\n\tlocal valid = type(ttl) == \"number\" and ttl >= constants.MIN_TTL_SECONDS and ttl <= constants.MAX_TTL_SECONDS\n\treturn assert(valid ~= false, constants.INVALID_TTL_MESSAGE)\nend\n",
+      "keys": "utils.keys = function(t)\n\tassert(type(t) == \"table\", \"argument needs to be a table\")\n\tlocal keys = {}\n\tfor key in pairs(t) do\n\t\ttable.insert(keys, key)\n\tend\n\treturn keys\nend\n",
+      "assertHasPermission": "function utils.assertHasPermission(from)\n\tfor _, c in ipairs(Controllers) do\n\t\tif c == from then\n\t\t\t-- if is controller, return true\n\t\t\treturn\n\t\tend\n\tend\n\tif Owner == from then\n\t\treturn\n\tend\n\tif ao.env.Process.Id == from then\n\t\treturn\n\tend\n\tassert(false, \"Only controllers and owners can set controllers, records, and change metadata.\")\nend\n",
+      "includes": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n"
+    },
+    ".common.json": {
+      "_version": "0.1.2",
+      "encode": "function json.encode(val)\n\treturn (encode(val))\nend\n",
+      "decode": "function json.decode(str)\n\tif type(str) ~= \"string\" then\n\t\terror(\"expected argument of type string, got \" .. type(str))\n\tend\n\tlocal res, idx = parse(str, next_char(str, 1, space_chars, true))\n\tidx = next_char(str, idx, space_chars, true)\n\tif idx <= #str then\n\t\tdecode_error(str, idx, \"trailing garbage\")\n\tend\n\treturn res\nend\n"
+    },
+    ".crypto.cipher.aes192": {
+      "encrypt": ".crypto.cipher.aes192",
+      "blockSize": 16,
+      "decrypt": ".crypto.cipher.aes192"
+    }
+  },
+  "globals": {
+    "debug": "<circular reference>",
+    "Bell": "\u0007",
+    "Handlers": {
+      "coroutines": [],
+      "once": ".handlers",
+      "list": {
+        "1": {
+          "pattern": ".handlers-utils",
+          "name": "evolve",
+          "handle": ".handlers"
+        },
+        "2": {
+          "pattern": ".process",
+          "name": "_eval",
+          "handle": ".handlers"
+        },
+        "3": {
+          "pattern": {
+            "Action": "Program-State"
+          },
+          "name": "_programState",
+          "handle": ".handlers"
+        },
+        "4": {
+          "pattern": ".process",
+          "handle": ".handlers",
+          "name": "_boot",
+          "maxRuns": 1
+        },
+        "5": {
+          "pattern": ".process",
+          "name": "_default",
+          "handle": ".handlers"
+        },
+        "6": {
+          "pattern": ".handlers-utils",
+          "name": "transfer",
+          "handle": ".handlers"
+        },
+        "7": {
+          "pattern": ".handlers-utils",
+          "name": "balance",
+          "handle": ".handlers"
+        },
+        "8": {
+          "pattern": ".handlers-utils",
+          "name": "balances",
+          "handle": ".handlers"
+        },
+        "9": {
+          "pattern": ".handlers-utils",
+          "name": "totalSupply",
+          "handle": ".handlers"
+        },
+        "10": {
+          "pattern": ".handlers-utils",
+          "name": "info",
+          "handle": ".handlers"
+        },
+        "11": {
+          "pattern": ".handlers-utils",
+          "name": "addController",
+          "handle": ".handlers"
+        },
+        "12": {
+          "pattern": ".handlers-utils",
+          "name": "removeController",
+          "handle": ".handlers"
+        },
+        "13": {
+          "pattern": ".handlers-utils",
+          "name": "controllers",
+          "handle": ".handlers"
+        },
+        "14": {
+          "pattern": ".handlers-utils",
+          "name": "setRecord",
+          "handle": ".handlers"
+        },
+        "15": {
+          "pattern": ".handlers-utils",
+          "name": "removeRecord",
+          "handle": ".handlers"
+        },
+        "16": {
+          "pattern": ".handlers-utils",
+          "name": "record",
+          "handle": ".handlers"
+        },
+        "17": {
+          "pattern": ".handlers-utils",
+          "name": "records",
+          "handle": ".handlers"
+        },
+        "18": {
+          "pattern": ".handlers-utils",
+          "name": "setName",
+          "handle": ".handlers"
+        },
+        "19": {
+          "pattern": ".handlers-utils",
+          "name": "setTicker",
+          "handle": ".handlers"
+        },
+        "20": {
+          "pattern": ".handlers-utils",
+          "name": "initializeState",
+          "handle": ".handlers"
+        },
+        "21": {
+          "pattern": ".handlers-utils",
+          "name": "state",
+          "handle": ".handlers"
+        }
+      },
+      "before": ".handlers",
+      "onceNonce": 0,
+      "utils": {
+        "hasMatchingTag": ".handlers-utils",
+        "hasMatchingData": ".handlers-utils",
+        "_version": "0.0.2",
+        "hasMatchingTagOf": ".handlers-utils",
+        "reply": ".handlers-utils",
+        "continue": ".handlers-utils"
+      },
+      "receive": ".handlers",
+      "generateResolver": ".handlers",
+      "add": ".handlers",
+      "append": ".handlers",
+      "evaluate": ".handlers",
+      "_version": "0.0.5",
+      "after": ".handlers",
+      "remove": ".handlers",
+      "prepend": ".handlers"
+    },
+    "Tab": ".process",
+    "_G": "<circular reference>",
+    "Initialized": false,
+    "Controllers": {
+      "1": "FOOBAR"
+    },
+    "Prompt": ".process",
+    "tonumber": "",
+    "Errors": [],
+    "next": "",
+    "collectgarbage": "",
+    "Receive": ".process",
+    "assert": "",
+    "Assign": ".process",
+    "handle": "__lua_webassembly__",
+    "Spawn": ".process",
+    "Name": "Thomas",
+    "HANDLER_PRINT_LOGS": [],
+    "Colors": {
+      "gray": "\u001b[90m",
+      "blue": "\u001b[34m",
+      "green": "\u001b[32m",
+      "red": "\u001b[31m",
+      "reset": "\u001b[0m"
+    },
+    "Records": {
+      "@": {
+        "ttlSeconds": 3600,
+        "transactionId": "-k7t8xMoB8hW482609Z9F4bTFMC3MnuW8bTvTyT8pFI"
+      }
+    },
+    "rawget": "",
+    "Send": ".process",
+    "Inbox": [],
+    "xpcall": "",
+    "type": "",
+    "Denomination": 0,
+    "select": "",
+    "tostring": "",
+    "string": "<circular reference>",
+    "require": "",
+    "Version": ".process",
+    "io": {
+      "lines": "",
+      "flush": "",
+      "open": "",
+      "stderr": "<userdata>",
+      "write": "",
+      "read": "",
+      "input": "",
+      "type": "",
+      "close": "",
+      "popen": "",
+      "output": "",
+      "tmpfile": "",
+      "stdout": "<userdata>",
+      "stdin": "<userdata>"
+    },
+    "TotalSupply": 1,
+    "pairs": "",
+    "Balances": {
+      "FOOBAR": 1
+    },
+    "math": {
+      "deg": "",
+      "acos": "",
+      "log10": "",
+      "tan": "",
+      "ldexp": "",
+      "log": "",
+      "atan": "",
+      "sin": "",
+      "asin": "",
+      "abs": "",
+      "exp": "",
+      "ult": "",
+      "type": "",
+      "min": "",
+      "sqrt": "",
+      "sinh": "",
+      "tanh": "",
+      "cos": "",
+      "huge": "inf",
+      "random": ".process",
+      "atan2": "",
+      "cosh": "",
+      "max": "",
+      "frexp": "",
+      "tointeger": "",
+      "pi": 3.1415926535898,
+      "modf": "",
+      "fmod": "",
+      "rad": "",
+      "mininteger": -9223372036854800000,
+      "randomseed": "",
+      "floor": "",
+      "ceil": "",
+      "maxinteger": 9223372036854800000,
+      "pow": ""
+    },
+    "print": ".process",
+    "setmetatable": "",
+    "package": {
+      "searchers": {
+        "1": "",
+        "2": "main",
+        "3": "",
+        "4": "",
+        "5": ""
+      },
+      "path": "/usr/local/share/lua/5.3/?.lua;/usr/local/share/lua/5.3/?/init.lua;/usr/local/lib/lua/5.3/?.lua;/usr/local/lib/lua/5.3/?/init.lua;./?.lua;./?/init.lua",
+      "config": "/\n;\n?\n!\n-\n",
+      "searchpath": "",
+      "preload": [],
+      "loadlib": "",
+      "cpath": "/usr/local/lib/lua/5.3/?.so;/usr/local/lib/lua/5.3/loadall.so;./?.so",
+      "loaded": {
+        ".crypto.util.hex": {
+          "stringToHex": ".crypto.util.hex",
+          "hexToString": ".crypto.util.hex"
+        },
+        ".process": {
+          "_version": "2.0.0",
+          "handle": ".process"
+        },
+        ".common.records": {
+          "getRecords": "function records.getRecords()\n\treturn json.encode(Records)\nend\n",
+          "setRecord": "function records.setRecord(name, transactionId, ttlSeconds)\n\tlocal nameValidity, nameValidityError = pcall(utils.validateUndername, name)\n\tassert(nameValidity ~= false, nameValidityError)\n\tlocal targetIdValidity, targetValidityError = pcall(utils.validateArweaveId, transactionId)\n\tassert(targetIdValidity ~= false, targetValidityError)\n\tlocal ttlSecondsValidity, ttlValidityError = pcall(utils.validateTTLSeconds, ttlSeconds)\n\tassert(ttlSecondsValidity ~= false, ttlValidityError)\n\n\tlocal recordsCount = #Records\n\n\tif recordsCount >= 10000 then\n\t\terror(\"Max records limit of 10,000 reached, please delete some records to make space\")\n\tend\n\n\tRecords[name] = {\n\t\ttransactionId = transactionId,\n\t\tttlSeconds = ttlSeconds,\n\t}\n\n\treturn json.encode({\n\t\ttransactionId = transactionId,\n\t\tttlSeconds = ttlSeconds,\n\t})\nend\n",
+          "removeRecord": "function records.removeRecord(name)\n\tlocal nameValidity, nameValidityError = pcall(utils.validateUndername, name)\n\tassert(nameValidity ~= false, nameValidityError)\n\tRecords[name] = nil\n\treturn json.encode({ message = \"Record deleted\" })\nend\n",
+          "getRecord": "function records.getRecord(name)\n\tutils.validateUndername(name)\n\tassert(Records[name] ~= nil, \"Record does not exist\")\n\n\treturn json.encode(Records[name])\nend\n"
+        },
+        "debug": {
+          "setlocal": "",
+          "gethook": "",
+          "setuservalue": "",
+          "getlocal": "",
+          "debug": "",
+          "getregistry": "",
+          "getuservalue": "",
+          "getmetatable": "",
+          "upvaluejoin": "",
+          "getupvalue": "",
+          "getinfo": "",
+          "upvalueid": "",
+          "sethook": "",
+          "setmetatable": "",
+          "setupvalue": "",
+          "traceback": ""
+        },
+        ".crypto.cipher.morus": {
+          "decrypt": ".crypto.cipher.morus",
+          "variant": "Morus-1280",
+          "encrypt": ".crypto.cipher.morus",
+          "state_update": ".crypto.cipher.morus",
+          "key_size": 32,
+          "nonce_size": 16
+        },
+        ".common.main": {
+          "init": "function ant.init()\n\t-- main.lua\n\t-- utils\n\tlocal json = require(\".common.json\")\n\tlocal utils = require(\".common.utils\")\n\tlocal camel = utils.camelCase\n\t-- spec modules\n\tlocal balances = require(\".common.balances\")\n\tlocal initialize = require(\".common.initialize\")\n\tlocal records = require(\".common.records\")\n\tlocal controllers = require(\".common.controllers\")\n\n\tOwner = Owner or ao.env.Process.Owner\n\tBalances = Balances or { [Owner] = 1 }\n\tControllers = Controllers or { Owner }\n\n\tName = Name or \"Arweave Name Token\"\n\tTicker = Ticker or \"ANT\"\n\tLogo = Logo or \"Sie_26dvgyok0PZD_-iQAFOhOd5YxDTkczOLoqTTL_A\"\n\tDenomination = Denomination or 0\n\tTotalSupply = TotalSupply or 1\n\tInitialized = Initialized or false\n\t-- INSERT placeholder used by build script to inject the appropriate ID\n\tSourceCodeTxId = SourceCodeTxId or \"__INSERT_SOURCE_CODE_ID__\"\n\tAntRegistryId = AntRegistryId or ao.env.Process.Tags[\"ANT-Registry-Id\"] or nil\n\n\tlocal ActionMap = {\n\t\t-- write\n\t\tAddController = \"Add-Controller\",\n\t\tRemoveController = \"Remove-Controller\",\n\t\tSetRecord = \"Set-Record\",\n\t\tRemoveRecord = \"Remove-Record\",\n\t\tSetName = \"Set-Name\",\n\t\tSetTicker = \"Set-Ticker\",\n\t\t--- initialization method for bootstrapping the contract from other platforms ---\n\t\tInitializeState = \"Initialize-State\",\n\t\t-- read\n\t\tControllers = \"Controllers\",\n\t\tRecord = \"Record\",\n\t\tRecords = \"Records\",\n\t\tState = \"State\",\n\t\tEvolve = \"Evolve\",\n\t}\n\n\tlocal TokenSpecActionMap = {\n\t\tInfo = \"Info\",\n\t\tBalances = \"Balances\",\n\t\tBalance = \"Balance\",\n\t\tTransfer = \"Transfer\",\n\t\tTotalSupply = \"Total-Supply\",\n\t\tCreditNotice = \"Credit-Notice\",\n\t\t-- not implemented\n\t\tMint = \"Mint\",\n\t\tBurn = \"Burn\",\n\t}\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Transfer),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Transfer),\n\t\tfunction(msg)\n\t\t\tlocal recipient = msg.Tags.Recipient\n\t\t\tlocal function checkAssertions()\n\t\t\t\tutils.validateOwner(msg.From)\n\t\t\tend\n\n\t\t\tlocal inputStatus, inputResult = pcall(checkAssertions)\n\n\t\t\tif not inputStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Transfer-Notice\", Error = \"Transfer-Error\" },\n\t\t\t\t\tData = tostring(inputResult),\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\t\t\tlocal transferStatus, transferResult = pcall(balances.transfer, recipient)\n\n\t\t\tif not transferStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Transfer-Notice\", Error = \"Transfer-Error\" },\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = tostring(transferResult),\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\telseif not msg.Cast then\n\t\t\t\tao.send(utils.notices.debit(msg))\n\t\t\t\tao.send(utils.notices.credit(msg))\n\t\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\t\t\treturn\n\t\t\tend\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tData = transferResult,\n\t\t\t})\n\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Balance),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Balance),\n\t\tfunction(msg)\n\t\t\tlocal balStatus, balRes = pcall(balances.balance, msg.Tags.Recipient or msg.From)\n\t\t\tif not balStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tTags = { Action = \"Invalid-Balance-Notice\", Error = \"Balance-Error\" },\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = tostring(balRes),\n\t\t\t\t})\n\t\t\telse\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Balance-Notice\",\n\t\t\t\t\tBalance = tostring(balRes),\n\t\t\t\t\tTicker = Ticker,\n\t\t\t\t\tAddress = msg.Tags.Recipient or msg.From,\n\t\t\t\t\tData = balRes,\n\t\t\t\t})\n\t\t\tend\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.Balances),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.Balances),\n\t\tfunction(msg)\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Balances-Notice\",\n\t\t\t\tData = balances.balances(),\n\t\t\t})\n\t\tend\n\t)\n\n\tHandlers.add(\n\t\tcamel(TokenSpecActionMap.TotalSupply),\n\t\tutils.hasMatchingTag(\"Action\", TokenSpecActionMap.TotalSupply),\n\t\tfunction(msg)\n\t\t\tassert(msg.From ~= ao.id, \"Cannot call Total-Supply from the same process!\")\n\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Total-Supply-Notice\",\n\t\t\t\tData = TotalSupply,\n\t\t\t\tTicker = Ticker,\n\t\t\t})\n\t\tend\n\t)\n\n\tHandlers.add(camel(TokenSpecActionMap.Info), utils.hasMatchingTag(\"Action\", TokenSpecActionMap.Info), function(msg)\n\t\tlocal info = {\n\t\t\tName = Name,\n\t\t\tTicker = Ticker,\n\t\t\t[\"Total-Supply\"] = tostring(TotalSupply),\n\t\t\tLogo = Logo,\n\t\t\tDenomination = tostring(Denomination),\n\t\t\tOwner = Owner,\n\t\t\tHandlers = utils.getHandlerNames(Handlers),\n\t\t\t[\"Source-Code-TX-ID\"] = SourceCodeTxId,\n\t\t}\n\t\tao.send({\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Info-Notice\",\n\t\t\tTags = info,\n\t\t\tData = json.encode(info),\n\t\t})\n\tend)\n\n\t-- ActionMap (ANT Spec)\n\n\tHandlers.add(camel(ActionMap.AddController), utils.hasMatchingTag(\"Action\", ActionMap.AddController), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Add-Controller-Notice\",\n\t\t\t\tError = \"Add-Controller-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\tData = permissionErr,\n\t\t\t})\n\t\tend\n\t\tlocal controllerStatus, controllerRes = pcall(controllers.setController, msg.Tags.Controller)\n\t\tif not controllerStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Add-Controller-Notice\",\n\t\t\t\tError = \"Add-Controller-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\tData = controllerRes,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\t\tao.send({ Target = msg.From, Action = \"Add-Controller-Notice\", Data = controllerRes })\n\t\tutils.notices.notifyState(msg, AntRegistryId)\n\tend)\n\n\tHandlers.add(\n\t\tcamel(ActionMap.RemoveController),\n\t\tutils.hasMatchingTag(\"Action\", ActionMap.RemoveController),\n\t\tfunction(msg)\n\t\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\t\tif assertHasPermission == false then\n\t\t\t\treturn ao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Remove-Controller-Notice\",\n\t\t\t\t\tData = permissionErr,\n\t\t\t\t\tError = \"Remove-Controller-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\tend\n\t\t\tlocal removeStatus, removeRes = pcall(controllers.removeController, msg.Tags.Controller)\n\t\t\tif not removeStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Remove-Controller-Notice\",\n\t\t\t\t\tData = removeRes,\n\t\t\t\t\tError = \"Remove-Controller-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tao.send({ Target = msg.From, Action = \"Remove-Controller-Notice\", Data = removeRes })\n\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\tend\n\t)\n\n\tHandlers.add(camel(ActionMap.Controllers), utils.hasMatchingTag(\"Action\", ActionMap.Controllers), function(msg)\n\t\tao.send({ Target = msg.From, Action = \"Controllers-Notice\", Data = controllers.getControllers() })\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetRecord), utils.hasMatchingTag(\"Action\", ActionMap.SetRecord), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Record-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal tags = msg.Tags\n\t\tlocal name, transactionId, ttlSeconds =\n\t\t\tstring.lower(tags[\"Sub-Domain\"]), tags[\"Transaction-Id\"], tonumber(tags[\"TTL-Seconds\"])\n\n\t\tlocal setRecordStatus, setRecordResult = pcall(records.setRecord, name, transactionId, ttlSeconds)\n\t\tif not setRecordStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Record-Notice\",\n\t\t\t\tData = setRecordResult,\n\t\t\t\tError = \"Set-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tao.send({ Target = msg.From, Action = \"Set-Record-Notice\", Data = setRecordResult })\n\tend)\n\n\tHandlers.add(camel(ActionMap.RemoveRecord), utils.hasMatchingTag(\"Action\", ActionMap.RemoveRecord), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({ Target = msg.From, Action = \"Invalid-Remove-Record-Notice\", Data = permissionErr })\n\t\tend\n\t\tlocal name = string.lower(msg.Tags[\"Sub-Domain\"])\n\t\tlocal removeRecordStatus, removeRecordResult = pcall(records.removeRecord, name)\n\t\tif not removeRecordStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Remove-Record-Notice\",\n\t\t\t\tData = removeRecordResult,\n\t\t\t\tError = \"Remove-Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\telse\n\t\t\tao.send({ Target = msg.From, Data = removeRecordResult })\n\t\tend\n\tend)\n\n\tHandlers.add(camel(ActionMap.Record), utils.hasMatchingTag(\"Action\", ActionMap.Record), function(msg)\n\t\tlocal name = string.lower(msg.Tags[\"Sub-Domain\"])\n\t\tlocal nameStatus, nameRes = pcall(records.getRecord, name)\n\t\tif not nameStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Record-Notice\",\n\t\t\t\tData = nameRes,\n\t\t\t\tError = \"Record-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tlocal recordNotice = {\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Record-Notice\",\n\t\t\tName = name,\n\t\t\tData = nameRes,\n\t\t}\n\n\t\t-- Add forwarded tags to the credit and debit notice messages\n\t\tfor tagName, tagValue in pairs(msg) do\n\t\t\t-- Tags beginning with \"X-\" are forwarded\n\t\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\t\trecordNotice[tagName] = tagValue\n\t\t\tend\n\t\tend\n\n\t\t-- Send Record-Notice\n\t\tao.send(recordNotice)\n\tend)\n\n\tHandlers.add(camel(ActionMap.Records), utils.hasMatchingTag(\"Action\", ActionMap.Records), function(msg)\n\t\tlocal records = records.getRecords()\n\n\t\t-- Credit-Notice message template, that is sent to the Recipient of the transfer\n\t\tlocal recordsNotice = {\n\t\t\tTarget = msg.From,\n\t\t\tAction = \"Records-Notice\",\n\t\t\tData = records,\n\t\t}\n\n\t\t-- Add forwarded tags to the records notice messages\n\t\tfor tagName, tagValue in pairs(msg) do\n\t\t\t-- Tags beginning with \"X-\" are forwarded\n\t\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\t\trecordsNotice[tagName] = tagValue\n\t\t\tend\n\t\tend\n\n\t\t-- Send Records-Notice\n\t\tao.send(recordsNotice)\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetName), utils.hasMatchingTag(\"Action\", ActionMap.SetName), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Name-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Name-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal nameStatus, nameRes = pcall(balances.setName, msg.Tags.Name)\n\t\tif not nameStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Name-Notice\",\n\t\t\t\tData = nameRes,\n\t\t\t\tError = \"Set-Name-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\t\tao.send({ Target = msg.From, Action = \"Set-Name-Notice\", Data = nameRes })\n\tend)\n\n\tHandlers.add(camel(ActionMap.SetTicker), utils.hasMatchingTag(\"Action\", ActionMap.SetTicker), function(msg)\n\t\tlocal assertHasPermission, permissionErr = pcall(utils.assertHasPermission, msg.From)\n\t\tif assertHasPermission == false then\n\t\t\treturn ao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Ticker-Notice\",\n\t\t\t\tData = permissionErr,\n\t\t\t\tError = \"Set-Ticker-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\tend\n\t\tlocal tickerStatus, tickerRes = pcall(balances.setTicker, msg.Tags.Ticker)\n\t\tif not tickerStatus then\n\t\t\tao.send({\n\t\t\t\tTarget = msg.From,\n\t\t\t\tAction = \"Invalid-Set-Ticker-Notice\",\n\t\t\t\tData = tickerRes,\n\t\t\t\tError = \"Set-Ticker-Error\",\n\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t})\n\t\t\treturn\n\t\tend\n\n\t\tao.send({ Target = msg.From, Action = \"Set-Ticker-Notice\", Data = tickerRes })\n\tend)\n\n\tHandlers.add(\n\t\tcamel(ActionMap.InitializeState),\n\t\tutils.hasMatchingTag(\"Action\", ActionMap.InitializeState),\n\t\tfunction(msg)\n\t\t\tassert(msg.From == Owner, \"Only the owner can initialize the state\")\n\t\t\tlocal initStatus, result = pcall(initialize.initializeANTState, msg.Data)\n\n\t\t\tif not initStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Initialize-State-Notice\",\n\t\t\t\t\tData = result,\n\t\t\t\t\tError = \"Initialize-State-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\telse\n\t\t\t\tao.send({ Target = msg.From, Action = \"Initialize-State-Notice\", Data = result })\n\t\t\t\tutils.notices.notifyState(msg, AntRegistryId)\n\t\t\tend\n\t\tend\n\t)\n\tHandlers.add(camel(ActionMap.State), utils.hasMatchingTag(\"Action\", ActionMap.State), function(msg)\n\t\tutils.notices.notifyState(msg, msg.From)\n\tend)\n\n\tHandlers.prepend(\n\t\tcamel(ActionMap.Evolve),\n\t\tHandlers.utils.continue(utils.hasMatchingTag(\"Action\", \"Eval\")),\n\t\tfunction(msg)\n\t\t\tlocal srcCodeTxId = msg.Tags[\"Source-Code-TX-ID\"]\n\t\t\tif not srcCodeTxId then\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tif Owner ~= msg.From then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Evolve-Notice\",\n\t\t\t\t\tError = \"Evolve-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = \"Only the Owner [\" .. Owner or \"no owner set\" .. \"] can call Evolve\",\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\n\t\t\tlocal srcCodeTxIdStatus, srcCodeTxIdResult = pcall(utils.validateArweaveId, srcCodeTxId)\n\t\t\tif srcCodeTxIdStatus and not srcCodeTxIdStatus then\n\t\t\t\tao.send({\n\t\t\t\t\tTarget = msg.From,\n\t\t\t\t\tAction = \"Invalid-Evolve-Notice\",\n\t\t\t\t\tError = \"Evolve-Error\",\n\t\t\t\t\t[\"Message-Id\"] = msg.Id,\n\t\t\t\t\tData = \"Source-Code-TX-ID is required\",\n\t\t\t\t})\n\t\t\t\treturn\n\t\t\tend\n\t\t\tSourceCodeTxId = srcCodeTxId\n\t\tend\n\t)\nend\n"
+        },
+        ".base64": {
+          "makedecoder": ".base64",
+          "decode": ".base64",
+          "encode": ".base64",
+          "makeencoder": ".base64"
+        },
+        ".handlers": "<circular reference>",
+        ".crypto.init": {
+          "utils": {
+            "bit": "<circular reference>",
+            "stream": {
+              "toString": ".crypto.util.stream",
+              "toHex": ".crypto.util.stream",
+              "toArray": ".crypto.util.stream",
+              "fromString": ".crypto.util.stream",
+              "fromHex": ".crypto.util.stream",
+              "fromArray": ".crypto.util.stream"
+            },
+            "_version": "0.0.1",
+            "array": {
+              "concat": ".crypto.util.array",
+              "readFromQueue": ".crypto.util.array",
+              "toStream": ".crypto.util.array",
+              "fromHex": ".crypto.util.array",
+              "toHex": ".crypto.util.array",
+              "slice": ".crypto.util.array",
+              "fromStream": ".crypto.util.array",
+              "toString": ".crypto.util.array",
+              "permute": ".crypto.util.array",
+              "writeToQueue": ".crypto.util.array",
+              "XOR": ".crypto.util.array",
+              "truncate": ".crypto.util.array",
+              "size": ".crypto.util.array",
+              "substitute": ".crypto.util.array",
+              "fromString": ".crypto.util.array",
+              "copy": ".crypto.util.array"
+            },
+            "hex": "<circular reference>",
+            "queue": ".crypto.util.queue"
+          },
+          "cipher": {
+            "norx": {
+              "variant": "NORX 64-4-1",
+              "nonce_size": 32,
+              "key_size": 32,
+              "decrypt": ".crypto.cipher.norx",
+              "encrypt": ".crypto.cipher.norx"
+            },
+            "issac": {
+              "random": ".crypto.cipher.issac",
+              "getRandomChar": ".crypto.cipher.issac",
+              "encrypt": ".crypto.cipher.issac",
+              "decrypt": ".crypto.cipher.issac",
+              "seedIsaac": ".crypto.cipher.issac",
+              "getRandom": ".crypto.cipher.issac"
+            },
+            "aes": {
+              "encrypt": ".crypto.cipher.aes",
+              "decrypt": ".crypto.cipher.aes"
+            },
+            "morus": "<circular reference>",
+            "_version": "0.0.1"
+          },
+          "random": ".crypto.cipher.issac",
+          "_version": "0.0.1",
+          "kdf": {
+            "_version": "0.0.1",
+            "pbkdf2": ".crypto.kdf.pbkdf2"
+          },
+          "digest": {
+            "sha2_512": ".crypto.digest.sha2_512",
+            "md5": ".crypto.digest.md5",
+            "md4": ".crypto.digest.md4",
+            "sha3_256": "",
+            "sha3_512": "",
+            "sha1": ".crypto.digest.sha1",
+            "keccak256": "",
+            "keccak512": "",
+            "_version": "0.0.1",
+            "md2": ".crypto.digest.md2",
+            "sha2_256": ".crypto.digest.sha2_256",
+            "blake2b": ".crypto.digest.blake2b"
+          },
+          "mac": {
+            "_version": "0.0.1",
+            "createHmac": ".crypto.mac.hmac"
+          }
+        },
+        ".common.initialize": {
+          "initializeANTState": "function initialize.initializeANTState(state)\n\tlocal encoded = json.decode(state)\n\tlocal balances = encoded.balances\n\tlocal controllers = encoded.controllers\n\tlocal records = encoded.records\n\tlocal name = encoded.name\n\tlocal ticker = encoded.ticker\n\tlocal owner = encoded.owner\n\tassert(type(name) == \"string\", \"name must be a string\")\n\tassert(type(ticker) == \"string\", \"ticker must be a string\")\n\tassert(type(balances) == \"table\", \"balances must be a table\")\n\tfor k, v in pairs(balances) do\n\t\tbalances[k] = tonumber(v)\n\tend\n\tassert(type(controllers) == \"table\", \"controllers must be a table\")\n\tassert(type(records) == \"table\", \"records must be a table\")\n\tassert(type(owner) == \"string\", \"owner must be a string\")\n\tfor k, v in pairs(records) do\n\t\tutils.validateUndername(k)\n\t\tassert(type(v) == \"table\", \"records values must be tables\")\n\t\tutils.validateArweaveId(v.transactionId)\n\t\tutils.validateTTLSeconds(v.ttlSeconds)\n\tend\n\n\tName = name\n\tTicker = ticker\n\tBalances = balances\n\tControllers = controllers\n\tRecords = records\n\tInitialized = true\n\tOwner = owner\n\n\treturn json.encode({\n\t\tname = Name,\n\t\tticker = Ticker,\n\t\tbalances = Balances,\n\t\tcontrollers = Controllers,\n\t\trecords = Records,\n\t\towner = Owner,\n\t\tinitialized = Initialized,\n\t})\nend\n",
+          "initializeProcessState": "function initialize.initializeProcessState(msg, env)\n\tErrors = Errors or {}\n\tInbox = Inbox or {}\n\n\t-- temporary fix for Spawn\n\tif not Owner then\n\t\tlocal _from = findObject(env.Process.Tags, \"name\", \"From-Process\")\n\t\tif _from then\n\t\t\tOwner = _from.value\n\t\telse\n\t\t\tOwner = msg.From\n\t\tend\n\tend\n\n\tif not Name then\n\t\tlocal taggedName = findObject(env.Process.Tags, \"name\", \"Name\")\n\t\tif taggedName then\n\t\t\tName = taggedName.value\n\t\telse\n\t\t\tName = \"ANT\"\n\t\tend\n\tend\nend\n"
+        },
+        ".crypto.digest.blake2b": ".crypto.digest.blake2b",
+        ".chance": {
+          "random": ".chance",
+          "seed": ".chance",
+          "integer": ".chance"
+        },
+        ".crypto.util.array": "<circular reference>",
+        ".common.balances": {
+          "setName": "function balances.setName(name)\n\tassert(type(name) == \"string\", \"Name must be a string\")\n\tName = name\n\treturn json.encode({ name = Name })\nend\n",
+          "balance": "function balances.balance(address)\n\tutils.validateArweaveId(address)\n\tlocal balance = Balances[address] or 0\n\treturn balance\nend\n",
+          "balances": "function balances.balances()\n\treturn json.encode(Balances)\nend\n",
+          "walletHasSufficientBalance": "function balances.walletHasSufficientBalance(wallet)\n\treturn Balances[wallet] ~= nil and Balances[wallet] > 0\nend\n",
+          "setTicker": "function balances.setTicker(ticker)\n\tassert(type(ticker) == \"string\", \"Ticker must be a string\")\n\tTicker = ticker\n\treturn json.encode({ ticker = Ticker })\nend\n",
+          "transfer": "function balances.transfer(to)\n\tutils.validateArweaveId(to)\n\tBalances = { [to] = 1 }\n\tOwner = to\n\tControllers = {}\n\treturn json.encode({ [to] = 1 })\nend\n"
+        },
+        ".common.controllers": {
+          "setController": "function controllers.setController(controller)\n\tutils.validateArweaveId(controller)\n\n\tfor _, c in ipairs(Controllers) do\n\t\tassert(c ~= controller, \"Controller already exists\")\n\tend\n\n\ttable.insert(Controllers, controller)\n\treturn json.encode(Controllers)\nend\n",
+          "getControllers": "function controllers.getControllers()\n\treturn json.encode(Controllers)\nend\n",
+          "removeController": "function controllers.removeController(controller)\n\tutils.validateArweaveId(controller)\n\tlocal controllerExists = false\n\n\tfor i, v in ipairs(Controllers) do\n\t\tif v == controller then\n\t\t\ttable.remove(Controllers, i)\n\t\t\tcontrollerExists = true\n\t\t\tbreak\n\t\tend\n\tend\n\n\tassert(controllerExists ~= nil, \"Controller does not exist\")\n\treturn json.encode(Controllers)\nend\n"
+        },
+        "ao": "<circular reference>",
+        ".crypto.digest.md2": ".crypto.digest.md2",
+        ".crypto.padding.zero": ".crypto.padding.zero",
+        ".crypto.kdf.init": "<circular reference>",
+        "json": {
+          "_version": "0.2.0",
+          "encode": "",
+          "decode": "json"
+        },
+        ".crypto.cipher.mode.ecb": {
+          "Cipher": ".crypto.cipher.mode.ecb",
+          "Decipher": ".crypto.cipher.mode.ecb"
+        },
+        "os": "<circular reference>",
+        ".crypto.cipher.mode.cbc": {
+          "Cipher": ".crypto.cipher.mode.cbc",
+          "Decipher": ".crypto.cipher.mode.cbc"
+        },
+        ".crypto.cipher.mode.ctr": {
+          "Cipher": ".crypto.cipher.mode.ctr",
+          "Decipher": ".crypto.cipher.mode.ctr"
+        },
+        ".crypto.digest.md4": ".crypto.digest.md4",
+        ".crypto.cipher.norx": "<circular reference>",
+        ".crypto.util.queue": ".crypto.util.queue",
+        ".crypto.mac.hmac": {
+          "hmac": ".crypto.mac.hmac",
+          "HMAC": ".crypto.mac.hmac"
+        },
+        "table": "<circular reference>",
+        "utf8": "<circular reference>",
+        ".stringify": {
+          "isSimpleArray": ".stringify",
+          "format": ".stringify",
+          "_version": "0.0.1"
+        },
+        ".crypto.cipher.mode.ofb": {
+          "Cipher": ".crypto.cipher.mode.ofb",
+          "Decipher": ".crypto.cipher.mode.ofb"
+        },
+        ".crypto.cipher.issac": "<circular reference>",
+        ".crypto.util.init": "<circular reference>",
+        ".crypto.cipher.mode.cfb": {
+          "Cipher": ".crypto.cipher.mode.cfb",
+          "Decipher": ".crypto.cipher.mode.cfb"
+        },
+        ".ao": "<circular reference>",
+        ".dump": ".dump",
+        ".crypto.cipher.init": "<circular reference>",
+        ".boot": ".boot",
+        ".utils": "<circular reference>",
+        ".crypto.digest.sha2_256": {
+          "sha2_256": ".crypto.digest.sha2_256",
+          "SHA2_256": ".crypto.digest.sha2_256"
+        },
+        "math": "<circular reference>",
+        ".crypto.digest.sha3": {
+          "sha3_512": "",
+          "keccak256": "",
+          "sha3_256": "",
+          "keccak512": ""
+        },
+        ".crypto.digest.sha2_512": ".crypto.digest.sha2_512",
+        ".pretty": {
+          "_version": "0.0.1",
+          "tprint": ".pretty"
+        },
+        ".default": ".default",
+        ".crypto.digest.md5": ".crypto.digest.md5",
+        "bit32": "<circular reference>",
+        "_G": "<circular reference>",
+        ".crypto.cipher.aes256": {
+          "encrypt": ".crypto.cipher.aes256",
+          "blockSize": 16,
+          "decrypt": ".crypto.cipher.aes256"
+        },
+        "coroutine": "<circular reference>",
+        "package": "<circular reference>",
+        ".crypto.util.bit": "<circular reference>",
+        ".common.constants": {
+          "MIN_TTL_SECONDS": 900,
+          "MAX_UNDERNAME_LENGTH": 61,
+          "UNDERNAME_DOES_NOT_EXIST_MESSAGE": "Name does not exist in the ANT!",
+          "UNDERNAME_REGEXP": "^(?:@|[a-zA-Z0-9][a-zA-Z0-9-_]{0,59}[a-zA-Z0-9])$",
+          "INVALID_ARWEAVE_ID_MESSAGE": "Invalid Arweave ID",
+          "MAX_TTL_SECONDS": 3600,
+          "ARWEAVE_ID_REGEXP": "^[a-zA-Z0-9-_]{43}$",
+          "INVALID_TTL_MESSAGE": "Invalid TTL. TLL must be an integer between 900 and 3600 seconds"
+        },
+        ".crypto.digest.sha1": {
+          "sha1": ".crypto.digest.sha1",
+          "SHA1": ".crypto.digest.sha1"
+        },
+        "io": "<circular reference>",
+        ".crypto.cipher.aes": "<circular reference>",
+        ".crypto.util.stream": "<circular reference>",
+        ".eval": ".eval",
+        "string": {
+          "byte": "",
+          "char": "",
+          "gmatch": "",
+          "packsize": "",
+          "lower": "",
+          "dump": "",
+          "reverse": "",
+          "unpack": "",
+          "find": "",
+          "rep": "",
+          "upper": "",
+          "match": "",
+          "sub": "",
+          "pack": "",
+          "format": "",
+          "len": "",
+          "gsub": ""
+        },
+        ".crypto.mac.init": "<circular reference>",
+        ".handlers-utils": "<circular reference>",
+        ".crypto.cipher.aes128": {
+          "encrypt": ".crypto.cipher.aes128",
+          "blockSize": 16,
+          "decrypt": ".crypto.cipher.aes128"
+        },
+        ".assignment": {
+          "_version": "0.1.0",
+          "init": ".assignment"
+        },
+        ".crypto.digest.init": "<circular reference>",
+        ".crypto.kdf.pbkdf2": {
+          "PBKDF2": ".crypto.kdf.pbkdf2",
+          "pbkdf2": ".crypto.kdf.pbkdf2"
+        },
+        ".common.utils": {
+          "getHandlerNames": "function utils.getHandlerNames(handlers)\n\tlocal names = {}\n\tfor _, handler in ipairs(handlers.list) do\n\t\ttable.insert(names, handler.name)\n\tend\n\treturn names\nend\n",
+          "values": "utils.values = function(t)\n\tassert(type(t) == \"table\", \"argument needs to be a table\")\n\tlocal values = {}\n\tfor _, value in pairs(t) do\n\t\ttable.insert(values, value)\n\tend\n\treturn values\nend\n",
+          "validateArweaveId": "function utils.validateArweaveId(id)\n\tlocal valid = string.match(id, constants.ARWEAVE_ID_REGEXP) == nil\n\n\tassert(valid == true, constants.INVALID_ARWEAVE_ID_MESSAGE)\nend\n",
+          "hasMatchingTag": "function utils.hasMatchingTag(tag, value)\n\treturn Handlers.utils.hasMatchingTag(tag, value)\nend\n",
+          "propEq": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "_version": "0.0.1",
+          "map": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "reverse": "utils.reverse = function(data)\n\tassert(type(data) == \"table\", \"argument needs to be a table that is an array\")\n\treturn utils.reduce(function(result, v, i)\n\t\tresult[#data - i + 1] = v\n\t\treturn result\n\tend, {}, data)\nend\n",
+          "compose": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "camelCase": "function utils.camelCase(str)\n\t-- Remove any leading or trailing spaces\n\tstr = string.gsub(str, \"^%s*(.-)%s*$\", \"%1\")\n\n\t-- Convert PascalCase to camelCase\n\tstr = string.gsub(str, \"^%u\", string.lower)\n\n\t-- Handle kebab-case, snake_case, and space-separated words\n\tstr = string.gsub(str, \"[-_%s](%w)\", function(s)\n\t\treturn string.upper(s)\n\tend)\n\n\treturn str\nend\n",
+          "notices": {
+            "credit": "function utils.notices.credit(msg)\n\tlocal notice = {\n\t\tTarget = msg.Recipient,\n\t\tAction = \"Credit-Notice\",\n\t\tSender = msg.From,\n\t\tQuantity = tostring(1),\n\t}\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tnotice[tagName] = tagValue\n\t\tend\n\tend\n\n\treturn notice\nend\n",
+            "debit": "function utils.notices.debit(msg)\n\tlocal notice = {\n\t\tTarget = msg.From,\n\t\tAction = \"Debit-Notice\",\n\t\tRecipient = msg.Recipient,\n\t\tQuantity = tostring(1),\n\t}\n\t-- Add forwarded tags to the credit and debit notice messages\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tnotice[tagName] = tagValue\n\t\tend\n\tend\n\n\treturn notice\nend\n",
+            "sendNotices": "function utils.notices.sendNotices(notices)\n\tfor _, notice in ipairs(notices) do\n\t\tao.send(notice)\n\tend\nend\n",
+            "notifyState": "function utils.notices.notifyState(msg, target)\n\tif not target then\n\t\tprint(\"No target specified for state notice\")\n\t\treturn\n\tend\n\tlocal state = {\n\t\tRecords = Records,\n\t\tControllers = Controllers,\n\t\tBalances = Balances,\n\t\tOwner = Owner,\n\t\tName = Name,\n\t\tTicker = Ticker,\n\t\tLogo = Logo,\n\t\tDenomination = Denomination,\n\t\tTotalSupply = TotalSupply,\n\t\tInitialized = Initialized,\n\t\t[\"Source-Code-TX-ID\"] = SourceCodeTxId,\n\t}\n\n\t-- Add forwarded tags to the records notice messages\n\tfor tagName, tagValue in pairs(msg) do\n\t\t-- Tags beginning with \"X-\" are forwarded\n\t\tif string.sub(tagName, 1, 2) == \"X-\" then\n\t\t\tstate[tagName] = tagValue\n\t\tend\n\tend\n\n\tao.send({ Target = target, Action = \"State-Notice\", Data = json.encode(state) })\nend\n"
+          },
+          "reduce": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "find": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "prop": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "filter": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "concat": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n",
+          "reply": "function utils.reply(msg)\n\tHandlers.utils.reply(msg)\nend\n",
+          "validateUndername": "function utils.validateUndername(name)\n\tlocal valid = string.match(name, constants.UNDERNAME_REGEXP) == nil\n\tassert(valid ~= false, constants.UNDERNAME_DOES_NOT_EXIST_MESSAGE)\nend\n",
+          "validateOwner": "function utils.validateOwner(caller)\n\tlocal isOwner = false\n\tif Owner == caller or Balances[caller] or ao.env.Process.Id == caller then\n\t\tisOwner = true\n\tend\n\tassert(isOwner, \"Sender is not the owner.\")\nend\n",
+          "curry": "utils.curry = function(fn, arity)\n\tassert(type(fn) == \"function\", \"function is required as first argument\")\n\tarity = arity or debug.getinfo(fn, \"u\").nparams\n\tif arity < 2 then\n\t\treturn fn\n\tend\n\n\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\nend\n",
+          "validateTTLSeconds": "function utils.validateTTLSeconds(ttl)\n\tlocal valid = type(ttl) == \"number\" and ttl >= constants.MIN_TTL_SECONDS and ttl <= constants.MAX_TTL_SECONDS\n\treturn assert(valid ~= false, constants.INVALID_TTL_MESSAGE)\nend\n",
+          "keys": "utils.keys = function(t)\n\tassert(type(t) == \"table\", \"argument needs to be a table\")\n\tlocal keys = {}\n\tfor key in pairs(t) do\n\t\ttable.insert(keys, key)\n\tend\n\treturn keys\nend\n",
+          "assertHasPermission": "function utils.assertHasPermission(from)\n\tfor _, c in ipairs(Controllers) do\n\t\tif c == from then\n\t\t\t-- if is controller, return true\n\t\t\treturn\n\t\tend\n\tend\n\tif Owner == from then\n\t\treturn\n\tend\n\tif ao.env.Process.Id == from then\n\t\treturn\n\tend\n\tassert(false, \"Only controllers and owners can set controllers, records, and change metadata.\")\nend\n",
+          "includes": "\treturn function(...)\n\t\tlocal args = { ... }\n\n\t\tif #args >= arity then\n\t\t\treturn fn(table.unpack(args))\n\t\telse\n\t\t\treturn utils.curry(function(...)\n\t\t\t\treturn fn(table.unpack(args), ...)\n\t\t\tend, arity - #args)\n\t\tend\n\tend\n"
+        },
+        ".common.json": {
+          "_version": "0.1.2",
+          "encode": "function json.encode(val)\n\treturn (encode(val))\nend\n",
+          "decode": "function json.decode(str)\n\tif type(str) ~= \"string\" then\n\t\terror(\"expected argument of type string, got \" .. type(str))\n\tend\n\tlocal res, idx = parse(str, next_char(str, 1, space_chars, true))\n\tidx = next_char(str, idx, space_chars, true)\n\tif idx <= #str then\n\t\tdecode_error(str, idx, \"trailing garbage\")\n\tend\n\treturn res\nend\n"
+        },
+        ".crypto.cipher.aes192": {
+          "encrypt": ".crypto.cipher.aes192",
+          "blockSize": 16,
+          "decrypt": ".crypto.cipher.aes192"
+        }
+      }
+    },
+    "ao": {
+      "removeAssignable": ".assignment",
+      "isAssignable": ".assignment",
+      "reference": 0,
+      "outbox": {
+        "Messages": [],
+        "Spawns": [],
+        "Output": [],
+        "Assignments": []
+      },
+      "sanitize": ".ao",
+      "send": ".process",
+      "result": ".ao",
+      "_version": "0.0.6",
+      "init": ".ao",
+      "spawn": ".process",
+      "authorities": {
+        "1": "BOOP"
+      },
+      "id": "AOS",
+      "normalize": ".ao",
+      "nonExtractableTags": {
+        "1": "Data-Protocol",
+        "2": "Variant",
+        "3": "From-Process",
+        "4": "From-Module",
+        "5": "Type",
+        "6": "From",
+        "7": "Owner",
+        "8": "Anchor",
+        "9": "Target",
+        "10": "Data",
+        "11": "Tags"
+      },
+      "log": ".ao",
+      "isAssignment": "",
+      "assignables": [],
+      "env": {
+        "Process": {
+          "Owner": "FOOBAR",
+          "Id": "AOS",
+          "TagArray": {
+            "1": {
+              "name": "Name",
+              "value": "Thomas"
+            },
+            "2": {
+              "name": "Authority",
+              "value": "BOOP"
+            }
+          },
+          "Tags": {
+            "Name": "Thomas",
+            "Authority": "BOOP"
+          }
+        }
+      },
+      "nonForwardableTags": {
+        "1": "Data-Protocol",
+        "2": "Variant",
+        "3": "From-Process",
+        "4": "From-Module",
+        "5": "Type",
+        "6": "From",
+        "7": "Owner",
+        "8": "Anchor",
+        "9": "Target",
+        "10": "Tags",
+        "11": "TagArray",
+        "12": "Hash-Chain",
+        "13": "Timestamp",
+        "14": "Nonce",
+        "15": "Epoch",
+        "16": "Signature",
+        "17": "Forwarded-By",
+        "18": "Pushed-For",
+        "19": "Read-Only",
+        "20": "Cron",
+        "21": "Block-Height",
+        "22": "Reference",
+        "23": "Id",
+        "24": "Reply-To"
+      },
+      "_module": "",
+      "clearOutbox": ".ao",
+      "assign": ".ao",
+      "addAssignable": ".assignment",
+      "clone": ".ao",
+      "isTrusted": ".ao"
+    },
+    "load": "",
+    "getmetatable": "",
+    "loadfile": "",
+    "bit32": {
+      "arshift": "",
+      "bnot": "",
+      "bxor": "",
+      "bor": "",
+      "btest": "",
+      "lshift": "",
+      "lrotate": "",
+      "extract": "",
+      "band": "",
+      "rrotate": "",
+      "replace": "",
+      "rshift": ""
+    },
+    "coroutine": {
+      "wrap": "",
+      "create": "",
+      "running": "",
+      "resume": "",
+      "status": "",
+      "yield": "",
+      "isyieldable": ""
+    },
+    "dofile": "",
+    "rawlen": "",
+    "ipairs": "",
+    "SourceCodeTxId": "__INSERT_SOURCE_CODE_ID__",
+    "pcall": "",
+    "Owner": "FOOBAR",
+    "Logo": "Sie_26dvgyok0PZD_-iQAFOhOd5YxDTkczOLoqTTL_A",
+    "Dump": ".dump",
+    "Ticker": "ANT",
+    "rawequal": "",
+    "utf8": {
+      "charpattern": "[\u0000-�-�][�-�]*",
+      "codepoint": "",
+      "char": "",
+      "offset": "",
+      "len": "",
+      "codes": ""
+    },
+    "table": {
+      "unpack": "",
+      "insert": "",
+      "pack": "",
+      "remove": "",
+      "sort": "",
+      "move": "",
+      "concat": ""
+    },
+    "_VERSION": "Lua 5.3",
+    "os": {
+      "tmpname": "",
+      "setlocale": "",
+      "getenv": "",
+      "time": ".process",
+      "rename": "",
+      "execute": "",
+      "difftime": "",
+      "exit": "",
+      "date": "",
+      "remove": "",
+      "clock": ""
+    },
+    "Seeded": true,
+    "Utils": {
+      "values": ".utils",
+      "propEq": ".utils",
+      "parseValue": ".utils",
+      "map": ".utils",
+      "reverse": ".utils",
+      "reduce": ".utils",
+      "keys": ".utils",
+      "_version": "0.0.5",
+      "find": ".utils",
+      "getProgramState": ".utils",
+      "filter": ".utils",
+      "matchesPattern": ".utils",
+      "prop": ".utils",
+      "compose": ".utils",
+      "concat": ".utils",
+      "parseCoroutine": ".utils",
+      "parseFunctionCode": ".utils",
+      "curry": ".utils",
+      "matchesSpec": ".utils",
+      "includes": ".utils"
+    },
+    "rawset": "",
+    "error": ""
+  }
+}
