@@ -80,7 +80,7 @@ function handlers.once(...)
     pattern = select(1, ...)
     handle = select(2, ...)
   end
-  handlers.add(name, pattern, handle, 1)
+  handlers.prepend(name, pattern, handle, 1)
 end
 
 function handlers.add(...)
