@@ -1,6 +1,6 @@
 # WeaveDrive Client
 
-Version: 0.0.1
+Version: 0.0.2
 
 This client allows users to connect to WeaveDrive and access the block headers and transaction headers for Arweave.
 
@@ -28,6 +28,11 @@ getTx takes a arweave txId and returns the transaction headers for that tx
 ```
 
 > NOTE: It is important to note that the owner Wallet Address is added to this result set.
+
+### getDataItem(id)
+
+getDataItem takes a L2 or bundled txId and returns the MetaData for that `id`
+
 
 ### getBlock(blockHeight) 
 
@@ -220,3 +225,11 @@ getBlock takes a blockHeight and returns the blockHeight Headers
   }
 }
 ```
+
+## Publish
+
+```
+npm i -g apm-tool
+apm publish
+```
+
