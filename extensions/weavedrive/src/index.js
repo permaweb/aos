@@ -564,9 +564,10 @@ module.exports = function weaveDrive(mod, FS) {
       return values.pop()
     },
 
-    async queryHasResult(query) {
-      const results = await mod.arweave.api.post('/graphql', query);
-      const json = JSON.parse(results)
+    async queryHasResult(query, variables) {
+      const json = await this.gqlQuery(query, variables)
+        .then((res) => res.json())
+
       return json.data.transactions.edges.length > 0
     },
 
