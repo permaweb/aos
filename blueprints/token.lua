@@ -192,6 +192,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
       if msg.reply then
         msg.reply(debitNotice)
       else
+        debitNotice.Target = msg.From
         Send(debitNotice)
       end
       Send(creditNotice)
