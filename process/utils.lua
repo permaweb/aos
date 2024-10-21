@@ -1,4 +1,4 @@
-utils = { _version = "0.0.5" }
+local utils = { _version = "0.0.5" }
 
 function utils.matchesPattern(pattern, value, msg)
   -- If the key is not in the message, then it does not match
