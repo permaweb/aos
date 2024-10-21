@@ -1,4 +1,4 @@
-local utils = { _version = "0.0.5" }
+utils = { _version = "0.0.5" }
 
 function utils.matchesPattern(pattern, value, msg)
   -- If the key is not in the message, then it does not match
@@ -57,10 +57,12 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      if not msg[key] then
+      local msgTagsKey = msg['Tags'] and msg['Tags'][key]
+
+      if not msg[key] and not msgTagsKey then
         return false
       end
-      if not utils.matchesPattern(pattern, msg[key], msg) then
+      if not utils.matchesPattern(pattern, msg[key], msg) and not utils.matchesPattern(pattern, msg['Tags'][key], msg)  then
         return false
       end
     end
