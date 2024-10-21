@@ -1,0 +1,17 @@
+{
+  "$schema": "https://raw.githubusercontent.com/ankushKun/apm-cli/main/apm.schema.json",
+  "name": "WeaveDrive",
+  "vendor": "@rakis",
+  "description": "WeaveDrive is a client that provides an interface to WeaveDrive for wasm64 processes",
+  "main": "main.lua",
+  "version": "0.0.2",
+  "repository": "https://github.com/permaweb/aos/extensions/weavedrive",
+  "license": "MIT",
+  "keywords": [],
+  "authors": [],
+  "warnings": {
+    "modifiesGlobalState": false,
+    "installMessage": ""
+  },
+  "dependencies": {}
+}
