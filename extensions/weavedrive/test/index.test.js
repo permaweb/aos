@@ -1,6 +1,6 @@
 const AoLoader = require('@permaweb/ao-loader')
 const fs = require('fs')
-const { test } = require('node:test')
+const { describe, test } = require('node:test')
 const assert = require('assert')
 const weaveDrive = require('../src/index.js')
 const wasm = fs.readFileSync('./process.wasm')
@@ -28,7 +28,7 @@ const Process = {
     { name: 'Type', value: 'Process' },
     { name: 'Extension', value: 'WeaveDrive' },
     { name: 'Module', value: 'MODULE' },
-    { name: 'Authority', value: 'PROCESS' },
+    { name: 'Authority', value: 'PROCESS' }
   ]
 }
 
@@ -47,8 +47,6 @@ const Msg = {
   Timestamp: Date.now()
 }
 
-const BootLoadedFromTx = 'Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA'
-
 const options = {
   format: 'wasm64-unknown-emscripten-draft_2024_02_15',
   WeaveDrive: weaveDrive,
@@ -56,19 +54,17 @@ const options = {
   mode: "test",
   blockHeight: 1000,
   spawn: {
-    tags: [
-      { name: 'Scheduler', value: 'TEST_SCHED_ADDR' },
-      { name: 'On-Boot', value: BootLoadedFromTx }
-    ],
+    tags: Process.Tags
   },
   module: {
-    tags: []
+    tags: Module.Tags
   }
 }
 
+const drive = fs.readFileSync('./client/main.lua', 'utf-8')
+
 test('load client source', async () => {
   const handle = await AoLoader(wasm, options)
-  const drive = fs.readFileSync('./client/main.lua', 'utf-8')
   const result = await handle(memory, {
     ...Msg,
     Data: `
@@ -153,6 +149,154 @@ return require('json').encode({ A = #results, B = #results2 })
   assert.equal(res.A, res.B)
 })
 
+describe('Assignments mode', () => {
+  const TX_ID_TO_LOAD = 'iaiAqmcYrviugZq9biUZKJIAi_zIT_mgFHAWZzMvDuk'
+  const blockHeight = 1536315
+  const mode = 'Assignments'
+
+  const ProcessAssignmentsMode = {
+    Id: 'PROCESS',
+    Owner: 'PROCESS',
+    Target: 'PROCESS',
+    Tags: [
+      { name: 'Data-Protocol', value: 'ao' },
+      { name: 'Variant', value: 'ao.TN.1' },
+      { name: 'Type', value: 'Process' },
+      { name: 'Extension', value: 'WeaveDrive' },
+      { name: 'Module', value: 'MODULE' },
+      { name: 'Authority', value: 'PROCESS' },
+      { name: 'Availability-Type', value: mode }
+    ],
+    Data: `Test = 1`,
+    From: 'PROCESS',
+    Module: 'MODULE',
+    "Block-Height": 4567,
+    Timestamp: Date.now()
+  }
+
+  test('read tx attested by Scheduler', async () => {
+    ProcessSchedulerAttested = {
+      ...ProcessAssignmentsMode,
+      Tags: [
+        ...ProcessAssignmentsMode.Tags,
+        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+      ]
+    }
+
+    const handle = await AoLoader(wasm, {
+      ...options, spawn: {
+        id: ProcessSchedulerAttested.Id,
+        owner: ProcessSchedulerAttested.Owner,
+        tags: ProcessSchedulerAttested.Tags
+      },
+      mode
+    })
+    const result = await handle(null, {
+      ...Msg,
+      'Block-Height': blockHeight + 2,
+      Data: `
+        local function _load() ${drive} end
+        _G.package.loaded['WeaveDrive'] = _load()
+        local drive = require('WeaveDrive')
+        return drive.getData("${TX_ID_TO_LOAD}")
+      `
+    }, { Process: ProcessSchedulerAttested, Module })
+    
+    assert.equal(result.Output.data, 'hello from attested')
+  })
+
+  test('read tx attested by Attestor', async () => {
+    const ProcessAttestorAttested = {
+      ...ProcessAssignmentsMode,
+      Tags: [
+        ...ProcessAssignmentsMode.Tags,
+        { name: 'Scheduler', value: 'something-else' },
+        { name: 'Attestor', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+      ]
+    }
+
+    const handle = await AoLoader(wasm, {
+      ...options,
+      spawn: {
+        id: ProcessAttestorAttested.Id,
+        owner: ProcessAttestorAttested.Owner,
+        tags: ProcessAttestorAttested.Tags
+      },
+      mode
+    })
+    const result = await handle(null, {
+      ...Msg,
+      'Block-Height': blockHeight + 2,
+      Data: `
+        local function _load() ${drive} end
+        _G.package.loaded['WeaveDrive'] = _load()
+        local drive = require('WeaveDrive')
+        return drive.getData("${TX_ID_TO_LOAD}")
+      `
+    }, { Process: ProcessAttestorAttested, Module })
+    
+    assert.equal(result.Output.data, 'hello from attested')
+  })
+})
+
+describe('Individual Mode', () => {
+  const TX_ID_TO_LOAD = 'msEHJnwpmxR0RP-YqeCk91l_x8O9QNOP8RZYG_1prYE'
+  const blockHeight = 1536315
+  const mode = 'Individual'
+
+  const ProcessIndividualMode = {
+    Id: 'PROCESS',
+    Owner: 'PROCESS',
+    Target: 'PROCESS',
+    Tags: [
+      { name: 'Data-Protocol', value: 'ao' },
+      { name: 'Variant', value: 'ao.TN.1' },
+      { name: 'Type', value: 'Process' },
+      { name: 'Extension', value: 'WeaveDrive' },
+      { name: 'Module', value: 'MODULE' },
+      { name: 'Authority', value: 'PROCESS' },
+      { name: 'Availability-Type', value:  mode },
+    ],
+    Data: `Test = 1`,
+    From: 'PROCESS',
+    Module: 'MODULE',
+    "Block-Height": 4567,
+    Timestamp: Date.now()
+  }
+
+  test('read tx attested by Scheduler', async () => {
+    const ProcessSchedulerAttested = {
+      ...ProcessIndividualMode,
+      Tags: [
+        ...ProcessIndividualMode.Tags,
+        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+      ]
+    }
+
+    const handle = await AoLoader(wasm, {
+      ...options,
+      spawn: {
+        id: ProcessSchedulerAttested.Id,
+        owner: ProcessSchedulerAttested.Owner,
+        tags: ProcessSchedulerAttested.Tags
+      },
+      mode
+    })
+    const result = await handle(null, {
+      ...Msg,
+      'Block-Height': blockHeight + 2,
+      Data: `
+        local function _load() ${drive} end
+        _G.package.loaded['WeaveDrive'] = _load()
+        local drive = require('WeaveDrive')
+        return drive.getData("${TX_ID_TO_LOAD}")
+      `
+    }, { Process: ProcessSchedulerAttested, Module })
+    
+    assert.equal(result.Output.data, '1234')
+  })
+})
+
 // test weavedrive feature of acceptint multiple gateways
 test('read block, multi url', async () => {
   const handle = await AoLoader(wasm, {
@@ -225,7 +369,6 @@ return result
   }, { Process, Module })
 
   memory = result.Memory
-  console.log({ result })
   assert.equal(result.Output.data, '')
 })
 
@@ -247,72 +390,79 @@ return result
   assert.equal(result.Output.data, '')
 })
 
-let memoryBootLoader = null
-
-/*
- * The Process is also the first message when aop 6 boot loader
- * is enabled in the network
- */
-const ProcessBootLoaderData = {
-  Id: 'PROCESS',
-  Owner: 'PROCESS',
-  Target: 'PROCESS',
-  Tags: [
-    { name: 'Data-Protocol', value: 'ao' },
-    { name: 'Variant', value: 'ao.TN.1' },
-    { name: 'Type', value: 'Process' },
-    { name: 'Extension', value: 'WeaveDrive' },
-    { name: 'On-Boot', value: 'Data' },
-    { name: 'Module', value: 'MODULE' },
-    { name: 'Authority', value: 'PROCESS' }
-  ],
-  Data: `
-Test = 1
-print("Test " .. Test)
-    `,
-  From: 'PROCESS',
-  Module: 'MODULE',
-  "Block-Height": 1000,
-  Timestamp: Date.now()
-}
-
-const optionsBootLoaderData = { ...options, mode: null }
-
 test('boot loader set to Data', async function () {
+  /**
+   * The Process is also the first message when aop 6 boot loader
+   * is enabled in the network
+   */
+  const ProcessBootLoaderData = {
+    Id: 'PROCESS',
+    Owner: 'PROCESS',
+    Target: 'PROCESS',
+    Tags: [
+      { name: 'Data-Protocol', value: 'ao' },
+      { name: 'Variant', value: 'ao.TN.1' },
+      { name: 'Type', value: 'Process' },
+      { name: 'Extension', value: 'WeaveDrive' },
+      { name: 'On-Boot', value: 'Data' },
+      { name: 'Module', value: 'MODULE' },
+      { name: 'Authority', value: 'PROCESS' }
+    ],
+    Data: `
+  Test = 1
+  print("Test " .. Test)
+      `,
+    From: 'PROCESS',
+    Module: 'MODULE',
+    "Block-Height": 1234,
+    Timestamp: Date.now()
+  }
+
+  const optionsBootLoaderData = { ...options, mode: null }
+
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderData)
-  const result = await handle(memoryBootLoader, {
+  const result = await handle(null, {
     ...ProcessBootLoaderData
   }, { Process: ProcessBootLoaderData, Module })
   assert.equal(result.Output.data, 'Test 1')
 })
 
-const ProcessBootLoaderTx = {
-  Id: 'PROCESS',
-  Owner: 'PROCESS',
-  Target: 'PROCESS',
-  Tags: [
-    { name: 'Data-Protocol', value: 'ao' },
-    { name: 'Variant', value: 'ao.TN.1' },
-    { name: 'Type', value: 'Process' },
-    { name: 'Extension', value: 'WeaveDrive' },
-    { name: 'On-Boot', value: BootLoadedFromTx },
-    { name: 'Module', value: 'MODULE' },
-    { name: 'Authority', value: 'PROCESS' }
-  ],
-  Data: `
-Test = 1
-    `,
-  From: 'PROCESS',
-  Module: 'MODULE',
-  "Block-Height": 1000,
-  Timestamp: Date.now()
-}
-
-const optionsBootLoaderTx = { ...options, mode: null }
-
 test('boot loader set to tx id', async function () {
+  const BootLoadedFromTx = 'Fmtgzy1Chs-5ZuUwHpQjQrQ7H7v1fjsP0Bi8jVaDIKA'
+  const ProcessBootLoaderTx = {
+    Id: 'PROCESS',
+    Owner: 'PROCESS',
+    Target: 'PROCESS',
+    Tags: [
+      { name: 'Data-Protocol', value: 'ao' },
+      { name: 'Variant', value: 'ao.TN.1' },
+      { name: 'Type', value: 'Process' },
+      { name: 'Extension', value: 'WeaveDrive' },
+      { name: 'On-Boot', value: BootLoadedFromTx },
+      { name: 'Module', value: 'MODULE' },
+      { name: 'Authority', value: 'PROCESS' }
+    ],
+    Data: `
+  Test = 1
+      `,
+    From: 'PROCESS',
+    Module: 'MODULE',
+    "Block-Height": 4567,
+    Timestamp: Date.now()
+  }
+
+  const optionsBootLoaderTx = {
+    ...options,
+    spawn: {
+      id: ProcessBootLoaderTx.Id,
+      owner: ProcessBootLoaderTx.Owner,
+      tags: ProcessBootLoaderTx.Tags
+    },
+    mode: null 
+  }
+
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderTx)
-  const { Memory } = await handle(memoryBootLoader, {
+  const { Memory } = await handle(null, {
     ...ProcessBootLoaderTx
   }, { Process: ProcessBootLoaderTx, Module })
 
