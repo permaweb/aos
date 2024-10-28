@@ -14,7 +14,7 @@
     "arweave": "^1.15.5"
   },
   "devDependencies": {
-    "@permaweb/ao-loader": "^0.0.39",
+    "@permaweb/ao-loader": "^0.0.43",
     "esbuild": "^0.24.0"
   }
 }

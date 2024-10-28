@@ -441,7 +441,7 @@ module.exports = function weaveDrive(mod, FS) {
       const blockHeight = mod.blockHeight
       const moduleExtensions = this.getTagValues("Extension", mod.module.tags)
       const moduleHasWeaveDrive = moduleExtensions.includes("WeaveDrive")
-      const processExtensions = this.getTagValues("Extension", mod.module.tags)
+      const processExtensions = this.getTagValues("Extension", mod.spawn.tags)
       const processHasWeaveDrive = moduleHasWeaveDrive || processExtensions.includes("WeaveDrive")
 
       if (!processHasWeaveDrive) {
@@ -471,7 +471,7 @@ module.exports = function weaveDrive(mod, FS) {
         [
           this.getTagValue('Scheduler', mod.spawn.tags),
           ...this.getTagValues("Attestor", mod.spawn.tags)
-        ]
+        ].filter(t => !!t)
       )
 
       // Init a set of GraphQL queries to run in order to find a valid attestation
@@ -510,7 +510,7 @@ module.exports = function weaveDrive(mod, FS) {
               owners: ${attestors},
               block: {min: 0, max: ${blockHeight}},
               tags: [
-                { name: "Data-Protocol", values: ["WeaveDrive"],
+                { name: "Data-Protocol", values: ["WeaveDrive"] },
                 { name: "Type", values: ["Available"]},
                 { name: "ID", values: ["${ID}"]}
               ]
@@ -564,10 +564,11 @@ module.exports = function weaveDrive(mod, FS) {
       return values.pop()
     },
 
-    async queryHasResult(query) {
-      const results = await mod.arweave.api.post('/graphql', query);
-      const json = JSON.parse(results)
-      return json.data.transactions.edges.length > 0
+    async queryHasResult(query, variables) {
+      const json = await this.gqlQuery(query, variables)
+        .then((res) => res.json())
+
+      return !!json?.data?.transactions?.edges?.length
     },
 
     async gqlExists() {
