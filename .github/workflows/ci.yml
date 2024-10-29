@@ -195,6 +195,22 @@ jobs:
           path: ${{ steps.aos_llama_module.outputs.aos_module_path }}
           retention-days: 10
 
+      # Set up Lua
+      - name: 🔧 Set up Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: 5.3
+
+      # Install LDoc
+      - name: 📦 Install LDoc
+        run: |
+          luarocks install ldoc
+
+      # Build process docs
+      - name: 📄 Build Process Docs
+        run: |
+          yarn build-docs
+
       # TODO: update manifests with new version and txids
 
       # - name: ⬆️ Push

@@ -1,0 +1,744 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>AOS</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ao.html">ao</a></li>
+  <li><a href="../modules/assignment.html">assignment</a></li>
+  <li><a href="../modules/boot.html">boot</a></li>
+  <li><a href="../modules/chance.html">chance</a></li>
+  <li><a href="../modules/eval.html">eval</a></li>
+  <li><a href="../modules/handlers-utils.html">handlers-utils</a></li>
+  <li><a href="../modules/handlers.html">handlers</a></li>
+  <li><a href="../modules/pretty.html">pretty</a></li>
+  <li><a href="../modules/process.html">process</a></li>
+  <li><a href="../modules/stringify.html">stringify</a></li>
+  <li><strong>utils</strong></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>utils</code></h1>
+<p>The Utils module provides a collection of utility functions for functional programming in Lua.</p>
+<p> It includes functions for array manipulation such as concatenation, mapping, reduction, filtering, and finding elements, as well as a property equality checker.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#matchesPattern">matchesPattern (pattern, value, msg)</a></td>
+	<td class="summary">Given a pattern, a value, and a message, returns whether there is a pattern match.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#matchesSpec">matchesSpec (msg, spec)</a></td>
+	<td class="summary">Given a message and a spec, returns whether there is a spec match.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#curry">curry (fn, arity)</a></td>
+	<td class="summary">Curries a function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#concat">concat (a, b)</a></td>
+	<td class="summary">Concat two Array Tables</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#reduce">reduce (fn, initial, t)</a></td>
+	<td class="summary">Applies a function to each element of a table, reducing it to a single value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#map">map (fn, data)</a></td>
+	<td class="summary">Applies a function to each element of an array table, mapping it to a new value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#filter">filter (fn, data)</a></td>
+	<td class="summary">Filters an array table based on a predicate function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#find">find (fn, t)</a></td>
+	<td class="summary">Finds the first element in an array table that satisfies a predicate function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#propEq">propEq (propName, value, object)</a></td>
+	<td class="summary">Checks if a property of an object is equal to a value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#reverse">reverse (data)</a></td>
+	<td class="summary">Reverses an array table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#compose">compose (...)</a></td>
+	<td class="summary">Composes a series of functions into a single function.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#prop">prop (propName, object)</a></td>
+	<td class="summary">Returns the value of a property of an object.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#includes">includes (val, t)</a></td>
+	<td class="summary">Checks if an array table includes a value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#keys">keys (t)</a></td>
+	<td class="summary">Returns the keys of a table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#values">values (t)</a></td>
+	<td class="summary">Returns the values of a table.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#utils">utils</a></td>
+	<td class="summary">The utils table</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "matchesPattern"></a>
+    <strong>matchesPattern (pattern, value, msg)</strong>
+    </dt>
+    <dd>
+    Given a pattern, a value, and a message, returns whether there is a pattern match.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">pattern</span>
+         The pattern to match
+        </li>
+        <li><span class="parameter">value</span>
+         The value to check for in the pattern
+        </li>
+        <li><span class="parameter">msg</span>
+         The message to check for the pattern
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        Whether there is a pattern match
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">utils.<span class="function-name">matchesPattern</span>(pattern, value, msg)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "matchesSpec"></a>
+    <strong>matchesSpec (msg, spec)</strong>
+    </dt>
+    <dd>
+    Given a message and a spec, returns whether there is a spec match.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+         The message to check for the spec
+        </li>
+        <li><span class="parameter">spec</span>
+         The spec to check for in the message
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        Whether there is a spec match
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <pre class="example">utils.<span class="function-name">matchesSpec</span>(msg, spec)</pre>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "curry"></a>
+    <strong>curry (fn, arity)</strong>
+    </dt>
+    <dd>
+    Curries a function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fn</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The function to curry
+        </li>
+        <li><span class="parameter">arity</span>
+            <span class="types"><span class="type">{number}</span></span>
+         The arity of the function
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        The curried function
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "concat"></a>
+    <strong>concat (a, b)</strong>
+    </dt>
+    <dd>
+    Concat two Array Tables
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">a</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The first array
+        </li>
+        <li><span class="parameter">b</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The second array
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The concatenated array
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">concat</span>(a)(b)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">concat</span>({<span class="number">1</span>, <span class="number">2</span>})({<span class="number">3</span>, <span class="number">4</span>}) <span class="comment">--&gt; {1, 2, 3, 4}</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "reduce"></a>
+    <strong>reduce (fn, initial, t)</strong>
+    </dt>
+    <dd>
+    Applies a function to each element of a table, reducing it to a single value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fn</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The function to apply
+        </li>
+        <li><span class="parameter">initial</span>
+         The initial value
+        </li>
+        <li><span class="parameter">t</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The table to reduce
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+        The reduced value
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">reduce</span>(fn)(initial)(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">reduce</span>(<span class="keyword">function</span>(acc, x) <span class="keyword">return</span> acc + x <span class="keyword">end</span>)(<span class="number">0</span>)({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; 6</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "map"></a>
+    <strong>map (fn, data)</strong>
+    </dt>
+    <dd>
+    Applies a function to each element of an array table, mapping it to a new value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fn</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The function to apply to each element
+        </li>
+        <li><span class="parameter">data</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The table to map over
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The mapped table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">map</span>(fn)(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">map</span>(<span class="keyword">function</span>(x) <span class="keyword">return</span> x * <span class="number">2</span> <span class="keyword">end</span>)({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; {2, 4, 6}</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "filter"></a>
+    <strong>filter (fn, data)</strong>
+    </dt>
+    <dd>
+    Filters an array table based on a predicate function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fn</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The predicate function to determine if an element should be included.
+        </li>
+        <li><span class="parameter">data</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The array to filter
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The filtered table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">filter</span>(fn)(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">filter</span>(<span class="keyword">function</span>(x) <span class="keyword">return</span> x &gt; <span class="number">1</span> <span class="keyword">end</span>)({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; {2,3}</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "find"></a>
+    <strong>find (fn, t)</strong>
+    </dt>
+    <dd>
+    Finds the first element in an array table that satisfies a predicate function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">fn</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The predicate function to determine if an element should be included.
+        </li>
+        <li><span class="parameter">t</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The array table to search
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">The</span></span>
+        first element that satisfies the predicate function
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">find</span>(fn)(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">find</span>(<span class="keyword">function</span>(x) <span class="keyword">return</span> x &gt; <span class="number">1</span> <span class="keyword">end</span>)({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; 2</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "propEq"></a>
+    <strong>propEq (propName, value, object)</strong>
+    </dt>
+    <dd>
+    Checks if a property of an object is equal to a value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">propName</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The property name to check
+        </li>
+        <li><span class="parameter">value</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The value to check against
+        </li>
+        <li><span class="parameter">object</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The object to check
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        Whether the property is equal to the value
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">propEq</span>(propName)(value)(object)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">propEq</span>(<span class="string">"name"</span>)(<span class="string">"Lua"</span>)({name = <span class="string">"Lua"</span>}) <span class="comment">--&gt; true</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "reverse"></a>
+    <strong>reverse (data)</strong>
+    </dt>
+    <dd>
+    Reverses an array table.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">data</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The array table to reverse
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The reversed array table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">reverse</span>(data)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">reverse</span>({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; {3, 2, 1}</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "compose"></a>
+    <strong>compose (...)</strong>
+    </dt>
+    <dd>
+    Composes a series of functions into a single function.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">...</span>
+            <span class="types"><span class="type">{function}</span></span>
+         The functions to compose
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        The composed function
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">compose</span>(fn1)(fn2)(fn3)(v)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">compose</span>(<span class="keyword">function</span>(x) <span class="keyword">return</span> x + <span class="number">1</span> <span class="keyword">end</span>)(<span class="keyword">function</span>(x) <span class="keyword">return</span> x * <span class="number">2</span> <span class="keyword">end</span>)(<span class="number">3</span>) <span class="comment">--&gt; 7</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "prop"></a>
+    <strong>prop (propName, object)</strong>
+    </dt>
+    <dd>
+    Returns the value of a property of an object.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">propName</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The property name to get
+        </li>
+        <li><span class="parameter">object</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The object to get the property from
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">The</span></span>
+        value of the property
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">prop</span>(propName)(object)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">prop</span>(<span class="string">"name"</span>)({name = <span class="string">"Lua"</span>}) <span class="comment">--&gt; "Lua"</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "includes"></a>
+    <strong>includes (val, t)</strong>
+    </dt>
+    <dd>
+    Checks if an array table includes a value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">val</span>
+         The value to check for
+        </li>
+        <li><span class="parameter">t</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+         The array table to check
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        Whether the value is in the array table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">includes</span>(val)(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">includes</span>(<span class="number">2</span>)({<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>}) <span class="comment">--&gt; true</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "keys"></a>
+    <strong>keys (t)</strong>
+    </dt>
+    <dd>
+    Returns the keys of a table.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">t</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The table to get the keys from
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The keys of the table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">keys</span>(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">keys</span>({name = <span class="string">"Lua"</span>, age = <span class="number">25</span>}) <span class="comment">--&gt; {"name", "age"}</span></pre></li>
+    </ul>
+
+</dd>
+    <dt>
+    <a name = "values"></a>
+    <strong>values (t)</strong>
+    </dt>
+    <dd>
+    Returns the values of a table.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">t</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The table to get the values from
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table<Array>}</a></span>
+        The values of the table
+    </ol>
+
+
+
+    <h3>Usage:</h3>
+    <ul>
+        <li><pre class="example">utils.<span class="function-name">values</span>(t)</pre></li>
+        <li><pre class="example">utils.<span class="function-name">values</span>({name = <span class="string">"Lua"</span>, age = <span class="number">25</span>}) <span class="comment">--&gt; {"Lua", 25}</span></pre></li>
+    </ul>
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Tables"></a>Tables</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "utils"></a>
+    <strong>utils</strong>
+    </dt>
+    <dd>
+    The utils table
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">_version</span>
+         The version number of the utils module
+        </li>
+        <li><span class="parameter">matchesPattern</span>
+         The matchesPattern function
+        </li>
+        <li><span class="parameter">matchesSpec</span>
+         The matchesSpec function
+        </li>
+        <li><span class="parameter">curry</span>
+         The curry function
+        </li>
+        <li><span class="parameter">concat</span>
+         The concat function
+        </li>
+        <li><span class="parameter">reduce</span>
+         The reduce function
+        </li>
+        <li><span class="parameter">map</span>
+         The map function
+        </li>
+        <li><span class="parameter">filter</span>
+         The filter function
+        </li>
+        <li><span class="parameter">find</span>
+         The find function
+        </li>
+        <li><span class="parameter">propEq</span>
+         The propEq function
+        </li>
+        <li><span class="parameter">reverse</span>
+         The reverse function
+        </li>
+        <li><span class="parameter">compose</span>
+         The compose function
+        </li>
+        <li><span class="parameter">prop</span>
+         The prop function
+        </li>
+        <li><span class="parameter">includes</span>
+         The includes function
+        </li>
+        <li><span class="parameter">keys</span>
+         The keys function
+        </li>
+        <li><span class="parameter">values</span>
+         The values function
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2024-10-29 14:41:25 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

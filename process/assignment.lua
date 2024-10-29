@@ -1,9 +1,28 @@
+--- The Assignment module provides functionality for handling assignments. Returns the Assignment table.
+-- @module assignment
 
+--- The Assignment module
+-- @table Assignment
+-- @field _version The version number of the assignment module
+-- @field init The init function
 local Assignment = { _version = "0.1.0" }
 local utils = require('.utils')
 
--- Implement assignable polyfills on _ao
+--- Implement assignable polyfills on ao.
+-- Creates addAssignable, removeAssignable, isAssignment, and isAssignable fields on ao.
+-- @function init
+-- @tparam {table} ao The ao environment object
+-- @see ao.addAssignable
+-- @see ao.removeAssignable
+-- @see ao.isAssignment
+-- @see ao.isAssignable
 function Assignment.init (ao)
+  -- Find the index of an object in an array by a given property
+  -- @lfunction findIndexByProp
+  -- @tparam {table} array The array to search
+  -- @tparam {string} prop The property to search by
+  -- @tparam {any} value The value to search for
+  -- @treturn {number|nil} The index of the object, or nil if not found
   local function findIndexByProp(array, prop, value)
     for index, object in ipairs(array) do
       if object[prop] == value then return index end
@@ -14,16 +33,6 @@ function Assignment.init (ao)
 
   ao.assignables = ao.assignables or {}
 
-  -- Add the MatchSpec to the ao.assignables table. A optional name may be provided.
-  -- This implies that ao.assignables may have both number and string indices.
-  --
-  -- @tparam ?string|number|any nameOrMatchSpec The name of the MatchSpec
-  --        to be added to ao.assignables. if a MatchSpec is provided, then
-  --        no name is included
-  -- @tparam ?any matchSpec The MatchSpec to be added to ao.assignables. Only provided
-  --        if its name is passed as the first parameter
-  -- @treturn ?string|number name The name of the MatchSpec, either as provided
-  --          as an argument or as incremented
   ao.addAssignable = ao.addAssignable or function (...)
     local name = nil
     local matchSpec = nil
@@ -50,11 +59,6 @@ function Assignment.init (ao)
     end
   end
 
-  -- Remove the MatchSpec, either by name or by index
-  -- If the name is not found, or if the index does not exist, then do nothing.
-  --
-  -- @tparam string|number name The name or index of the MatchSpec to be removed
-  -- @treturn nil nil
   ao.removeAssignable = ao.removeAssignable or function (name)
     local idx = nil
 
@@ -69,19 +73,8 @@ function Assignment.init (ao)
     table.remove(ao.assignables, idx)
   end
 
-  -- Return whether the msg is an assignment or not. This
-  -- can be determined by simply check whether the msg's Target is
-  -- This process' id
-  --
-  -- @param msg The msg to be checked
-  -- @treturn boolean isAssignment
   ao.isAssignment = ao.isAssignment or function (msg) return msg.Target ~= ao.id end
 
-  -- Check whether the msg matches any assignable MatchSpec.
-  -- If not assignables are configured, the msg is deemed not assignable, by default.
-  --
-  -- @param msg The msg to be checked
-  -- @treturn boolean isAssignable
   ao.isAssignable = ao.isAssignable or function (msg)
     for _, assignable in pairs(ao.assignables) do
       if utils.matchesSpec(msg, assignable.pattern) then return true end

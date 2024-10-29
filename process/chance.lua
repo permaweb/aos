@@ -1,10 +1,16 @@
+--- The Chance module provides utilities for generating random numbers and values. Returns the chance table.
+-- @module chance
+
 local N = 624
 local M = 397
 local MATRIX_A = 0x9908b0df
 local UPPER_MASK = 0x80000000
 local LOWER_MASK = 0x7fffffff
 
--- initializes mt[N] with a seed
+--- Initializes mt[N] with a seed
+-- @lfunction init_genrand
+-- @tparam {table} o The table to initialize
+-- @tparam {number} s The seed
 local function init_genrand(o, s)
     o.mt[0] = s & 0xffffffff
     for i = 1, N - 1 do
@@ -19,7 +25,10 @@ local function init_genrand(o, s)
     o.mti = N
 end
 
--- generates a random number on [0,0xffffffff]-interval
+--- Generates a random number on [0,0xffffffff]-interval
+-- @lfunction genrand_int32
+-- @tparam {table} o The table to generate the random number from
+-- @treturn {number} The random number
 local function genrand_int32(o)
     local y
     local mag01 = {} -- mag01[x] = x * MATRIX_A  for x=0,1
@@ -60,24 +69,34 @@ MersenneTwister.mt = {}
 MersenneTwister.mti = N + 1
 
 
+--- The Random table
+-- @table Random
+-- @field seed The seed function
+-- @field random The random function
+-- @field integer The integer function
 local Random = {}
 
--- set new random seed
+--- Sets a new random table given a seed.
+-- @function seed
+-- @tparam {number} seed The seed
 function Random.seed(seed)
     init_genrand(MersenneTwister, seed)
 end
 
--- generates a random number on [0,1)-real-interval
+--- Generates a random number on [0,1)-real-interval.
+-- @function random
+-- @treturn {number} The random number
 function Random.random()
     return genrand_int32(MersenneTwister) * (1.0 / 4294967296.0)
 end
 
---[[
-return a random integer
-NOTE the min and max are INCLUDED in the range.
-the max integer in lua is math.maxinteger
-the min is math.mininteger
-]]
+--- Returns a random integer. The min and max are INCLUDED in the range.
+-- The max integer in lua is math.maxinteger
+-- The min is math.mininteger
+-- @function Random.integer
+-- @tparam {number} min The minimum value
+-- @tparam {number} max The maximum value
+-- @treturn {number} The random integer
 function Random.integer(min, max)
     assert(max >= min, "max must bigger than min")
     return math.floor(Random.random() * (max - min + 1) + min)

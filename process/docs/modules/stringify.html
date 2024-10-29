@@ -1,0 +1,194 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>AOS</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ao.html">ao</a></li>
+  <li><a href="../modules/assignment.html">assignment</a></li>
+  <li><a href="../modules/boot.html">boot</a></li>
+  <li><a href="../modules/chance.html">chance</a></li>
+  <li><a href="../modules/eval.html">eval</a></li>
+  <li><a href="../modules/handlers-utils.html">handlers-utils</a></li>
+  <li><a href="../modules/handlers.html">handlers</a></li>
+  <li><a href="../modules/pretty.html">pretty</a></li>
+  <li><a href="../modules/process.html">process</a></li>
+  <li><strong>stringify</strong></li>
+  <li><a href="../modules/utils.html">utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>stringify</code></h1>
+<p>The Stringify module provides utilities for formatting and displaying Lua tables in a more readable manner.</p>
+<p> Returns the stringify table.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#isSimpleArray">isSimpleArray (tbl)</a></td>
+	<td class="summary">Checks if a table is a simple array (i.e., an array with consecutive numeric keys starting from 1).</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#format">format (tbl, indent, visited)</a></td>
+	<td class="summary">Formats a table for display, handling circular references and formatting strings and tables recursively.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#stringify">stringify</a></td>
+	<td class="summary">The stringify table</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "isSimpleArray"></a>
+    <strong>isSimpleArray (tbl)</strong>
+    </dt>
+    <dd>
+    Checks if a table is a simple array (i.e., an array with consecutive numeric keys starting from 1).
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The table to check
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        Whether the table is a simple array
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "format"></a>
+    <strong>format (tbl, indent, visited)</strong>
+    </dt>
+    <dd>
+    Formats a table for display, handling circular references and formatting strings and tables recursively.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">tbl</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The table to format
+        </li>
+        <li><span class="parameter">indent</span>
+            <span class="types"><span class="type">{number}</span></span>
+         The indentation level (default is 0)
+        </li>
+        <li><span class="parameter">visited</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         A table to track visited tables and detect circular references (optional)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+        A string representation of the table
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Tables"></a>Tables</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "stringify"></a>
+    <strong>stringify</strong>
+    </dt>
+    <dd>
+    The stringify table
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">_version</span>
+         The version number of the stringify module
+        </li>
+        <li><span class="parameter">isSimpleArray</span>
+         The isSimpleArray function
+        </li>
+        <li><span class="parameter">format</span>
+         The format function
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2024-10-29 14:41:25 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

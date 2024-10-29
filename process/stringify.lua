@@ -1,3 +1,11 @@
+--- The Stringify module provides utilities for formatting and displaying Lua tables in a more readable manner. Returns the stringify table.
+-- @module stringify
+
+--- The stringify table
+-- @table stringify
+-- @field _version The version number of the stringify module
+-- @field isSimpleArray The isSimpleArray function
+-- @field format The format function
 local stringify = { _version = "0.0.1" }
 
 -- ANSI color codes
@@ -8,6 +16,10 @@ local colors = {
   reset = "\27[0m"
 }
 
+--- Checks if a table is a simple array (i.e., an array with consecutive numeric keys starting from 1).
+-- @function isSimpleArray
+-- @tparam {table} tbl The table to check
+-- @treturn {boolean} Whether the table is a simple array
 function stringify.isSimpleArray(tbl)
   local arrayIndex = 1
   for k, v in pairs(tbl) do
@@ -19,6 +31,12 @@ function stringify.isSimpleArray(tbl)
   return true
 end
 
+--- Formats a table for display, handling circular references and formatting strings and tables recursively.
+-- @function format
+-- @tparam {table} tbl The table to format
+-- @tparam {number} indent The indentation level (default is 0)
+-- @tparam {table} visited A table to track visited tables and detect circular references (optional)
+-- @treturn {string} A string representation of the table
 function stringify.format(tbl, indent, visited)
   indent = indent or 0
   local toIndent = string.rep(" ", indent)

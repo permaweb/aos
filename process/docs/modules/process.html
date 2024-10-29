@@ -1,0 +1,351 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>AOS</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ao.html">ao</a></li>
+  <li><a href="../modules/assignment.html">assignment</a></li>
+  <li><a href="../modules/boot.html">boot</a></li>
+  <li><a href="../modules/chance.html">chance</a></li>
+  <li><a href="../modules/eval.html">eval</a></li>
+  <li><a href="../modules/handlers-utils.html">handlers-utils</a></li>
+  <li><a href="../modules/handlers.html">handlers</a></li>
+  <li><a href="../modules/pretty.html">pretty</a></li>
+  <li><strong>process</strong></li>
+  <li><a href="../modules/stringify.html">stringify</a></li>
+  <li><a href="../modules/utils.html">utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>process</code></h1>
+<p>The Process library provides an environment for managing and executing processes on the AO network.</p>
+<p> It includes capabilities for handling messages, spawning processes, and customizing the environment with programmable logic and handlers. Returns the process table.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#Tab">Tab (msg)</a></td>
+	<td class="summary">Convert a message's tags to a table of key-value pairs</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Prompt">Prompt ()</a></td>
+	<td class="summary">Generate a prompt string for the current process</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#print">print (a)</a></td>
+	<td class="summary">Print a value, formatting tables and converting non-string types</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Send">Send (msg)</a></td>
+	<td class="summary">Send a message to a target process</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Spawn">Spawn (args)</a></td>
+	<td class="summary">Spawn a new process</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Receive">Receive (match)</a></td>
+	<td class="summary">Calls Handlers.receive with the provided pattern criteria, awaiting a message that matches the criteria.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Assign">Assign (assignment)</a></td>
+	<td class="summary">Assigns based on the assignment passed.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#Version">Version ()</a></td>
+	<td class="summary">Prints the version of the process</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#handle">handle (msg, _)</a></td>
+	<td class="summary">Main handler for processing incoming messages.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#process">process</a></td>
+	<td class="summary">The process table</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "Tab"></a>
+    <strong>Tab (msg)</strong>
+    </dt>
+    <dd>
+    Convert a message's tags to a table of key-value pairs
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message containing tags
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+        A table with tag names as keys and their values
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Prompt"></a>
+    <strong>Prompt ()</strong>
+    </dt>
+    <dd>
+    Generate a prompt string for the current process
+
+
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+        The custom command prompt string
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "print"></a>
+    <strong>print (a)</strong>
+    </dt>
+    <dd>
+    Print a value, formatting tables and converting non-string types
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">a</span>
+            <span class="types"><span class="type">{any}</span></span>
+         The value to print
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Send"></a>
+    <strong>Send (msg)</strong>
+    </dt>
+    <dd>
+    Send a message to a target process
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to send
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Spawn"></a>
+    <strong>Spawn (args)</strong>
+    </dt>
+    <dd>
+    Spawn a new process
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">args</span>
+            <span class="types"><span class="type">{...any}</span></span>
+         The arguments to pass to the spawn function
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Receive"></a>
+    <strong>Receive (match)</strong>
+    </dt>
+    <dd>
+    Calls Handlers.receive with the provided pattern criteria, awaiting a message that matches the criteria.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">match</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The pattern criteria for the message
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{any}</span></span>
+        The result of the message handling
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Assign"></a>
+    <strong>Assign (assignment)</strong>
+    </dt>
+    <dd>
+    Assigns based on the assignment passed.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">assignment</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The assignment to be made
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "Version"></a>
+    <strong>Version ()</strong>
+    </dt>
+    <dd>
+    Prints the version of the process
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "handle"></a>
+    <strong>handle (msg, _)</strong>
+    </dt>
+    <dd>
+    Main handler for processing incoming messages.  It initializes the state, processes commands, and handles message evaluation and inbox management.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to handle
+        </li>
+        <li><span class="parameter">_</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The environment to handle the message in
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Tables"></a>Tables</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "process"></a>
+    <strong>process</strong>
+    </dt>
+    <dd>
+    The process table
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">_version</span>
+         The version number of the process
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2024-10-29 14:41:25 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>

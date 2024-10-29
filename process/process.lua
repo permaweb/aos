@@ -1,3 +1,7 @@
+--- The Process library provides an environment for managing and executing processes on the AO network. It includes capabilities for handling messages, spawning processes, and customizing the environment with programmable logic and handlers. Returns the process table.
+-- @module process
+
+-- @dependencies
 local pretty = require('.pretty')
 local base64 = require('.base64')
 local json = require('json')
@@ -31,12 +35,18 @@ end
 -- Implement assignable polyfills on _ao
 assignment.init(ao)
 
+--- The process table
+-- @table process
+-- @field _version The version number of the process
+
 local process = { _version = "2.0.1" }
+-- The maximum number of messages to store in the inbox
 local maxInboxCount = 10000
 
 -- wrap ao.send and ao.spawn for magic table
-local aosend = ao.send 
+local aosend = ao.send
 local aospawn = ao.spawn
+
 ao.send = function (msg)
   if msg.Data and type(msg.Data) == 'table' then
     msg['Content-Type'] = 'application/json'
@@ -52,6 +62,10 @@ ao.spawn = function (module, msg)
   return aospawn(module, msg)
 end
 
+--- Remove the last three lines from a string
+-- @lfunction removeLastThreeLines
+-- @tparam {string} input The string to remove the last three lines from
+-- @treturn {string} The string with the last three lines removed
 local function removeLastThreeLines(input)
   local lines = {}
   for line in input:gmatch("([^\n]*)\n?") do
@@ -67,17 +81,24 @@ local function removeLastThreeLines(input)
   return table.concat(lines, "\n")
 end
 
-
+--- Insert a message into the inbox and manage overflow
+-- @lfunction insertInbox
+-- @tparam {table} msg The message to insert into the inbox
 local function insertInbox(msg)
   table.insert(Inbox, msg)
   if #Inbox > maxInboxCount then
-    local overflow = #Inbox - maxInboxCount 
+    local overflow = #Inbox - maxInboxCount
     for i = 1,overflow do
       table.remove(Inbox, 1)
     end
-  end 
+  end
 end
 
+--- Find an object in an array by a given key and value
+-- @lfunction findObject
+-- @tparam {table} array The array to search through
+-- @tparam {string} key The key to search for
+-- @tparam {any} value The value to search for
 local function findObject(array, key, value)
   for i, object in ipairs(array) do
     if object[key] == value then
@@ -87,6 +108,10 @@ local function findObject(array, key, value)
   return nil
 end
 
+--- Convert a message's tags to a table of key-value pairs
+-- @function Tab
+-- @tparam {table} msg The message containing tags
+-- @treturn {table} A table with tag names as keys and their values
 function Tab(msg)
   local inputs = {}
   for _, o in ipairs(msg.Tags) do
@@ -97,6 +122,9 @@ function Tab(msg)
   return inputs
 end
 
+--- Generate a prompt string for the current process
+-- @function Prompt
+-- @treturn {string} The custom command prompt string
 function Prompt()
   return Colors.green .. Name .. Colors.gray
     .. "@" .. Colors.blue .. "aos-" .. process._version .. Colors.gray
@@ -104,6 +132,9 @@ function Prompt()
     .. "]" .. Colors.reset .. "> "
 end
 
+--- Print a value, formatting tables and converting non-string types
+-- @function print
+-- @tparam {any} a The value to print
 function print(a)
   if type(a) == "table" then
     a = stringify.format(a)
@@ -136,6 +167,9 @@ In order to print non string types we need to convert to string
   return tostring(a)
 end
 
+--- Send a message to a target process
+-- @function Send
+-- @tparam {table} msg The message to send
 function Send(msg)
   if not msg.Target then
     print("WARN: No target specified for message. Data will be stored, but no process will receive it.")
@@ -148,6 +182,9 @@ function Send(msg)
   }
 end
 
+--- Spawn a new process
+-- @function Spawn
+-- @tparam {...any} args The arguments to pass to the spawn function
 function Spawn(...)
   local module, spawnMsg
 
@@ -167,13 +204,20 @@ function Spawn(...)
     output = "Spawn process request added to outbox",
     after = result.after,
     receive = result.receive
-  }  
+  }
 end
 
+--- Calls Handlers.receive with the provided pattern criteria, awaiting a message that matches the criteria.
+-- @function Receive
+-- @tparam {table} match The pattern criteria for the message
+-- @treturn {any} The result of the message handling
 function Receive(match)
   return Handlers.receive(match)
 end
 
+--- Assigns based on the assignment passed.
+-- @function Assign
+-- @tparam {table} assignment The assignment to be made
 function Assign(assignment)
   if not ao.assign then
     print("Assign is not implemented.")
@@ -186,6 +230,10 @@ end
 
 Seeded = Seeded or false
 
+--- Converts a string to a seed value
+-- @lfunction stringToSeed
+-- @tparam {string} s The string to convert to a seed
+-- @treturn {number} The seed value
 -- this is a temporary approach...
 local function stringToSeed(s)
   local seed = 0
@@ -196,9 +244,12 @@ local function stringToSeed(s)
   return seed
 end
 
+--- Initializes or updates the state of the process based on the incoming message and environment.
+-- @lfunction initializeState
+-- @tparam {table} msg The message to initialize the state with
+-- @tparam {table} env The environment to initialize the state with
 local function initializeState(msg, env)
   if not Seeded then
-    --math.randomseed(1234)
     chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. msg.Module .. msg.Id)))
     math.random = function (...)
       local args = {...}
@@ -240,10 +291,16 @@ local function initializeState(msg, env)
 
 end
 
+--- Prints the version of the process
+-- @function Version
 function Version()
   print("version: " .. process._version)
 end
 
+--- Main handler for processing incoming messages. It initializes the state, processes commands, and handles message evaluation and inbox management.
+-- @function handle
+-- @tparam {table} msg The message to handle
+-- @tparam {table} _ The environment to handle the message in
 function process.handle(msg, _)
   local env = nil
   if _.Process then
