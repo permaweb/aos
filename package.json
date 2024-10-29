@@ -10,8 +10,8 @@
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test test",
-    "build-docs": "rm -rf process/docs && ldoc .",
     "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId",
+    "build-docs": "rm -rf process/docs && ldoc .",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
     "staged": "lint-staged"
   },
