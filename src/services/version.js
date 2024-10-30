@@ -8,7 +8,7 @@ import { getPkg } from './get-pkg.js'
 import path from 'path'
 import fs from 'fs'
 
-const UPDATE_URL = 'https://get_ao.g8way.io'
+const UPDATE_URL = process.env.UPDATE_URL || 'https://get_ao.arweave.net'
 const pkg = getPkg()
 
 export function version(id) {

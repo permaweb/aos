@@ -14,7 +14,7 @@
     "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.48",
+    "@permaweb/aoconnect": "^0.0.59",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -30,10 +30,10 @@
     "yargs": "^17.7.2"
   },
   "aos": {
-    "module": "bkjb55i07GUCUSWROtKK4HU1mBS_X0TyH3M5jMV6aPg",
-    "sqlite": "aGVVWHldKA7GBlI_w7Qp_agO6aKjCoOTPA1G2OlluXE",
-    "llama": "oamLI-KZ1Q9MxNxWwLcqXYavpwKYf1EX1BpEofb6418",
-    "version": "2.0.0"
+    "module": "oKBlsMP3UWrAUURWUzGO4ZGEqlurAL5UkidMLrYo8EM",
+    "sqlite": "9VBLtu07DtUhPNdIqnw0Z_QJ_GKQqNXHpzumG8DY-J4",
+    "llama": "7eiZkMWDUQmY1SBIpumzYR5_XhVMbnjmA27Xbyt4QxU",
+    "version": "2.0.1"
   },
   "devDependencies": {
     "esbuild": "^0.20.1"

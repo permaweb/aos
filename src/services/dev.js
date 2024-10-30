@@ -5,9 +5,9 @@ if (argv['dev']) {
   console.log('*** DEV ENVIRONMENT ***')
 
   process.env.GATEWAY_URL = 'https://arweave.net'
-  process.env.CU_URL = 'https://ao-cu-router-1.onrender.com'
-  process.env.MU_URL = 'https://ao-mu-router-1.onrender.com'
-  //process.env.SCHEDULER = 'TZ7o7SIZ06ZEJ14lXwVtng1EtSx60QkPy-kh-kdAXog'
+  process.env.CU_URL = 'https://ao-cu-0.ao-devnet.xyz'
+  process.env.MU_URL = 'https://ao-mu-0.ao-devnet.xyz'
+  process.env.SCHEDULER = 'gCpQfnG6nWLlKs8jYgV8oUfe38GYrPLv59AC7LCtCGg'
 
   console.log('GATEWAY_URL', process.env.GATEWAY_URL)
   console.log('CU', process.env.CU_URL)
@@ -15,8 +15,8 @@ if (argv['dev']) {
   console.log('SCHEDULER', process.env.SCHEDULER)
 } else {
   process.env.GATEWAY_URL ||= 'https://arweave.net'
-  process.env.CU_URL      ||= 'https://cu.ao-testnet.xyz'
-  process.env.MU_URL      ||= 'https://mu.ao-testnet.xyz'
+  process.env.CU_URL ||= 'https://cu.ao-testnet.xyz'
+  process.env.MU_URL ||= 'https://mu.ao-testnet.xyz'
 }
 
 export function dev() {

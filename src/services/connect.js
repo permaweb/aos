@@ -156,7 +156,7 @@ export async function live(id, watch) {
 
       try {
         isJobRunning = true;
-        let params = { process: id, limit: "1000" }
+        let params = { process: id, limit: 1000 }
         if (cursor) {
           params["from"] = cursor
         } else {
