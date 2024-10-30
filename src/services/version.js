@@ -28,7 +28,19 @@ export const checkForUpdate = () => new Promise(async (resolve, reject) => {
     const res = await fetch(UPDATE_URL)
     const data = []
     const extract = tar.extract()
-    if (res.status === 404) { return resolve({ available: false }) }
+
+    if (res.status === 404) {
+      return resolve({ available: false })
+    }
+
+    if (res.status >= 500) {
+      if (process.env.DEBUG) {
+        console.log(chalk.yellow(`Warning: The update server (${UPDATE_URL}) responded with a ${res.status} status code\n`))
+      }
+
+      return resolve({ available: false })
+    }
+
     Readable.fromWeb(res.body).pipe(createGunzip()).pipe(extract)
 
     extract.on('entry', (header, stream, next) => {
