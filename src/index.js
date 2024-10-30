@@ -90,13 +90,13 @@ if (argv['sqlite']) {
  * 
  * https://github.com/permaweb/aos/issues/310
  */
- if (argv['module']) {
+if (argv['module']) {
   if (argv['module'].length === 43) {
     process.env.AOS_MODULE = argv['module']
   } else {
     process.env.AOS_MODULE_NAME = argv['module']
   }
-} 
+}
 
 let cron = null
 

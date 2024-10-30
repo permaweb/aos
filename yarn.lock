@@ -122,28 +122,28 @@
   resolved "https://registry.npmjs.org/@fastify/busboy/-/busboy-2.1.1.tgz"
   integrity sha512-vBZP4NlzfOlerQTnba4aqZoMhE/a9HY7HRqoOPaETQcSQuWEIyZMHGfVu6w9wGtGK5fED5qRs2DteVCjOH60sA==
 
-"@permaweb/ao-scheduler-utils@~0.0.13":
-  version "0.0.19"
-  resolved "https://registry.npmjs.org/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.19.tgz"
-  integrity sha512-xwIe9FqQ1UZxEYWvSGJDONz0xr4vDq2Ny1NeRUiO0dKYoonShN+oI1ULgrHocKOjOPNEgRX70vMCKGLe+3x70A==
+"@permaweb/ao-scheduler-utils@~0.0.23":
+  version "0.0.24"
+  resolved "https://registry.yarnpkg.com/@permaweb/ao-scheduler-utils/-/ao-scheduler-utils-0.0.24.tgz#a7d2c1e09f9b6ea5d45127fa395bbbcef6688452"
+  integrity sha512-G6109Nz8+dQFPuG7mV8mz66kLVA+gl2uTSqU7qpaRwfujrWi6obM94CpmvyvAnrLo3dB29EYiuv7+KOKcns8ig==
   dependencies:
     lru-cache "^10.2.2"
     ramda "^0.30.0"
     zod "^3.23.5"
 
-"@permaweb/aoconnect@^0.0.48":
-  version "0.0.48"
-  resolved "https://registry.npmjs.org/@permaweb/aoconnect/-/aoconnect-0.0.48.tgz"
-  integrity sha512-CldwoE+6STKrfvknnmozRDBlo5gSHXLhmfAtAqHZvbMRprZ3yk+N3OIAt8La5axQ8Rwte5KKRcltvrNyxZpsVA==
+"@permaweb/aoconnect@^0.0.59":
+  version "0.0.59"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.59.tgz#0ceb6257e2f376f4af6783163e3037240560dff1"
+  integrity sha512-AgnUv50hp3BVvqWk2IOw3p9ksF2GblFwQHCIWqwTYjvdViCPlsL4gx/BefxFqbMABXQ5q2QJItMJLlPelqC2CQ==
   dependencies:
-    "@permaweb/ao-scheduler-utils" "~0.0.13"
+    "@permaweb/ao-scheduler-utils" "~0.0.23"
     buffer "^6.0.3"
-    debug "^4.3.4"
+    debug "^4.3.6"
     hyper-async "^1.1.2"
     mnemonist "^0.39.8"
-    ramda "^0.29.1"
+    ramda "^0.30.1"
     warp-arbundles "^1.0.4"
-    zod "^3.22.4"
+    zod "^3.23.8"
 
 agent-base@^7.0.2:
   version "7.1.1"
@@ -287,6 +287,13 @@ debug@4, debug@^4.3.4:
   integrity sha512-pt0bNEmneDIvdL1Xsd9oDQ/wrQRkXDT4AUWlNZNPKvW5x/jyO9VFXkJUP07vQ2upmw5PlaITaPKc31jK13V+jg==
   dependencies:
     ms "2.1.2"
+
+debug@^4.3.6:
+  version "4.3.7"
+  resolved "https://registry.yarnpkg.com/debug/-/debug-4.3.7.tgz#87945b4151a011d76d95a198d7111c865c360a52"
+  integrity sha512-Er2nc/H7RrMXZBFCEim6TCmMk02Z8vLC2Rbi1KEBggpo0fS6l0S1nnapwmIi3yW/+GOJap1Krg4w0Hg80oCqgQ==
+  dependencies:
+    ms "^2.1.3"
 
 eastasianwidth@^0.2.0:
   version "0.2.0"
@@ -435,6 +442,11 @@ ms@2.1.2:
   resolved "https://registry.npmjs.org/ms/-/ms-2.1.2.tgz"
   integrity sha512-sGkPx+VjMtmA6MX27oA4FBFELFCZZ4S4XqeGOXCv68tT+jb3vk/RyaKWP0PTKyWtmLSM0b+adUTEvbs1PEaH2w==
 
+ms@^2.1.3:
+  version "2.1.3"
+  resolved "https://registry.yarnpkg.com/ms/-/ms-2.1.3.tgz#574c8138ce1d2b5861f0b44579dbadd60c6615b2"
+  integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
+
 node-cron@^3.0.3:
   version "3.0.3"
   resolved "https://registry.npmjs.org/node-cron/-/node-cron-3.0.3.tgz"
@@ -487,14 +499,9 @@ queue-tick@^1.0.1:
   resolved "https://registry.npmjs.org/queue-tick/-/queue-tick-1.0.1.tgz"
   integrity sha512-kJt5qhMxoszgU/62PLP1CJytzd2NKetjSRnyuj31fDd3Rlcz3fzlFdFLD1SItunPwyqEOkca6GbV612BWfaBag==
 
-ramda@^0.29.1:
-  version "0.29.1"
-  resolved "https://registry.npmjs.org/ramda/-/ramda-0.29.1.tgz"
-  integrity sha512-OfxIeWzd4xdUNxlWhgFazxsA/nl3mS4/jGZI5n00uWOoSSFRhC1b6gl6xvmzUamgmqELraWp0J/qqVlXYPDPyA==
-
-ramda@^0.30.0:
+ramda@^0.30.0, ramda@^0.30.1:
   version "0.30.1"
-  resolved "https://registry.npmjs.org/ramda/-/ramda-0.30.1.tgz"
+  resolved "https://registry.yarnpkg.com/ramda/-/ramda-0.30.1.tgz#7108ac95673062b060025052cd5143ae8fc605bf"
   integrity sha512-tEF5I22zJnuclswcZMc8bDIrwRHRzf+NqVEmqg50ShAZMP7MWeR/RGDthfM/p+BlqvF2fXAzpn8i+SJcYD3alw==
 
 readable-stream@^3.4.0:
@@ -684,7 +691,7 @@ yargs@^17.7.2:
     y18n "^5.0.5"
     yargs-parser "^21.1.1"
 
-zod@^3.22.4, zod@^3.23.5:
+zod@^3.23.5, zod@^3.23.8:
   version "3.23.8"
-  resolved "https://registry.npmjs.org/zod/-/zod-3.23.8.tgz"
+  resolved "https://registry.yarnpkg.com/zod/-/zod-3.23.8.tgz#e37b957b5d52079769fb8097099b592f0ef4067d"
   integrity sha512-XBx9AXhXktjUqnepgTiE5flcKIYWi/rme0Eaj+5Y0lftuGBq+jyRu/md4WnuxqgP1ubdpNCsYEYPxrzVHD8d6g==
