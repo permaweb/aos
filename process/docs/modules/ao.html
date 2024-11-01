@@ -1,0 +1,627 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>AOS</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><strong>ao</strong></li>
+  <li><a href="../modules/assignment.html">assignment</a></li>
+  <li><a href="../modules/boot.html">boot</a></li>
+  <li><a href="../modules/chance.html">chance</a></li>
+  <li><a href="../modules/eval.html">eval</a></li>
+  <li><a href="../modules/handlers-utils.html">handlers-utils</a></li>
+  <li><a href="../modules/handlers.html">handlers</a></li>
+  <li><a href="../modules/pretty.html">pretty</a></li>
+  <li><a href="../modules/process.html">process</a></li>
+  <li><a href="../modules/stringify.html">stringify</a></li>
+  <li><a href="../modules/utils.html">utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>ao</code></h1>
+<p>The AO module provides functionality for managing the AO environment and handling messages.</p>
+<p> Returns the ao table.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#clone">clone (obj, seen)</a></td>
+	<td class="summary">Clones a table recursively.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#normalize">normalize (msg)</a></td>
+	<td class="summary">Normalizes a message by extracting tags.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#sanitize">sanitize (msg)</a></td>
+	<td class="summary">Sanitizes a message by removing non-forwardable tags.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#init">init (env)</a></td>
+	<td class="summary">Initializes the AO environment, including ID, module, authorities, outbox, and environment.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#log">log (txt)</a></td>
+	<td class="summary">Logs a message to the output.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#clearOutbox">clearOutbox ()</a></td>
+	<td class="summary">Clears the outbox.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#send">send (msg)</a></td>
+	<td class="summary">Sends a message.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#spawn">spawn (module, msg)</a></td>
+	<td class="summary">Spawns a process.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#assign">assign (assignment)</a></td>
+	<td class="summary">Assigns a message to a process.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#isTrusted">isTrusted (msg)</a></td>
+	<td class="summary">Checks if a message is trusted.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#result">result (result)</a></td>
+	<td class="summary">Returns the result of the process.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#addAssignable">addAssignable (nameOrMatchSpec, matchSpec)</a></td>
+	<td class="summary">Add the MatchSpec to the ao.assignables table.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#removeAssignable">removeAssignable (name)</a></td>
+	<td class="summary">Remove the MatchSpec, either by name or by index
+ If the name is not found, or if the index does not exist, then do nothing.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#isAssignment">isAssignment (msg)</a></td>
+	<td class="summary">Return whether the msg is an assignment or not.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#isAssignable">isAssignable (msg)</a></td>
+	<td class="summary">Check whether the msg matches any assignable MatchSpec.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#ao">ao</a></td>
+	<td class="summary">The AO module</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "clone"></a>
+    <strong>clone (obj, seen)</strong>
+    </dt>
+    <dd>
+    Clones a table recursively.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">obj</span>
+            <span class="types"><span class="type">{any}</span></span>
+         The object to clone
+        </li>
+        <li><span class="parameter">seen</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The table of seen objects (default is nil)
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{any}</span></span>
+        The cloned object
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "normalize"></a>
+    <strong>normalize (msg)</strong>
+    </dt>
+    <dd>
+    Normalizes a message by extracting tags.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to normalize
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+        The normalized message
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "sanitize"></a>
+    <strong>sanitize (msg)</strong>
+    </dt>
+    <dd>
+    Sanitizes a message by removing non-forwardable tags.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to sanitize
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+        The sanitized message
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "init"></a>
+    <strong>init (env)</strong>
+    </dt>
+    <dd>
+    Initializes the AO environment, including ID, module, authorities, outbox, and environment.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">env</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The environment object
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "log"></a>
+    <strong>log (txt)</strong>
+    </dt>
+    <dd>
+    Logs a message to the output.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">txt</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The message to log
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "clearOutbox"></a>
+    <strong>clearOutbox ()</strong>
+    </dt>
+    <dd>
+    Clears the outbox.
+
+
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "send"></a>
+    <strong>send (msg)</strong>
+    </dt>
+    <dd>
+    Sends a message.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to send
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "spawn"></a>
+    <strong>spawn (module, msg)</strong>
+    </dt>
+    <dd>
+    Spawns a process.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">module</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The module source id
+        </li>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to send
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "assign"></a>
+    <strong>assign (assignment)</strong>
+    </dt>
+    <dd>
+    Assigns a message to a process.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">assignment</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The assignment to assign
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+    <dt>
+    <a name = "isTrusted"></a>
+    <strong>isTrusted (msg)</strong>
+    </dt>
+    <dd>
+    Checks if a message is trusted.
+ The default security model of AOS processes: Trust all and *only* those on the ao.authorities list.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The message to check
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{boolean}</span></span>
+        True if the message is trusted, false otherwise
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "result"></a>
+    <strong>result (result)</strong>
+    </dt>
+    <dd>
+    Returns the result of the process.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">result</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+         The result of the process
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table}</a></span>
+        The result of the process, including Output, Messages, Spawns, and Assignments
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "addAssignable"></a>
+    <strong>addAssignable (nameOrMatchSpec, matchSpec)</strong>
+    </dt>
+    <dd>
+    Add the MatchSpec to the ao.assignables table.  A optional name may be provided.
+ This implies that ao.assignables may have both number and string indices.
+ Added in the assignment module.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">nameOrMatchSpec</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">string</a>, <span class="type">number</span> or <span class="type">any</span></span>
+         The name of the MatchSpec
+        to be added to ao.assignables. if a MatchSpec is provided, then
+        no name is included
+        </li>
+        <li><span class="parameter">matchSpec</span>
+            <span class="types">optional <span class="type">any</span></span>
+         The MatchSpec to be added to ao.assignables. Only provided
+        if its name is passed as the first parameter
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">string</a> or <span class="type">number</span></span>
+        name The name of the MatchSpec, either as provided
+          as an argument or as incremented
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/assignment.html#">assignment</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "removeAssignable"></a>
+    <strong>removeAssignable (name)</strong>
+    </dt>
+    <dd>
+    Remove the MatchSpec, either by name or by index
+ If the name is not found, or if the index does not exist, then do nothing.
+ Added in the assignment module.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string</a> or <span class="type">number}</span></span>
+         The name or index of the MatchSpec to be removed
+        </li>
+    </ul>
+
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/assignment.html#">assignment</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "isAssignment"></a>
+    <strong>isAssignment (msg)</strong>
+    </dt>
+    <dd>
+    Return whether the msg is an assignment or not.  This can be determined by simply check whether the msg's Target is this process' id
+ Added in the assignment module.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+         The msg to be checked
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        isAssignment
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/assignment.html#">assignment</a>
+    </ul>
+
+
+</dd>
+    <dt>
+    <a name = "isAssignable"></a>
+    <strong>isAssignable (msg)</strong>
+    </dt>
+    <dd>
+    Check whether the msg matches any assignable MatchSpec.
+ If not assignables are configured, the msg is deemed not assignable, by default.
+ Added in the assignment module.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">msg</span>
+         The msg to be checked
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">boolean</span></span>
+        isAssignable
+    </ol>
+
+
+    <h3>See also:</h3>
+    <ul>
+         <a href="../modules/assignment.html#">assignment</a>
+    </ul>
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Tables"></a>Tables</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "ao"></a>
+    <strong>ao</strong>
+    </dt>
+    <dd>
+    The AO module
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">_version</span>
+         The version number of the ao module
+        </li>
+        <li><span class="parameter">_module</span>
+         The module id of the process
+        </li>
+        <li><span class="parameter">id</span>
+         The id of the process
+        </li>
+        <li><span class="parameter">authorities</span>
+         A table of authorities of the process
+        </li>
+        <li><span class="parameter">reference</span>
+         The reference number of the process
+        </li>
+        <li><span class="parameter">outbox</span>
+         The outbox of the process
+        </li>
+        <li><span class="parameter">nonExtractableTags</span>
+         The non-extractable tags
+        </li>
+        <li><span class="parameter">nonForwardableTags</span>
+         The non-forwardable tags
+        </li>
+        <li><span class="parameter">clone</span>
+         The clone function
+        </li>
+        <li><span class="parameter">normalize</span>
+         The normalize function
+        </li>
+        <li><span class="parameter">sanitize</span>
+         The sanitize function
+        </li>
+        <li><span class="parameter">init</span>
+         The init function
+        </li>
+        <li><span class="parameter">log</span>
+         The log function
+        </li>
+        <li><span class="parameter">clearOutbox</span>
+         The clearOutbox function
+        </li>
+        <li><span class="parameter">send</span>
+         The send function
+        </li>
+        <li><span class="parameter">spawn</span>
+         The spawn function
+        </li>
+        <li><span class="parameter">assign</span>
+         The assign function
+        </li>
+        <li><span class="parameter">isTrusted</span>
+         The isTrusted function
+        </li>
+        <li><span class="parameter">result</span>
+         The result function
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2024-10-29 14:41:25 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
