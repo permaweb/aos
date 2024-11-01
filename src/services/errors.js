@@ -49,6 +49,7 @@ export function parseError(error) {
  * @typedef ErrorOrigin
  * @property {string} file
  * @property {number|undefined} line
+ * @property {string|undefined} lineContent
  */
 
 /**
@@ -62,19 +63,43 @@ export function getErrorOrigin(loadedModules, lineNumber) {
   if (loadedModules.length === 1) {
     return {
       file: loadedModules[0].path,
-      line: undefined
+      line: lineNumber - 2, // Remove the \n\n offset
+      lineContent: loadedModules[0].content.split('\n')[lineNumber - 2 - 1]
     }
   }
 
-  let currentLine = 0
+  // Each loaded module begins with \n\n.
+  // After the first module, the first '\n' will be appended on the end of the previous module,
+  // creating net one new line. However, for the first module, there is no previous module,
+  // and two new lines are created. This is why we begin at one and offset by one per module.
+  let currentLine = 1
 
   for (let i = 0; i < loadedModules.length; i++) {
-    // get module line count, add 2 for '\n\n' offset
-    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 1 + 2
+    const lineCount = (loadedModules[i].content.match(/\r?\n/g)?.length || 0) + 2
+    /**
+     * All modules have 2 lines ('\n\n') prepended to their executable.
+     * 
+     * Secondary modules have the following content:
+     * 
+      1  -- module: ".*name*"
+      2  local function _loaded_mod_*name*()
+          *** function ***
+      3  end
+      4
+      5 '_G.package.loaded[".*name*"] = _loaded_mod_*name*()'
+
+     * (see loading-files.js)
+     * This adds 5 lines to the loaded module.
+     * The loaded modules will always appear first in the array (ie the main module will be last)
+     */
+    
+    const isPrimaryModule = i == loadedModules.length - 1
     if (currentLine + lineCount >= lineNumber) {
+      const originLineNumber = lineNumber - currentLine
       return {
         file: loadedModules[i].path,
-        line: lineNumber - currentLine - (i + 1) * 2
+        line: originLineNumber - (isPrimaryModule ? 1 : 3), // If secondary module, adjust for added header
+        lineContent: loadedModules[i].content.split('\n')[originLineNumber - 2]
       }
     }
 
@@ -91,28 +116,19 @@ export function getErrorOrigin(loadedModules, lineNumber) {
  * @param {ErrorOrigin|undefined} origin
  */
 export function outputError(line, error, origin) {
-  // Subtract 2 lines as the line does not includes the '\n\n' offset
-  const lineNumber = (origin?.line || error.lineNumber - 2)
+  const lineNumber = (origin?.line || error.lineNumber)
+  const lineContent = (origin?.lineContent || line.split('\n')[lineNumber - 1])
   const lineNumberPlaceholder = ' '.repeat(lineNumber.toString().length)
 
-  if (origin) {
-    console.log(
-      '\n' +
-      chalk.bold(error.errorMessage) +
-      '\n' +
-      (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
-      chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +
-      line.split('\n')[lineNumber + 1] +
-      '\n' +
-      chalk.blue(` ${lineNumberPlaceholder} |\n`) +
-      chalk.dim('This error occurred while aos was evaluating the submitted code.')
-    )
-  } else {
-    console.log(
-      '\n' +
-      chalk.bold(`Error on line ${lineNumber}: ${error.errorMessage}`) +
-      '\n' +
-      chalk.dim('This error occurred while aos was evaluating the submitted code.')
-    )
-  }
+  console.log(
+    '\n' +
+    chalk.bold(error.errorMessage) +
+    '\n' +
+    (origin ? chalk.dim(`  in ${origin.file}\n`) : "") +
+    chalk.blue(` ${lineNumberPlaceholder} |\n ${lineNumber} |    `) +
+    lineContent +
+    '\n' +
+    chalk.blue(` ${lineNumberPlaceholder} |\n`) +
+    chalk.dim('This error occurred while aos was evaluating the submitted code.')
+  )
 }
