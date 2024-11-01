@@ -12,7 +12,7 @@ function findDirectories (srcDir, { ignore = [] } = {}) {
 /**
  * A function that given a list of allowed scopes
  * will enforce CommitLint rules:
- *
+ * 
  * - A scope is always provided in the commit message
  * - The scope is one or multiple of the allowed scopes
  *
@@ -34,8 +34,7 @@ module.exports = {
     ...RequireScopes([
       'aos', 
       ...findDirectories(path.join(__dirname, 'src')),
-      ...findDirectories(path.join(__dirname, 'extensions')),
-      ...findDirectories(path.join(__dirname, 'test'))
+      ...findDirectories(path.join(__dirname, 'extensions'))
     ])
   }
 }
