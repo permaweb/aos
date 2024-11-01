@@ -12,7 +12,8 @@
     "test": "node --test test",
     "build-docs": "rm -rf process/docs && ldoc .",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
-    "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId"
+    "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId",
+    "staged": "lint-staged"
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.59",
@@ -37,6 +38,10 @@
     "version": "2.0.1"
   },
   "devDependencies": {
-    "esbuild": "^0.20.1"
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "esbuild": "^0.20.1",
+    "husky": "^9.1.6",
+    "lint-staged": "^15.2.10"
   }
 }

@@ -465,6 +465,9 @@ async function connect(jwk, id) {
     suffixText: ``
   })
 
+  console.log(     ' a  '    )
+
+  
   spinner.start();
   spinner.suffixText = chalk.gray("[Connecting to process...]")
 
