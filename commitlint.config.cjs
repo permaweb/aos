@@ -1,7 +1,7 @@
-const fs = require('node:fs');
-const path = require('node:path');
+const fs = require('node:fs')
+const path = require('node:path')
 
-function findDirectories(srcDir, {ignore = [] } = {}) {
+function findDirectories (srcDir, { ignore = [] } = {}) {
   return fs.readdirSync(srcDir).filter((file) => {
     if (ignore.includes(file)) return false
     if (file.startsWith('.')) return false // ignore hidden directories
@@ -12,7 +12,7 @@ function findDirectories(srcDir, {ignore = [] } = {}) {
 /**
  * A function that given a list of allowed scopes
  * will enforce CommitLint rules:
- * 
+ *
  * - A scope is always provided in the commit message
  * - The scope is one or multiple of the allowed scopes
  *
@@ -32,7 +32,7 @@ module.exports = {
   ],
   rules: {
     ...RequireScopes([
-      'repo', // denotes repo-wide changes ie. monorepo tooling, monorepo docs etc.
+      'aos', 
       ...findDirectories(path.join(__dirname, 'src')),
       ...findDirectories(path.join(__dirname, 'extensions')),
       ...findDirectories(path.join(__dirname, 'test'))
