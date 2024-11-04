@@ -36,6 +36,7 @@
   "devDependencies": {
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
+    "@johnnymorganz/stylua-bin": "^0.20.0",
     "esbuild": "^0.20.1",
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10"
