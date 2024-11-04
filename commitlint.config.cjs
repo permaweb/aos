@@ -12,7 +12,7 @@ function findDirectories (srcDir, { ignore = [] } = {}) {
 /**
  * A function that given a list of allowed scopes
  * will enforce CommitLint rules:
- * 
+ *
  * - A scope is always provided in the commit message
  * - The scope is one or multiple of the allowed scopes
  *
