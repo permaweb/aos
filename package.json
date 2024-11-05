@@ -1,20 +1,25 @@
 {
   "name": "@permaweb/aos",
   "version": "2.0.1",
+  "private": true,
   "repository": "https://github.com/permaweb/aos.git",
   "license": "MIT",
   "author": "Tom Wilson <tom@hyper.io>",
   "type": "module",
   "main": "src/index.js",
   "bin": "./bin/aos.js",
+  "workspaces": [
+    "process",
+    "extensions/*"
+  ],
   "scripts": {
     "start": "node src/index.js",
     "test": "node --test test",
     "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId",
     "build-docs": "rm -rf process/docs && ldoc .",
-    "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
-    "staged": "lint-staged"
+    "staged": "lint-staged",
+    "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
     "@permaweb/aoconnect": "^0.0.59",
