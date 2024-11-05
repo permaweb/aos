@@ -16,29 +16,41 @@ module.exports = function weaveDrive(mod, FS) {
       FS.streams[fd].node.cache = new Uint8Array(0)
     },
 
+    joinUrl ({ url, path }) {
+      if (!path) return url
+      if (path.startsWith('/')) return this.joinUrl({ url, path: path.slice(1) })
+    
+      url = new URL(url)
+      url.pathname += path
+      return url.toString()
+    },
+
     async customFetch(path, options) {
-      let urlList = null
-      if (mod.ARWEAVE.includes(',')) {
-        urlList = mod.ARWEAVE.split(',').map(url => url.trim())
+      /**
+       * mod.ARWEAVE may be a comma-delimited list of urls.
+       * So we parse it into an array that we sequentially consume
+       * using fetch, and return the first successful response.
+       * 
+       * The first url is considered "primary". So if all urls fail
+       * to produce a successful response, then we return the primary's
+       * error response
+       */
+      const urlList = mod.ARWEAVE.includes(',')
+        ? mod.ARWEAVE.split(',').map(url => url.trim())
+        : [mod.ARWEAVE]
+
+      let p
+      for (const url of urlList) {
+        const res = fetch(this.joinUrl({ url, path }), options)
+        if (await res.then((r) => r.ok).catch(() => false)) return res
+        if (!p) p = res
       }
-      if (urlList && urlList.length > 0) {
-        /**
-         * Try a list of gateways instead of a single one
-         */
-        for (const url of urlList) {
-          const response = await fetch(`${url}${path}`, options)
-          if (response.ok) {
-            return response
-          }
-        }
-        /**
-         * None succeeded so fall back to mod.ARWEAVE so that
-         * if this fails we return a proper error response
-         */
-        return await fetch(`${mod.ARWEAVE}${path}`, options)
-      } else {
-        return await fetch(`${mod.ARWEAVE}${path}`, options)
-      }
+
+      /**
+       * None succeeded so fallback to the primary and accept
+       * whatever it returned
+       */
+      return p
     },
 
     async create(id) {
@@ -588,42 +600,13 @@ module.exports = function weaveDrive(mod, FS) {
     },
 
     async gqlQuery(query, variables) {
-      let urlList = null
-      const headers = new Headers({})
-      headers.append("content-type", "application/json")
-      if (mod.ARWEAVE.includes(',')) {
-        urlList = mod.ARWEAVE.split(',').map(url => url.trim())
+      const options = {
+        method: 'POST',
+        body: JSON.stringify({ query, variables }),
+        headers: { 'Content-Type': 'application/json'}
       }
-      if (urlList && urlList.length > 0) {
-        /**
-         * Try a list of gateways instead of a single one
-         */
-        for (const url of urlList) {
-          const response = await fetch(`${url}/graphql`, {
-            method: 'POST',
-            body: JSON.stringify({ query, variables }),
-            headers
-          })
-          if (response.ok) {
-            return response
-          }
-        }
-        /**
-         * None succeeded so fall back to mod.ARWEAVE so that
-         * if this fails we return a proper error response
-         */
-        return await fetch(`${mod.ARWEAVE}/graphql`, {
-          method: 'POST',
-          body: JSON.stringify({ query, variables }),
-          headers
-        })
-      } else {
-        return await fetch(`${mod.ARWEAVE}/graphql`, {
-          method: 'POST',
-          body: JSON.stringify({ query, variables }),
-          headers
-        })
-      }
+
+      return this.customFetch('graphql', options)
     }
   }
 }

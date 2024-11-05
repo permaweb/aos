@@ -297,43 +297,45 @@ describe('Individual Mode', () => {
   })
 })
 
-// test weavedrive feature of acceptint multiple gateways
-test('read block, multi url', async () => {
-  const handle = await AoLoader(wasm, {
-    ...options,
-    ARWEAVE: 'https://arweave.net,https://g8way.io'
+// test weavedrive feature of accepting multiple gateways
+describe('multi-url', () => {
+  const urls =  'https://arweave.net/does-not-exist,https://g8way.io'
+  test('read block', async () => {
+    const handle = await AoLoader(wasm, {
+      ...options,
+      ARWEAVE: urls
+    })
+    const result = await handle(memory, {
+      ...Msg,
+      Data: `
+        return #require('WeaveDrive').getBlock('1439784').txs
+      `
+    }, { Process, Module })
+    memory = result.Memory
+    assert.equal(result.Output.data, '20')
   })
-  const result = await handle(memory, {
-    ...Msg,
-    Data: `
-    return #require('WeaveDrive').getBlock('1439784').txs
-`
-  }, { Process, Module })
-  memory = result.Memory
-})
-
-
-test('read tx, multi url', async () => {
-  const handle = await AoLoader(wasm, {
-    ...options,
-    ARWEAVE: 'https://arweave.net,https://g8way.io'
+  
+  
+  test('read tx', async () => {
+    const handle = await AoLoader(wasm, {
+      ...options,
+      ARWEAVE: urls
+    })
+    const result = await handle(memory, {
+      ...Msg,
+      Data: `
+        local results = {}
+        local drive = require('WeaveDrive')
+        local txs = drive.getBlock('1439784').txs
+        for i=1,#txs do
+          local tx = drive.getTx(txs[i])
+        end
+        return results
+      `
+    }, { Process, Module })
+    memory = result.Memory
+    assert.ok(true)
   })
-  const result = await handle(memory, {
-    ...Msg,
-    Data: `
-local results = {}
-local drive = require('WeaveDrive')
-local txs = drive 
-  .getBlock('1439784').txs
-for i=1,#txs do
-  local tx = drive.getTx(txs[i])
-end
-
-return results
-    `
-  }, { Process, Module })
-  memory = result.Memory
-  assert.ok(true)
 })
 
 test('read data item tx', async () => {
@@ -479,4 +481,27 @@ test('boot loader set to tx id', async function () {
   }, { Process: ProcessBootLoaderTx, Module })
 
   assert.equal(result.Output.data, '<TICKER>')
+})
+
+describe('joinUrl', () => {
+  const wd = weaveDrive()
+  const joinUrl = wd.joinUrl.bind(wd)
+
+  test('should return the url', () => {
+    assert.equal(joinUrl({ url: 'https://arweave.net/graphql' }), 'https://arweave.net/graphql')
+    assert.equal(joinUrl({ url: 'https://arweave.net/graphql?foo=bar' }), 'https://arweave.net/graphql?foo=bar')
+    assert.equal(joinUrl({ url: 'https://arweave.net/graphql', path: undefined }), 'https://arweave.net/graphql')
+  })
+
+  test('should append the path', () => {
+    assert.equal(joinUrl({ url: 'https://arweave.net', path: 'graphql' }), 'https://arweave.net/graphql')
+    assert.equal(joinUrl({ url: 'https://arweave.net', path: '/graphql' }), 'https://arweave.net/graphql')
+    assert.equal(joinUrl({ url: 'https://arweave.net/', path: 'graphql' }), 'https://arweave.net/graphql')
+    assert.equal(joinUrl({ url: 'https://arweave.net/', path: '/graphql' }), 'https://arweave.net/graphql')
+
+    assert.equal(joinUrl({ url: 'https://arweave.net?foo=bar', path: 'graphql' }), 'https://arweave.net/graphql?foo=bar')
+    assert.equal(joinUrl({ url: 'https://arweave.net?foo=bar', path: '/graphql' }), 'https://arweave.net/graphql?foo=bar')
+    assert.equal(joinUrl({ url: 'https://arweave.net/?foo=bar', path: 'graphql' }), 'https://arweave.net/graphql?foo=bar')
+    assert.equal(joinUrl({ url: 'https://arweave.net/?foo=bar', path: '/graphql' }), 'https://arweave.net/graphql?foo=bar')
+  })
 })
