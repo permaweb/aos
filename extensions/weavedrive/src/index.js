@@ -494,9 +494,9 @@ module.exports = function weaveDrive(mod, FS) {
             owners: ${attestors},
             block: {min: 0, max: ${blockHeight}},
             tags: [
-              { name: "Data-Protocol", values: ["ao"] },
               { name: "Type", values: ["Attestation"] },
               { name: "Message", values: ["${ID}"]}
+              { name: "Data-Protocol", values: ["ao"] },
             ]
           ) 
           {
@@ -522,9 +522,9 @@ module.exports = function weaveDrive(mod, FS) {
               owners: ${attestors},
               block: {min: 0, max: ${blockHeight}},
               tags: [
-                { name: "Data-Protocol", values: ["WeaveDrive"] },
                 { name: "Type", values: ["Available"]},
                 { name: "ID", values: ["${ID}"]}
+                { name: "Data-Protocol", values: ["WeaveDrive"] },
               ]
             ) 
             {
