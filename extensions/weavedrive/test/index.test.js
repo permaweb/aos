@@ -356,6 +356,24 @@ return result
   assert.equal(data.block.height, 1290333)
 })
 
+test('data item with chinese characters', async () => {
+  const chineseCharacterTx = 'Xg82mcAfQNgJetk_kSKqMkwYDfoMJLGw8fdheU3evWk'
+  const handle = await AoLoader(wasm, options)
+  const result = await handle(memory, {
+    ...Msg,
+      Data: `
+      local data = require('WeaveDrive').getDataItem('${chineseCharacterTx}')
+      local json = require('json')
+      local decoded = json.decode(data)
+      return data
+  `
+  }, { Process, Module })
+  memory = result.Memory
+  const data = JSON.parse(result.Output.data)
+  const description = data.tags.find(tag => tag.name === 'Description')?.value
+  assert.equal(description, "Smartweave是不是要转到AO了？\n本文档介绍原子资产SmartWeave合约的标准接口。原子资产是SmartWeave合约及其在发布到Arweave的同一事务中初始化的数据。SmartWeave合约和数据共享一个交易ID。")
+})
+
 test('read data item tx, no result', async () => {
   const handle = await AoLoader(wasm, options)
   const result = await handle(memory, {

@@ -105,7 +105,7 @@ module.exports = function weaveDrive(mod, FS) {
 
       var bytesLength = result.length;
 
-      var node = FS.createDataFile('/', 'block/' + id, result, true, false);
+      var node = FS.createDataFile('/', 'block/' + id, Buffer.from(result, 'utf-8'), true, false);
 
       var stream = FS.open('/block/' + id, 'r');
       return stream;
@@ -135,7 +135,7 @@ module.exports = function weaveDrive(mod, FS) {
         //.then(x => (console.error(x), x))
         .then(x => JSON.stringify(x));
 
-      var node = FS.createDataFile('/', 'tx/' + id, result, true, false);
+      var node = FS.createDataFile('/', 'tx/' + id, Buffer.from(result, 'utf-8'), true, false);
       var stream = FS.open('/tx/' + id, 'r');
       return stream;
     },
@@ -220,7 +220,7 @@ module.exports = function weaveDrive(mod, FS) {
       if (result === 'No results') {
         return result
       }
-      FS.createDataFile('/', 'tx2/' + id, result, true, false);
+      FS.createDataFile('/', 'tx2/' + id, Buffer.from(result, 'utf-8'), true, false);
       var stream = FS.open('/tx2/' + id, 'r');
 
       return stream;
