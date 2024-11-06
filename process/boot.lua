@@ -31,6 +31,9 @@ end
 return function (ao)
   local eval = require(".eval")(ao)
   return function (msg)
+    if #Inbox == 0 then
+      table.insert(Inbox, msg)
+    end
     if msg.Tags['On-Boot'] == nil then
       return
     end
