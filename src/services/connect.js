@@ -160,7 +160,7 @@ export async function live(id, watch) {
         if (cursor) {
           params["from"] = cursor
         } else {
-          params["limit"] = 1
+          params["limit"] = 5
           params["sort"] = "DESC"
         }
 
