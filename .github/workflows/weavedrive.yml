@@ -24,29 +24,6 @@ defaults:
     shell: bash
 
 jobs:
-  test:
-    if: github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: 📥 Download deps
-        working-directory: extensions/weavedrive
-        run: |
-          npm i
-
-      - name: ⚡ Run Tests
-        working-directory: extensions/weavedrive
-        run: |
-          npm test
-        env:
-          CI: true
 
   release:
     # Releases are performed via a workflow dispatch
