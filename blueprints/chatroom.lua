@@ -47,7 +47,7 @@ Handlers.add(
     local haveSentRecords = {}
     for _, recipient in ipairs(Members) do
       if not haveSentRecords[recipient] then
-        ao.send({Target = recipient, Data = msg.Data})
+        ao.send({Target = recipient, Action = "Broadcast-Notice", Data = msg.Data})
         haveSentRecords[recipient] = true
       end
     end
