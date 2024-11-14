@@ -6,7 +6,7 @@ import ora from 'ora'
 import chalk from 'chalk'
 import path from 'path'
 import * as url from 'url'
-import process from 'node:process';
+import process from 'node:process'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -43,66 +43,60 @@ import { pad } from './commands/pad.js'
 const argv = minimist(process.argv.slice(2))
 
 let dryRunMode = false
-let luaData = ""
+let luaData = ''
 if (!process.stdin.isTTY) {
-
   const onData = chunk => {
     luaData = luaData + chunk
   }
-  const onEnd = () => {
-    argv['lua-file'] = luaData
-
-  }
   process.stdin.on('data', onData)
-  //process.stdin.on('end', onEnd)
+  // process.stdin.on('end', onEnd)
 }
-
 
 globalThis.alerts = {}
 // make prompt global :(
-globalThis.prompt = "aos> "
+globalThis.prompt = 'aos> '
 
 if (argv['get-blueprints']) {
   blueprints(argv['get-blueprints'])
   process.exit(0)
 }
 
-if (argv['help']) {
+if (argv.help) {
   help()
   process.exit(0)
 }
 
-if (argv['version']) {
+if (argv.version) {
   version()
   process.exit(0)
 }
 
-if (argv['sqlite']) {
+if (argv.sqlite) {
   process.env.AOS_MODULE = getPkg().aos.sqlite
 }
 
 /**
  * A module can be specified when spawning a process using AOS
  * that value can be the id of the module, or a colloquial 'name' for the module
- * 
+ *
  * this code assumes that the provided value is a TXid if the length matches what a TXid should be
  * otherwise, we set the env variable AOS_MODULE_NAME
- * 
+ *
  * https://github.com/permaweb/aos/issues/310
  */
-if (argv['module']) {
-  if (argv['module'].length === 43) {
-    process.env.AOS_MODULE = argv['module']
+if (argv.module) {
+  if (argv.module.length === 43) {
+    process.env.AOS_MODULE = argv.module
   } else {
-    process.env.AOS_MODULE_NAME = argv['module']
+    process.env.AOS_MODULE_NAME = argv.module
   }
 }
 
 let cron = null
 
-if (argv['watch'] && argv['watch'].length === 43) {
-  live(argv['watch'], true).then(res => {
-    process.stdout.write('\n' + "\u001b[0G" + chalk.green('Watching: ') + chalk.blue(argv['watch']) + '\n')
+if (argv.watch && argv.watch.length === 43) {
+  live(argv.watch, true).then(res => {
+    process.stdout.write('\n' + '\u001b[0G' + chalk.green('Watching: ') + chalk.blue(argv.watch) + '\n')
     cron = res
   })
 }
@@ -124,12 +118,12 @@ if (argv['mu-url']) {
   process.env.MU_URL = argv['mu-url']
 }
 
-if (!argv['watch']) {
+if (!argv.watch) {
   of()
     .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
     .chain(jwk => {
       // handle list option, need jwk in order to do it.
-      if (argv['list']) {
+      if (argv.list) {
         return list(jwk, { address, gql }).chain(Rejected)
       }
       return Resolved(jwk)
@@ -140,19 +134,18 @@ if (!argv['watch']) {
     .toPromise()
     .then(async ({ jwk, id }) => {
       let editorMode = false
-      let editorData = ""
-      let editorPrompt = ""
+      let editorData = ''
 
-      let history = readHistory(id)
+      const history = readHistory(id)
 
-      if (luaData.length > 0 && argv['load']) {
+      if (luaData.length > 0 && argv.load) {
         const spinner = ora({
           spinner: 'dots',
-          suffixText: ``
+          suffixText: ''
         })
 
-        spinner.start();
-        spinner.suffixText = chalk.gray("[Connecting to process...]")
+        spinner.start()
+        spinner.suffixText = chalk.gray('[Connecting to process...]')
         const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
 
         spinner.stop()
@@ -164,13 +157,13 @@ if (!argv['watch']) {
       }
 
       if (!id) {
-        console.error(chalk.red("Error! Could not find process ID."))
+        console.error(chalk.red('Error! Could not find process ID.'))
         process.exit(0)
       }
       version(id)
 
       // kick start monitor if monitor option
-      if (argv['monitor']) {
+      if (argv.monitor) {
         const result = await monitor(jwk, id, { monitorProcess })
         console.log(chalk.green(result))
       }
@@ -178,9 +171,9 @@ if (!argv['watch']) {
       // check for update and install if needed
       const update = await checkForUpdate()
       if (update.available && !process.env.DEBUG) {
-        const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+        const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
-        await installUpdate(update, path.join(__dirname, "../"))
+        await installUpdate(update, path.join(__dirname, '../'))
       }
 
       if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
@@ -193,24 +186,23 @@ if (!argv['watch']) {
 
       const spinner = ora({
         spinner: 'dots',
-        suffixText: ``,
+        suffixText: '',
         discardStdin: false
-      });
+      })
 
       const rl = readline.createInterface({
         input: process.stdin,
         output: process.stdout,
         terminal: true,
-        history: history,
+        history,
         historySize: 100,
         prompt: globalThis.prompt
-      });
+      })
       globalThis.setPrompt = (p) => {
         rl.setPrompt(p)
       }
 
-      //async function repl() {
-
+      // async function repl() {
 
       // process.stdin.on('keypress', (str, key) => {
       //   if (ct) {
@@ -222,20 +214,20 @@ if (!argv['watch']) {
         history.concat(e)
       })
 
-      //rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+      // rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
       rl.setPrompt(globalThis.prompt)
       if (!editorMode) rl.prompt(true)
 
       rl.on('line', async line => {
-        if (!editorMode && line.trim() == '') {
+        if (!editorMode && line.trim() === '') {
           console.log(undefined)
-          //rl.close()
-          //repl()
+          // rl.close()
+          // repl()
           rl.prompt(true)
-          return;
+          return
         }
 
-        if (!editorMode && line == ".help") {
+        if (!editorMode && line === '.help') {
           replHelp()
           // rl.close()
           // repl()
@@ -243,8 +235,8 @@ if (!argv['watch']) {
           return
         }
 
-        if (!editorMode && line == ".live") {
-          //printLive()
+        if (!editorMode && line === '.live') {
+          // printLive()
           cron.start()
           // rl.close()
           // repl()
@@ -252,14 +244,14 @@ if (!argv['watch']) {
           return
         }
         // pause live
-        if (!editorMode && line == ".pause") {
+        if (!editorMode && line === '.pause') {
           // pause live feed
           cron.stop()
           rl.prompt(true)
           return
         }
 
-        if (!editorMode && line == ".dryrun") {
+        if (!editorMode && line === '.dryrun') {
           dryRunMode = !dryRunMode
           if (dryRunMode) {
             console.log(chalk.green('dryrun mode engaged'))
@@ -269,35 +261,34 @@ if (!argv['watch']) {
             rl.setPrompt(globalThis.prompt.replace('*', ''))
           }
           rl.prompt(true)
-          return;
+          return
         }
 
-        if (!editorMode && line == ".monitor") {
-          const result = await monitor(jwk, id, { monitorProcess }).catch(err => chalk.gray('⚡️ could not monitor process!'))
+        if (!editorMode && line === '.monitor') {
+          const result = await monitor(jwk, id, { monitorProcess }).catch(_ => chalk.gray('⚡️ could not monitor process!'))
           console.log(chalk.green(result))
           // rl.close()
           // repl()
           rl.prompt(true)
-          return;
+          return
         }
 
-        if (!editorMode && line == ".unmonitor") {
-          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(err => chalk.gray('⚡️ monitor not found!'))
+        if (!editorMode && line === '.unmonitor') {
+          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ => chalk.gray('⚡️ monitor not found!'))
           console.log(chalk.green(result))
           // rl.close()
           // repl()
           rl.prompt(true)
-          return;
+          return
         }
 
         if (/^\.load-blueprint/.test(line)) {
-          try { line = loadBlueprint(line) }
-          catch (e) {
+          try { line = loadBlueprint(line) } catch (e) {
             console.log(e.message)
             // rl.close()
             // repl()
             rl.prompt(true)
-            return;
+            return
           }
         }
 
@@ -305,38 +296,36 @@ if (!argv['watch']) {
         /** @type {Module[]} */
         let loadedModules = []
         if (/^\.load/.test(line)) {
-          try { [line, loadedModules] = load(line) }
-          catch (e) {
+          try { [line, loadedModules] = load(line) } catch (e) {
             console.log(e.message)
             // rl.close()
             // repl()
             rl.prompt(true)
-            return;
+            return
           }
         }
 
-        if (line === ".editor") {
+        if (line === '.editor') {
           console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
-          editorMode = true;
+          editorMode = true
           rl.setPrompt('')
-          editorPrompt = globalThis.prompt
 
           // rl.close()
           // repl()
           rl.prompt(true)
 
-          return;
+          return
         }
 
-        if (editorMode && line === ".done") {
+        if (editorMode && line === '.done') {
           line = editorData
-          editorData = ""
-          editorMode = false;
+          editorData = ''
+          editorMode = false
           rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
         }
 
-        if (editorMode && line === ".delete") {
-          let lines = editorData.split('\n')
+        if (editorMode && line === '.delete') {
+          const lines = editorData.split('\n')
           lines.pop()
           lines.pop()
           editorData = lines.join('\n') + '\n'
@@ -351,28 +340,27 @@ if (!argv['watch']) {
           return
         }
 
-        if (editorMode && line === ".print") {
+        if (editorMode && line === '.print') {
           console.log(editorData)
-          editorData = ""
+          editorData = ''
           editorMode = false
-          //rl.setPrompt(globalThis.prompt)
+          // rl.setPrompt(globalThis.prompt)
           rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           rl.prompt(true)
           return
         }
 
-        if (editorMode && line === ".cancel") {
-          editorData = ""
-          editorMode = false;
-          //rl.setPrompt(globalThis.prompt)
+        if (editorMode && line === '.cancel') {
+          editorData = ''
+          editorMode = false
+          // rl.setPrompt(globalThis.prompt)
           rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
-
 
           // rl.close()
           // repl()
           rl.prompt(true)
 
-          return;
+          return
         }
 
         if (editorMode) {
@@ -382,27 +370,27 @@ if (!argv['watch']) {
           // repl()
           rl.prompt(true)
 
-          return;
+          return
         }
 
-        if (line === ".pad") {
+        if (line === '.pad') {
           rl.pause()
           pad(id, async (err, content) => {
             if (!err) {
               // console.log(content)
               await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
             }
-            rl.resume();
-            rl.prompt(true);
+            rl.resume()
+            rl.prompt(true)
           })
-          return;
+          return
         }
 
-        if (line === ".exit") {
-          cron.stop();
-          console.log("Exiting...");
-          rl.close();
-          return;
+        if (line === '.exit') {
+          cron.stop()
+          console.log('Exiting...')
+          rl.close()
+          return
         }
 
         if (line === '.update') {
@@ -425,7 +413,6 @@ if (!argv['watch']) {
         // rl.close()
         // repl()
         rl.prompt(true)
-        return
       })
 
       process.on('SIGINT', function () {
@@ -436,84 +423,81 @@ if (!argv['watch']) {
         process.exit(0)
       })
 
-      //}
+      // }
 
-      //repl()
-
+      // repl()
     })
     .catch(e => {
-      if (argv['list']) {
+      if (argv.list) {
         console.log(e)
       } else {
         if (process.env.DEBUG) {
           console.log(e)
         }
-        if (argv['load']) {
+        if (argv.load) {
           console.log(e.message)
         } else {
           console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
           process.exit(1)
         }
-
       }
     })
 }
 
-async function connect(jwk, id) {
+async function connect (jwk, id) {
   const spinner = ora({
     spinner: 'dots',
-    suffixText: ``
+    suffixText: ''
   })
 
-  spinner.start();
-  spinner.suffixText = chalk.gray("[Connecting to process...]")
+  spinner.start()
+  spinner.suffixText = chalk.gray('[Connecting to process...]')
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
   let _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
-  for (var i = 0; i < 50; i++) {
+  for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
-      spinner.suffixText = chalk.red("[Connecting to process....]")
+      spinner.suffixText = chalk.red('[Connecting to process....]')
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
       console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
-      break;
+      break
     }
   }
-  spinner.stop();
+  spinner.stop()
   if (_prompt === undefined) {
     console.log('Could not connect to process! Exiting...')
-    process.exit(1);
+    process.exit(1)
   }
-  let aosVersion = getPkg().aos.version
+  const aosVersion = getPkg().aos.version
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
     console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
   }
   return _prompt
 }
 
-async function handleLoadArgs(jwk, id) {
+async function handleLoadArgs (jwk, id) {
   const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(line => load(line)[0]).join('\n')
   if (loadCode) {
     const spinner = ora({
       spinner: 'dots',
-      suffixText: ``
+      suffixText: ''
     })
     spinner.start()
-    spinner.suffixText = chalk.gray("[Signing message and sequencing...]")
+    spinner.suffixText = chalk.gray('[Signing message and sequencing...]')
     await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
       .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
 
     spinner.stop()
-
   }
 }
 
-async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
-  spinner.start();
-  spinner.suffixText = chalk.gray("[Dispatching message...]")
+async function doEvaluate (line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
+  spinner.start()
+  spinner.suffixText = chalk.gray('[Dispatching message...]')
 
   // create message and publish to ao
   let result = null
@@ -524,7 +508,7 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
     result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
       .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
   }
-  const output = result.Output //JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
+  const output = result.Output // JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
   // log output
   // console.log(output)
   spinner.stop()
@@ -538,18 +522,18 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
       // print error
       outputError(line, error, errorOrigin)
     } else {
-      console.log(chalk.red(result.Error || result.error));
+      console.log(chalk.red(result.Error || result.error))
     }
   } else {
     if (output?.data) {
-      if (output.data.hasOwnProperty('output')) {
+      if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
         console.log(output.data.output)
-      } else if (output.data.hasOwnProperty('prompt')) {
+      } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
         console.log('')
       } else {
         console.log(output.data)
       }
-      if (output.data.hasOwnProperty('prompt')) {
+      if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
         globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
       } else {
         globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
@@ -562,5 +546,4 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
       }
     }
   }
-  return;
 }
