@@ -123,7 +123,29 @@ export function register(jwk, services) {
     })
   }
 
-  const alreadyRegistered = results => Resolved(results[0].node.id)
+  const alreadyRegistered = async (results) => {
+    if (results.length == 1) {
+      return Promise.resolve(results[0].node.id)
+    }
+
+    const processes = results.map((r, i) => {
+      const version = r.node.tags.find(t => t.name == "aos-Version")?.value
+      return {
+        title: `${i + 1} - ${version} - ${r.node.id}`,
+        value: r.node.id
+      }
+    })
+    return prompts({
+      type: 'select',
+      name: 'process',
+      message: 'Please select a process',
+      choices: processes,
+      instructions: false
+    })
+      .then(r => r.process)
+      .catch(() => Promise.reject({ ok: false, error: 'Error selecting process' }))
+  }
+
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
 
@@ -150,7 +172,7 @@ export function register(jwk, services) {
         if (!ctx.ok) return Rejected(ctx)
         return findModule(ctx).chain(createProcess)
       },
-      alreadyRegistered
+      fromPromise(alreadyRegistered)
     )
     
 }
@@ -186,7 +208,7 @@ export function register(jwk, services) {
 function queryForAOS(name) {
   return `query ($owners: [String!]!) {
     transactions(
-      first: 1,
+      first: 10,
       owners: $owners,
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
@@ -197,6 +219,10 @@ function queryForAOS(name) {
       edges {
         node {
           id
+          tags {
+            name
+            value
+          }
         }
       }
     }
