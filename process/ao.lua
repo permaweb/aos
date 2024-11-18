@@ -34,7 +34,7 @@ local ao = {
         {Output = {}, Messages = {}, Spawns = {}, Assignments = {}},
     nonExtractableTags = {
         'Data-Protocol', 'Variant', 'From-Process', 'From-Module', 'Type',
-        'From', 'Owner', 'Anchor', 'Target', 'Data', 'Tags'
+        'From', 'Owner', 'Anchor', 'Target', 'Data', 'Tags', 'Read-Only'
     },
     nonForwardableTags = {
         'Data-Protocol', 'Variant', 'From-Process', 'From-Module', 'Type',
