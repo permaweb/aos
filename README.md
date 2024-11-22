@@ -5,7 +5,7 @@
 </picture>
 
 
-Version: 2.0.1
+Version: 2.0.2
 Module: `Do_Uc2Sju_ffp6Ev0AnLVdPtot15rvMjP-a9VVaA5fM`
 
 Sqlite-Module: `GuzQrkf50rBUqz3uUgjOIFOL1XmW9nSNysTBC-wyiWM`
