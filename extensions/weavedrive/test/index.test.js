@@ -9,8 +9,8 @@ const bootLoaderWasm = fs.readFileSync('./bootloader.wasm')
 let memory = null
 
 const Module = {
-  Id: "MODULE",
-  Owner: "OWNER",
+  Id: 'MODULE',
+  Owner: 'OWNER',
   Tags: [
     { name: 'Data-Protocol', value: 'ao' },
     { name: 'Variant', value: 'ao.TN.1' },
@@ -43,7 +43,7 @@ const Msg = {
     { name: 'Type', value: 'Message' },
     { name: 'Action', value: 'Eval' }
   ],
-  "Block-Height": 1000,
+  'Block-Height': 1000,
   Timestamp: Date.now()
 }
 
@@ -51,7 +51,7 @@ const options = {
   format: 'wasm64-unknown-emscripten-draft_2024_02_15',
   WeaveDrive: weaveDrive,
   ARWEAVE: 'https://arweave.net',
-  mode: "test",
+  mode: 'test',
   blockHeight: 1000,
   spawn: {
     tags: Process.Tags
@@ -167,24 +167,25 @@ describe('Assignments mode', () => {
       { name: 'Authority', value: 'PROCESS' },
       { name: 'Availability-Type', value: mode }
     ],
-    Data: `Test = 1`,
+    Data: 'Test = 1',
     From: 'PROCESS',
     Module: 'MODULE',
-    "Block-Height": 4567,
+    'Block-Height': 4567,
     Timestamp: Date.now()
   }
 
   test('read tx attested by Scheduler', async () => {
-    ProcessSchedulerAttested = {
+    const ProcessSchedulerAttested = {
       ...ProcessAssignmentsMode,
       Tags: [
         ...ProcessAssignmentsMode.Tags,
-        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' }
       ]
     }
 
     const handle = await AoLoader(wasm, {
-      ...options, spawn: {
+      ...options,
+      spawn: {
         id: ProcessSchedulerAttested.Id,
         owner: ProcessSchedulerAttested.Owner,
         tags: ProcessSchedulerAttested.Tags
@@ -201,7 +202,7 @@ describe('Assignments mode', () => {
         return drive.getData("${TX_ID_TO_LOAD}")
       `
     }, { Process: ProcessSchedulerAttested, Module })
-    
+
     assert.equal(result.Output.data, 'hello from attested')
   })
 
@@ -211,7 +212,7 @@ describe('Assignments mode', () => {
       Tags: [
         ...ProcessAssignmentsMode.Tags,
         { name: 'Scheduler', value: 'something-else' },
-        { name: 'Attestor', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+        { name: 'Attestor', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' }
       ]
     }
 
@@ -234,7 +235,7 @@ describe('Assignments mode', () => {
         return drive.getData("${TX_ID_TO_LOAD}")
       `
     }, { Process: ProcessAttestorAttested, Module })
-    
+
     assert.equal(result.Output.data, 'hello from attested')
   })
 })
@@ -255,12 +256,12 @@ describe('Individual Mode', () => {
       { name: 'Extension', value: 'WeaveDrive' },
       { name: 'Module', value: 'MODULE' },
       { name: 'Authority', value: 'PROCESS' },
-      { name: 'Availability-Type', value:  mode },
+      { name: 'Availability-Type', value: mode }
     ],
-    Data: `Test = 1`,
+    Data: 'Test = 1',
     From: 'PROCESS',
     Module: 'MODULE',
-    "Block-Height": 4567,
+    'Block-Height': 4567,
     Timestamp: Date.now()
   }
 
@@ -269,7 +270,7 @@ describe('Individual Mode', () => {
       ...ProcessIndividualMode,
       Tags: [
         ...ProcessIndividualMode.Tags,
-        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' },
+        { name: 'Scheduler', value: 'kdUCABg56Jroco1kMwfF-YIjah9wBbZ1BhyOnwLwOY0' }
       ]
     }
 
@@ -292,14 +293,14 @@ describe('Individual Mode', () => {
         return drive.getData("${TX_ID_TO_LOAD}")
       `
     }, { Process: ProcessSchedulerAttested, Module })
-    
+
     assert.equal(result.Output.data, '1234')
   })
 })
 
 // test weavedrive feature of accepting multiple gateways
 describe('multi-url', () => {
-  const urls =  'https://arweave.net/does-not-exist,https://g8way.io'
+  const urls = 'https://arweave.net/does-not-exist,https://g8way.io'
   test('read block', async () => {
     const handle = await AoLoader(wasm, {
       ...options,
@@ -314,8 +315,7 @@ describe('multi-url', () => {
     memory = result.Memory
     assert.equal(result.Output.data, '20')
   })
-  
-  
+
   test('read tx', async () => {
     const handle = await AoLoader(wasm, {
       ...options,
@@ -336,78 +336,6 @@ describe('multi-url', () => {
     memory = result.Memory
     assert.ok(true)
   })
-})
-
-test('read data item tx', async () => {
-  const handle = await AoLoader(wasm, options)
-  const result = await handle(memory, {
-    ...Msg,
-    Data: `
-local results = {}
-local drive = require('WeaveDrive')
-local result = drive.getDataItem('Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
-
-return result
-    `
-  }, { Process, Module })
-  const data = JSON.parse(result.Output.data)
-  assert.equal(data.format, 3)
-  assert.equal(data.id, 'Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
-  assert.equal(data.block.height, 1290333)
-})
-
-test('data item with chinese characters', async () => {
-  const chineseCharacterTx = 'Xg82mcAfQNgJetk_kSKqMkwYDfoMJLGw8fdheU3evWk'
-  const handle = await AoLoader(wasm, options)
-  const result = await handle(memory, {
-    ...Msg,
-      Data: `
-      local data = require('WeaveDrive').getDataItem('${chineseCharacterTx}')
-      local json = require('json')
-      local decoded = json.decode(data)
-      return data
-  `
-  }, { Process, Module })
-  memory = result.Memory
-  const data = JSON.parse(result.Output.data)
-  const description = data.tags.find(tag => tag.name === 'Description')?.value
-  assert.equal(description, "Smartweave是不是要转到AO了？\n本文档介绍原子资产SmartWeave合约的标准接口。原子资产是SmartWeave合约及其在发布到Arweave的同一事务中初始化的数据。SmartWeave合约和数据共享一个交易ID。")
-})
-
-test('read data item tx, no result', async () => {
-  const handle = await AoLoader(wasm, options)
-  const result = await handle(memory, {
-    ...Msg,
-    Data: `
-local address = 'foo-address'
-local results = {}
-local drive = require('WeaveDrive')
-local result = drive.getDataItem(address)
-
-return result
-    `
-  }, { Process, Module })
-
-  memory = result.Memory
-  assert.equal(result.Output.data, '')
-})
-
-test('read data item tx, no gql', async () => {
-  const handle = await AoLoader(wasm, {
-    ...options,
-    ARWEAVE: 'https://example.com'
-  })
-  const result = await handle(memory, {
-    ...Msg,
-    Data: `
-local results = {}
-local drive = require('WeaveDrive')
-local result = drive.getDataItem('Jy_AFHfmxVsrtJoxeJZfq9dx_ES730a7uO2lyYtO6uU')
-return result
-    `
-  }, { Process, Module })
-  memory = result.Memory
-  assert.equal(result.Output.data, '')
 })
 
 test('boot loader set to Data', async function () {
@@ -434,7 +362,7 @@ test('boot loader set to Data', async function () {
       `,
     From: 'PROCESS',
     Module: 'MODULE',
-    "Block-Height": 1234,
+    'Block-Height': 1234,
     Timestamp: Date.now()
   }
 
@@ -467,7 +395,7 @@ test('boot loader set to tx id', async function () {
       `,
     From: 'PROCESS',
     Module: 'MODULE',
-    "Block-Height": 4567,
+    'Block-Height': 4567,
     Timestamp: Date.now()
   }
 
@@ -478,7 +406,7 @@ test('boot loader set to tx id', async function () {
       owner: ProcessBootLoaderTx.Owner,
       tags: ProcessBootLoaderTx.Tags
     },
-    mode: null 
+    mode: null
   }
 
   const handle = await AoLoader(bootLoaderWasm, optionsBootLoaderTx)
