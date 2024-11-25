@@ -26,7 +26,7 @@ function drive.getTx(txId)
 end
 
 function drive.getData(txId)
-	local file = io.open("/data/" .. txId)
+	local file = io.open("tx2/" .. txId)
 	if not file then
 		return nil, "File not found!"
 	end
