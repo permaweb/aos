@@ -391,9 +391,16 @@ function handlers.evaluate(msg, env)
         if not status then
           if not o.errorHandler then error(err)
           else
+            -- allow error handler to override the default
+            -- handler behavior (break/continue)
             local errorHandlerRes = o.errorHandler(msg, env, err)
-            if errorHandlerRes == "break" or errorHandlerRes == -1 or (errorHandlerRes ~= nil and not errorHandlerRes) then
-              match = -1
+
+            if errorHandlerRes ~= nil then
+              if type(errorHandlerRes) ~= "number" then
+                match = errorHandlerRes == "break" and -1 or 1
+              elseif errorHandlerRes == 1 or errorHandlerRes == -1 then
+                match = errorHandlerRes
+              end
             end
           end
         end
