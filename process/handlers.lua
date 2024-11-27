@@ -258,29 +258,14 @@ end
 ---    * of handlers will continue to the next matching handler, if there is any.
 ---    */
 ---   errorHandler?: function;
----   /** 
----    * Optional handler timeout. This allows to define a timeout value of milliseconds or
----    * blocks that can be useful when using coroutines in a handler (such as 
----    * "ao.send().receive()", "ao.spawn().receive()" or "Handlers.receive()"). The timeout
----    * ensures that the handler instance becomes outdated after the defined value (in the 
----    * units of the defined type) and doesn't continue running when for e.g. the response 
----    * arrives for "ao.send().receive()", etc. The handler will still run normally for new
----    * messages (matches).
+---   /**
+---    * Optional deadline, after which the handler expires and runs no longer.
+---    * Can be defined with milliseconds or blocks.
 ---    */
 ---   timeout?: {
 ---     /** Timeout units */
 ---     type: "milliseconds" | "blocks";
 ---     /** Timeout value, in the units of the defined type */
----     value: integer;
----   };
----   /**
----    * Optional deadline, after which the handler expires and runs no longer.
----    * Can be defined with milliseconds or blocks.
----    */
----   deadline?: {
----     /** Deadline units */
----     type: "milliseconds" | "blocks";
----     /** Deadline value, in the units of the defined type */
 ---     value: integer;
 ---   };
 --- };
@@ -332,18 +317,6 @@ function handlers.advanced(config)
   )
 
   if config.timeout then
-    assert(type(config.timeout) == 'table', 'Invalid timeout: must be a table')
-    assert(
-      config.timeout.type == 'milliseconds' or config.timeout.type == 'blocks',
-      'Invalid timeout.type: must be of ("milliseconds" or "blocks")'
-    )
-    assert(
-      type(config.timeout.value) == 'number',
-      'Invalid timeout.value: must be an integer'
-    )
-  end
-
-  if config.deadline then
     assert(type(config.timeout) == 'table', 'Invalid timeout: must be a table')
     assert(
       config.timeout.type == 'milliseconds' or config.timeout.type == 'blocks',
@@ -422,6 +395,15 @@ function handlers.evaluate(msg, env)
         error("Pattern result is not valid, it MUST be string, number, or boolean")
       end
 
+      -- ensure the handler hasn't timed out yet
+      if o.timeout then
+        -- remove handler if it timed out
+        if (o.timeout.type == 'milliseconds' and o.timeout.value < msg.Timestamp) or (o.timeout.type == 'blocks' and o.timeout.value < msg["Block-Height"]) then
+          handlers.remove(o.name)
+          match = 0
+        end
+      end
+
       -- handle boolean returns
       if type(match) == "boolean" and match == true then
         match = -1
@@ -446,7 +428,7 @@ function handlers.evaluate(msg, env)
         if o.runType ~= nil then
           match = o.runType == 'continue' and 1 or -1
         end
-        
+
         if match < 0 then
           handled = true
         end
