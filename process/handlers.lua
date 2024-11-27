@@ -414,14 +414,14 @@ function handlers.evaluate(msg, env)
   local handled = false
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
-  
+
   for _, o in ipairs(handlers.list) do
     if o.name ~= "_default" then
       local match = utils.matchesSpec(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
         error("Pattern result is not valid, it MUST be string, number, or boolean")
       end
-      
+
       -- handle boolean returns
       if type(match) == "boolean" and match == true then
         match = -1
@@ -441,6 +441,12 @@ function handlers.evaluate(msg, env)
       end
 
       if match ~= 0 then
+        -- the pattern matched, now we overwrite it with the
+        -- handler's "runType" configuration, if there's any
+        if o.runType ~= nil then
+          match = o.runType == 'continue' and 1 or -1
+        end
+        
         if match < 0 then
           handled = true
         end
