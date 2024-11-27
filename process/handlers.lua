@@ -97,9 +97,7 @@ function handlers.receive(pattern)
   handlers.once(pattern, function (msg)
       -- If the result of the resumed coroutine is an error then we should bubble it up to the process
       local _, success, errmsg = coroutine.resume(self, msg)
-      if not success then
-        error(errmsg)
-      end
+      assert(success, errmsg)
   end)
   return coroutine.yield(pattern)
 end
