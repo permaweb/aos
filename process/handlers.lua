@@ -14,6 +14,7 @@
 -- @field add The add function
 -- @field append The append function
 -- @field prepend The prepend function
+-- @field advanced Advanced handler function
 -- @field remove The remove function
 -- @field evaluate The evaluate function
 local handlers = { _version = "0.0.5" }
@@ -296,6 +297,63 @@ function handlers.after(handleName)
       
     end
   }
+
+end
+
+--- Advanced handler config
+--- interface HandlerConfig {
+---   /** Handler name */
+---   name: string;
+---   /** The position where the handler will be added */
+---   position?: {
+---     /** Position type */
+---     type: "append" | "prepend" | "before" | "after";
+---     /** Position target, used for "before" and "after" */
+---     target?: string;
+---   };
+---   /** Pattern that determinates whether the handler runs or not */
+---   pattern?: table | function | string;
+---   /** Handler function or a resolver to add */
+---   handle: function | { [matchSpec: table | function]: function };
+---   /** 
+---    * If the pattern matches and this field is defined, it will overwrite whatever
+---    * the pattern match returns (break/continue).
+---    * - "break": Once the handler runs, no other handlers will be evaluated/executed
+---    * - "continue": Once the handler runs, handler evaluation doesn't stop and moves
+---    *               on the next matching handler, if there is any
+---    */
+---   runType?: "break" | "continue";
+---   /** Maximum times this handler can run */
+---   maxRuns?: integer;
+---   /** 
+---    * Optional error handler for the handler. Having this makes the process run the handler
+---    * simularly to when a code block/function is wrapped in a try/catch block. The handler
+---    * runs no matter if it errors or not. If it errors, the error handler is executed
+---    * immediately after the error is thrown. If the pattern match for this handler 
+---    * returned "continue" or "runType" is "continue", then the evalutation/execution of
+---    * handlers will continue to the next matching handler, if there is any.
+---    */
+---   errorHandler?: function;
+---   /** 
+---    * Optional handler timeout. This allows to define a timeout value of milliseconds or
+---    * blocks that can be useful when using coroutines in a handler (such as 
+---    * "ao.send().receive()", "ao.spawn().receive()" or "Handlers.receive()"). The timeout
+---    * ensures that the handler becomes outdated after the defined value (in the units of
+---    * the defined type) and doesn't continue running when for e.g. the response arrives
+---    * for "ao.send().receive()", etc.
+---    */
+---   timeout?: {
+---     /** Timeout units */
+---     type: "milliseconds" | "blocks";
+---     /** Timeout value, in the units of the defined type */
+---     value: integer;
+---   };
+--- };
+
+--- Allows creating and adding a handler with advanced options using a simple configuration table
+-- @function advanced
+-- @tparam {table} config The new handler's configuration
+function handlers.advanced(config)
 
 end
 
