@@ -390,7 +390,12 @@ function handlers.evaluate(msg, env)
         local status, err = pcall(o.handle, msg, env)
         if not status then
           if not o.errorHandler then error(err)
-          else pcall(o.errorHandler, msg, env, err) end
+          else
+            local errorHandlerRes = o.errorHandler(msg, env, err)
+            if errorHandlerRes == "break" or errorHandlerRes == -1 or (errorHandlerRes ~= nil and not errorHandlerRes) then
+              match = -1
+            end
+          end
         end
         -- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
         if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
