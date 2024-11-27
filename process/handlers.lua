@@ -48,24 +48,6 @@ local function findIndexByProp(array, prop, value)
   return nil
 end
 
---- Given a name, a pattern, and a handle, asserts that the arguments are valid.
--- @lfunction assertAddArgs
--- @tparam {string} name The name of the handler
--- @tparam {table | function | string} pattern The pattern to check for in the message
--- @tparam {function} handle The function to call if the pattern matches
--- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
-local function assertAddArgs(name, pattern, handle, maxRuns)
-  assert(
-    type(name) == 'string' and
-    (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string'),
-    'Invalid arguments given. Expected: \n' ..
-    '\tname : string, ' ..
-    '\tpattern : Action : string | MsgMatch : table,\n' ..
-    '\t\tfunction(msg: Message) : {-1 = break, 0 = skip, 1 = continue},\n' ..
-    '\thandle(msg : Message) : void) | Resolver,\n' ..
-    '\tMaxRuns? : number | "inf" | nil')
-end
-
 --- Given a resolver specification, returns a resolver function.
 -- @function generateResolver
 -- @tparam {table | function} resolveSpec The resolver specification
@@ -95,9 +77,9 @@ end
 function handlers.receive(pattern)
   local self = coroutine.running()
   handlers.once(pattern, function (msg)
-      -- If the result of the resumed coroutine is an error then we should bubble it up to the process
-      local _, success, errmsg = coroutine.resume(self, msg)
-      assert(success, errmsg)
+    -- If the result of the resumed coroutine is an error then we should bubble it up to the process
+    local _, success, errmsg = coroutine.resume(self, msg)
+    assert(success, errmsg)
   end)
   return coroutine.yield(pattern)
 end
@@ -131,41 +113,27 @@ end
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
 function handlers.add(...)
-  local name, pattern, handle, maxRuns
+  -- select arguments based on the amount of arguments provided
   local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
-  end
-  assertAddArgs(name, pattern, handle, maxRuns)
-  
-  handle = handlers.generateResolver(handle)
-  
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else
-    -- not found then add    
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
+  local name = select(1, ...)
+  local pattern = select(1, ...)
+  local handle = select(2, ...)
 
+  local maxRuns
+
+  if args >= 3 then
+    pattern = select(2, ...)
+    handle = select(3, ...)
   end
-  return #handlers.list
+  if args >= 4 then maxRuns = select(4, ...) end
+
+  -- configure handler
+  return handlers.advanced({
+    name = name,
+    pattern = pattern,
+    handle = handle,
+    maxRuns = maxRuns
+  })
 end
 
 --- Appends a new handler to the end of the handlers list.
@@ -174,42 +142,7 @@ end
 -- @tparam {table | function | string} pattern The pattern to check for in the message
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
-function handlers.append(...)
-  local name, pattern, handle, maxRuns
-  local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
-  end
-  assertAddArgs(name, pattern, handle, maxRuns)
-  
-  handle = handlers.generateResolver(handle)
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else
-    
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-  end
-
-  
-end
+handlers.append = handlers.add
 
 --- Prepends a new handler to the beginning of the handlers list.
 -- @function prepend
@@ -218,40 +151,28 @@ end
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
 function handlers.prepend(...)
-  local name, pattern, handle, maxRuns
+  -- select arguments based on the amount of arguments provided
   local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
+  local name = select(1, ...)
+  local pattern = select(1, ...)
+  local handle = select(2, ...)
+
+  local maxRuns
+
+  if args >= 3 then
     pattern = select(2, ...)
     handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
   end
-  assertAddArgs(name, pattern, handle, maxRuns)
+  if args >= 4 then maxRuns = select(4, ...) end
 
-  handle = handlers.generateResolver(handle)
-
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else  
-    table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-  end
-
-  
+  -- configure handler
+  return handlers.advanced({
+    name = name,
+    pattern = pattern,
+    handle = handle,
+    maxRuns = maxRuns,
+    position = 'prepend'
+  })
 end
 
 --- Returns an object that allows adding a new handler before a specified handler.
@@ -261,17 +182,19 @@ end
 function handlers.before(handleName)
   assert(type(handleName) == 'string', 'Handler name MUST be a string')
 
-  local idx = findIndexByProp(handlers.list, "name", handleName)
   return {
-    add = function (name, pattern, handle, maxRuns) 
-      assertAddArgs(name, pattern, handle, maxRuns)
-      
-      handle = handlers.generateResolver(handle)
-      
-      if idx then
-        table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-      end
-      
+    add = function (name, pattern, handle, maxRuns)
+      -- configure handler
+      return handlers.advanced({
+        name = name,
+        pattern = pattern,
+        handle = handle,
+        maxRuns = maxRuns,
+        position = {
+          type = 'before',
+          target = handleName
+        }
+      })
     end
   }
 end
@@ -282,17 +205,20 @@ end
 -- @treturn {table} An object with an `add` method to insert the new handler
 function handlers.after(handleName)
   assert(type(handleName) == 'string', 'Handler name MUST be a string')
-  local idx = findIndexByProp(handlers.list, "name", handleName)
+
   return {
     add = function (name, pattern, handle, maxRuns)
-      assertAddArgs(name, pattern, handle, maxRuns)
-      
-      handle = handlers.generateResolver(handle)
-      
-      if idx then
-        table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-      end
-      
+      -- configure handler
+      return handlers.advanced({
+        name = name,
+        pattern = pattern,
+        handle = handle,
+        maxRuns = maxRuns,
+        position = {
+          type = 'after',
+          target = handleName
+        }
+      })
     end
   }
 
@@ -303,7 +229,7 @@ end
 ---   /** Handler name */
 ---   name: string;
 ---   /** The position where the handler will be added */
----   position?: {
+---   position?: "append" | "prepend" | {
 ---     /** Position type */
 ---     type: "append" | "prepend" | "before" | "after";
 ---     /** Position target, used for "before" and "after" */
@@ -371,15 +297,21 @@ function handlers.advanced(config)
   )
 
   if config.position ~= nil then
-    assert(type(config.position) == 'table', 'Invalid position: must be a table')
     assert(
-      config.position.type == 'append' or config.position.type == 'prepend' or config.position.type == 'before' or config.position.type == 'after',
-      'Invalid position.type: must be one of ("append", "prepend", "before", "after")'
+      type(config.position) == 'table' or config.position == 'append' or config.position == 'prepend',
+      'Invalid position: must be a table or "append"/"prepend"'
     )
-    assert(
-      config.position.target == nil or type(config.position.target) == 'string',
-      'Invalid position.target: must be a string (handler name)'
-    )
+
+    if type(config.position) == 'table' then
+      assert(
+        config.position.type == 'append' or config.position.type == 'prepend' or config.position.type == 'before' or config.position.type == 'after',
+        'Invalid position.type: must be one of ("append", "prepend", "before", "after")'
+      )
+      assert(
+        config.position.target == nil or type(config.position.target) == 'string',
+        'Invalid position.target: must be a string (handler name)'
+      )
+    end
   end
 
   assert(
@@ -427,7 +359,7 @@ function handlers.advanced(config)
   config.handle = handlers.generateResolver(config.handle)
 
   -- if the handler already exists, find it and update
-  local idx = findIndexByProp(handlers.list, "name", config.name)
+  local idx = findIndexByProp(handlers.list, 'name', config.name)
 
   if idx ~= nil and idx > 0 then
     -- found a handler to update
@@ -438,12 +370,15 @@ function handlers.advanced(config)
     -- calculate the position the handler should be added at
     -- (by default it's the end of the list)
     idx = #handlers.list + 1
-    if config.position then
-      if config.position.type == "prepend" then idx = 1
-      elseif config.position.type == "before" then
-        idx = findIndexByProp(handlers.list, "name", config.position.target)
-      elseif config.position.type == "after" then
-        idx = findIndexByProp(handlers.list, "name", config.position.target) + 1
+    if config.position and config.position ~= 'append' then
+      if config.position == 'prepend' or config.position.type == 'prepend' then
+        idx = 1
+      elseif type(config.position) == 'table' and config.position.type ~= 'append' then
+        if config.position.type == 'before' then
+          idx = findIndexByProp(handlers.list, 'name', config.position.target)
+        elseif config.position.type == 'after' then
+          idx = findIndexByProp(handlers.list, 'name', config.position.target) + 1
+        end
       end
     end
 
