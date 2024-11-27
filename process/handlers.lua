@@ -348,13 +348,83 @@ end
 ---     /** Timeout value, in the units of the defined type */
 ---     value: integer;
 ---   };
+---   /**
+---    * Optional deadline, after which the handler expires and runs no longer.
+---    * Can be defined with milliseconds or blocks.
+---    */
+---   deadline?: {
+---     /** Deadline units */
+---     type: "milliseconds" | "blocks";
+---     /** Deadline value, in the units of the defined type */
+---     value: integer;
+---   };
 --- };
 
 --- Allows creating and adding a handler with advanced options using a simple configuration table
 -- @function advanced
 -- @tparam {table} config The new handler's configuration
 function handlers.advanced(config)
+  -- validate handler config
+  assert(type(config.name) == 'string', 'Invalid handler name: must be a string')
+  assert(
+    type(config.pattern) == 'function' or type(config.pattern) == 'table' or type(config.pattern) == 'string',
+    'Invalid pattern: must be a function, a table or a string'
+  )
 
+  if config.position ~= nil then
+    assert(type(config.position) == 'table', 'Invalid position: must be a table')
+    assert(
+      config.position.type == 'append' or config.position.type == 'prepend' or config.position.type == 'before' or config.position.type == 'after',
+      'Invalid position.type: must be one of ("append", "prepend", "before", "after")'
+    )
+    assert(
+      config.position.target == nil or type(config.position.target) == 'string',
+      'Invalid position.target: must be a string (handler name)'
+    )
+  end
+
+  assert(
+    type(config.handle) == 'function' or type(config.handle) == 'table',
+    'Invalid handle: must be a function or a table of resolvers'
+  )
+  assert(
+    config.runType == nil or config.runType == 'continue' or config.runType == 'break',
+    'Invalid runType: must be "continue" or "break'
+  )
+  assert(
+    config.maxRuns == nil or type(config.maxRuns) == 'number',
+    "Invalid maxRuns: must be an integer"
+  )
+  assert(
+    config.errorHandler == nil or type(config.errorHandler) == 'function',
+    "Invalid error handler: must be a function"
+  )
+
+  if config.timeout then
+    assert(type(config.timeout) == 'table', 'Invalid timeout: must be a table')
+    assert(
+      config.timeout.type == 'milliseconds' or config.timeout.type == 'blocks',
+      'Invalid timeout.type: must be of ("milliseconds" or "blocks")'
+    )
+    assert(
+      type(config.timeout.value) == 'number',
+      'Invalid timeout.value: must be an integer'
+    )
+  end
+
+  if config.deadline then
+    assert(type(config.timeout) == 'table', 'Invalid timeout: must be a table')
+    assert(
+      config.timeout.type == 'milliseconds' or config.timeout.type == 'blocks',
+      'Invalid timeout.type: must be of ("milliseconds" or "blocks")'
+    )
+    assert(
+      type(config.timeout.value) == 'number',
+      'Invalid timeout.value: must be an integer'
+    )
+  end
+
+  
 end
 
 --- Removes a handler from the handlers list by name.
