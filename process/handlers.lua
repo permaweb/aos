@@ -254,8 +254,8 @@ end
 ---    * simularly to when a code block/function is wrapped in a try/catch block. The handler
 ---    * runs no matter if it errors or not. If it errors, the error handler is executed
 ---    * immediately after the error is thrown. If the pattern match for this handler 
----    * returned "continue" or "runType" is "continue", then the evalutation/execution of
----    * handlers will continue to the next matching handler, if there is any.
+---    * returned "continue" (or 1) or "runType" is "continue", then the evalutation/execution
+---    * of handlers will continue to the next matching handler, if there is any.
 ---    */
 ---   errorHandler?: function;
 ---   /** 
@@ -453,7 +453,8 @@ function handlers.evaluate(msg, env)
         -- each handle function can accept, the msg, env
         local status, err = pcall(o.handle, msg, env)
         if not status then
-          error(err)
+          if not o.errorHandler then error(err)
+          else pcall(o.errorHandler, msg, env, err) end
         end
         -- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
         if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
