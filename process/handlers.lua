@@ -338,9 +338,10 @@ end
 ---    * Optional handler timeout. This allows to define a timeout value of milliseconds or
 ---    * blocks that can be useful when using coroutines in a handler (such as 
 ---    * "ao.send().receive()", "ao.spawn().receive()" or "Handlers.receive()"). The timeout
----    * ensures that the handler becomes outdated after the defined value (in the units of
----    * the defined type) and doesn't continue running when for e.g. the response arrives
----    * for "ao.send().receive()", etc.
+---    * ensures that the handler instance becomes outdated after the defined value (in the 
+---    * units of the defined type) and doesn't continue running when for e.g. the response 
+---    * arrives for "ao.send().receive()", etc. The handler will still run normally for new
+---    * messages (matches).
 ---    */
 ---   timeout?: {
 ---     /** Timeout units */
@@ -424,7 +425,35 @@ function handlers.advanced(config)
     )
   end
 
-  
+  -- generate resolver for the handler
+  config.handle = handlers.generateResolver(config.handle)
+
+  -- if the handler already exists, find it and update
+  local idx = findIndexByProp(handlers.list, "name", config.name)
+
+  if idx ~= nil and idx > 0 then
+    -- found a handler to update
+    handlers[idx] = config
+  else
+    -- a handler with this name doesn't exist yet, so we add it
+    --
+    -- calculate the position the handler should be added at
+    -- (by default it's the end of the list)
+    idx = #handlers.list + 1
+    if config.position then
+      if config.position.type == "prepend" then idx = 1
+      elseif config.position.type == "before" then
+        idx = findIndexByProp(handlers.list, "name", config.position.target)
+      elseif config.position.type == "after" then
+        idx = findIndexByProp(handlers.list, "name", config.position.target) + 1
+      end
+    end
+
+    -- add handler
+    table.insert(handlers.list, idx, config)
+  end
+
+  return #handlers.list
 end
 
 --- Removes a handler from the handlers list by name.
@@ -434,14 +463,12 @@ function handlers.remove(name)
   assert(type(name) == 'string', 'name MUST be string')
   if #handlers.list == 1 and handlers.list[1].name == name then
     handlers.list = {}
-    
   end
 
   local idx = findIndexByProp(handlers.list, "name", name)
   if idx ~= nil and idx > 0 then
     table.remove(handlers.list, idx)
   end
-  
 end
 
 --- Evaluates each handler against a given message and environment. Handlers are called in the order they appear in the handlers list.
