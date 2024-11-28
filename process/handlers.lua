@@ -14,7 +14,8 @@
 -- @field add The add function
 -- @field append The append function
 -- @field prepend The prepend function
--- @field advanced Advanced handler function
+-- @field setActive The handler activation function
+-- @field advanced The advanced handler function
 -- @field remove The remove function
 -- @field evaluate The evaluate function
 local handlers = { _version = "0.0.5" }
@@ -224,6 +225,23 @@ function handlers.after(handleName)
 
 end
 
+--- Allows activating/deactivating a handler
+-- @function setActive
+-- @tparam {string} name The target handler's name
+-- @tparam {boolean} status The handlers active status
+function handlers.setActive(name, status)
+  assert(type(status) == 'boolean', 'Invalid status: must be a boolean')
+
+  -- find handler
+  local idx = findIndexByProp(handlers.list, 'name', name)
+
+  -- not found
+  if idx == nil or idx <= 0 then return end
+
+  -- reverse provided status
+  handlers.list[idx].inactive = not status
+end
+
 --- Allows creating and adding a handler with advanced options using a simple configuration table
 -- @function advanced
 -- @tparam {table} config The new handler's configuration
@@ -268,6 +286,10 @@ function handlers.advanced(config)
   assert(
     config.errorHandler == nil or type(config.errorHandler) == 'function',
     "Invalid error handler: must be a function"
+  )
+  assert(
+    config.inactive == nil or type(config.inactive) == 'boolean',
+    'Invalid inactive: must be a boolean'
   )
 
   if config.timeout then
@@ -343,7 +365,7 @@ function handlers.evaluate(msg, env)
   assert(type(env) == 'table', 'env is not valid')
 
   for _, o in ipairs(handlers.list) do
-    if o.name ~= "_default" then
+    if o.name ~= "_default" and not o.inactive then
       local match = utils.matchesSpec(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
         error("Pattern result is not valid, it MUST be string, number, or boolean")
