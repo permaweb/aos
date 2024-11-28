@@ -323,10 +323,14 @@ function handlers.advanced(config)
       if config.position == 'prepend' or config.position.type == 'prepend' then
         idx = 1
       elseif type(config.position) == 'table' and config.position.type ~= 'append' then
-        if config.position.type == 'before' then
-          idx = findIndexByProp(handlers.list, 'name', config.position.target)
-        elseif config.position.type == 'after' then
-          idx = findIndexByProp(handlers.list, 'name', config.position.target) + 1
+        idx = findIndexByProp(handlers.list, 'name', config.position.target)
+
+        if config.position.type == 'after' and idx and idx > 0 then
+          idx = idx + 1
+        end
+
+        if not idx or idx <= 0 then
+          return #handlers.list
         end
       end
     end
