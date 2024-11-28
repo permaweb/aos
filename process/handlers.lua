@@ -60,11 +60,11 @@ function handlers.generateResolver(resolveSpec)
     if type(resolveSpec) == "function" then
       return resolveSpec(msg)
     else
-        for matchSpec, func in pairs(resolveSpec) do
-            if utils.matchesSpec(msg, matchSpec) then
-                return func(msg)
-            end
+      for matchSpec, func in pairs(resolveSpec) do
+        if utils.matchesSpec(msg, matchSpec) then
+          return func(msg)
         end
+      end
     end
   end
 end
