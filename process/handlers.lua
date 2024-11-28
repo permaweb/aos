@@ -276,8 +276,8 @@ function handlers.advanced(config)
     'Invalid handle: must be a function or a table of resolvers'
   )
   assert(
-    config.runType == nil or config.runType == 'continue' or config.runType == 'break',
-    'Invalid runType: must be "continue" or "break'
+    config.runType == nil or config.runType == 'continue' or config.runType == 'break' or config.runType == 1 or config.runType == -1,
+    'Invalid runType: must be "continue"/1 or "break"/-1'
   )
   assert(
     config.maxRuns == nil or type(config.maxRuns) == 'number',
@@ -406,7 +406,11 @@ function handlers.evaluate(msg, env)
         -- the pattern matched, now we overwrite it with the
         -- handler's "runType" configuration, if there's any
         if o.runType ~= nil then
-          match = o.runType == 'continue' and 1 or -1
+          if type(o.runType) == 'number' then
+            match = o.runType
+          else
+            match = o.runType == 'continue' and 1 or -1
+          end
         end
 
         if match < 0 then
