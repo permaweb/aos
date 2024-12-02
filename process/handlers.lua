@@ -288,6 +288,10 @@ function handlers.advanced(config)
     "Invalid error handler: must be a function"
   )
   assert(
+    config.onRemove == nil or type(config.onRemove) == 'function',
+    "Invalid onRemove: must be a function"
+  )
+  assert(
     config.inactive == nil or type(config.inactive) == 'boolean',
     'Invalid inactive: must be a boolean'
   )
@@ -348,11 +352,17 @@ end
 function handlers.remove(name)
   assert(type(name) == 'string', 'name MUST be string')
   if #handlers.list == 1 and handlers.list[1].name == name then
+    if handlers.list[1].onRemove ~= nil then
+      handlers.list[1].onRemove("user-remove")
+    end
     handlers.list = {}
   end
 
   local idx = findIndexByProp(handlers.list, "name", name)
   if idx ~= nil and idx > 0 then
+    if handlers.list[idx].onRemove ~= nil then
+      handlers.list[idx].onRemove("user-remove")
+    end
     table.remove(handlers.list, idx)
   end
 end
@@ -379,6 +389,7 @@ function handlers.evaluate(msg, env)
       if o.timeout then
         -- remove handler if it timed out
         if (o.timeout.type == 'milliseconds' and o.timeout.value < msg.Timestamp) or (o.timeout.type == 'blocks' and o.timeout.value < msg["Block-Height"]) then
+          if o.onRemove ~= nil then o.onRemove("timeout") end
           handlers.remove(o.name)
           match = 0
         end
@@ -438,6 +449,7 @@ function handlers.evaluate(msg, env)
         if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
           o.maxRuns = o.maxRuns - 1
           if o.maxRuns == 0 then
+            if o.onRemove ~= nil then o.onRemove("expired") end
             handlers.remove(o.name)
           end
         end
