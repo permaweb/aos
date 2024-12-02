@@ -1,8 +1,4 @@
---- The Handler Utils module is a lightweight Lua utility library designed to provide common functionalities
---- for handling and processing messages within the AOS computer system.
---- It offers a set of functions to check message attributes and send replies,
---- simplifying the development of more complex scripts and modules.
---- Returns the _utils table.
+--- The Handler Utils module is a lightweight Lua utility library designed to provide common functionalities for handling and processing messages within the AOS computer system.  It offers a set of functions to check message attributes and send replies, simplifying the development of more complex scripts and modules. Returns the _utils table.
 -- @module handlers-utils
 
 --- The _utils table
@@ -21,7 +17,7 @@ local _ = require(".utils")
 -- @function hasMatchingTag
 -- @tparam {string} name The tag name to check
 -- @tparam {string} value The value to match for in the tag
--- @treturn {function} A function that takes a message and returns whether there is a tag match (-1 if matches, 0 otherwise)
+-- @treturn {function} A function that takes a message and returns whether there is a tag match (-1 if matches, 0 o.w.)
 function _utils.hasMatchingTag(name, value)
 	assert(type(name) == "string" and type(value) == "string", "invalid arguments: (name : string, value : string)")
 
@@ -34,7 +30,7 @@ end
 -- @function hasMatchingTagOf
 -- @tparam {string} name The tag name to check
 -- @tparam {string[]} values The list of values of which one should match
--- @treturn {function} A function that takes a message and returns whether there is a tag match (-1 if matches, 0 otherwise)
+-- @treturn {function} A function that takes a message and returns whether there is a tag match (-1 if matches, 0 o.w.)
 function _utils.hasMatchingTagOf(name, values)
 	assert(type(name) == "string" and type(values) == "table", "invalid arguments: (name : string, values : string[])")
 	return function(msg)
