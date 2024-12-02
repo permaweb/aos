@@ -1,6 +1,9 @@
 --- The Handlers library provides a flexible way to manage and execute a series of handlers based on patterns. Each handler consists of a pattern function, a handle function, and a name. This library is suitable for scenarios where different actions need to be taken based on varying input criteria. Returns the handlers table.
 -- @module handlers
 
+-- timeout
+-- { timeout = string(ntime, ex 5-minutes), start = timestamp, onTimeout = 'handle' | 'remove' | function, handlerPayload? = table (payload for handle function)}
+
 --- The handlers table
 -- @table handlers
 -- @field _version The version number of the handlers module
@@ -17,20 +20,59 @@
 -- @field remove The remove function
 -- @field evaluate The evaluate function
 local handlers = { _version = "0.0.5" }
-local coroutine = require('coroutine')
-local utils = require('.utils')
+local coroutine = require("coroutine")
+local utils = require(".utils")
 
-handlers.utils = require('.handlers-utils')
+handlers.utils = require(".handlers-utils")
 -- if update we need to keep defined handlers
 if Handlers then
-  handlers.list = Handlers.list or {}
-  handlers.coroutines = Handlers.coroutines or {}
+	handlers.list = Handlers.list or {}
+	handlers.coroutines = Handlers.coroutines or {}
 else
-  handlers.list = {}
-  handlers.coroutines = {}
-
+	handlers.list = {}
+	handlers.coroutines = {}
 end
 handlers.onceNonce = 0
+
+local time_units_in_seconds = {
+	sec = 1,
+	secs = 1,
+	second = 1,
+	seconds = 1,
+	min = 60,
+	mins = 60,
+	minute = 60,
+	minutes = 60,
+	hr = 3600,
+	hrs = 3600,
+	hour = 3600,
+	hours = 3600,
+	day = 86400,
+	days = 86400,
+	week = 604800,
+	weeks = 604800,
+}
+
+--- Given a time format string, returns the number of milliseconds for the time format.
+-- @lfunction nTime
+-- @tparam {string} time_format The time format string (ex 5-minutes)
+-- @treturn {number} The number of milliseconds for the time format
+local function nTime(time_format)
+	local n, unit = time_format:match("(%d+)%-(%a+)")
+
+	if not n or not unit then
+		error("Invalid time format. Expected format is {n}-{interval unit(s)}")
+	end
+
+	n = tonumber(n)
+	unit = unit:lower()
+	local seconds = time_units_in_seconds[unit]
+
+	if not seconds then
+		error("Invalid time unit provided.")
+	end
+	return n * seconds * 1000
+end
 
 --- Given an array, a property name, and a value, returns the index of the object in the array that has the property with the value.
 -- @lfunction findIndexByProp
@@ -39,12 +81,12 @@ handlers.onceNonce = 0
 -- @tparam {any} value The value to check for in the property
 -- @treturn {number | nil} The index of the object in the array that has the property with the value, or nil if no such object is found
 local function findIndexByProp(array, prop, value)
-  for index, object in ipairs(array) do
-    if object[prop] == value then
-      return index
-    end
-  end
-  return nil
+	for index, object in ipairs(array) do
+		if object[prop] == value then
+			return index
+		end
+	end
+	return nil
 end
 
 --- Given a name, a pattern, and a handle, asserts that the arguments are valid.
@@ -53,36 +95,74 @@ end
 -- @tparam {table | function | string} pattern The pattern to check for in the message
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
-local function assertAddArgs(name, pattern, handle, maxRuns)
-  assert(
-    type(name) == 'string' and
-    (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string'),
-    'Invalid arguments given. Expected: \n' ..
-    '\tname : string, ' ..
-    '\tpattern : Action : string | MsgMatch : table,\n' ..
-    '\t\tfunction(msg: Message) : {-1 = break, 0 = skip, 1 = continue},\n' ..
-    '\thandle(msg : Message) : void) | Resolver,\n' ..
-    '\tMaxRuns? : number | "inf" | nil')
+-- @tparam {table | nil} timeout The timeout for the message
+local function assertAddArgs(name, pattern, handle, maxRuns, timeout)
+	assert(
+		type(name) == "string"
+			and (type(pattern) == "function" or type(pattern) == "table" or type(pattern) == "string")
+			and (type(handle) == "function")
+			and (type(maxRuns) == "number" or type(maxRuns) == "string" or maxRuns == nil)
+			and (
+				type(timeout) == "nil"
+				or (
+					type(timeout) == "table"
+					and type(timeout.timeout) == "string"
+					and (type(timeout.onTimeout) == "string" or type(timeout.onTimeout) == "function")
+				)
+			),
+		"Invalid arguments given. Expected: \n"
+			.. "\tname : string, "
+			.. "\tpattern : Action : string | MsgMatch : table,\n"
+			.. "\t\tfunction(msg: Message) : {-1 = break, 0 = skip, 1 = continue},\n"
+			.. "\thandle(msg : Message) : void) | Resolver,\n"
+			.. '\tMaxRuns? : number | "inf" | nil\n'
+			.. "\ttimeout? : table (timeout, onTimeout, timeoutPayload)"
+	)
 end
 
+--- Given a variable number of arguments, returns the arguments in a list (name, pattern, handle, maxRuns, timeout).
+-- @lfunction selectArgs
+-- @tparam {...any} args The arguments to select
+-- @treturn {any[]} The arguments in a list ()
+local function selectArgs(...)
+	local argsLength = select("#", ...)
+	if argsLength == 2 then
+		return select(1, ...), select(1, ...), select(2, ...), nil, nil
+	end
+	if argsLength == 3 then
+		return select(1, ...), select(2, ...), select(3, ...), nil, nil
+	end
+	if argsLength == 4 then
+		return select(1, ...), select(2, ...), select(3, ...), select(4, ...), nil
+	end
+	if argsLength == 5 then
+		local timeout = select(5, ...)
+		if type(timeout) == "table" then
+			timeout.start = timeout.start or os.time()
+			timeout.milliseconds = nTime(timeout.timeout)
+		end
+		return select(1, ...), select(2, ...), select(3, ...), select(4, ...), timeout
+	end
+	error("Invalid number of arguments given to selectArgs")
+end
 --- Given a resolver specification, returns a resolver function.
 -- @function generateResolver
 -- @tparam {table | function} resolveSpec The resolver specification
 -- @treturn {function} A resolver function
 function handlers.generateResolver(resolveSpec)
-  return function(msg)
-    -- If the resolver is a single function, call it.
-    -- Else, find the first matching pattern (by its matchSpec), and exec.
-    if type(resolveSpec) == "function" then
-      return resolveSpec(msg)
-    else
-        for matchSpec, func in pairs(resolveSpec) do
-            if utils.matchesSpec(msg, matchSpec) then
-                return func(msg)
-            end
-        end
-    end
-  end
+	return function(msg)
+		-- If the resolver is a single function, call it.
+		-- Else, find the first matching pattern (by its matchSpec), and exec.
+		if type(resolveSpec) == "function" then
+			return resolveSpec(msg)
+		else
+			for matchSpec, func in pairs(resolveSpec) do
+				if utils.matchesSpec(msg, matchSpec) then
+					return func(msg)
+				end
+			end
+		end
+	end
 end
 
 --- Given a pattern, returns the next message that matches the pattern.
@@ -91,16 +171,17 @@ end
 -- processing of one message until another is received that matches the pattern.
 -- @function receive
 -- @tparam {table | function} pattern The pattern to check for in the message
-function handlers.receive(pattern)
-  local self = coroutine.running()
-  handlers.once(pattern, function (msg)
-      -- If the result of the resumed coroutine is an error then we should bubble it up to the process
-      local _, success, errmsg = coroutine.resume(self, msg)
-      if not success then
-        error(errmsg)
-      end
-  end)
-  return coroutine.yield(pattern)
+-- @tparam {table | nil} timeout The timeout for the message
+function handlers.receive(pattern, timeout)
+	local self = coroutine.running()
+	handlers.once(pattern, function(msg)
+		-- If the result of the resumed coroutine is an error then we should bubble it up to the process
+		local _, success, errmsg = coroutine.resume(self, msg)
+		if not success then
+			error(errmsg)
+		end
+	end, timeout)
+	return coroutine.yield(pattern)
 end
 
 --- Given a name, a pattern, and a handle, adds a handler to the list.
@@ -109,20 +190,35 @@ end
 -- @function once
 -- @tparam {string} name The name of the handler
 -- @tparam {table | function | string} pattern The pattern to check for in the message
--- @tparam {function} handle The function to call if the pattern matches
+-- @tparam {functions} handle The function to call if the pattern matches
+-- @tparam {table | nil} timeout The timeout for the message
 function handlers.once(...)
-  local name, pattern, handle
-  if select("#", ...) == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-  else
-    name = "_once_" .. tostring(handlers.onceNonce)
-    handlers.onceNonce = handlers.onceNonce + 1
-    pattern = select(1, ...)
-    handle = select(2, ...)
-  end
-  handlers.prepend(name, pattern, handle, 1)
+	local name, pattern, handle, timeout
+	if select("#", ...) == 4 then
+		name = select(1, ...)
+		pattern = select(2, ...)
+		handle = select(3, ...)
+		timeout = select(4, ...)
+	elseif select("#", ...) == 3 then
+		-- If the third argument is a table, then it is a timeout. Otherwise, it is a handle fucntion.
+		if type(select(3, ...)) == "function" then
+			name = select(1, ...)
+			pattern = select(2, ...)
+			handle = select(3, ...)
+		else
+			name = "_once_" .. tostring(handlers.onceNonce)
+			handlers.onceNonce = handlers.onceNonce + 1
+			pattern = select(1, ...)
+			handle = select(2, ...)
+			timeout = select(3, ...)
+		end
+	else
+		name = "_once_" .. tostring(handlers.onceNonce)
+		handlers.onceNonce = handlers.onceNonce + 1
+		pattern = select(1, ...)
+		handle = select(2, ...)
+	end
+	handlers.prepend(name, pattern, handle, 1, timeout)
 end
 
 --- Given a name, a pattern, and a handle, adds a handler to the list.
@@ -131,42 +227,29 @@ end
 -- @tparam {table | function | string} pattern The pattern to check for in the message
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
+-- @tparam {table | nil} timeout The timeout for the message
 function handlers.add(...)
-  local name, pattern, handle, maxRuns
-  local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
-  end
-  assertAddArgs(name, pattern, handle, maxRuns)
-  
-  handle = handlers.generateResolver(handle)
-  
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else
-    -- not found then add    
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
+	local name, pattern, handle, maxRuns, timeout = selectArgs(...)
+	assertAddArgs(name, pattern, handle, maxRuns, timeout)
 
-  end
-  return #handlers.list
+	handle = handlers.generateResolver(handle)
+
+	-- update existing handler by name
+	local idx = findIndexByProp(handlers.list, "name", name)
+	if idx ~= nil and idx > 0 then
+		-- found update
+		handlers.list[idx].pattern = pattern
+		handlers.list[idx].handle = handle
+		handlers.list[idx].maxRuns = maxRuns
+		handlers.list[idx].timeout = timeout
+	else
+		-- not found then add
+		table.insert(
+			handlers.list,
+			{ pattern = pattern, handle = handle, name = name, maxRuns = maxRuns, timeout = timeout }
+		)
+	end
+	return #handlers.list
 end
 
 --- Appends a new handler to the end of the handlers list.
@@ -175,41 +258,26 @@ end
 -- @tparam {table | function | string} pattern The pattern to check for in the message
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
+-- @tparam {table | nil} timeout The timeout for the message
 function handlers.append(...)
-  local name, pattern, handle, maxRuns
-  local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
-  end
-  assertAddArgs(name, pattern, handle, maxRuns)
-  
-  handle = handlers.generateResolver(handle)
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else
-    
-    table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-  end
+	local name, pattern, handle, maxRuns, timeout = selectArgs(...)
+	assertAddArgs(name, pattern, handle, maxRuns, timeout)
 
-  
+	handle = handlers.generateResolver(handle)
+	-- update existing handler by name
+	local idx = findIndexByProp(handlers.list, "name", name)
+	if idx ~= nil and idx > 0 then
+		-- found update
+		handlers.list[idx].pattern = pattern
+		handlers.list[idx].handle = handle
+		handlers.list[idx].maxRuns = maxRuns
+		handlers.list[idx].timeout = timeout
+	else
+		table.insert(
+			handlers.list,
+			{ pattern = pattern, handle = handle, name = name, maxRuns = maxRuns, timeout = timeout }
+		)
+	end
 end
 
 --- Prepends a new handler to the beginning of the handlers list.
@@ -218,41 +286,28 @@ end
 -- @tparam {table | function | string} pattern The pattern to check for in the message
 -- @tparam {function} handle The function to call if the pattern matches
 -- @tparam {number | string | nil} maxRuns The maximum number of times the handler should run, or nil if there is no limit
+-- @tparam {table | nil} timeout The timeout for the message
 function handlers.prepend(...)
-  local name, pattern, handle, maxRuns
-  local args = select("#", ...)
-  if args == 2 then
-    name = select(1, ...)
-    pattern = select(1, ...)
-    handle = select(2, ...)
-    maxRuns = nil
-  elseif args == 3 then
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = nil
-  else 
-    name = select(1, ...)
-    pattern = select(2, ...)
-    handle = select(3, ...)
-    maxRuns = select(4, ...)
-  end
-  assertAddArgs(name, pattern, handle, maxRuns)
+	local name, pattern, handle, maxRuns, timeout = selectArgs(...)
+	assertAddArgs(name, pattern, handle, maxRuns, timeout)
 
-  handle = handlers.generateResolver(handle)
+	handle = handlers.generateResolver(handle)
 
-  -- update existing handler by name
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    -- found update
-    handlers.list[idx].pattern = pattern
-    handlers.list[idx].handle = handle
-    handlers.list[idx].maxRuns = maxRuns
-  else  
-    table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-  end
-
-  
+	-- update existing handler by name
+	local idx = findIndexByProp(handlers.list, "name", name)
+	if idx ~= nil and idx > 0 then
+		-- found update
+		handlers.list[idx].pattern = pattern
+		handlers.list[idx].handle = handle
+		handlers.list[idx].maxRuns = maxRuns
+		handlers.list[idx].timeout = timeout
+	else
+		table.insert(
+			handlers.list,
+			1,
+			{ pattern = pattern, handle = handle, name = name, maxRuns = maxRuns, timeout = timeout }
+		)
+	end
 end
 
 --- Returns an object that allows adding a new handler before a specified handler.
@@ -260,21 +315,24 @@ end
 -- @tparam {string} handleName The name of the handler before which the new handler will be added
 -- @treturn {table} An object with an `add` method to insert the new handler
 function handlers.before(handleName)
-  assert(type(handleName) == 'string', 'Handler name MUST be a string')
+	assert(type(handleName) == "string", "Handler name MUST be a string")
 
-  local idx = findIndexByProp(handlers.list, "name", handleName)
-  return {
-    add = function (name, pattern, handle, maxRuns) 
-      assertAddArgs(name, pattern, handle, maxRuns)
-      
-      handle = handlers.generateResolver(handle)
-      
-      if idx then
-        table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-      end
-      
-    end
-  }
+	local idx = findIndexByProp(handlers.list, "name", handleName)
+	return {
+		add = function(name, pattern, handle, maxRuns, timeout)
+			assertAddArgs(name, pattern, handle, maxRuns, timeout)
+
+			handle = handlers.generateResolver(handle)
+
+			if idx then
+				table.insert(
+					handlers.list,
+					idx,
+					{ pattern = pattern, handle = handle, name = name, maxRuns = maxRuns, timeout = timeout }
+				)
+			end
+		end,
+	}
 end
 
 --- Returns an object that allows adding a new handler after a specified handler.
@@ -282,38 +340,36 @@ end
 -- @tparam {string} handleName The name of the handler after which the new handler will be added
 -- @treturn {table} An object with an `add` method to insert the new handler
 function handlers.after(handleName)
-  assert(type(handleName) == 'string', 'Handler name MUST be a string')
-  local idx = findIndexByProp(handlers.list, "name", handleName)
-  return {
-    add = function (name, pattern, handle, maxRuns)
-      assertAddArgs(name, pattern, handle, maxRuns)
-      
-      handle = handlers.generateResolver(handle)
-      
-      if idx then
-        table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
-      end
-      
-    end
-  }
-
+	assert(type(handleName) == "string", "Handler name MUST be a string")
+	local idx = findIndexByProp(handlers.list, "name", handleName)
+	return {
+		add = function(name, pattern, handle, maxRuns, timeout)
+			assertAddArgs(name, pattern, handle, maxRuns, timeout)
+			handle = handlers.generateResolver(handle)
+			if idx then
+				table.insert(
+					handlers.list,
+					idx + 1,
+					{ pattern = pattern, handle = handle, name = name, maxRuns = maxRuns, timeout = timeout }
+				)
+			end
+		end,
+	}
 end
 
 --- Removes a handler from the handlers list by name.
 -- @function remove
 -- @tparam {string} name The name of the handler to be removed
 function handlers.remove(name)
-  assert(type(name) == 'string', 'name MUST be string')
-  if #handlers.list == 1 and handlers.list[1].name == name then
-    handlers.list = {}
-    
-  end
+	assert(type(name) == "string", "name MUST be string")
+	if #handlers.list == 1 and handlers.list[1].name == name then
+		handlers.list = {}
+	end
 
-  local idx = findIndexByProp(handlers.list, "name", name)
-  if idx ~= nil and idx > 0 then
-    table.remove(handlers.list, idx)
-  end
-  
+	local idx = findIndexByProp(handlers.list, "name", name)
+	if idx ~= nil and idx > 0 then
+		table.remove(handlers.list, idx)
+	end
 end
 
 --- Evaluates each handler against a given message and environment. Handlers are called in the order they appear in the handlers list.
@@ -323,62 +379,62 @@ end
 -- @tparam {table} env The environment in which the handlers are executed.
 -- @treturn The response from the handler(s). Returns a default message if no handler matches.
 function handlers.evaluate(msg, env)
-  local handled = false
-  assert(type(msg) == 'table', 'msg is not valid')
-  assert(type(env) == 'table', 'env is not valid')
-  
-  for _, o in ipairs(handlers.list) do
-    if o.name ~= "_default" then
-      local match = utils.matchesSpec(msg, o.pattern)
-      if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
-        error("Pattern result is not valid, it MUST be string, number, or boolean")
-      end
-      
-      -- handle boolean returns
-      if type(match) == "boolean" and match == true then
-        match = -1
-      elseif type(match) == "boolean" and match == false then
-        match = 0
-      end
+	local handled = false
+	assert(type(msg) == "table", "msg is not valid")
+	assert(type(env) == "table", "env is not valid")
 
-      -- handle string returns
-      if type(match) == "string" then
-        if match == "continue" then
-          match = 1
-        elseif match == "break" then
-          match = -1
-        else
-          match = 0
-        end
-      end
+	for _, o in ipairs(handlers.list) do
+		if o.name ~= "_default" then
+			local match = utils.matchesSpec(msg, o.pattern)
+			if not (type(match) == "number" or type(match) == "string" or type(match) == "boolean") then
+				error("Pattern result is not valid, it MUST be string, number, or boolean")
+			end
 
-      if match ~= 0 then
-        if match < 0 then
-          handled = true
-        end
-        -- each handle function can accept, the msg, env
-        local status, err = pcall(o.handle, msg, env)
-        if not status then
-          error(err)
-        end
-        -- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
-        if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
-          o.maxRuns = o.maxRuns - 1
-          if o.maxRuns == 0 then
-            handlers.remove(o.name)
-          end
-        end
-      end
-      if match < 0 then
-        return handled
-      end
-    end
-  end
-  -- do default
-  if not handled then
-    local idx = findIndexByProp(handlers.list, "name", "_default")
-    handlers.list[idx].handle(msg,env)
-  end
+			-- handle boolean returns
+			if type(match) == "boolean" and match == true then
+				match = -1
+			elseif type(match) == "boolean" and match == false then
+				match = 0
+			end
+
+			-- handle string returns
+			if type(match) == "string" then
+				if match == "continue" then
+					match = 1
+				elseif match == "break" then
+					match = -1
+				else
+					match = 0
+				end
+			end
+
+			if match ~= 0 then
+				if match < 0 then
+					handled = true
+				end
+				-- each handle function can accept, the msg, env
+				local status, err = pcall(o.handle, msg, env)
+				if not status then
+					error(err)
+				end
+				-- remove handler if maxRuns is reached. maxRuns can be either a number or "inf"
+				if o.maxRuns ~= nil and o.maxRuns ~= "inf" then
+					o.maxRuns = o.maxRuns - 1
+					if o.maxRuns == 0 then
+						handlers.remove(o.name)
+					end
+				end
+			end
+			if match < 0 then
+				return handled
+			end
+		end
+	end
+	-- do default
+	if not handled then
+		local idx = findIndexByProp(handlers.list, "name", "_default")
+		handlers.list[idx].handle(msg, env)
+	end
 end
 
 return handlers
