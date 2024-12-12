@@ -202,6 +202,13 @@ module.exports = function weaveDrive (mod, FS) {
         mod.HEAP8.set(stream.node.contents.subarray(0, toRead), dstPtr)
         return toRead
       }
+
+      // console.log(`stream.node.total_size: ${stream.node.total_size}, stream.position: ${stream.position}, to_read: ${to_read}`)
+      if (stream.position >= stream.node.total_size) {
+        // console.log("WeaveDrive: EOF reached.")
+        return 0;
+      }
+
       // Satisfy what we can with the cache first
       let bytesRead = this.readFromCache(stream, dstPtr, toRead)
       stream.position += bytesRead
