@@ -69,8 +69,13 @@ module.exports = function weaveDrive (mod, FS) {
       }
 
       const node = FS.createFile('/', 'data/' + id, properties, true, false)
+
       // Set initial parameters
-      const bytesLength = await this.customFetch(`/${id}`, { method: 'HEAD' }).then(res => res.headers.get('Content-Length'))
+      const response = await this.customFetch(`/${id}`, { method: 'HEAD' })
+      if (!response.ok) {
+        return 'HALT'
+      }
+      const bytesLength = response.headers.get('Content-Length')
       node.total_size = Number(bytesLength)
       node.cache = new Uint8Array(0)
       node.position = 0
@@ -138,7 +143,6 @@ module.exports = function weaveDrive (mod, FS) {
     async open (filename) {
       const pathCategory = filename.split('/')[1]
       const id = filename.split('/')[2]
-      console.log('JS: Opening ID: ', id)
       if (pathCategory === 'tx') {
         FS.createPath('/', 'tx', true, false)
         if (FS.analyzePath(filename).exists) {
@@ -165,12 +169,12 @@ module.exports = function weaveDrive (mod, FS) {
         if (FS.analyzePath(filename).exists) {
           const stream = FS.open(filename, 'r')
           if (stream.fd) return stream.fd
-          console.log('JS: File not found: ', filename)
           return 0
         } else {
-          // console.log("JS: Open => Creating file: ", id);
           const stream = await this.create(id)
-          // console.log("JS: Open => Created file: ", id, " fd: ", stream.fd);
+          if (typeof stream === 'string') {
+            return 'HALT: FILE NOT FOUND'
+          }
           return stream.fd
         }
       } else if (pathCategory === 'headers') {
