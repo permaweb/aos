@@ -56,7 +56,7 @@ module.exports = function weaveDrive (mod, FS) {
 
       if (!await this.checkAdmissible(id)) {
         // console.log("WeaveDrive: Arweave ID is not admissable! ", id)
-        return 0
+        return 'HALT'
       }
 
       // Create the file in the emscripten FS
