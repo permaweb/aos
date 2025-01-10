@@ -71,7 +71,7 @@ module.exports = function weaveDrive (mod, FS) {
       const node = FS.createFile('/', 'data/' + id, properties, true, false)
 
       // Set initial parameters
-      const response = await this.customFetch(`/${id}`, { method: 'HEAD' })
+      const response = await this.customFetch(`/${id}`, { method: 'HEAD', headers: { 'Accept-Encoding': 'identity' } })
       if (!response.ok) {
         return 'HALT'
       }
