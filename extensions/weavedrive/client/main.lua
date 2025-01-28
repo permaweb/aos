@@ -10,7 +10,9 @@ function drive.getBlock(height)
 	if not block then
 		return nil, "Block Header not found!"
 	end
-	local headers = require("json").decode(block:read(block:seek("end")))
+	local size = block:seek("end")
+	block:seek("set")
+	local headers = require("json").decode(block:read(size))
 	block:close()
 	return headers
 end
@@ -20,7 +22,9 @@ function drive.getTx(txId)
 	if not file then
 		return nil, "File not found!"
 	end
-	local contents = require("json").decode(file:read(file:seek("end")))
+	local size = file:seek("end")
+	file:seek("set")
+	local contents = require("json").decode(file:read(size))
 	file:close()
 	return contents
 end
@@ -30,7 +34,9 @@ function drive.getData(txId)
 	if not file then
 		return nil, "File not found!"
 	end
-	local contents = file:read(file:seek("end"))
+	local size = file:seek("end")
+	file:seek("set")
+	local contents = file:read(size)
 	file:close()
 	return contents
 end
