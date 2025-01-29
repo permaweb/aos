@@ -6,16 +6,35 @@ import fs from 'fs';
 const wasm = fs.readFileSync('./process.wasm');
 const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15", computeLimit: 100247047330 }
 
+const env = {
+  Process: {
+    Id: 'AOS',
+    Owner: 'FOOBAR',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }
+}
+
+async function init(handle) {
+  const {Memory} = await handle(null, {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    'Block-Height': '999',
+    Id: 'AOS',
+    Module: 'WOOPAWOOPA',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }, env)
+  return Memory
+}
+
 test('run aes cipher successfully', async () => {
 	const handle = await AoLoader(wasm, options);
-	const env = {
-		Process: {
-			Id: 'AOS',
-			Owner: 'FOOBAR',
-			Tags: [{ name: 'Name', value: 'Thomas' }],
-		},
-	};
-
+	const start = await init(handle)
+	
 	const results = [
 		// AES128 CBC Mode
 		"A3B9E6E1FBD9D46930E5F76807C84B8E", "616F0000000000000000000000000000",
@@ -79,7 +98,7 @@ test('run aes cipher successfully', async () => {
 		Data: data,
 	};
 
-	const result = await handle(null, msg, env);
+	const result = await handle(start, msg, env);
 
 	assert.equal(result.Output?.data, results.join(', '));
 	// assert.ok(result.GasUsed >= 3000000000)

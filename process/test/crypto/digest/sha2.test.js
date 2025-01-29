@@ -5,20 +5,40 @@ import fs from 'fs';
 
 const wasm = fs.readFileSync('./process.wasm');
 const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
+
+const env = {
+  Process: {
+    Id: 'AOS',
+    Owner: 'FOOBAR',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }
+}
+
+async function init(handle) {
+  const {Memory} = await handle(null, {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    'Block-Height': '999',
+    Id: 'AOS',
+    Module: 'WOOPAWOOPA',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }, env)
+  return Memory
+}
+
 test('run sha2 hash successfully', async () => {
 	const results = [
 		'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad',
 		'6f36a696b17ce5a71efa700e8a7e47994f3e134a5e5f387b3e7c2c912abe94f94ee823f9b9dcae59af99e2e34c8b4fb0bd592260c6720ee49e5deaac2065c4b1',
 	];
 	const handle = await AoLoader(wasm, options);
-	const env = {
-		Process: {
-			Id: 'AOS',
-			Owner: 'FOOBAR',
-			Tags: [{ name: 'Name', value: 'Thomas' }],
-		},
-	};
-
+	const start = await init(handle)
+	
 	const data = `
 	local crypto = require(".crypto");
 
@@ -44,7 +64,7 @@ test('run sha2 hash successfully', async () => {
 		Data: data,
 	};
 
-	const result = await handle(null, msg, env);
+	const result = await handle(start, msg, env);
 	assert.equal(result.Output?.data, results.join(', '));
 	assert.ok(true);
 });

@@ -6,6 +6,31 @@ import fs from 'fs';
 const wasm = fs.readFileSync('./process.wasm');
 const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
 
+const env = {
+  Process: {
+    Id: 'AOS',
+    Owner: 'FOOBAR',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }
+}
+
+async function init(handle) {
+  const {Memory} = await handle(null, {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    'Block-Height': '999',
+    Id: 'AOS',
+    Module: 'WOOPAWOOPA',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }, env)
+  return Memory
+}
+
 test('run md5 hash successfully', async () => {
 	const cases = [
 		['', 'd41d8cd98f00b204e9800998ecf8427e'],
@@ -18,13 +43,7 @@ test('run md5 hash successfully', async () => {
 		],
 	];
 	const handle = await AoLoader(wasm, options);
-	const env = {
-		Process: {
-			Id: 'AOS',
-			Owner: 'FOOBAR',
-			Tags: [{ name: 'Name', value: 'Thomas' }],
-		},
-	};
+	const start = await init(handle)
 
 	const testCase = async (e) => {
 		const data = `
@@ -44,7 +63,7 @@ test('run md5 hash successfully', async () => {
 			Data: data,
 		};
 
-		const result = await handle(null, msg, env);
+		const result = await handle(start, msg, env);
 		assert.equal(result.Output?.data, e[1]);
 		assert.ok(true);
 	};
