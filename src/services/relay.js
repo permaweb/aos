@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from "@permaweb/aoconnect"
+import { connect } from '@permaweb/aoconnect'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -11,26 +11,26 @@ import Arweave from 'arweave'
 
 const arweave = Arweave.init({})
 
-
 const pkg = getPkg()
-const getInfo = () => ({
-  GATEWAY_URL: process.env.GATEWAY_URL,
-  CU_URL: process.env.CU_URL,
-  MU_URL: process.env.MU_URL
-})
+const setupRelay = (wallet) => {
+  const info = {
+    GATEWAY_URL: process.env.GATEWAY_URL,
+    CU_URL: process.env.CU_URL,
+    MU_URL: process.env.MU_URL,
+    URL : process.env.RELAY_URL
+  } 
+  return connect.hb({
+    wallet, 
+    ...info 
+  })
+}
 
-const retryAsync = (fn, left, right, retries = 3) =>
-  fn().bichain(
-    err => (retries > 0 ? retryAsync(fn, retries - 1) : left(err)),
-    res => right(res)
-  );
 
-
-export function readResult(params) {
-
+export function readResultRelay(params) {
+  
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(params), 500))
-  )().chain(fromPromise(() => connect(getInfo()).result(params)))
+  )().chain(fromPromise(() => setupRelay({}).result(params)))
     // log the error messages most seem related to 503
     // .bimap(_ => (console.log(_), _), _ => (console.log(_), _))
     .bichain(fromPromise(() =>
@@ -40,15 +40,16 @@ export function readResult(params) {
     )
 }
 
-export function dryrun({ processId, wallet, tags, data }, spinnner) {
+export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
   return fromPromise(() =>
     arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      connect(getInfo()).dryrun({ process: processId, Owner, tags, data })
+      setupRelay(wallet).dryrun({ process: processId, Owner, tags, data })
     )
   )()
 }
 
-export function sendMessage({ processId, wallet, tags, data }, spinner) {
+
+export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
   let retries = "."
   const signer = createDataItemSigner(wallet)
 
@@ -59,40 +60,32 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
       return _
     })
     .chain(fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data })))
-
-  return fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data }))()
-    //.bimap(function (e) { console.log(e); return e }, function (a) { console.log(a); return a; })
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-  //.map(result => (console.log(result), result))
+  
+  const retryAsync = (fn, left, right, retries = 3) =>
+    fn().bichain(
+      err => (retries > 0 ? retryAsync(fn, retries - 1) : left(err)),
+      res => right(res)
+    );
+    
+  return retryAsync(
+    fromPromise(() => 
+      setupRelay(wallet).message({ process: processId, signer, tags, data })
+    ), 
+    retry, 
+    Resolved, 
+    10
+  )
+  
+    
 
 }
 
-export function spawnProcess({ wallet, src, tags, data }) {
+export function spawnProcessRelay({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const signer = createDataItemSigner(wallet)
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => connect(getInfo()).spawn({
+  return fromPromise(() => setupRelay(wallet).spawn({
     module: src, scheduler: SCHEDULER, signer, tags, data
   })
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
@@ -100,23 +93,23 @@ export function spawnProcess({ wallet, src, tags, data }) {
 
 }
 
-export function monitorProcess({ id, wallet }) {
+export function monitorProcessRelay({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).monitor({ process: id, signer }))()
+  return fromPromise(() => setupRelay(wallet).monitor({ process: id, signer }))()
   //.map(result => (console.log(result), result))
 
 }
 
-export function unmonitorProcess({ id, wallet }) {
+export function unmonitorProcessRelay({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).unmonitor({ process: id, signer }))()
+  return fromPromise(() => setupRelay(wallet).unmonitor({ process: id, signer }))()
   //.map(result => (console.log(result), result))
 
 }
 
 let _watch = false
 
-export function printLive() {
+export function printLiveRelay() {
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
@@ -137,7 +130,7 @@ export function printLive() {
 
 }
 
-export async function live(id, watch) {
+export async function liveRelay(id, watch) {
   _watch = watch
   let ct = null
   let cursor = null
@@ -171,7 +164,7 @@ export async function live(id, watch) {
           params["sort"] = "DESC"
         }
 
-        const results = await connect(getInfo()).results(params)
+        const results = await setupRelay({}).results(params)
 
         let edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {

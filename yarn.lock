@@ -516,20 +516,21 @@
     ramda "^0.30.0"
     zod "^3.23.5"
 
-"@permaweb/aoconnect@^0.0.63":
-  version "0.0.63"
-  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.63.tgz#2ea84eea9dc5d18f3e7064535c1abde681be45ca"
-  integrity sha512-4RMc3ioS82f/xwZAF5PhAjz9vOpXMv05eSl2wm3gJcvI6KO4yh5Sut6+Jj4ZQhkKOK63QfMbY04VDrw5QERIbA==
+"@permaweb/aoconnect@^0.0.64":
+  version "0.0.64"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.64.tgz#78fe5cff1f8f0feb9107fd43ff5cd1511ea62daf"
+  integrity sha512-Kx6KDxflHppBLUnTuwpuDRlaHIMpY+quImXGmz9HJ+FxQmNmqwNK3c6IsD/rqoyOUzpQ0+hm8gAumECXItuLHQ==
   dependencies:
     "@permaweb/ao-scheduler-utils" "~0.0.25"
     "@permaweb/protocol-tag-utils" "~0.0.2"
     buffer "^6.0.3"
-    debug "^4.3.7"
+    debug "^4.4.0"
+    http-message-signatures "^1.0.4"
     hyper-async "^1.1.2"
     mnemonist "^0.39.8"
     ramda "^0.30.1"
     warp-arbundles "^1.0.4"
-    zod "^3.23.8"
+    zod "^3.24.1"
 
 "@permaweb/protocol-tag-utils@~0.0.2":
   version "0.0.2"
@@ -1147,7 +1148,7 @@ data-view-byte-offset@^1.0.0:
     es-errors "^1.3.0"
     is-data-view "^1.0.1"
 
-debug@4, debug@^4.3.1, debug@^4.3.2, debug@^4.3.7, debug@~4.4.0:
+debug@4, debug@^4.3.1, debug@^4.3.2, debug@^4.4.0, debug@~4.4.0:
   version "4.4.0"
   resolved "https://registry.npmjs.org/debug/-/debug-4.4.0.tgz"
   integrity sha512-6WTZ/IxCY/T6BALoZHaE4ctp9xm+Z5kY/pzYaCHRFeyVhojxlrm+46y68HA6hr0TcwEssoxNiDEUJQjfPZ/RYA==
@@ -2023,6 +2024,13 @@ hasown@^2.0.0, hasown@^2.0.1, hasown@^2.0.2:
   integrity sha512-0hJU9SCPvmMzIBdZFqNPXWa6dqh7WdH0cII9y+CyS8rG3nL48Bclra9HmKhVVUHyPWNH5Y7xDwAB7bfgSjkUMQ==
   dependencies:
     function-bind "^1.1.2"
+
+http-message-signatures@^1.0.4:
+  version "1.0.4"
+  resolved "https://registry.yarnpkg.com/http-message-signatures/-/http-message-signatures-1.0.4.tgz#3d1f614977d3a435af7c1d35a75e1e48d9094075"
+  integrity sha512-gavCQWnxHFg0BVlKs6CmYK7hNSH1o0x0mHTC68yBAHYOYuTVXPv52mEE7QuT5TenfiagTdOa/zPJzen4lEX7Rg==
+  dependencies:
+    structured-headers "^1.0.1"
 
 https-proxy-agent@^7.0.4:
   version "7.0.6"
@@ -3588,6 +3596,11 @@ strip-json-comments@^3.1.1:
   resolved "https://registry.npmjs.org/strip-json-comments/-/strip-json-comments-3.1.1.tgz"
   integrity sha512-6fPc+R4ihwqP6N/aIv2f1gMH8lOVtWQHoqC4yK6oSDVVocumAsfCqjkXnqiYMhmMwS/mEHLp7Vehlt3ql6lEig==
 
+structured-headers@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/structured-headers/-/structured-headers-1.0.1.tgz#1821e434e0fe45bdd78f07c779b16519ab520415"
+  integrity sha512-QYBxdBtA4Tl5rFPuqmbmdrS9kbtren74RTJTcs0VSQNVV5iRhJD4QlYTLD0+81SBwUQctjEQzjTRI3WG4DzICA==
+
 supports-color@^7.1.0:
   version "7.2.0"
   resolved "https://registry.npmjs.org/supports-color/-/supports-color-7.2.0.tgz"
@@ -3945,7 +3958,7 @@ yocto-queue@^1.0.0:
   resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-1.1.1.tgz"
   integrity sha512-b4JR1PFR10y1mKjhHY9LaGo6tmrgjit7hxVIeAmyMw3jegXR4dhYqLaQF5zMXZxY7tLpMyJeLjr1C4rLmkVe8g==
 
-zod@^3.23.5, zod@^3.23.8:
+zod@^3.23.5, zod@^3.24.1:
   version "3.24.1"
   resolved "https://registry.npmjs.org/zod/-/zod-3.24.1.tgz"
   integrity sha512-muH7gBL9sI1nciMZV67X5fTKKBLtwpZ5VBp1vsOQzj1MhrBZ4wlVCm3gedKZWLp0Oyel8sIGfeiz54Su+OVT+A==
