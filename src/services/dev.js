@@ -8,7 +8,7 @@ if (argv['dev']) {
   process.env.CU_URL = 'https://ao-cu-0.ao-devnet.xyz'
   process.env.MU_URL = 'https://ao-mu-0.ao-devnet.xyz'
   process.env.SCHEDULER = 'gCpQfnG6nWLlKs8jYgV8oUfe38GYrPLv59AC7LCtCGg'
-
+  
   console.log('GATEWAY_URL', process.env.GATEWAY_URL)
   console.log('CU', process.env.CU_URL)
   console.log('MU', process.env.MU_URL)

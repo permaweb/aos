@@ -18,9 +18,8 @@ import { dryEval } from './dry-eval.js'
 // services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
-import {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
-} from './services/connect.js'
+import * as connectSvc from './services/connect.js'
+import * as relaySvc from './services/relay.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
@@ -44,6 +43,18 @@ const argv = minimist(process.argv.slice(2))
 
 let dryRunMode = false
 let luaData = ''
+let relayMode = false
+
+let {
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
+} = connectSvc
+
+let {
+  spawnProcessRelay, sendMessageRelay, readResultRelay, 
+  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay, 
+  dryrunRelay
+} = relaySvc
+
 if (!process.stdin.isTTY) {
   const onData = chunk => {
     luaData = luaData + chunk
@@ -103,6 +114,21 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
+if (argv['relay']) {
+  console.log(chalk.cyanBright('Using Relay: ') + chalk.cyan(argv['relay']))
+  process.env.RELAY_URL = argv['relay']
+  // replace services to use relay service
+  sendMessage = sendMessageRelay
+  spawnProcess = spawnProcessRelay
+  readResult = readResultRelay
+  monitorProcess = monitorProcessRelay
+  unmonitorProcess = unmonitorProcessRelay
+  live = liveRelay
+  printLive = printLiveRelay
+  dryrun = dryrunRelay
+
+  relayMode = true
+}
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
   process.env.GATEWAY_URL = argv['gateway-url']
