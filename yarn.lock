@@ -516,10 +516,10 @@
     ramda "^0.30.0"
     zod "^3.23.5"
 
-"@permaweb/aoconnect@^0.0.64":
-  version "0.0.64"
-  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.64.tgz#78fe5cff1f8f0feb9107fd43ff5cd1511ea62daf"
-  integrity sha512-Kx6KDxflHppBLUnTuwpuDRlaHIMpY+quImXGmz9HJ+FxQmNmqwNK3c6IsD/rqoyOUzpQ0+hm8gAumECXItuLHQ==
+"@permaweb/aoconnect@^0.0.65":
+  version "0.0.65"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.65.tgz#884cb0edcbe6536ff0ce9e80196d43d3b9b3228c"
+  integrity sha512-ODFFNlM7ykWj8D0XLd/k4TWSZFY57Tbipz5J1AdtESVntylsugesMjTtBJhbY+uf8LFtbeTEW6MyYZo5AaSo6g==
   dependencies:
     "@permaweb/ao-scheduler-utils" "~0.0.25"
     "@permaweb/protocol-tag-utils" "~0.0.2"

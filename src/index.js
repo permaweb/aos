@@ -148,6 +148,10 @@ if (!argv.watch) {
   of()
     .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
     .chain(jwk => {
+      // make wallet available to services if relay mode
+      if (argv['relay']) {
+        process.env.WALLET = JSON.stringify(jwk)
+      }
       // handle list option, need jwk in order to do it.
       if (argv.list) {
         return list(jwk, { address, gql }).chain(Rejected)
@@ -161,7 +165,7 @@ if (!argv.watch) {
     .then(async ({ jwk, id }) => {
       let editorMode = false
       let editorData = ''
-
+      
       const history = readHistory(id)
 
       if (luaData.length > 0 && argv.load) {
