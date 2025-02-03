@@ -38,12 +38,13 @@ const dummy = {
 }
 
 export function readResultRelay(params) {
-  
+  const { results, createDataItemSigner } = setupRelay(wallet) 
+  params = {signer: createDataItemSigner(), ...params}
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(params), 500))
   )()
     
-    .chain(fromPromise(() => setupRelay(dummy).results(params)))
+    .chain(fromPromise(() => results(params)))
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
@@ -52,9 +53,10 @@ export function readResultRelay(params) {
 }
 
 export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
+  const { dryrun, createDataItemSigner } = setupRelay(wallet)
   return fromPromise(() =>
     arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      setupRelay(wallet).dryrun({ process: processId, Owner, tags, data })
+      dryrun({ process: processId, Owner, signer: createDataItemSigner(), tags, data })
     )
   )()
 }
@@ -62,20 +64,20 @@ export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
 
 export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
   let retries = "."
-  // const signer = createDataItemSigner(wallet)
-
+  const { message, createDataItemSigner } = setupRelay(wallet) 
+  
   const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
     .map(_ => {
       spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
       retries += "."
       return _
     })
-    .chain(fromPromise(() => setupRelay(wallet).message({ process: processId, signer: () => null, tags, data })))
+    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
   
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => { console.log('calling message'); resolve() }, 500))
   )().chain(fromPromise(() => 
-    setupRelay(wallet).message({ process: processId, tags, data })
+    message({ process: processId, signer: createDataItemSigner(), tags, data })
   ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -92,11 +94,12 @@ export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
 
 export function spawnProcessRelay({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const signer = createDataItemSigner(wallet)
+  const { spawn, createDataItemSigner } = setupRelay(wallet) 
+ 
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => setupRelay(wallet).spawn({
-    module: src, scheduler: SCHEDULER, signer, tags, data
+  return fromPromise(() => spawn({
+    module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
   })
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
@@ -104,15 +107,17 @@ export function spawnProcessRelay({ wallet, src, tags, data }) {
 }
 
 export function monitorProcessRelay({ id, wallet }) {
-  const signer = createDataItemSigner(wallet)
-  return fromPromise(() => setupRelay(wallet).monitor({ process: id, signer }))()
+  const { monitor, createDataItemSigner } = setupRelay(wallet) 
+  
+  return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
   //.map(result => (console.log(result), result))
 
 }
 
 export function unmonitorProcessRelay({ id, wallet }) {
-  const signer = createDataItemSigner(wallet)
-  return fromPromise(() => setupRelay(wallet).unmonitor({ process: id, signer }))()
+  const { unmonitor, createDataItemSigner } = setupRelay(wallet) 
+
+  return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
   //.map(result => (console.log(result), result))
 
 }
@@ -162,6 +167,7 @@ export async function liveRelay(id, watch) {
   let isJobRunning = false
 
   const checkLive = async () => {
+    const signer = setupRelay(wallet).createDataItemSigner()
     if (!isJobRunning) {
 
       try {
@@ -174,7 +180,7 @@ export async function liveRelay(id, watch) {
           params["sort"] = "DESC"
         }
 
-        const results = await setupRelay({}).results(params)
+        const results = await setupRelay({}).results({signer, ...params})
 
         let edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {
