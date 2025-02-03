@@ -467,6 +467,7 @@ if (!argv.watch) {
         if (argv.load) {
           console.log(e.message)
         } else {
+          console.log(e)
           console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
           process.exit(1)
         }

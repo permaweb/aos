@@ -39,7 +39,7 @@ assignment.init(ao)
 -- @table process
 -- @field _version The version number of the process
 
-local process = { _version = "2.0.1" }
+local process = { _version = "2.0.3" }
 -- The maximum number of messages to store in the inbox
 local maxInboxCount = 10000
 

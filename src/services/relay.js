@@ -214,6 +214,6 @@ export async function liveRelay(id, watch) {
   }
   await cron.schedule('*/2 * * * * *', checkLive)
 
-  ct = await cron.schedule('*/2 * * * * *', printLive)
+  ct = await cron.schedule('*/2 * * * * *', printLiveRelay)
   return ct
 }
