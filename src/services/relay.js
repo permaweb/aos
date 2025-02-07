@@ -19,7 +19,8 @@ const setupRelay = (wallet) => {
     MU_URL: process.env.MU_URL,
     URL : process.env.RELAY_URL
   } 
-  return connect.hb({
+  return connect({
+    MODE: 'relay',
     wallet, 
     ...info 
   })
