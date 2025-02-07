@@ -12,21 +12,21 @@ import Arweave from 'arweave'
 const arweave = Arweave.init({})
 
 const pkg = getPkg()
-const setupRelay = (wallet) => {
+const setupMainnet = (wallet) => {
   const info = {
     GATEWAY_URL: process.env.GATEWAY_URL,
     CU_URL: process.env.CU_URL,
     MU_URL: process.env.MU_URL,
-    RELAY_URL : process.env.RELAY_URL
+    AO_URL : process.env.AO_URL
   } 
   return connect({
-    MODE: 'relay',
+    MODE: 'mainnet',
     wallet, 
     ...info 
   })
 }
 
-export function readResultRelay(params) {
+export function readResultMainnet(params) {
   const wallet = JSON.parse(process.env.WALLET)
   const { result } = setupRelay(wallet) 
   return fromPromise(() =>
@@ -40,8 +40,8 @@ export function readResultRelay(params) {
     )
 }
 
-export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
-  const { dryrun } = setupRelay(wallet)
+export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
+  const { dryrun } = setupMainnet(wallet)
   return fromPromise(() =>
     arweave.wallets.jwkToAddress(wallet).then(Owner =>
       dryrun({ process: processId, Owner, tags, data })
@@ -50,9 +50,9 @@ export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
 }
 
 
-export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
+export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   let retries = "."
-  const { message, createDataItemSigner } = setupRelay(wallet) 
+  const { message, createDataItemSigner } = setupMainnet(wallet) 
   
   const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
     .map(_ => {
@@ -80,9 +80,9 @@ export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
 
 }
 
-export function spawnProcessRelay({ wallet, src, tags, data }) {
+export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const { spawn, createDataItemSigner } = setupRelay(wallet) 
+  const { spawn, createDataItemSigner } = setupMainnet(wallet) 
  
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
@@ -94,7 +94,7 @@ export function spawnProcessRelay({ wallet, src, tags, data }) {
 
 }
 
-export function monitorProcessRelay({ id, wallet }) {
+export function monitorProcessMainnet({ id, wallet }) {
   const { monitor, createDataItemSigner } = setupRelay(wallet) 
   
   return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
@@ -102,7 +102,7 @@ export function monitorProcessRelay({ id, wallet }) {
 
 }
 
-export function unmonitorProcessRelay({ id, wallet }) {
+export function unmonitorProcessMainnet({ id, wallet }) {
   const { unmonitor, createDataItemSigner } = setupRelay(wallet) 
 
   return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
@@ -112,7 +112,7 @@ export function unmonitorProcessRelay({ id, wallet }) {
 
 let _watch = false
 
-export function printLiveRelay() {
+export function printLiveMainnet() {
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
@@ -133,7 +133,7 @@ export function printLiveRelay() {
 
 }
 
-export async function liveRelay(id, watch) {
+export async function liveMainnet(id, watch) {
   _watch = watch
   let ct = null
   let cursor = null
@@ -156,7 +156,7 @@ export async function liveRelay(id, watch) {
 
   const checkLive = async () => {
     const wallet = process.env.WALLET
-    const { results } = setupRelay(wallet)
+    const { results } = setupMainnet(wallet)
     if (!isJobRunning) {
 
       try {
@@ -215,6 +215,6 @@ export async function liveRelay(id, watch) {
   }
   await cron.schedule('*/2 * * * * *', checkLive)
 
-  ct = await cron.schedule('*/2 * * * * *', printLiveRelay)
+  ct = await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
 }
