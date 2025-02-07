@@ -20,6 +20,7 @@ import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import * as connectSvc from './services/connect.js'
 import * as relaySvc from './services/relay.js'
+import * as mainnetSvc from './services/mainnet.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
@@ -54,6 +55,12 @@ let {
   monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay, 
   dryrunRelay
 } = relaySvc
+
+let {
+  spawnProcessMainnet, sendMessageMainnet, readResultMainnet, 
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet, 
+  dryrunMainnet
+} = mainnetSvc
 
 if (!process.stdin.isTTY) {
   const onData = chunk => {
@@ -126,6 +133,21 @@ if (argv['relay']) {
   live = liveRelay
   printLive = printLiveRelay
   dryrun = dryrunRelay
+
+  relayMode = true
+}
+if (argv['mainnet']) {
+  console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
+  process.env.MAINNET_URL = argv['mainnet']
+  // replace services to use mainnet service
+  sendMessage = sendMessageMainnet
+  spawnProcess = spawnProcessMainnet
+  readResult = readResultMainnet
+  monitorProcess = monitorProcessMainnet
+  unmonitorProcess = unmonitorProcessMainnet
+  live = liveMainnet
+  printLive = printLiveMainnet
+  dryrun = dryrunMainnet
 
   relayMode = true
 }
