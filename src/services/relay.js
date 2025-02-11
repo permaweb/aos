@@ -94,7 +94,7 @@ export function spawnProcessRelay({ wallet, src, tags, data }) {
 
 
   tags = tags.concat([
-    { name: 'aos-Version', value: pkg.version }, 
+    { name: 'aos-Version', value: pkg.version },
     { name: 'Authority', value: 'tYRUqrx6zuFFiix3MoSBYSPP3nMzi5EKf-lVYDEQz8A' }
   ])
   return fromPromise(() => spawn({
@@ -244,7 +244,59 @@ function formatTopupAmount(num) {
   return fixed;
 }
 
+function fromDenominatedAmount(num) {
+  return num / Math.pow(10, 12);
+}
+
 export async function handleRelayTopup(jwk) {
+  const PAYMENT = {
+    address: '0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc',
+    ticker: 'AO'
+  };
+  const RELAY = {
+    address: 'yTVz5K0XU52lD9O0iHh42wgBGSXgsPcu7wEY8GqWnFY',
+    url: `${process.env.RELAY_URL}/~simple-pay@1.0/balance`
+  };
+
+  const { dryrun, message, createDataItemSigner } = connect();
+
+  const walletAddress = await arweave.wallets.getAddress(jwk)
+  console.log(chalk.cyanBright('Wallet Address: ') + chalk.cyan(walletAddress));
+  console.log(chalk.gray(`You must transfer some ${PAYMENT.ticker} to this relay in order to start sending messages.`));
+
+  let spinner = ora({
+    spinner: 'dots',
+    suffixText: chalk.gray('[Getting your balance...]')
+  });
+  spinner.start();
+
+  let balanceResponse;
+  try {
+    balanceResponse = await dryrun({
+      process: PAYMENT.address,
+      tags: [
+        { name: 'Action', value: 'Balance' },
+        { name: 'Recipient', value: walletAddress },
+      ]
+    });
+    spinner.stop();
+  }
+  catch (e) {
+    spinner.stop();
+    console.log(chalk.red('Error getting your balance'));
+    process.exit(1);
+  }
+
+  const balance = balanceResponse?.Messages?.[0]?.Data;
+  if (balance) {
+    const getChalk = balance > 0 ? chalk.green : chalk.yellow;
+    console.log(chalk.gray('Current balance: ' + getChalk(`${fromDenominatedAmount(balance)} AO`)));
+    if (balance <= 0) {
+      console.log(chalk.red(`This wallet must hold some ${PAYMENT.ticker} in order to transfer to the relay.`));
+      process.exit(1);
+    }
+  }
+
   const rl = readline.createInterface({
     input: process.stdin,
     output: process.stdout
@@ -257,22 +309,21 @@ export async function handleRelayTopup(jwk) {
     let topupAmount = 0.0000001; // TODO: Get minimum amount
     const maxBalanceRetries = 20;
 
-    console.log(chalk.gray(`Minimum amount required: (${formatTopupAmount(topupAmount)} AO)`));
+    console.log(chalk.gray('Minimum amount required: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
     const amountAnswer = await ask(chalk.gray('Enter topup amount (leave blank for minimum): '));
     if (amountAnswer?.length) topupAmount = parseFloat(amountAnswer);
 
     if (isNaN(topupAmount) || topupAmount <= 0) {
       console.log(chalk.red('Invalid topup amount provided. Topup cancelled.'));
       rl.close();
-      return false;
+      process.exit(1);
     }
 
-    console.log(chalk.gray('Proceeding with topup...'));
-    console.log(chalk.green(`Topping up with amount: ${formatTopupAmount(topupAmount)} AO`));
+    console.log(chalk.gray('Topping up with amount: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
 
-    const spinner = ora({
+    spinner = ora({
       spinner: 'dots',
-      suffixText: chalk.gray('[Handling relay topup...]')
+      suffixText: chalk.gray('[Transferring balance to relay...]')
     });
     spinner.start();
 
@@ -281,12 +332,7 @@ export async function handleRelayTopup(jwk) {
     const signer = createSigner(privateKey, 'rsa-pss-sha512', address);
     const params = ['alg', 'keyid'].sort();
 
-    const relay = {
-      address: 'yTVz5K0XU52lD9O0iHh42wgBGSXgsPcu7wEY8GqWnFY',
-      url: `${process.env.RELAY_URL}/~simple-pay@1.0/balance`
-    };
-
-    const relayUrl = new URL(relay.url);
+    const relayUrl = new URL(RELAY.url);
     const request = {
       url: relayUrl,
       method: 'GET',
@@ -304,54 +350,60 @@ export async function handleRelayTopup(jwk) {
 
     let initialBalance;
     try {
-      const response = await fetch(relay.url, { method, headers });
+      const response = await fetch(RELAY.url, { method, headers });
       const balance = parseInt(await response.text(), 10);
       initialBalance = Number.isNaN(balance) ? 0 : balance;
-      // console.log(chalk.gray(`Initial balance before transfer: ${initialBalance} AO`));
     } catch (e) {
       console.error(chalk.red('Error fetching initial balance:'), e);
     }
 
     const sendQuantity = (topupAmount * Math.pow(10, 12)).toString();
-    const { message, createDataItemSigner } = connect();
 
     try {
-      const transferId = await message({
-        process: '0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc',
+      await message({
+        process: PAYMENT.address,
         signer: createDataItemSigner(jwk),
         tags: [
           { name: 'Action', value: 'Transfer' },
-          { name: 'Recipient', value: relay.address },
+          { name: 'Recipient', value: RELAY.address },
           { name: 'Quantity', value: sendQuantity },
         ]
       });
-      // console.log(`\nTransfer ID: ${transferId}`);
     } catch (e) {
       console.error(chalk.red('Error sending transfer message:'), e);
     }
 
-    let newBalance;
+    let balanceUpdated = false;
     for (let attempt = 1; attempt <= maxBalanceRetries; attempt++) {
       try {
-        let response = await fetch(relay.url, { method, headers });
+        const response = await fetch(RELAY.url, { method, headers });
         const balance = parseInt(await response.text(), 10);
-        newBalance = Number.isNaN(balance) ? 0 : balance;
+        const newBalance = Number.isNaN(balance) ? 0 : balance;
         if (newBalance !== initialBalance) {
+          balanceUpdated = true;
           spinner.stop();
-          console.log(chalk.green(`Balance updated from ${formatTopupAmount(initialBalance)} to ${formatTopupAmount(newBalance)} AO`));
+          console.log(
+            chalk.green(
+              `Balance updated from ${fromDenominatedAmount(initialBalance)} to ${fromDenominatedAmount(newBalance)} ${PAYMENT.ticker}`
+            )
+          );
           break;
         }
       } catch (e) {
         console.error('Error fetching balance endpoint:', e);
       }
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     rl.close();
+    if (!balanceUpdated) {
+      console.error(chalk.red('Balance did not update after topup.'));
+      process.exit(1);
+    }
     return true;
   } else {
-    console.log(chalk.red('Topup cancelled'));
+    console.log(chalk.gray('Topup cancelled'));
     rl.close();
-    return false;
+    process.exit(1);
   }
 }
