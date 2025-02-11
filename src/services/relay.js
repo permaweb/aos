@@ -307,7 +307,7 @@ export async function handleRelayTopup(jwk) {
       const response = await fetch(relay.url, { method, headers });
       const balance = parseInt(await response.text(), 10);
       initialBalance = Number.isNaN(balance) ? 0 : balance;
-      console.log(chalk.gray(`Initial balance before transfer: ${initialBalance} AO`));
+      // console.log(chalk.gray(`Initial balance before transfer: ${initialBalance} AO`));
     } catch (e) {
       console.error(chalk.red('Error fetching initial balance:'), e);
     }
@@ -325,7 +325,7 @@ export async function handleRelayTopup(jwk) {
           { name: 'Quantity', value: sendQuantity },
         ]
       });
-      console.log(`\nTransfer ID: ${transferId}`);
+      // console.log(`\nTransfer ID: ${transferId}`);
     } catch (e) {
       console.error(chalk.red('Error sending transfer message:'), e);
     }
