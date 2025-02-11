@@ -51,14 +51,14 @@ let {
 } = connectSvc
 
 let {
-  spawnProcessRelay, sendMessageRelay, readResultRelay, 
-  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay, 
-  dryrunRelay
+  spawnProcessRelay, sendMessageRelay, readResultRelay,
+  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
+  dryrunRelay, handleRelayTopup
 } = relaySvc
 
 let {
-  spawnProcessMainnet, sendMessageMainnet, readResultMainnet, 
-  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet, 
+  spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
   dryrunMainnet
 } = mainnetSvc
 
@@ -168,338 +168,362 @@ if (argv['mu-url']) {
   process.env.MU_URL = argv['mu-url']
 }
 
-if (!argv.watch) {
-  of()
-    .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
-    .chain(jwk => {
-      // make wallet available to services if relay mode
-      if (argv['relay']) {
-        process.env.WALLET = JSON.stringify(jwk)
-      }
-      // handle list option, need jwk in order to do it.
-      if (argv.list) {
-        return list(jwk, { address, gql }).chain(Rejected)
-      }
-      return Resolved(jwk)
-    })
-    .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
-      .map(id => ({ jwk, id }))
-    )
-    .toPromise()
-    .then(async ({ jwk, id }) => {
-      let editorMode = false
-      let editorData = ''
-      
-      const history = readHistory(id)
+async function runProcess() {
+  if (!argv.watch) {
+    of()
+      .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
+      .chain(jwk => {
+        // make wallet available to services if relay mode
+        if (argv['relay']) {
+          process.env.WALLET = JSON.stringify(jwk)
+        }
+        // handle list option, need jwk in order to do it.
+        if (argv.list) {
+          return list(jwk, { address, gql }).chain(Rejected)
+        }
+        return Resolved(jwk)
+      })
+      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
+        .map(id => ({ jwk, id }))
+      )
+      .toPromise()
+      .then(async ({ jwk, id }) => {
+        let editorMode = false
+        let editorData = ''
 
-      if (luaData.length > 0 && argv.load) {
+        const history = readHistory(id)
+
+        if (luaData.length > 0 && argv.load) {
+          const spinner = ora({
+            spinner: 'dots',
+            suffixText: ''
+          })
+
+          spinner.start()
+          spinner.suffixText = chalk.gray('[Connecting to process...]')
+          const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
+
+          spinner.stop()
+
+          if (result.Output?.data) {
+            console.log(result.Output?.data)
+          }
+          process.exit(0)
+        }
+
+        if (!id) {
+          console.error(chalk.red('Error! Could not find process ID.'))
+          process.exit(0)
+        }
+        version(id)
+
+        // kick start monitor if monitor option
+        if (argv.monitor) {
+          const result = await monitor(jwk, id, { monitorProcess })
+          console.log(chalk.green(result))
+        }
+
+        // check for update and install if needed
+        const update = await checkForUpdate()
+        if (update.available && !process.env.DEBUG) {
+          const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
+
+          await installUpdate(update, path.join(__dirname, '../'))
+        }
+
+        if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
+        globalThis.prompt = await connect(jwk, id, luaData)
+        if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
+        // check loading files flag
+        await handleLoadArgs(jwk, id)
+
+        cron = await live(id)
+
         const spinner = ora({
           spinner: 'dots',
-          suffixText: ''
+          suffixText: '',
+          discardStdin: false
         })
 
-        spinner.start()
-        spinner.suffixText = chalk.gray('[Connecting to process...]')
-        const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
-
-        spinner.stop()
-
-        if (result.Output?.data) {
-          console.log(result.Output?.data)
-        }
-        process.exit(0)
-      }
-
-      if (!id) {
-        console.error(chalk.red('Error! Could not find process ID.'))
-        process.exit(0)
-      }
-      version(id)
-
-      // kick start monitor if monitor option
-      if (argv.monitor) {
-        const result = await monitor(jwk, id, { monitorProcess })
-        console.log(chalk.green(result))
-      }
-
-      // check for update and install if needed
-      const update = await checkForUpdate()
-      if (update.available && !process.env.DEBUG) {
-        const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
-
-        await installUpdate(update, path.join(__dirname, '../'))
-      }
-
-      if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
-      globalThis.prompt = await connect(jwk, id, luaData)
-      if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
-      // check loading files flag
-      await handleLoadArgs(jwk, id)
-
-      cron = await live(id)
-
-      const spinner = ora({
-        spinner: 'dots',
-        suffixText: '',
-        discardStdin: false
-      })
-
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-        terminal: true,
-        history,
-        historySize: 100,
-        prompt: globalThis.prompt
-      })
-      globalThis.setPrompt = (p) => {
-        rl.setPrompt(p)
-      }
-
-      // async function repl() {
-
-      // process.stdin.on('keypress', (str, key) => {
-      //   if (ct) {
-      //     ct.stop()
-      //   }
-      // })
-
-      rl.on('history', e => {
-        history.concat(e)
-      })
-
-      // rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
-      rl.setPrompt(globalThis.prompt)
-      if (!editorMode) rl.prompt(true)
-
-      rl.on('line', async line => {
-        if (!editorMode && line.trim() === '') {
-          console.log(undefined)
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-          return
+        const rl = readline.createInterface({
+          input: process.stdin,
+          output: process.stdout,
+          terminal: true,
+          history,
+          historySize: 100,
+          prompt: globalThis.prompt
+        })
+        globalThis.setPrompt = (p) => {
+          rl.setPrompt(p)
         }
 
-        if (!editorMode && line === '.help') {
-          replHelp()
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-          return
-        }
+        // async function repl() {
 
-        if (!editorMode && line === '.live') {
-          // printLive()
-          cron.start()
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-          return
-        }
-        // pause live
-        if (!editorMode && line === '.pause') {
-          // pause live feed
-          cron.stop()
-          rl.prompt(true)
-          return
-        }
+        // process.stdin.on('keypress', (str, key) => {
+        //   if (ct) {
+        //     ct.stop()
+        //   }
+        // })
 
-        if (!editorMode && line === '.dryrun') {
-          dryRunMode = !dryRunMode
-          if (dryRunMode) {
-            console.log(chalk.green('dryrun mode engaged'))
-            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
-          } else {
-            console.log(chalk.red('dryrun mode disengaged'))
-            rl.setPrompt(globalThis.prompt.replace('*', ''))
-          }
-          rl.prompt(true)
-          return
-        }
+        rl.on('history', e => {
+          history.concat(e)
+        })
 
-        if (!editorMode && line === '.monitor') {
-          const result = await monitor(jwk, id, { monitorProcess }).catch(_ => chalk.gray('⚡️ could not monitor process!'))
-          console.log(chalk.green(result))
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-          return
-        }
+        // rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+        rl.setPrompt(globalThis.prompt)
+        if (!editorMode) rl.prompt(true)
 
-        if (!editorMode && line === '.unmonitor') {
-          const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ => chalk.gray('⚡️ monitor not found!'))
-          console.log(chalk.green(result))
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-          return
-        }
-
-        if (/^\.load-blueprint/.test(line)) {
-          try { line = loadBlueprint(line) } catch (e) {
-            console.log(e.message)
+        rl.on('line', async line => {
+          if (!editorMode && line.trim() === '') {
+            console.log(undefined)
             // rl.close()
             // repl()
             rl.prompt(true)
             return
           }
-        }
 
-        // modules loaded
-        /** @type {Module[]} */
-        let loadedModules = []
-        if (/^\.load/.test(line)) {
-          try { [line, loadedModules] = load(line) } catch (e) {
-            console.log(e.message)
+          if (!editorMode && line === '.help') {
+            replHelp()
             // rl.close()
             // repl()
             rl.prompt(true)
             return
           }
-        }
 
-        if (line === '.editor') {
-          console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
-          editorMode = true
-          rl.setPrompt('')
+          if (!editorMode && line === '.live') {
+            // printLive()
+            cron.start()
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+            return
+          }
+          // pause live
+          if (!editorMode && line === '.pause') {
+            // pause live feed
+            cron.stop()
+            rl.prompt(true)
+            return
+          }
 
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-
-          return
-        }
-
-        if (editorMode && line === '.done') {
-          line = editorData
-          editorData = ''
-          editorMode = false
-          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
-        }
-
-        if (editorMode && line === '.delete') {
-          const lines = editorData.split('\n')
-          lines.pop()
-          lines.pop()
-          editorData = lines.join('\n') + '\n'
-          readline.moveCursor(process.stdout, 0, -1)
-          readline.clearLine(process.stdout, 0)
-          readline.cursorTo(process.stdout, 0)
-
-          readline.moveCursor(process.stdout, 0, -1)
-          readline.clearLine(process.stdout, 0)
-          readline.cursorTo(process.stdout, 0)
-
-          return
-        }
-
-        if (editorMode && line === '.print') {
-          console.log(editorData)
-          editorData = ''
-          editorMode = false
-          // rl.setPrompt(globalThis.prompt)
-          rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
-          rl.prompt(true)
-          return
-        }
-
-        if (editorMode && line === '.cancel') {
-          editorData = ''
-          editorMode = false
-          // rl.setPrompt(globalThis.prompt)
-          rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
-
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-
-          return
-        }
-
-        if (editorMode) {
-          editorData += line + '\n'
-
-          // rl.close()
-          // repl()
-          rl.prompt(true)
-
-          return
-        }
-
-        if (line === '.pad') {
-          rl.pause()
-          pad(id, async (err, content) => {
-            if (!err) {
-              // console.log(content)
-              await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
+          if (!editorMode && line === '.dryrun') {
+            dryRunMode = !dryRunMode
+            if (dryRunMode) {
+              console.log(chalk.green('dryrun mode engaged'))
+              rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+            } else {
+              console.log(chalk.red('dryrun mode disengaged'))
+              rl.setPrompt(globalThis.prompt.replace('*', ''))
             }
-            rl.resume()
             rl.prompt(true)
-          })
-          return
-        }
+            return
+          }
 
-        if (line === '.exit') {
-          cron.stop()
-          console.log('Exiting...')
-          rl.close()
-          return
-        }
+          if (!editorMode && line === '.monitor') {
+            const result = await monitor(jwk, id, { monitorProcess }).catch(_ => chalk.gray('⚡️ could not monitor process!'))
+            console.log(chalk.green(result))
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+            return
+          }
 
-        if (line === '.update') {
-          line = os.update()
-        }
+          if (!editorMode && line === '.unmonitor') {
+            const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ => chalk.gray('⚡️ monitor not found!'))
+            console.log(chalk.green(result))
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+            return
+          }
 
-        if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
-        printLive()
+          if (/^\.load-blueprint/.test(line)) {
+            try { line = loadBlueprint(line) } catch (e) {
+              console.log(e.message)
+              // rl.close()
+              // repl()
+              rl.prompt(true)
+              return
+            }
+          }
 
-        await doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
+          // modules loaded
+          /** @type {Module[]} */
+          let loadedModules = []
+          if (/^\.load/.test(line)) {
+            try { [line, loadedModules] = load(line) } catch (e) {
+              console.log(e.message)
+              // rl.close()
+              // repl()
+              rl.prompt(true)
+              return
+            }
+          }
 
-        if (process.env.DEBUG) {
-          console.timeEnd(chalk.gray('Elapsed'))
-        }
+          if (line === '.editor') {
+            console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+            editorMode = true
+            rl.setPrompt('')
 
-        if (cron) {
-          cron.start()
-        }
+            // rl.close()
+            // repl()
+            rl.prompt(true)
 
-        // rl.close()
+            return
+          }
+
+          if (editorMode && line === '.done') {
+            line = editorData
+            editorData = ''
+            editorMode = false
+            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+          }
+
+          if (editorMode && line === '.delete') {
+            const lines = editorData.split('\n')
+            lines.pop()
+            lines.pop()
+            editorData = lines.join('\n') + '\n'
+            readline.moveCursor(process.stdout, 0, -1)
+            readline.clearLine(process.stdout, 0)
+            readline.cursorTo(process.stdout, 0)
+
+            readline.moveCursor(process.stdout, 0, -1)
+            readline.clearLine(process.stdout, 0)
+            readline.cursorTo(process.stdout, 0)
+
+            return
+          }
+
+          if (editorMode && line === '.print') {
+            console.log(editorData)
+            editorData = ''
+            editorMode = false
+            // rl.setPrompt(globalThis.prompt)
+            rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
+            rl.prompt(true)
+            return
+          }
+
+          if (editorMode && line === '.cancel') {
+            editorData = ''
+            editorMode = false
+            // rl.setPrompt(globalThis.prompt)
+            rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
+
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+
+            return
+          }
+
+          if (editorMode) {
+            editorData += line + '\n'
+
+            // rl.close()
+            // repl()
+            rl.prompt(true)
+
+            return
+          }
+
+          if (line === '.pad') {
+            rl.pause()
+            pad(id, async (err, content) => {
+              if (!err) {
+                // console.log(content)
+                await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
+              }
+              rl.resume()
+              rl.prompt(true)
+            })
+            return
+          }
+
+          if (line === '.exit') {
+            cron.stop()
+            console.log('Exiting...')
+            rl.close()
+            return
+          }
+
+          if (line === '.update') {
+            line = os.update()
+          }
+
+          if (process.env.DEBUG) console.time(chalk.gray('Elapsed'))
+          printLive()
+
+          await doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
+
+          if (process.env.DEBUG) {
+            console.timeEnd(chalk.gray('Elapsed'))
+          }
+
+          if (cron) {
+            cron.start()
+          }
+
+          // rl.close()
+          // repl()
+          rl.prompt(true)
+        })
+
+        process.on('SIGINT', function () {
+          // save the input history when the user exits
+          if (id) {
+            writeHistory(id, history)
+          }
+          process.exit(0)
+        })
+
+        // }
+
         // repl()
-        rl.prompt(true)
       })
-
-      process.on('SIGINT', function () {
-        // save the input history when the user exits
-        if (id) {
-          writeHistory(id, history)
-        }
-        process.exit(0)
-      })
-
-      // }
-
-      // repl()
-    })
-    .catch(e => {
-      if (argv.list) {
-        console.log(e)
-      } else {
-        if (process.env.DEBUG) {
+      .catch(async e => {
+        if (argv.list) {
           console.log(e)
-        }
-        if (argv.load) {
-          console.log(e.message)
         } else {
-          console.log(e)
-          console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
-          process.exit(1)
+          if (argv.relay) {
+            let jwk;
+            if (process.env.WALLET) {
+              try {
+                jwk = JSON.parse(process.env.WALLET);
+              } catch (err) {
+                console.error('Error parsing WALLET from environment:', err);
+              }
+            }
+
+            try {
+              const topupSuccess = await handleRelayTopup(jwk);
+              if (topupSuccess) {
+                return runProcess();
+              }
+            } catch (topupError) {
+              console.error('Error handling relay topup:', topupError);
+              process.exit(1);
+            }
+          }
+          if (process.env.DEBUG) {
+            console.log(e)
+          }
+          if (argv.load) {
+            console.log(e.message)
+          } else {
+            console.log(e)
+            console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
+            process.exit(1)
+          }
         }
-      }
-    })
+      })
+  }
 }
 
-async function connect (jwk, id) {
+runProcess()
+
+async function connect(jwk, id) {
   const spinner = ora({
     spinner: 'dots',
     suffixText: ''
@@ -534,7 +558,7 @@ async function connect (jwk, id) {
   return _prompt
 }
 
-async function handleLoadArgs (jwk, id) {
+async function handleLoadArgs(jwk, id) {
   const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(line => load(line)[0]).join('\n')
   if (loadCode) {
     const spinner = ora({
@@ -550,7 +574,7 @@ async function handleLoadArgs (jwk, id) {
   }
 }
 
-async function doEvaluate (line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
   spinner.start()
   spinner.suffixText = chalk.gray('[Dispatching message...]')
 
