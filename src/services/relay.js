@@ -245,7 +245,8 @@ function formatTopupAmount(num) {
 }
 
 function fromDenominatedAmount(num) {
-  return num / Math.pow(10, 12);
+  const result = num / Math.pow(10, 12);
+  return result.toFixed(12).replace(/\.?0+$/, '');
 }
 
 export async function handleRelayTopup(jwk) {
