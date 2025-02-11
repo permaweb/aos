@@ -540,7 +540,7 @@ async function connect(jwk, id) {
       spinner.suffixText = chalk.red('[Connecting to process....]')
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
-      console.log({ promptResult })
+      // console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break
