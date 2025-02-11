@@ -18,9 +18,9 @@ import { dryEval } from './dry-eval.js'
 // services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
-import {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
-} from './services/connect.js'
+import * as connectSvc from './services/connect.js'
+import * as relaySvc from './services/relay.js'
+import * as mainnetSvc from './services/mainnet.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
 import { splash } from './services/splash.js'
@@ -44,6 +44,24 @@ const argv = minimist(process.argv.slice(2))
 
 let dryRunMode = false
 let luaData = ''
+let relayMode = false
+
+let {
+  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
+} = connectSvc
+
+let {
+  spawnProcessRelay, sendMessageRelay, readResultRelay, 
+  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay, 
+  dryrunRelay
+} = relaySvc
+
+let {
+  spawnProcessMainnet, sendMessageMainnet, readResultMainnet, 
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet, 
+  dryrunMainnet
+} = mainnetSvc
+
 if (!process.stdin.isTTY) {
   const onData = chunk => {
     luaData = luaData + chunk
@@ -103,6 +121,38 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
+if (argv['relay']) {
+  console.log(chalk.cyanBright('Using Relay: ') + chalk.cyan(argv['relay']))
+  process.env.RELAY_URL = argv['relay']
+  // replace services to use relay service
+  sendMessage = sendMessageRelay
+  spawnProcess = spawnProcessRelay
+  readResult = readResultRelay
+  monitorProcess = monitorProcessRelay
+  unmonitorProcess = unmonitorProcessRelay
+  live = liveRelay
+  printLive = printLiveRelay
+  dryrun = dryrunRelay
+
+  relayMode = true
+}
+if (argv['mainnet']) {
+  console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
+  process.env.AO_URL = argv['mainnet']
+  // get scheduler if in mainnetmode
+  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/address`).then(res => res.text())
+  // replace services to use mainnet service
+  sendMessage = sendMessageMainnet
+  spawnProcess = spawnProcessMainnet
+  readResult = readResultMainnet
+  monitorProcess = monitorProcessMainnet
+  unmonitorProcess = unmonitorProcessMainnet
+  live = liveMainnet
+  printLive = printLiveMainnet
+  dryrun = dryrunMainnet
+
+  relayMode = true
+}
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
   process.env.GATEWAY_URL = argv['gateway-url']
@@ -122,6 +172,10 @@ if (!argv.watch) {
   of()
     .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
     .chain(jwk => {
+      // make wallet available to services if relay mode
+      if (argv['relay']) {
+        process.env.WALLET = JSON.stringify(jwk)
+      }
       // handle list option, need jwk in order to do it.
       if (argv.list) {
         return list(jwk, { address, gql }).chain(Rejected)
@@ -135,7 +189,7 @@ if (!argv.watch) {
     .then(async ({ jwk, id }) => {
       let editorMode = false
       let editorData = ''
-
+      
       const history = readHistory(id)
 
       if (luaData.length > 0 && argv.load) {
@@ -437,6 +491,7 @@ if (!argv.watch) {
         if (argv.load) {
           console.log(e.message)
         } else {
+          console.log(e)
           console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
           process.exit(1)
         }

@@ -39,7 +39,7 @@ assignment.init(ao)
 -- @table process
 -- @field _version The version number of the process
 
-local process = { _version = "2.0.1" }
+local process = { _version = "2.0.3" }
 -- The maximum number of messages to store in the inbox
 local maxInboxCount = 10000
 
@@ -270,8 +270,8 @@ local function initializeState(msg, env)
   Errors = Errors or {}
   Inbox = Inbox or {}
 
-  -- temporary fix for Spawn
-  if not Owner then
+  -- Owner should only be assiged once
+  if env.Process.Id == msg.Id and not Owner then
     local _from = findObject(env.Process.Tags, "name", "From-Process")
     if _from then
       Owner = _from.value
@@ -361,12 +361,15 @@ function process.handle(msg, _)
 
   -- Added for aop6 boot loader
   -- See: https://github.com/permaweb/aos/issues/342
-  Handlers.once("_boot",
-    function (msg)
-      return msg.Tags.Type == "Process" and Owner == msg.From 
-    end,
-    require('.boot')(ao)
-  )
+  -- Only run bootloader when Process Message is First Message
+  if env.Process.Id == msg.Id then
+    Handlers.once("_boot",
+      function (msg)
+        return msg.Tags.Type == "Process" and Owner == msg.From 
+      end,
+      require('.boot')(ao)
+    )
+  end
 
   Handlers.append("_default", function () return true end, require('.default')(insertInbox))
 

@@ -6,17 +6,34 @@ import fs from 'fs'
 const wasm = fs.readFileSync('./process.wasm')
 const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
 
+const env = {
+  Process: {
+    Id: 'AOS',
+    Owner: 'FOOBAR',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }
+}
+
+async function init(handle) {
+  const {Memory} = await handle(null, {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    'Block-Height': '999',
+    Id: 'AOS',
+    Module: 'WOOPAWOOPA',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }, env)
+  return Memory
+}
+
 test('handlers receive', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -36,7 +53,7 @@ return require('json').encode(res)
   }
 
   // load handler
-  const { Memory, Output, Messages } = await handle(null, msg, env)
+  const { Memory, Output, Messages } = await handle(start, msg, env)
   //console.log(Output)
   console.log(Messages[0])
   // ---
@@ -56,15 +73,8 @@ return require('json').encode(res)
 
 test('resolvers', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -88,7 +98,7 @@ Handlers.once("onetime",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const ping = {
     Target: 'AOS',
@@ -106,15 +116,8 @@ Handlers.once("onetime",
 
 test('handlers once', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -135,7 +138,7 @@ Handlers.once("onetime",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const ping = {
     From: 'FRED',
@@ -155,15 +158,8 @@ Handlers.once("onetime",
 
 test('ping pong', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -184,7 +180,7 @@ Handlers.add("ping",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const ping = {
     Target: 'AOS',
@@ -200,15 +196,8 @@ Handlers.add("ping",
 
 test('handler pipeline', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -248,7 +237,7 @@ Handlers.add("three",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const ping = {
     Target: 'AOS',
@@ -264,15 +253,8 @@ Handlers.add("three",
 
 test('timestamp', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -293,7 +275,7 @@ Handlers.add("timestamp",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const currentTimestamp = Date.now();
   const timestamp = {
@@ -311,15 +293,8 @@ Handlers.add("timestamp",
 
 test('test pattern, fn handler', async () => {
   const handle = await AoLoader(wasm, options)
-  const env = {
-    Process: {
-      Id: 'AOS',
-      Owner: 'FOOBAR',
-      Tags: [
-        { name: 'Name', value: 'Thomas' }
-      ]
-    }
-  }
+  const start = await init(handle)
+  
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
@@ -339,7 +314,7 @@ Handlers.add("Balance",
     `
   }
   // load handler
-  const { Memory } = await handle(null, msg, env)
+  const { Memory } = await handle(start, msg, env)
   // ---
   const currentTimestamp = Date.now();
   const balance = {

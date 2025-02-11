@@ -53,6 +53,9 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       }
       return x
     })
-    .toPromise()
+    .toPromise().catch(err => {
+      console.log(err)
+      return {}
+    })
   //return { output: 'echo: ' + line, prompt: null }
 }

@@ -1,4 +1,4 @@
-import { connect, createDataItemSigner } from "@permaweb/aoconnect"
+import { connect } from '@permaweb/aoconnect'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -11,28 +11,28 @@ import Arweave from 'arweave'
 
 const arweave = Arweave.init({})
 
-
 const pkg = getPkg()
-const getInfo = () => ({
-  GATEWAY_URL: process.env.GATEWAY_URL,
-  CU_URL: process.env.CU_URL,
-  MU_URL: process.env.MU_URL
-})
+const setupRelay = (wallet) => {
+  const info = {
+    GATEWAY_URL: process.env.GATEWAY_URL,
+    CU_URL: process.env.CU_URL,
+    MU_URL: process.env.MU_URL,
+    RELAY_URL : process.env.RELAY_URL
+  } 
+  return connect({
+    MODE: 'relay',
+    wallet, 
+    ...info 
+  })
+}
 
-const retryAsync = (fn, left, right, retries = 3) =>
-  fn().bichain(
-    err => (retries > 0 ? retryAsync(fn, retries - 1) : left(err)),
-    res => right(res)
-  );
-
-
-export function readResult(params) {
-
+export function readResultRelay(params) {
+  const wallet = JSON.parse(process.env.WALLET)
+  const { result } = setupRelay(wallet) 
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 500))
-  )().chain(fromPromise(() => connect(getInfo()).result(params)))
-    // log the error messages most seem related to 503
-    // .bimap(_ => (console.log(_), _), _ => (console.log(_), _))
+    new Promise((resolve) => setTimeout(() => resolve(params), 1000))
+  )()
+    .chain(fromPromise(() => result(params)))
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
@@ -40,28 +40,33 @@ export function readResult(params) {
     )
 }
 
-export function dryrun({ processId, wallet, tags, data }, spinnner) {
+export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
+  const { dryrun } = setupRelay(wallet)
   return fromPromise(() =>
     arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      connect(getInfo()).dryrun({ process: processId, Owner, tags, data })
+      dryrun({ process: processId, Owner, tags, data })
     )
   )()
 }
 
-export function sendMessage({ processId, wallet, tags, data }, spinner) {
-  let retries = "."
-  const signer = createDataItemSigner(wallet)
 
+export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
+  let retries = "."
+  const { message, createDataItemSigner } = setupRelay(wallet) 
+  
   const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
     .map(_ => {
       spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
       retries += "."
       return _
     })
-    .chain(fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data })))
-
-  return fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data }))()
-    //.bimap(function (e) { console.log(e); return e }, function (a) { console.log(a); return a; })
+    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
+  
+  return fromPromise(() =>
+    new Promise((resolve) => setTimeout(() => resolve(), 500))
+  )().chain(fromPromise(() => 
+    message({ process: processId, signer: createDataItemSigner(), tags, data })
+  ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -71,52 +76,43 @@ export function sendMessage({ processId, wallet, tags, data }, spinner) {
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-  //.map(result => (console.log(result), result))
+    .bichain(retry, Resolved)    
 
 }
 
-export function spawnProcess({ wallet, src, tags, data }) {
+export function spawnProcessRelay({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const signer = createDataItemSigner(wallet)
+  const { spawn, createDataItemSigner } = setupRelay(wallet) 
+ 
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => connect(getInfo()).spawn({
-    module: src, scheduler: SCHEDULER, signer, tags, data
+  return fromPromise(() => spawn({
+    module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
   })
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
 
 }
 
-export function monitorProcess({ id, wallet }) {
-  const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).monitor({ process: id, signer }))()
+export function monitorProcessRelay({ id, wallet }) {
+  const { monitor, createDataItemSigner } = setupRelay(wallet) 
+  
+  return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
   //.map(result => (console.log(result), result))
 
 }
 
-export function unmonitorProcess({ id, wallet }) {
-  const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).unmonitor({ process: id, signer }))()
+export function unmonitorProcessRelay({ id, wallet }) {
+  const { unmonitor, createDataItemSigner } = setupRelay(wallet) 
+
+  return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
   //.map(result => (console.log(result), result))
 
 }
 
 let _watch = false
 
-export function printLive() {
+export function printLiveRelay() {
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
@@ -137,7 +133,7 @@ export function printLive() {
 
 }
 
-export async function live(id, watch) {
+export async function liveRelay(id, watch) {
   _watch = watch
   let ct = null
   let cursor = null
@@ -159,6 +155,8 @@ export async function live(id, watch) {
   let isJobRunning = false
 
   const checkLive = async () => {
+    const wallet = process.env.WALLET
+    const { results } = setupRelay(wallet)
     if (!isJobRunning) {
 
       try {
@@ -171,9 +169,9 @@ export async function live(id, watch) {
           params["sort"] = "DESC"
         }
 
-        const results = await connect(getInfo()).results(params)
+        const _relayResults = await results(params)
 
-        let edges = uniqBy(prop('cursor'))(results.edges.filter(function (e) {
+        let edges = uniqBy(prop('cursor'))(_relayResults.edges.filter(function (e) {
           if (e.node?.Output?.print === true) {
             return true
           }
@@ -217,8 +215,6 @@ export async function live(id, watch) {
   }
   await cron.schedule('*/2 * * * * *', checkLive)
 
-
-
-  ct = await cron.schedule('*/2 * * * * *', printLive)
+  ct = await cron.schedule('*/2 * * * * *', printLiveRelay)
   return ct
 }

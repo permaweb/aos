@@ -77,7 +77,7 @@ export function register(jwk, services) {
 
     if (!AOS_MODULE && !AOS_MODULE_NAME) return Resolved({ ...ctx, module: getPkg().aos.module });
     if (AOS_MODULE) return Resolved({ ...ctx, module: AOS_MODULE });
-
+    
     return services
       .gql(findAoModuleByName(), { name: ctx.module })
       .map(utils.path(['data', 'transactions', 'edges']))
