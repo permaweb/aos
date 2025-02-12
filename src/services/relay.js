@@ -250,14 +250,23 @@ function fromDenominatedAmount(num) {
 }
 
 export async function handleRelayTopup(jwk) {
+  const RELAY = {
+    url: `${process.env.RELAY_URL}/~simple-pay@1.0/balance`
+  };
+
   const PAYMENT = {
     address: '0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc',
     ticker: 'AO'
   };
-  const RELAY = {
-    address: 'yTVz5K0XU52lD9O0iHh42wgBGSXgsPcu7wEY8GqWnFY',
-    url: `${process.env.RELAY_URL}/~simple-pay@1.0/balance`
-  };
+
+  try {
+    const relayAddressResponse = await fetch(`${process.env.RELAY_URL}/~meta@1.0/info/address`);
+    RELAY.address = await relayAddressResponse.text();
+  }
+  catch (e) {
+    console.log(chalk.red('Error getting relay information'));
+    process.exit(1);
+  }
 
   const { dryrun, message, createDataItemSigner } = connect();
 
