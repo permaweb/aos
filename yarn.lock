@@ -2052,7 +2052,7 @@ hasown@^2.0.0, hasown@^2.0.2:
 
 http-message-signatures@^1.0.4:
   version "1.0.4"
-  resolved "https://registry.npmjs.org/http-message-signatures/-/http-message-signatures-1.0.4.tgz"
+  resolved "https://registry.yarnpkg.com/http-message-signatures/-/http-message-signatures-1.0.4.tgz#3d1f614977d3a435af7c1d35a75e1e48d9094075"
   integrity sha512-gavCQWnxHFg0BVlKs6CmYK7hNSH1o0x0mHTC68yBAHYOYuTVXPv52mEE7QuT5TenfiagTdOa/zPJzen4lEX7Rg==
   dependencies:
     structured-headers "^1.0.1"
