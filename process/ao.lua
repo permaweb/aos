@@ -202,7 +202,9 @@ function ao.send(msg)
     }
 
     if ao.hint then
-      table.insert(message.Tags, { name = "From-Process", value = "" .. "?hint=" ..  ao.hint } ) 
+      table.insert(message.Tags, { name = "From-Process", value = ao.id .. "?hint=" ..  ao.hint } ) 
+    else 
+      table.insert(message.Tags, { name = "From-Process", value = ao.id })
     end
     -- if custom tags in root move them to tags
     for k, v in pairs(msg) do
