@@ -42,7 +42,8 @@ local ao = {
         'Timestamp', 'Nonce', 'Epoch', 'Signature', 'Forwarded-By',
         'Pushed-For', 'Read-Only', 'Cron', 'Block-Height', 'Reference', 'Id',
         'Reply-To'
-    }
+    },
+    hint = ""
 }
 
 --- Checks if a key exists in a list.
@@ -115,6 +116,12 @@ function ao.normalize(msg)
         if not _includes(ao.nonExtractableTags)(o.name) then
             msg[o.name] = o.value
         end
+    end
+    -- capture "Hint" on every message
+    if msg.Hint then
+        ao.hint = msg.Hint
+    else
+        ao.hint = nil
     end
     return msg
 end
@@ -194,6 +201,11 @@ function ao.send(msg)
         }
     }
 
+    if ao.hint then
+      table.insert(message.Tags, { name = "From-Process", value = ao.id .. "?hint=" ..  ao.hint } ) 
+    else 
+      table.insert(message.Tags, { name = "From-Process", value = ao.id })
+    end
     -- if custom tags in root move them to tags
     for k, v in pairs(msg) do
         if not _includes({"Target", "Data", "Anchor", "Tags", "From"})(k) then

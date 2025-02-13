@@ -25,8 +25,9 @@ async function init(handle) {
     Id: 'AOS',
     Module: 'WOOPAWOOPA',
     Tags: [
-      { name: 'Name', value: 'Thomas' }
-    ]
+      { name: 'Name', value: 'Thomas' },
+    ],
+    Data: ''
   }, env)
   return Memory
 }
@@ -43,15 +44,45 @@ test('multi print feature', async () => {
     Id: "1234xyxfoo",
     Module: "WOOPAWOOPA",
     Tags: [
-      { name: 'Action', value: 'Eval' }
+      { name: 'Action', value: 'Eval' },
+      { name: 'Hint', value: 'https://the.ao.computer'},
     ],
     Data: `
 print("one") 
 print("two")
+Send({Target = ao.id, Action = "Hint" })
 `
   }
   const result = await handle(start, msg, env)
   assert.equal(result.Output?.data, 'one\ntwo')
+  assert.ok(result.Messages[0].Tags.find(t => t.name === "From-Process").value == "AOS?hint=https://the.ao.computer")
+  assert.ok(true)
+  console.log(result.Messages[0].Tags)
+})
+
+test('multi print feature - no hint', async () => {
+  const handle = await AoLoader(wasm, options)
+  const start = await init(handle)
+  
+  const msg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' },
+    ],
+    Data: `
+print("one") 
+print("two")
+Send({Target = ao.id, Action = "Hint" })
+`
+  }
+  const result = await handle(start, msg, env)
+  assert.equal(result.Output?.data, 'one\ntwo')
+  assert.ok(result.Messages[0].Tags.find(t => t.name === "From-Process").value == "AOS")
   assert.ok(true)
 })
 
