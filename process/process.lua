@@ -2,11 +2,11 @@
 -- @module process
 
 -- @dependencies
-local pretty = require('.pretty')
-local base64 = require('.base64')
-local json = require('json')
+-- local pretty = require('.pretty')
+-- local base64 = require('.base64')
+-- local json = require('json')
 local chance = require('.chance')
-local crypto = require('.crypto.init')
+-- local crypto = require('.crypto.init')
 local coroutine = require('coroutine')
 -- set alias ao for .ao library
 if not _G.package.loaded['ao'] then _G.package.loaded['ao'] = require('.ao') end
@@ -250,7 +250,7 @@ end
 -- @tparam {table} env The environment to initialize the state with
 local function initializeState(msg, env)
   if not Seeded then
-    chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. msg.Module .. msg.Id)))
+    chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. "hello-there" .. msg.Id)))
     math.random = function (...)
       local args = {...}
       local n = #args
@@ -316,7 +316,11 @@ function process.handle(msg, _)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
   HANDLER_PRINT_LOGS = {}
-  
+
+  -- AR.IO PROCESS CODE
+  -- TODO: this should be moved AFTER the _eval is set up below, but doing so bricks the process. Unsure why. By having it up here we break eval.
+  require(".src.init").init()
+
   -- set os.time to return msg.Timestamp
   os.time = function () return msg.Timestamp end
 
@@ -356,9 +360,10 @@ function process.handle(msg, _)
     function (msg)
       return msg.Action == "Eval" and Owner == msg.From
     end,
-    require('.eval')(ao)
+    function ()
+      require('.eval')(ao)
+    end
   )
-
   -- Added for aop6 boot loader
   -- See: https://github.com/permaweb/aos/issues/342
   -- Only run bootloader when Process Message is First Message
@@ -367,7 +372,11 @@ function process.handle(msg, _)
       function (msg)
         return msg.Tags.Type == "Process" and Owner == msg.From 
       end,
-      require('.boot')(ao)
+      function ()
+        require('.boot')(ao)
+        -- load all the initial state once
+        require(".state.init").init()
+      end
     )
   end
 
