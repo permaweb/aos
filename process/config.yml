@@ -1,0 +1,4 @@
+stack_size: 33554432 # 32Mib
+initial_memory: 50331648 # 48Mib
+maximum_memory: 8589934592 # 8Gib
+target: 64
