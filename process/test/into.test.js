@@ -61,19 +61,19 @@ test('return process info', async () => {
     Data: 'print("hello world")'
   }
   const result2 = await handle(result.Memory, msg2, env)
-  // const msg3 = {
-  //   Target: 'AOS',
-  //   From: 'FOOBAR',
-  //   Owner: 'FOOBAR',
-  //   ['Block-Height']: "1000",
-  //   Id: "1234xyxfoo",
-  //   Module: "WOOPAWOOPA",
-  //   Timestamp: "1000",
-  //   Tags: [
-  //     { name: 'Action', value: 'Info' }
-  //   ],
-  // }
-  // const result3 = await handle(result2.Memory, msg3, env)
-  console.log(result2)
-  // assert.ok(result3.Messages[0]?.Data)
+  assert.ok(result2.Messages[0]?.Data)
+  const msg3 = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Timestamp: "1000",
+    Tags: [
+      { name: 'Action', value: 'Info' }
+    ],
+  }
+  const result3 = await handle(result2.Memory, msg3, env)
+  assert.ok(result3.Messages[0]?.Data)
 })

@@ -31,33 +31,6 @@ fi
 
 echo "Extracted Module ID: $MODULE_ID"
 
-# Define an output file
-AOS_OUTPUT_FILE="aos_output.txt"
-# Remove any existing output file
-rm -f "$AOS_OUTPUT_FILE"
-
 # Step 5: Use the module ID in the final command
 echo "Running: aos -w ./wallet.json --module=$MODULE_ID"
-AOS_PID=$!
-
-# Wait a few seconds to let the output accumulate
-sleep 10
-
-# Kill the background process
-kill "$AOS_PID" 2>/dev/null || true
-
-# Read the output from the file
-aos_output=$(cat "$AOS_OUTPUT_FILE")
-echo "$aos_output"
-
-# Step 6: Extract the AOS process from the captured output
-# Example line: "Your AOS process: xpXa1ws-RK66TlXbI6OHybYNi7mZoxG3BZ1k5impnZc"
-process_line=$(echo "$aos_output" | grep "Your AOS process:")
-if [ -z "$process_line" ]; then
-  echo "Error: Could not find the AOS process in the output."
-  exit 1
-fi
-
-# Assuming the process ID is the fourth word in the line:
-AOS_PROCESS=$(echo "$process_line" | awk '{print $4}')
-echo "Extracted AOS Process: $AOS_PROCESS"
+aos -w ./wallet.json --module=$MODULE_ID
