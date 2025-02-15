@@ -22,8 +22,8 @@ const pkg = getPkg()
 const setupRelay = (wallet) => {
   const info = {
     GATEWAY_URL: process.env.GATEWAY_URL,
-    CU_URL: process.env.CU_URL ?? 'http://cu.s451-comm3-main.xyz',
-    MU_URL: process.env.MU_URL ?? 'http://mu.s451-comm3-main.xyz',
+    CU_URL: 'http://cu.s451-comm3-main.xyz',
+    MU_URL: 'http://mu.s451-comm3-main.xyz',
     RELAY_URL: process.env.RELAY_URL ?? 'http://137.220.36.155',
     SCHEDULER: 'eyhFer638JG-fJFEC3X3Q5kAl78aTe1eljYDiQo0vuU'
   }
@@ -89,7 +89,8 @@ export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
 }
 
 export function spawnProcessRelay({ wallet, src, tags, data }) {
-  const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+  // const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+  const SCHEDULER = "eyhFer638JG-fJFEC3X3Q5kAl78aTe1eljYDiQo0vuU"
   const { spawn, createDataItemSigner } = setupRelay(wallet)
 
 
