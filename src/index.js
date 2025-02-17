@@ -122,7 +122,7 @@ if (argv.watch && argv.watch.length === 43) {
 splash()
 
 if (argv['relay']) {
-  console.log(chalk.cyanBright('Using Relay: ') + chalk.cyan(argv['relay']))
+  console.log(`\n${chalk.gray('Using Relay:')} ${chalk.yellow(argv['relay'])}`);
   process.env.RELAY_URL = argv['relay']
   // replace services to use relay service
   sendMessage = sendMessageRelay
@@ -192,6 +192,10 @@ async function runProcess() {
         let editorData = ''
 
         const history = readHistory(id)
+
+        if (argv.relay && argv.topup) {
+          await handleRelayTopup(jwk, false);
+        }
 
         if (luaData.length > 0 && argv.load) {
           const spinner = ora({
@@ -497,7 +501,7 @@ async function runProcess() {
             }
 
             try {
-              const topupSuccess = await handleRelayTopup(jwk);
+              const topupSuccess = await handleRelayTopup(jwk, true);
               if (topupSuccess) {
                 return runProcess();
               }
