@@ -250,7 +250,7 @@ function fromDenominatedAmount(num) {
   return result.toFixed(12).replace(/\.?0+$/, '');
 }
 
-export async function handleRelayTopup(jwk) {
+export async function handleRelayTopup(jwk, insufficientBalance) {
   const RELAY = {
     url: `${process.env.RELAY_URL}/~simple-pay@1.0/balance`
   };
@@ -269,15 +269,16 @@ export async function handleRelayTopup(jwk) {
     process.exit(1);
   }
 
-  const { dryrun, message, createDataItemSigner } = connect();
+  const { dryrun, message, createDataItemSigner } = connect({ MODE: 'legacy' });
 
   const walletAddress = await arweave.wallets.getAddress(jwk)
-  console.log(chalk.cyanBright('Wallet Address: ') + chalk.cyan(walletAddress));
-  console.log(chalk.gray(`You must transfer some ${PAYMENT.ticker} to this relay in order to start sending messages.`));
+  console.log(`${chalk.gray('Wallet Address:')} ${chalk.yellow(walletAddress)}\n`);
+  
+  if (insufficientBalance) console.log(chalk.gray(`You must transfer some ${PAYMENT.ticker} to this relay in order to start sending messages.`));
 
   let spinner = ora({
     spinner: 'dots',
-    suffixText: chalk.gray('[Getting your balance...]')
+    suffixText: chalk.gray(`[Getting your ${PAYMENT.ticker} balance...]`)
   });
   spinner.start();
 
@@ -301,44 +302,14 @@ export async function handleRelayTopup(jwk) {
   const balance = balanceResponse?.Messages?.[0]?.Data;
   if (balance) {
     const getChalk = balance > 0 ? chalk.green : chalk.yellow;
-    console.log(chalk.gray('Current balance: ' + getChalk(`${fromDenominatedAmount(balance)} AO`)));
+    console.log(chalk.gray('Current balance in wallet: ' + getChalk(`${fromDenominatedAmount(balance)} ${PAYMENT.ticker}`)));
     if (balance <= 0) {
       console.log(chalk.red(`This wallet must hold some ${PAYMENT.ticker} in order to transfer to the relay.`));
       process.exit(1);
     }
   }
 
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-  });
-
-  const ask = (question) => new Promise(resolve => rl.question(question, answer => resolve(answer)));
-
-  const answer = await ask(chalk.gray('Insufficient funds. Would you like to top up? (Y/N): '));
-  if (answer.trim().toLowerCase().startsWith('y')) {
-    let topupAmount = 0.0000001; // TODO: Get minimum amount
-    const maxBalanceRetries = 20;
-
-    console.log(chalk.gray('Minimum amount required: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
-    const amountAnswer = await ask(chalk.gray('Enter topup amount (leave blank for minimum): '));
-    if (amountAnswer?.length) topupAmount = parseFloat(amountAnswer);
-
-    if (isNaN(topupAmount) || topupAmount <= 0) {
-      console.log(chalk.red('Invalid topup amount provided. Topup cancelled.'));
-      rl.close();
-      process.exit(1);
-    }
-
-    console.log(chalk.gray('Topping up with amount: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
-
-    spinner = ora({
-      spinner: 'dots',
-      suffixText: chalk.gray('[Transferring balance to relay...]')
-    });
-    spinner.start();
-
-    const address = await arweave.wallets.getAddress(jwk);
+  const address = await arweave.wallets.getAddress(jwk);
     const privateKey = createPrivateKey({ key: jwk, format: 'jwk' });
     const signer = createSigner(privateKey, 'rsa-pss-sha512', address);
     const params = ['alg', 'keyid'].sort();
@@ -359,13 +330,63 @@ export async function handleRelayTopup(jwk) {
       params
     }, request);
 
-    let initialBalance;
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const ask = (question) => new Promise(resolve => rl.question(question, answer => resolve(answer)));
+
+  let continueWithTopup = true;
+  
+  let currentRelayBalance;
+  if (insufficientBalance) {
+    const answer = await ask(chalk.gray('Insufficient funds. Would you like to top up? (Y/N): '));
+    continueWithTopup = answer.trim().toLowerCase().startsWith('y');
+  }
+  else {
     try {
       const response = await fetch(RELAY.url, { method, headers });
       const balance = parseInt(await response.text(), 10);
-      initialBalance = Number.isNaN(balance) ? 0 : balance;
+      currentRelayBalance = Number.isNaN(balance) ? 0 : balance;
+        console.log(chalk.gray('Current balance in relay: ' + chalk.green(`${fromDenominatedAmount(currentRelayBalance)} ${PAYMENT.ticker}\n`)));
+      
     } catch (e) {
-      console.error(chalk.red('Error fetching initial balance:'), e);
+      console.error('Error fetching balance endpoint:', e);
+    }
+  }
+
+  if (continueWithTopup) {
+    let topupAmount = 0.0000001; // TODO: Get minimum amount
+    const maxBalanceRetries = 20;
+
+    if (insufficientBalance) console.log(chalk.gray('Minimum amount required: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
+    const amountAnswer = await ask(chalk.gray(`Enter topup amount (leave blank for ${chalk.green(formatTopupAmount(topupAmount))} ${PAYMENT.ticker}): `));
+    if (amountAnswer?.length) topupAmount = parseFloat(amountAnswer);
+
+    if (isNaN(topupAmount) || topupAmount <= 0) {
+      console.log(chalk.red('Invalid topup amount provided. Topup cancelled.'));
+      rl.close();
+      process.exit(1);
+    }
+
+    console.log(chalk.gray('Topping up with amount: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}\n`)));
+
+    spinner = ora({
+      spinner: 'dots',
+      suffixText: chalk.gray('[Transferring balance to relay...]')
+    });
+    spinner.start();
+
+    
+    if (!currentRelayBalance) {
+      try {
+        const response = await fetch(RELAY.url, { method, headers });
+        const balance = parseInt(await response.text(), 10);
+        currentRelayBalance = Number.isNaN(balance) ? 0 : balance;
+      } catch (e) {
+        console.error(chalk.red('Error fetching initial balance:'), e);
+      }
     }
 
     const sendQuantity = (topupAmount * Math.pow(10, 12)).toString();
@@ -390,12 +411,12 @@ export async function handleRelayTopup(jwk) {
         const response = await fetch(RELAY.url, { method, headers });
         const balance = parseInt(await response.text(), 10);
         const newBalance = Number.isNaN(balance) ? 0 : balance;
-        if (newBalance !== initialBalance) {
+        if (newBalance > currentRelayBalance) {
           balanceUpdated = true;
           spinner.stop();
           console.log(
-            chalk.green(
-              `Balance updated from ${fromDenominatedAmount(initialBalance)} to ${fromDenominatedAmount(newBalance)} ${PAYMENT.ticker}`
+            chalk.gray(
+              `Relay balance updated from ${chalk.green(fromDenominatedAmount(currentRelayBalance))} to ${chalk.green(fromDenominatedAmount(newBalance))} ${chalk.green(PAYMENT.ticker)}`
             )
           );
           break;
