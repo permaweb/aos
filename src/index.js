@@ -140,7 +140,7 @@ if (argv['mainnet']) {
   console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
-  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/address`).then(res => res.text())
+  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet
@@ -174,9 +174,9 @@ async function runProcess() {
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
         // make wallet available to services if relay mode
-        if (argv['relay']) {
-          process.env.WALLET = JSON.stringify(jwk)
-        }
+        // if (argv['relay'] || argv['mainnet']) {
+        process.env.WALLET = JSON.stringify(jwk)
+        // }
         // handle list option, need jwk in order to do it.
         if (argv.list) {
           return list(jwk, { address, gql }).chain(Rejected)
@@ -184,6 +184,7 @@ async function runProcess() {
         return Resolved(jwk)
       })
       .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
+        
         .map(id => ({ jwk, id }))
       )
       .toPromise()
@@ -191,6 +192,7 @@ async function runProcess() {
         let editorMode = false
         let editorData = ''
 
+        
         const history = readHistory(id)
 
         if (luaData.length > 0 && argv.load) {
@@ -589,7 +591,6 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
   }
   const output = result.Output // JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
   // log output
-  // console.log(output)
   spinner.stop()
 
   if (result?.Error || result?.error) {

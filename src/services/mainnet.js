@@ -1,4 +1,4 @@
-import { connect } from '@permaweb/aoconnect'
+import { connect, createSigner } from '@permaweb/aoconnect'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -6,7 +6,7 @@ import cron from 'node-cron'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { uniqBy, prop, keys } from 'ramda'
+import { uniqBy, prop, keys, assoc } from 'ramda'
 import Arweave from 'arweave'
 
 const arweave = Arweave.init({})
@@ -15,24 +15,33 @@ const pkg = getPkg()
 const setupMainnet = (wallet) => {
   const info = {
     GATEWAY_URL: process.env.GATEWAY_URL,
-    CU_URL: process.env.CU_URL,
-    MU_URL: process.env.MU_URL,
-    AO_URL : process.env.AO_URL
+    URL : process.env.AO_URL
   } 
   return connect({
     MODE: 'mainnet',
-    wallet, 
+    signer: createSigner(wallet),
+    device: 'process@1.0', 
     ...info 
   })
 }
 
 export function readResultMainnet(params) {
   const wallet = JSON.parse(process.env.WALLET)
-  const { result } = setupRelay(wallet) 
+  const { request } = setupMainnet(wallet) 
+  
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(params), 1000))
   )()
-    .chain(fromPromise(() => result(params)))
+    .chain(fromPromise(() => request({
+      path: `/${params.process}/compute&slot+integer=${params.message}/results/json`,
+      method: 'POST',
+      target: params.process,
+      'slot+integer': params.message,
+      accept: 'application/json'
+    }).then(async res => ({ Output: await res.Output.json()}))
+  
+    ))
+    
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
@@ -41,10 +50,20 @@ export function readResultMainnet(params) {
 }
 
 export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
-  const { dryrun } = setupMainnet(wallet)
+  const { request } = setupMainnet(wallet)
   return fromPromise(() =>
     arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      dryrun({ process: processId, Owner, tags, data })
+      request({
+        path: `/~relay@1.0?relay-path=http://localhost:3000/dryrun/${processId}`,
+        method: 'POST',
+        body: JSON.stringify({
+          Target: processId,
+          Owner,
+          tags,
+          data
+        })
+      })
+      //dryrun({ process: processId, Owner, tags, data })
     )
   )()
 }
@@ -52,7 +71,7 @@ export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
 
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   let retries = "."
-  const { message, createDataItemSigner } = setupMainnet(wallet) 
+  const { request } = setupMainnet(wallet) 
   
   const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
     .map(_ => {
@@ -60,12 +79,36 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       retries += "."
       return _
     })
-    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
+    .chain(fromPromise(() => {
+      return request({
+        type: 'Message',
+        path: `${processId}/schedule`,
+        method: 'POST',
+        ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+        data: data,
+        'Data-Protocol': 'ao',
+        Variant: 'ao.N.1'
+      }).then(res => {
+      
+        return res.slot.text()
+      }) 
+    }))
   
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(), 500))
   )().chain(fromPromise(() => 
-    message({ process: processId, signer: createDataItemSigner(), tags, data })
+    request({
+      type: 'Message',
+      path: `${processId}/schedule`,
+      method: 'POST',
+      ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+      data: data,
+      'Data-Protocol': 'ao',
+      Variant: 'ao.N.1'
+    }).then(res => {
+      
+      return res.slot.text()
+    }) 
   ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -82,13 +125,28 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const { spawn, createDataItemSigner } = setupMainnet(wallet) 
+  const { request } = setupMainnet(wallet) 
  
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => spawn({
-    module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
+  return fromPromise(() => request({
+    method: 'POST',
+    path: '/schedule',
+    type: 'Process',
+    scheduler: SCHEDULER,
+    module: src,
+    device: 'process@1.0',
+    'scheduler-device': 'scheduler@1.0',
+    'execution-device': 'compute-lite@1.0',
+    authority: SCHEDULER,
+    'scheduler-location': SCHEDULER,
+    data: 'print("spawned")',
+    'Data-Protocol': 'ao',
+    Variant: 'ao.N.1',
+    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    data: data
   })
+    .then(x => x.process.text())
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
 

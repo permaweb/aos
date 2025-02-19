@@ -56,6 +56,7 @@ export function register(jwk, services) {
              */
             : Rejected({ ...ctx, ok: true })
       )
+      
   }
 
   const selectModule = (results) =>
@@ -114,7 +115,7 @@ export function register(jwk, services) {
         data = fs.readFileSync(path.resolve(argv.data), 'utf-8')
       }
     }
-
+    
     return services.spawnProcess({
       wallet: jwk,
       src: module,

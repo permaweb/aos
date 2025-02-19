@@ -1,5 +1,5 @@
 import { createPrivateKey } from 'node:crypto'
-import { connect } from '@permaweb/aoconnect'
+import { connect, createSigner } from '@permaweb/aoconnect'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import readline from 'readline';
 import ora from 'ora'
@@ -12,7 +12,7 @@ import os from 'os'
 import { uniqBy, prop, keys } from 'ramda'
 import Arweave from 'arweave'
 
-import { httpbis, createSigner } from 'http-message-signatures'
+import { httpbis } from 'http-message-signatures'
 
 const { signMessage } = httpbis
 const arweave = Arweave.init({})
@@ -24,12 +24,13 @@ const setupRelay = (wallet) => {
     GATEWAY_URL: process.env.GATEWAY_URL,
     CU_URL: 'http://cu.s451-comm3-main.xyz',
     MU_URL: 'http://mu.s451-comm3-main.xyz',
-    RELAY_URL: process.env.RELAY_URL ?? 'http://137.220.36.155',
+    URL: process.env.RELAY_URL ?? 'http://137.220.36.155',
     SCHEDULER: 'eyhFer638JG-fJFEC3X3Q5kAl78aTe1eljYDiQo0vuU'
   }
   return connect({
-    MODE: 'relay',
-    wallet,
+    MODE: 'mainnet',
+    device: 'relay@1.0',
+    signer: createSigner(wallet),
     ...info
   })
 }
