@@ -14,9 +14,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       ],
       data: line
     }, spinner))
-
     .map(x => {
-      //console.log(x)
       if (process.env.DEBUG) {
         console.log("")
         console.timeEnd('Send')
@@ -25,27 +23,34 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       if (process.env.DEBUG) console.time('Read')
       return x
     })
-
-    .map(message => ({ message, process: processId }))
-    .chain(services.readResult)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
+    .chain(x => {
+      if (x.Output) {
+        return Resolved(x)
+      } else {
+        return of(x).map(message => ({ message, process: processId }))
+        .chain(services.readResult)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+        .bichain(services.readResult, Resolved)
+      }
+    })
+    
+    
     .map(x => {
       if (process.env.DEBUG) {
         console.log("")

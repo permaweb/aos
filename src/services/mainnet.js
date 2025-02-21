@@ -88,16 +88,12 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
         data: data,
         'Data-Protocol': 'ao',
         Variant: 'ao.N.1'
-      }).then(res => {
-      
-        return res.slot.text()
       }) 
     }))
   
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(), 500))
-  )().chain(fromPromise(() => 
-    request({
+  )().chain(fromPromise(() => request({
       type: 'Message',
       path: `${processId}/schedule`,
       method: 'POST',
@@ -105,10 +101,22 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       data: data,
       'Data-Protocol': 'ao',
       Variant: 'ao.N.1'
-    }).then(res => {
-      
-      return res.slot.text()
-    }) 
+    })
+    .then(res => res.Messages.length > 0
+    ? request({
+        path: `/${process}/push&slot+integer=${res.slot}`,
+        method: 'POST',
+        target: process,
+        'slot+integer': res.slot,
+        data: '1984'
+      }).then(push => {
+        console.log('push', push)
+        return Promise.resolve(res)
+      }).catch(err => {
+        console.log(err)
+        return Promise.resolve(res)
+      })
+    : Promise.resolve(res)) 
   ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -120,6 +128,21 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)    
+    
+    //   fromPromise(res => {
+    //     if (res.Messages.length > 0) {
+    //       console.log('push')
+    //       // force push
+    //       return request({
+    //         path: `/${process}/push&slot+integer=${res.slot}`,
+    //         method: 'POST',
+    //         target: process,
+    //         'slot+integer': res.slot,
+    //         accept: 'application/json'
+    //       }).then(push => res)
+    //     }
+    //     return Resolved(res)
+    // }))
 
 }
 
@@ -130,8 +153,8 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
   return fromPromise(() => request({
-    method: 'POST',
     path: '/schedule',
+    method: 'POST',
     type: 'Process',
     scheduler: SCHEDULER,
     module: src,
@@ -140,13 +163,13 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     'execution-device': 'compute-lite@1.0',
     authority: SCHEDULER,
     'scheduler-location': SCHEDULER,
-    data: 'print("spawned")',
     'Data-Protocol': 'ao',
     Variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     data: data
   })
-    .then(x => x.process.text())
+   
+    .then(x => x.process)
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
 

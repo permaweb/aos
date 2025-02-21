@@ -340,8 +340,10 @@ export async function handleRelayTopup(jwk) {
     spinner.start();
 
     const address = await arweave.wallets.getAddress(jwk);
-    const privateKey = createPrivateKey({ key: jwk, format: 'jwk' });
-    const signer = createSigner(privateKey, 'rsa-pss-sha512', address);
+    //const privateKey = createPrivateKey({ key: jwk, format: 'jwk' });
+    //const signer = createSigner(privateKey, 'rsa-pss-sha512', address);
+    const signer = createSigner(jwk)
+    /*
     const params = ['alg', 'keyid'].sort();
 
     const relayUrl = new URL(RELAY.url);
@@ -368,28 +370,39 @@ export async function handleRelayTopup(jwk) {
     } catch (e) {
       console.error(chalk.red('Error fetching initial balance:'), e);
     }
-
-    const sendQuantity = (topupAmount * Math.pow(10, 12)).toString();
-
+    */
+    let initialBalance;
     try {
-      await message({
+      initialBalance = Number(await connect({MODE: 'mainnet', URL: 'http://relay.ao-hb.xyz', signer: createSigner(jwk)}).getNodeBalance())
+    } catch (e) {
+      console.error(chalk.red('Error fetching initial balance:'), e);
+    }
+    const sendQuantity = (topupAmount * Math.pow(10, 12)).toString();
+    
+    try {
+      await connect({
+        MODE: 'legacy', signer, 
+        MU_URL: 'https://mu.ao-testnet.xyz', 
+        CU_URL: 'https://cu.ao-testnet.xyz' 
+      }).message({
         process: PAYMENT.address,
-        signer: createDataItemSigner(jwk),
         tags: [
           { name: 'Action', value: 'Transfer' },
           { name: 'Recipient', value: RELAY.address },
           { name: 'Quantity', value: sendQuantity },
-        ]
+        ],
+        signer
       });
     } catch (e) {
       console.error(chalk.red('Error sending transfer message:'), e);
     }
-
+    
     let balanceUpdated = false;
     for (let attempt = 1; attempt <= maxBalanceRetries; attempt++) {
       try {
-        const response = await fetch(RELAY.url, { method, headers });
-        const balance = parseInt(await response.text(), 10);
+        const balance = Number(await connect({MODE: 'mainnet', URL: 'http://relay.ao-hb.xyz', signer: createSigner(jwk)}).getNodeBalance()) 
+        // const response = await fetch(RELAY.url, { method: 'GET', headers });
+        // const balance = parseInt(await response.text(), 10);
         const newBalance = Number.isNaN(balance) ? 0 : balance;
         if (newBalance !== initialBalance) {
           balanceUpdated = true;

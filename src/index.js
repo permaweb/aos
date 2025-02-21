@@ -141,6 +141,7 @@ if (argv['mainnet']) {
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
   process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+  //console.log('SCHEDULER', process.env.SCHEDULER)
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet
@@ -536,6 +537,7 @@ async function connect(jwk, id) {
 
   // need to check if a process is registered or create a process
   let promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
+  
   let _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
