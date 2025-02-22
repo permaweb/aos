@@ -1,4 +1,4 @@
-import { connect, createSigner } from '@permaweb/aoconnect'
+import { connect, createSigner } from '@permaweb/aoconnect-m2'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -38,10 +38,30 @@ export function readResultMainnet(params) {
       target: params.process,
       'slot+integer': params.message,
       accept: 'application/json'
-    }).then(async res => ({ Output: await res.Output.json()}))
+    })
+      .then(res => ({ process: params.process, slot: params.message,  Output: res.Output, Messages: res.Messages }))
+      .catch(e => {
+        console.log(e)
+        return ({ Error: e.message })
+      })
   
     ))
-    
+    .chain(fromPromise(async res => {
+      if (res.Messages.length > 0) {
+        // console.log('pushing outbox')
+        const process = res.process
+        const slot = res.slot
+        const push = await request({
+          path: `/${process}/push&slot+integer=${slot}`,
+          method: 'POST',
+          target: process,
+          'slot+integer': slot,
+          accept: 'application/json'
+        }).catch(e => console.log(e))
+        // console.log('push results', push)
+      }
+      return res
+    }))
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
@@ -84,6 +104,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
         type: 'Message',
         path: `${processId}/schedule`,
         method: 'POST',
+        device: 'genesis-wasm@1.0',
         ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
         data: data,
         'Data-Protocol': 'ao',
@@ -97,37 +118,26 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       type: 'Message',
       path: `${processId}/schedule`,
       method: 'POST',
+      device: 'genesis-wasm@1.0',
       ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data,
       'Data-Protocol': 'ao',
       Variant: 'ao.N.1'
     })
-    .then(res => res.Messages.length > 0
-    ? request({
-        path: `/${process}/push&slot+integer=${res.slot}`,
-        method: 'POST',
-        target: process,
-        'slot+integer': res.slot,
-        data: '1984'
-      }).then(push => {
-        console.log('push', push)
-        return Promise.resolve(res)
-      }).catch(err => {
-        console.log(err)
-        return Promise.resolve(res)
-      })
-    : Promise.resolve(res)) 
-  ))
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)    
+    .then(res => {
+      return res.slot
+    })
+))
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)
+    // .bichain(retry, Resolved)    
     
     //   fromPromise(res => {
     //     if (res.Messages.length > 0) {
@@ -160,7 +170,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     module: src,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
-    'execution-device': 'compute-lite@1.0',
+    'execution-device': 'genesis-wasm@1.0',
     authority: SCHEDULER,
     'scheduler-location': SCHEDULER,
     'Data-Protocol': 'ao',

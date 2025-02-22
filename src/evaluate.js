@@ -23,32 +23,27 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       if (process.env.DEBUG) console.time('Read')
       return x
     })
-    .chain(x => {
-      if (x.Output) {
-        return Resolved(x)
-      } else {
-        return of(x).map(message => ({ message, process: processId }))
-        .chain(services.readResult)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-        .bichain(services.readResult, Resolved)
-      }
-    })
+    .map(message => ({ message, process: processId }))
+    .chain(services.readResult)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+    .bichain(services.readResult, Resolved)
+
     
     
     .map(x => {

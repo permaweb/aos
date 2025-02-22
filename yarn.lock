@@ -835,6 +835,25 @@
     ramda "^0.30.0"
     zod "^3.23.5"
 
+"@permaweb/aoconnect-m2@^0.0.75":
+  version "0.0.75"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect-m2/-/aoconnect-m2-0.0.75.tgz#7d81a0358d06e1254e9871dce244ee2026436140"
+  integrity sha512-5FgT/6rMXyQUmtRs7g4bOHn7y1fiA8pWtvsr0FiykEHkXeCizBsmIMKU6rp94Yz/BJelDyphgnOl9/YmB+r5GQ==
+  dependencies:
+    "@dha-team/arbundles" "^1.0.1"
+    "@permaweb/ao-scheduler-utils" "~0.0.25"
+    "@permaweb/protocol-tag-utils" "~0.0.2"
+    axios "^1.7.9"
+    base64url "^3.0.1"
+    buffer "^6.0.3"
+    debug "^4.4.0"
+    http-message-signatures "^1.0.4"
+    hyper-async "^1.1.2"
+    mnemonist "^0.39.8"
+    ramda "^0.30.1"
+    structured-headers "^2.0.0"
+    zod "^3.24.1"
+
 "@permaweb/aoconnect@^0.0.75":
   version "0.0.75"
   resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.75.tgz#a81f932f031cedf2e6ccaec1bb6cd7d6725e2453"
