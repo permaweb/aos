@@ -12,7 +12,8 @@ const env = {
     Id: 'AOS',
     Owner: 'FOOBAR',
     Tags: [
-      { name: 'Name', value: 'Thomas' }
+      { name: 'Name', value: 'Thomas' },
+      { name: "Scheduler", value: "1234?hint=https://localhost:10000"}
     ]
   }
 }
@@ -26,7 +27,8 @@ async function init(handle) {
     Id: 'AOS',
     Module: 'WOOPAWOOPA',
     Tags: [
-      { name: 'Name', value: 'Thomas' }
+      { name: 'Name', value: 'Thomas' },
+      { name: "Scheduler", value: "1234?hint=https://localhost:10000"}
     ]
   }, env)
   return Memory

@@ -202,7 +202,8 @@ function ao.send(msg)
             {name = "Data-Protocol", value = "ao"},
             {name = "Variant", value = "ao.TN.1"},
             {name = "Type", value = "Message"},
-            {name = "Reference", value = referenceString}
+            {name = "Reference", value = referenceString},
+            {name = "From-Scheduler", value = ao.env.Process.Tags.Scheduler}
         }
     }
 

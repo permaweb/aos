@@ -240,7 +240,7 @@ async function runProcess() {
         // check loading files flag
         await handleLoadArgs(jwk, id)
 
-        cron = await live(id)
+        cron = await live(id, null, jwk)
 
         const spinner = ora({
           spinner: 'dots',

@@ -224,15 +224,15 @@ export function printLiveMainnet() {
 
 }
 
-export async function liveMainnet(id, watch) {
+export async function liveMainnet(id, watch, wallet) {
   _watch = watch
   let ct = null
-  let cursor = null
+  let cursor = 1
   let count = null
   let cursorFile = path.resolve(os.homedir() + `/.${id}.txt`)
 
   if (fs.existsSync(cursorFile)) {
-    cursor = fs.readFileSync(cursorFile, 'utf-8')
+    cursor = Number(fs.readFileSync(cursorFile, 'utf-8')) || 1
   }
   let stopped = false
   process.stdin.on('keypress', (str, key) => {
@@ -243,54 +243,54 @@ export async function liveMainnet(id, watch) {
     }
   })
 
+  const { request } = setupMainnet(wallet)
+ 
   let isJobRunning = false
 
   const checkLive = async () => {
-    const wallet = process.env.WALLET
-    const { results } = setupMainnet(wallet)
+    
+    
     if (!isJobRunning) {
 
       try {
         isJobRunning = true;
-        let params = { process: id, limit: 1000 }
-        if (cursor) {
-          params["from"] = cursor
-        } else {
-          params["limit"] = 5
-          params["sort"] = "DESC"
+        let params = { process: id, slot: cursor || '1' }
+        
+        const r = await request({
+          method: 'GET',
+          path: `/${params.process}/compute&slot=${params.slot}/results/json`,
+          accept: 'application/json'
+        })
+        .then(r => {
+          if (r.Output) {
+            cursor = Number(cursor) + 1
+          }
+          return r
+        })
+        .catch(e => {
+          console.log('ERROR: ', e.message)
+          return ({})
+        })
+
+        
+        let edges = []
+        if (r.Output?.print === true) {
+          edges.push({
+            node: r
+          })
         }
-
-        const _relayResults = await results(params)
-
-        let edges = uniqBy(prop('cursor'))(_relayResults.edges.filter(function (e) {
-          if (e.node?.Output?.print === true) {
-            return true
-          }
-          if (e.cursor === cursor) {
-            return false
-          }
-          return false
-        }))
-
-        // Sort the edges by ordinate value to ensure they are printed in the correct order.
-        // TODO: Handle sorting with Cron jobs, considering nonces and timestamps. Review cursor usage for compatibility with future CU implementations.
-        edges = edges.sort((a, b) => JSON.parse(atob(a.cursor)).ordinate - JSON.parse(atob(b.cursor)).ordinate);
-
-        // --- peek on previous line and if delete line if last prompt.
-        // --- key event can detect 
-        // count !== null && 
+ 
         if (edges.length > 0) {
           edges.map(e => {
-            if (!globalThis.alerts[e.cursor]) {
-              globalThis.alerts[e.cursor] = e.node?.Output
+            if (!globalThis.alerts[cursor] && e.node?.Output?.data && e.node?.Output?.data?.length > 0) {
+              globalThis.alerts[cursor] = e.node?.Output
             }
           })
 
         }
         count = edges.length
-        if (results.edges.length > 0) {
-          cursor = results.edges[results.edges.length - 1].cursor
-          fs.writeFileSync(cursorFile, cursor)
+        if (edges.length > 0) {
+          fs.writeFileSync(cursorFile, String(cursor))
         }
         //process.nextTick(() => null)
 
