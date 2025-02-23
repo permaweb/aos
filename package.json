@@ -52,9 +52,10 @@
     "standard": "^17.1.2"
   },
   "aos": {
-    "module": "JArYBF-D8q2OmZ4Mok00sD2Y_6SYEQ7Hjx-6VZ_jl3g",
-    "sqlite": "33d-3X8mpv6xYBlVB-eXMrPfH5Kzf6Hiwhcv0UA10sw",
-    "llama": "-izm2qwp0PrqEGzNNu6ZiGXOpj9KgZcPEbwb3PR4Vrs",
-    "version": "2.0.3"
+    "module": "0gn2SqTu-siVluNtGFigjjig5gLUqBoVUxonSNnlstU",
+    "sqlite": "qs9Kvhxom4tB9HHR8kB0LfAmKlvN1aaedClEZTqYIDQ",
+    "llama": "qhetts1V073QHPVJsjTYa6JhGuzeUsfe6uhJLAP8zxc",
+    "test": "yDj05sS1by8LN3Dkui1PvjUn3NXSzgslUtPu4MzeMOk",
+    "version": "2.0.6"
   }
 }

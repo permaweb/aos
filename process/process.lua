@@ -39,7 +39,7 @@ assignment.init(ao)
 -- @table process
 -- @field _version The version number of the process
 
-local process = { _version = "2.0.3" }
+local process = { _version = "2.0.6" }
 -- The maximum number of messages to store in the inbox
 local maxInboxCount = 10000
 
@@ -165,6 +165,13 @@ In order to print non string types we need to convert to string
   end
 
   return tostring(a)
+end
+
+-- Patch state for external access
+-- @function Patch
+-- @tparam { table } patch
+function Patch(patch)
+  return ao.patch(patch)
 end
 
 --- Send a message to a target process
@@ -438,7 +445,7 @@ function process.handle(msg, _)
     print(Colors.green .. result .. Colors.reset)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
     local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
-    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
+    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {}, Patches = {} })
   end
   
   if msg.Action == "Eval" then

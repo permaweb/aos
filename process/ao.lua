@@ -171,7 +171,19 @@ end
 --- Clears the outbox.
 -- @function clearOutbox
 function ao.clearOutbox()
-    ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
+    ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}, Patches = {}}
+end
+
+-- Provides a patch of state for quick access
+-- @function patch
+-- @tparam {table} patch
+function ao.patch(patch)
+  assert(type(patch) == 'table', 'patch should be table')
+  -- make sure the patch qualifier is on the patch message
+  patch.method = "PATCH"
+  -- add patch to outbox
+  table.insert(ao.outbox.Patches, patch)
+  return "OK"
 end
 
 --- Sends a message.
@@ -363,7 +375,8 @@ function ao.result(result)
         Output = result.Output or ao.outbox.Output,
         Messages = ao.outbox.Messages,
         Spawns = ao.outbox.Spawns,
-        Assignments = ao.outbox.Assignments
+        Assignments = ao.outbox.Assignments,
+        Patches = ao.outbox.Patches
     }
 end
 

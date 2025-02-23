@@ -127,9 +127,9 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     .then(res => {
       return res.slot
     })
-))
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
+  ))
+    .bichain(retry, Resolved)
+    .bichain(retry, Resolved)
     // .bichain(retry, Resolved)
     // .bichain(retry, Resolved)
     // .bichain(retry, Resolved)
