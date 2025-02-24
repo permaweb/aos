@@ -15,6 +15,9 @@ const env = {
       { name: 'Name', value: 'Thomas' },
       { name: "Scheduler", value: "1234?hint=https://localhost:10000"}
     ]
+  },
+  Module: {
+    Id: 'WOOPAWOOPA'
   }
 }
 

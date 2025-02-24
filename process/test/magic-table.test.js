@@ -13,6 +13,9 @@ const env = {
     Tags: [
       { name: 'Name', value: 'Thomas' }
     ]
+  },
+  Module: {
+    Id: 'WOOPAWOOPA'
   }
 }
 

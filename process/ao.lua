@@ -30,8 +30,9 @@ local ao = {
     _module = oldao._module or "",
     authorities = oldao.authorities or {},
     reference = oldao.reference or 0,
+    _hints = {},
     outbox = oldao.outbox or
-        {Output = {}, Messages = {}, Spawns = {}, Assignments = {}},
+        {Output = {}, Messages = {}, Spawns = {}, Assignments = {}, Patches = {} },
     nonExtractableTags = {
         'Data-Protocol', 'Variant', 'From-Process', 'From-Module', 'Type',
         'From', 'Owner', 'Anchor', 'Target', 'Data', 'Tags', 'Read-Only'
@@ -153,6 +154,8 @@ function ao.init(env)
         end
     end
 
+    -- register hint
+
     ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
     ao.env = env
 
@@ -194,6 +197,17 @@ function ao.send(msg)
     ao.reference = ao.reference + 1
     local referenceString = tostring(ao.reference)
 
+    --handle hints outbound
+    if ao._hints[msg.Target] then
+        -- Append hint and ttl to target if found
+        local hint = ao._hints[msg.Target]
+        local t = msg.Target .. "&hint=" .. hint.hint
+        if hint.ttl then
+            t = t .. "&hint-ttl=" .. hint.ttl
+        end
+        msg.Target = t
+    end
+
     local message = {
         Target = msg.Target,
         Data = msg.Data,
@@ -202,10 +216,11 @@ function ao.send(msg)
             {name = "Data-Protocol", value = "ao"},
             {name = "Variant", value = "ao.TN.1"},
             {name = "Type", value = "Message"},
-            {name = "Reference", value = referenceString},
-            {name = "From-Scheduler", value = ao.env.Process.Tags.Scheduler}
+            {name = "Reference", value = referenceString}
         }
     }
+
+    -- add hint if available
 
     -- if custom tags in root move them to tags
     for k, v in pairs(msg) do
@@ -339,6 +354,73 @@ function ao.spawn(module, msg)
 
     return spawn
 end
+
+-- registerHints
+-- if From-Process has `hint` and `hint-ttl` then we need to add to a bounded registry
+function ao.registerHint(msg)
+    -- check if From-Process tag exists
+    local fromProcess = nil
+    local hint = nil
+    local hintTTL = nil
+    
+    -- find From-Process tag
+    if msg.Tags then
+        for name, value in pairs(msg.Tags) do
+            if name == "From-Process" then
+                -- split by & to get process, hint, and ttl
+                local parts = {}
+                for part in string.gmatch(value, "[^&]+") do
+                    table.insert(parts, part)
+                end
+                local hintParts = {}
+                for item in string.gmatch(parts[2], "[^=]+") do
+                    table.insert(hintParts, item)
+                end
+                local ttlParts = {}
+                for item in string.gmatch(parts[3], "[^=]+") do
+                    table.insert(ttlParts, item)
+                end
+                
+                fromProcess = parts[1]
+                hint = hintParts[2]
+                hintTTL = ttlParts[2] 
+                break
+            end
+        end
+    end
+
+    -- if we found a hint, store it in the registry
+    if hint then
+        if not ao._hints then
+            ao._hints = {}
+        end
+        ao._hints[fromProcess] = {
+            hint = hint,
+            ttl = hintTTL
+        }
+    end
+    -- enforce bounded registry of 1000 keys
+    if ao._hints then
+        local count = 0
+        local oldest = nil
+        local oldestKey = nil
+        
+        -- count keys and find oldest entry
+        for k, v in pairs(ao._hints) do
+            count = count + 1
+            if not oldest or v.ttl < oldest then
+                oldest = v.ttl
+                oldestKey = k
+            end
+        end
+        
+        -- if over 1000 entries, remove oldest
+        if count > 1000 and oldestKey then
+            ao._hints[oldestKey] = nil
+        end
+    end
+end
+
 
 --- Assigns a message to a process.
 -- @function assign

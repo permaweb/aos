@@ -1,5 +1,5 @@
 import { connect, createSigner } from '@permaweb/aoconnect-m2'
-import { fromPromise, Resolved, Rejected } from 'hyper-async'
+import { of, fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
 import cron from 'node-cron'
@@ -30,8 +30,9 @@ export function readResultMainnet(params) {
   const { request } = setupMainnet(wallet) 
   
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 1000))
+    new Promise((resolve) => setTimeout(() => resolve(params), 100))
   )()
+    
     .chain(fromPromise(() => request({
       path: `/${params.process}/compute&slot+integer=${params.message}/results/json`,
       method: 'POST',

@@ -412,6 +412,9 @@ function process.handle(msg, _)
       ao.send(newMsg)
     end
 
+  -- handle hints
+  ao.registerHint(msg)
+
   local co = coroutine.create(
     function()
       return pcall(Handlers.evaluate, msg, env)
