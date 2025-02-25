@@ -32,7 +32,8 @@ export function readResultMainnet(params) {
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(params), 100))
   )()
-    
+
+
     .chain(fromPromise(() => request({
       path: `/${params.process}/compute&slot+integer=${params.message}/results/json`,
       method: 'POST',
@@ -40,6 +41,10 @@ export function readResultMainnet(params) {
       'slot+integer': params.message,
       accept: 'application/json'
     })
+      .then(async res => {
+        
+        return res
+      })
       .then(res => ({ process: params.process, slot: params.message,  Output: res.Output, Messages: res.Messages }))
       .catch(e => {
         console.log(e)
@@ -47,22 +52,22 @@ export function readResultMainnet(params) {
       })
   
     ))
-    .chain(fromPromise(async res => {
-      if (res.Messages.length > 0) {
-        // console.log('pushing outbox')
-        const process = res.process
-        const slot = res.slot
-        const push = await request({
-          path: `/${process}/push&slot+integer=${slot}`,
-          method: 'POST',
-          target: process,
-          'slot+integer': slot,
-          accept: 'application/json'
-        }).catch(e => console.log(e))
-        // console.log('push results', push)
-      }
-      return res
-    }))
+    // .chain(fromPromise(async res => {
+    //   if (res.Messages.length > 0) {
+    //     // console.log('pushing outbox')
+    //     const process = res.process
+    //     const slot = res.slot
+    //     const push = await request({
+    //       path: `/${process}/push&slot+integer=${slot}`,
+    //       method: 'POST',
+    //       target: process,
+    //       'slot+integer': slot,
+    //       accept: 'application/json'
+    //     }).catch(e => console.log(e))
+    //     // console.log('push results', push)
+    //   }
+    //   return res
+    // }))
     .bichain(fromPromise(() =>
       new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
     ),
@@ -101,12 +106,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       return _
     })
     .chain(fromPromise(() => {
+      
       return request({
         type: 'Message',
-        path: `${processId}/schedule`,
+        path: `/${processId}/push`,
         method: 'POST',
-        device: 'genesis-wasm@1.0',
-        ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+        target: processId,
+        ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
         data: data,
         'Data-Protocol': 'ao',
         Variant: 'ao.N.1'
@@ -115,19 +121,25 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   
   return fromPromise(() =>
     new Promise((resolve) => setTimeout(() => resolve(), 500))
-  )().chain(fromPromise(() => request({
+  )().chain(fromPromise(() => {
+
+    const params = {
       type: 'Message',
-      path: `${processId}/schedule`,
+      path: `/${processId}/push`,
       method: 'POST',
-      device: 'genesis-wasm@1.0',
-      ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+      target: processId,
+      ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data,
       'Data-Protocol': 'ao',
       Variant: 'ao.N.1'
-    })
-    .then(res => {
-      return res.slot
-    })
+    }
+    
+    return request(params)
+      //.then(res => (console.log(res), res))
+      .then(res => {
+        return res.slot
+      })
+    }
   ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
@@ -159,30 +171,36 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+  const AUTHORITY = process.env.AUTHORITY
   const { request } = setupMainnet(wallet) 
  
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => request({
-    path: '/schedule',
-    method: 'POST',
-    type: 'Process',
-    scheduler: SCHEDULER,
-    module: src,
-    device: 'process@1.0',
-    'scheduler-device': 'scheduler@1.0',
-    'execution-device': 'genesis-wasm@1.0',
-    authority: SCHEDULER,
-    'scheduler-location': SCHEDULER,
-    'Data-Protocol': 'ao',
-    Variant: 'ao.N.1',
-    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
-    data: data
-  })
+  return fromPromise(() => {
+    const params = {
+      path: '/push',
+      method: 'POST',
+      type: 'Process',
+      scheduler: SCHEDULER,
+      module: src,
+      device: 'process@1.0',
+      'scheduler-device': 'scheduler@1.0',
+      'execution-device': 'genesis-wasm@1.0',
+      'push-device': 'push@1.0',
+      //authority: AUTHORITY,
+      'scheduler-location': SCHEDULER,
+      'Data-Protocol': 'ao',
+      Variant: 'ao.N.1',
+      ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+      data: data
+    }
+    //console.log(params)
+    return request(params)
+    //.then(x => (console.log(x), x))
    
     .then(x => x.process)
     .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
-  )()
+})()
 
 }
 
@@ -257,21 +275,21 @@ export async function liveMainnet(id, watch, wallet) {
         isJobRunning = true;
         let params = { process: id, slot: cursor || '1' }
         
-        const r = await request({
-          method: 'GET',
-          path: `/${params.process}/compute&slot=${params.slot}/results/json`,
-          accept: 'application/json'
-        })
-        .then(r => {
-          if (r.Output) {
-            cursor = Number(cursor) + 1
-          }
-          return r
-        })
-        .catch(e => {
-          console.log('ERROR: ', e.message)
-          return ({})
-        })
+        // const r = await request({
+        //   method: 'GET',
+        //   path: `/${params.process}/compute&slot=${params.slot}/results/json`,
+        //   accept: 'application/json'
+        // })
+        // .then(r => {
+        //   if (r.Output) {
+        //     cursor = Number(cursor) + 1
+        //   }
+        //   return r
+        // })
+        // .catch(e => {
+        //   console.log('ERROR: ', e.message)
+        //   return ({})
+        // })
 
         
         let edges = []
