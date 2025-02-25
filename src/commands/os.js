@@ -10,6 +10,7 @@ import path from 'node:path'
 import os from 'node:os'
 import * as url from 'url'
 import chalk from 'chalk'
+import { getPkg } from '../services/get-pkg.js'
 
 
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -34,7 +35,6 @@ export function update() {
     })
     .concat(patch())
     .concat(patch2())
-    .concat("print([[\nUpdated AOS to version ]] .. require('.process')._version)")
     .join('\n\n')
 
   luaFiles = `
@@ -61,6 +61,15 @@ end
 if not _G.package.loaded['ao'] then
   _G.package.loaded['ao'] = _G.package.loaded['.ao'] 
 end 
+  \n`
+
+  // get the AOS version from the package.json
+  const pkg = getPkg()
+
+  luaFiles = luaFiles + `
+-- update process version to package.json version
+  _G.package.loaded['.process']['_version'] = '${pkg.version}'
+  print([[\nUpdated AOS to version ]] .. '${pkg.version}')
   \n`
 
   return luaFiles
