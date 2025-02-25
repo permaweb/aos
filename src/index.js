@@ -170,6 +170,11 @@ if (argv['mu-url']) {
 
 async function runProcess() {
   if (!argv.watch) {
+    const spinner = ora({
+      spinner: 'dots',
+      suffixText: ''
+    })
+
     of()
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
@@ -183,9 +188,15 @@ async function runProcess() {
         }
         return Resolved(jwk)
       })
-      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
-        .map(id => ({ jwk, id }))
-      )
+      .chain(jwk => {
+        spinner.start()
+        return register(jwk, { address, isAddress, spawnProcess, gql }, spinner)
+          .map(id => ({ jwk, id }))
+          .map(_ => {
+            spinner.stop()
+            return _
+          })
+      })
       .toPromise()
       .then(async ({ jwk, id }) => {
         let editorMode = false
@@ -194,11 +205,6 @@ async function runProcess() {
         const history = readHistory(id)
 
         if (luaData.length > 0 && argv.load) {
-          const spinner = ora({
-            spinner: 'dots',
-            suffixText: ''
-          })
-
           spinner.start()
           spinner.suffixText = chalk.gray('[Connecting to process...]')
           const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
@@ -540,7 +546,6 @@ async function connect(jwk, id) {
       spinner.suffixText = chalk.red('[Connecting to process....]')
       await new Promise(resolve => setTimeout(resolve, 500 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
-      // console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break

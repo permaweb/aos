@@ -12,6 +12,7 @@ import minimist from 'minimist'
 import { getPkg } from './services/get-pkg.js'
 import fs from 'fs'
 import path from 'path'
+import chalk from 'chalk'
 
 const promptUser = (results) => {
   const choices = results.map((res, i) => {
@@ -33,20 +34,51 @@ const promptUser = (results) => {
     .catch(() => Promise.reject({ ok: false, error: 'No module selected' }))
 }
 
-export function register(jwk, services) {
+export function register(jwk, services, spinner) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = (ctx) => {
     const { address, name } = ctx
 
-    const argv = minimist(process.argv.slice(2))
-
-    return services
-      .gql(queryForAOS(name), { owners: [address, argv.address || ""] })
-      .map(utils.path(['data', 'transactions', 'edges']))
+    // Query AOS for the process, with 3 retries
+    const findProcessFromAOSWithRetry = (retries = 0) => {
+      return fromPromise(() => new Promise(r => setTimeout(r, retries == 0 ? 0 : 500)))()
+        .chain(() => 
+          services.gql(queryForAOS(name), { owners: argv.address ? [address, argv.address] : [address] })
+          .map(utils.path(['data', 'transactions', 'edges']))
+          .bichain(
+            (err) => {
+              // If we've retried 3 times, give up
+              if (retries > 3) {
+                return Rejected(err)
+              }
+              // Update the spinner suffix text to indicate the number of retries
+              spinner ? spinner.suffixText = chalk.gray('[Querying process from gateway, attempt #' + (retries + 1) + ']') : console.log(chalk.gray('.'))
+              // Retry the query
+              return findProcessFromAOSWithRetry(retries + 1)
+            },
+            Resolved
+          )
+      )
+    }
+    return of()
+      .map(() => {              
+        // Update the spinner suffix text to indicate the number of retries
+        spinner ? spinner.suffixText = chalk.gray('[Querying process from gateway, attempt #1]') : console.log(chalk.gray('.'))
+        // Start the spinner
+        spinner.start()
+      })
+      .chain(findProcessFromAOSWithRetry)
+      .map(
+        (res) => {
+          // Stop the spinner
+          spinner.stop()
+          return res
+        }
+      )
       .bichain(
         _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }),
         results => results?.length > 0
-            ? Resolved(results.reverse())
+            ? Resolved(results)
             /**
              * No process was found that matches the name, module and owners
              * But no catastrophic error occured. 
@@ -214,7 +246,8 @@ function queryForAOS(name) {
         { name: "Data-Protocol", values: ["ao"] },
         { name: "Type", values: ["Process"]},
         { name: "Name", values: ["${name}"]}
-      ]
+      ],
+      sort: HEIGHT_DESC
     ) {
       edges {
         node {
