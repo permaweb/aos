@@ -35,14 +35,13 @@ export function readResultMainnet(params) {
 
 
     .chain(fromPromise(() => request({
-      path: `/${params.process}/compute&slot+integer=${params.message}/results/json`,
+      path: `/${params.process}/compute&slot=${params.message}/results/json`,
       method: 'POST',
-      target: params.process,
-      'slot+integer': params.message,
-      accept: 'application/json'
+      target: params.process
     })
       .then(async res => {
-        
+        console.log('Compute results from mainnet:')
+        console.log(res)
         return res
       })
       .then(res => ({ process: params.process, slot: params.message,  Output: res.Output, Messages: res.Messages }))
@@ -58,10 +57,10 @@ export function readResultMainnet(params) {
     //     const process = res.process
     //     const slot = res.slot
     //     const push = await request({
-    //       path: `/${process}/push&slot+integer=${slot}`,
+    //       path: `/${process}/push&slot=${slot}`,
     //       method: 'POST',
     //       target: process,
-    //       'slot+integer': slot,
+    //       'slot': slot,
     //       accept: 'application/json'
     //     }).catch(e => console.log(e))
     //     // console.log('push results', push)
@@ -114,13 +113,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
         target: processId,
         ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
         data: data,
-        'Data-Protocol': 'ao',
-        Variant: 'ao.N.1'
+        'data-protocol': 'ao',
+        variant: 'ao.N.1'
       }) 
     }))
   
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 500))
+    new Promise((resolve) => setTimeout(() => resolve(), 1))
   )().chain(fromPromise(() => {
 
     const params = {
@@ -130,8 +129,8 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       target: processId,
       ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data,
-      'Data-Protocol': 'ao',
-      Variant: 'ao.N.1'
+      'data-protocol': 'ao',
+      variant: 'ao.N.1'
     }
     
     return request(params)
