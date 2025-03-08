@@ -1,4 +1,4 @@
-import { connect, createSigner } from '@permaweb/aoconnect-m2'
+import { connect, createSigner } from '@permaweb/aoconnect'
 import { of, fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -135,9 +135,9 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     }
     
     return request(params)
-      //.then(res => (console.log(res), res))
-      .then(res => {
-        return res.slot
+      .then(res => (console.log(res), res))
+      .then(async res => {
+        return await res.slot.text()
       })
     }
   ))
@@ -175,7 +175,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const { request } = setupMainnet(wallet) 
  
 
-  tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
+  tags = tags.concat([{ name: 'aos-version', value: pkg.version }])
   return fromPromise(() => {
     const params = {
       path: '/push',
@@ -194,12 +194,18 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
       ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data
     }
-    //console.log(params)
+    console.log('Sending spawn request:')
+    console.log(params)
     return request(params)
     //.then(x => (console.log(x), x))
    
     .then(x => x.process)
-    .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
+    .then(async result => {
+      const process = await result.text()
+      console.log("SPAWNED PROCESS:")
+      console.log(process)
+      return process
+    })
 })()
 
 }
