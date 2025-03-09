@@ -30,19 +30,39 @@ export function readResultMainnet(params) {
   const { request } = setupMainnet(wallet) 
   
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 100))
+    new Promise((resolve) => setTimeout(() => resolve(params), 0))
   )()
-
-
     .chain(fromPromise(() => request({
       path: `/${params.process}/compute&slot=${params.message}/results/json`,
       method: 'POST',
       target: params.process
     })
       .then(async res => {
-        console.log('Compute results from mainnet:')
-        console.log(res)
-        return res
+        //console.log('Mainnet request response:')
+        //console.log(res)
+        
+        let parsedMessages = []
+        for(let message of res.Messages) {
+          let parsedMessage = {}
+          for(let key in message) {
+            parsedMessage[key] = await message[key].text()
+          }
+          parsedMessages.push(parsedMessage)
+        }
+        delete res.Messages
+
+        let parsedRes = {}
+        for(let key in res) {
+          if(typeof res[key] === 'object' && res[key].text && typeof res[key].text === 'function') {
+            parsedRes[key] = await res[key].text()
+          } else {
+            parsedRes[key] = res[key]
+          }
+        }
+        const finalRes = { ...parsedRes, Messages: parsedMessages }
+        //console.log('Final mainnet response:')
+        //console.log(finalRes)
+        return finalRes
       })
       .then(res => ({ process: params.process, slot: params.message,  Output: res.Output, Messages: res.Messages }))
       .catch(e => {
@@ -119,7 +139,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     }))
   
   return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 1))
+    new Promise((resolve) => setTimeout(() => resolve(), 0))
   )().chain(fromPromise(() => {
 
     const params = {
@@ -134,7 +154,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     }
     
     return request(params)
-      .then(res => (console.log(res), res))
+      //.then(res => (console.log(res), res))
       .then(async res => {
         return await res.slot.text()
       })
@@ -142,30 +162,6 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   ))
     .bichain(retry, Resolved)
     .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)
-    // .bichain(retry, Resolved)    
-    
-    //   fromPromise(res => {
-    //     if (res.Messages.length > 0) {
-    //       console.log('push')
-    //       // force push
-    //       return request({
-    //         path: `/${process}/push&slot+integer=${res.slot}`,
-    //         method: 'POST',
-    //         target: process,
-    //         'slot+integer': res.slot,
-    //         accept: 'application/json'
-    //       }).then(push => res)
-    //     }
-    //     return Resolved(res)
-    // }))
-
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
@@ -193,16 +189,14 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
       ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data
     }
-    console.log('Sending spawn request:')
-    console.log(params)
+    //console.log('Sending spawn request:')
+    //console.log(params)
     return request(params)
     //.then(x => (console.log(x), x))
    
     .then(x => x.process)
     .then(async result => {
       const process = await result.text()
-      console.log("SPAWNED PROCESS:")
-      console.log(process)
       return process
     })
 })()
