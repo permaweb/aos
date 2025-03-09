@@ -262,7 +262,7 @@ export async function handleRelayTopup(jwk) {
   };
 
   try {
-    const relayAddressResponse = await fetch(`${process.env.RELAY_URL}/~meta@1.0/info/address`);
+    const relayAddressResponse = await fetch(`${process.env.RELAY_URL}/~meta@1.0/info/operator`);
     RELAY.address = await relayAddressResponse.text();
   }
   catch (e) {
