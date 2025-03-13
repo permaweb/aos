@@ -22,8 +22,8 @@ const pkg = getPkg()
 const setupRelay = (wallet) => {
   const info = {
     GATEWAY_URL: process.env.GATEWAY_URL,
-    CU_URL: 'http://cu.s451-comm3-main.xyz',
-    MU_URL: 'http://mu.s451-comm3-main.xyz',
+    CU_URL: 'http://cu.ao-testnet.xyz',
+    MU_URL: 'http://mu.ao-testnet.xyz',
     URL: process.env.RELAY_URL ?? 'http://137.220.36.155',
     SCHEDULER: 'eyhFer638JG-fJFEC3X3Q5kAl78aTe1eljYDiQo0vuU'
   }
