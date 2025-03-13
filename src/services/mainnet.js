@@ -128,7 +128,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       
       return request({
         type: 'Message',
-        path: `/${processId}/push`,
+        path: `/${processId}~process@1.0/push`,
         method: 'POST',
         target: processId,
         ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
@@ -144,7 +144,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 
     const params = {
       type: 'Message',
-      path: `/${processId}/push`,
+      path: `/${processId}~process@1.0/push`,
       method: 'POST',
       target: processId,
       ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
