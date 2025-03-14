@@ -45,7 +45,11 @@ export function readResultMainnet(params) {
         for(let message of res.Messages) {
           let parsedMessage = {}
           for(let key in message) {
-            parsedMessage[key] = await message[key].text()
+            if (typeof message[key] === 'function') {
+              parsedMessage[key] = await message[key]()
+            } else {
+              parsedMessage[key] = message[key]
+            }
           }
           parsedMessages.push(parsedMessage)
         }
@@ -118,29 +122,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   let retries = "."
   const { request } = setupMainnet(wallet) 
   
-  const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
-    .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
-      retries += "."
-      return _
-    })
-    .chain(fromPromise(() => {
-      
-      return request({
-        type: 'Message',
-        path: `/${processId}~process@1.0/push`,
-        method: 'POST',
-        target: processId,
-        ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
-        data: data,
-        'data-protocol': 'ao',
-        variant: 'ao.N.1'
-      }) 
-    }))
-  
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 0))
-  )().chain(fromPromise(() => {
+  return fromPromise(() => {
 
     const params = {
       type: 'Message',
@@ -154,14 +136,10 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     }
     
     return request(params)
-      //.then(res => (console.log(res), res))
       .then(async res => {
         return await res.slot.text()
       })
-    }
-  ))
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
+  })()
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
