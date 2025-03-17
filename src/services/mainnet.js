@@ -33,7 +33,7 @@ export function readResultMainnet(params) {
     new Promise((resolve) => setTimeout(() => resolve(params), 0))
   )()
     .chain(fromPromise(() => request({
-      path: `/${params.process}/compute&slot=${params.message}/results/json`,
+      path: `/${params.process}~process@1.0/compute&slot=${params.message}/results/json`,
       method: 'POST',
       target: params.process
     })
