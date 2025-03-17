@@ -28,7 +28,7 @@ export function checkLoadArgs() {
  * @returns {[string, Module[]]}
  */
 export function createExecutableFromProject(project) {
-  const getModFnName = (name) => name.replace(/\./g, '_').replace(/^_/, '')
+  const getModFnName = (name) => name.replace(/\.|-/g, '_').replace(/^_/, '')
   /** @type {Module[]} */
   const contents = []
 
