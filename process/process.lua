@@ -26,6 +26,7 @@ Utils = require('.utils')
 Handlers = require('.handlers')
 local stringify = require(".stringify")
 local assignment = require('.assignment')
+Nonce = Nonce or nil
 ao = nil
 if _G.package.loaded['.ao'] then
   ao = require('.ao')
@@ -39,7 +40,7 @@ assignment.init(ao)
 -- @table process
 -- @field _version The version number of the process
 
-local process = { _version = "2.0.3" }
+local process = { _version = "2.0.4" }
 -- The maximum number of messages to store in the inbox
 local maxInboxCount = 10000
 
@@ -302,6 +303,15 @@ end
 -- @tparam {table} msg The message to handle
 -- @tparam {table} _ The environment to handle the message in
 function process.handle(msg, _)
+  if not Nonce then
+    Nonce = tonumber(msg.Nonce)
+  else
+    Nonce = Nonce + 1
+    if tonumber(msg.Nonce) ~= Nonce then
+      return ao.result({Error = "HALT Nonce is out of sync " .. Nonce .. " <> " .. msg.Nonce})
+    end 
+  end
+
   local env = nil
   if _.Process then
     env = _
