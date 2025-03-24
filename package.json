@@ -50,9 +50,9 @@
     "standard": "^17.1.2"
   },
   "aos": {
-    "module": "jEoqVF7arFV1VWYiLVkAju8Etxcmw7zVDnGxUes0Zjk",
-    "sqlite": "Qb7NHsBlttUcDpr5-B7GLQkLqdsE1aAq1RW4mWLb0BI",
-    "llama": "FG2KECbZIFt1lu6_JXKkms6W0hNHJ_elcZqSS5sXGEw",
+    "module": "HDs53JE63BeD57V9dVW6EupEncdfYhE3Fg3NvKGYPGA",
+    "sqlite": "4xm5834zx6RGLCp0O1whlKweyZC4Lj9OhYlY5k5Pjk4",
+    "llama": "VtgR0srruI1yk66LOHp9i3vaPbCvl75uKN0UeLPhnfc",
     "version": "2.0.4"
   }
 }
