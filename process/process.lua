@@ -303,13 +303,14 @@ end
 -- @tparam {table} msg The message to handle
 -- @tparam {table} _ The environment to handle the message in
 function process.handle(msg, _)
-  -- Only check for Nonce if msg is not read-only
-  if not msg['Read-Only'] then
+  -- Only check for Nonce if msg is not read-only and not cron
+  if not msg['Read-Only'] and not msg['Cron'] then
     if not Nonce then
       Nonce = tonumber(msg.Nonce)
     else
       if tonumber(msg.Nonce) ~= (Nonce + 1) then
-        return ao.result({Error = "HALT Nonce is out of sync " .. Nonce .. " <> " .. (msg.Nonce or "0") })
+        return ao.result({Output = { data = msg }})
+        --return ao.result({Error = "HALT Nonce is out of sync " .. Nonce .. " <> " .. (msg.Nonce or "0") })
       end
       Nonce = msg.Nonce 
     end
