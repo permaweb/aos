@@ -42,7 +42,8 @@ local ao = {
         'Timestamp', 'Nonce', 'Epoch', 'Signature', 'Forwarded-By',
         'Pushed-For', 'Read-Only', 'Cron', 'Block-Height', 'Reference', 'Id',
         'Reply-To'
-    }
+    },
+    Nonce = nil
 }
 
 --- Checks if a key exists in a list.
