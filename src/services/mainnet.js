@@ -154,7 +154,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
       path: '/push',
       method: 'POST',
       signingFormat: 'ANS-104',
-      type: 'Process',
+      'Type': 'Process',
       scheduler: SCHEDULER,
       module: src,
       device: 'process@1.0',
