@@ -47,12 +47,13 @@
     "lint-staged": "^15.2.10",
     "markdown-toc-gen": "^1.1.0",
     "sort-package-json": "^2.10.1",
-    "standard": "^17.1.2"
+    "standard": "^17.1.2",
+    "shelljs": "^0.9.2"
   },
   "aos": {
-    "module": "KGGQZ02IqMQwZEt_Q-ZyWjsZIbbsj4qAHS7aN8fr-ws",
-    "sqlite": "h817MOmgBVxvQNsoI07BexZJ68EAXJQrKjBi5lVwE_E",
-    "llama": "VtgR0srruI1yk66LOHp9i3vaPbCvl75uKN0UeLPhnfc",
+    "module": "URgYpPQzvxxfYQtjrIQ116bl3YBfcImo3JEnNo8Hlrk",
+    "sqlite": "lPkDN7vAoKMW4A6H9O3Q4faegLaXZ3HFix_E0lZkPlg",
+    "llama": "l2C3iKWRxQgW-WnX0fCNuHMj6y2S_NWctnsTWcCwSuY",
     "version": "2.0.4"
   }
 }
