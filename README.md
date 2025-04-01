@@ -37,7 +37,7 @@ The current implementation of aos is using the ao wasm module and building with 
 
 ## For Developers
 
-The aos console is a command-line application that provides a easy to use DX experience to create Processes (aka Smart Contracts) on the ao Computer.
+The aos console is a command-line application that provides an easy to use DX experience to create Processes (aka Smart Contracts) on the ao Computer.
 
 ### Setup
 
@@ -79,10 +79,10 @@ When running the console, you can type `dot` commands to instruct the console to
 
 | Command                  | Description                                                                                                                                  |
 | ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.editor`                | This command opens a simple cli editor that you can type on multiple lines, and then you can type `.done` or `.cancel` to exist editor mode. |
+| `.editor`                | This command opens a simple cli editor that you can type on multiple lines, and then you can type `.done` or `.cancel` to exit editor mode.  |
 | `.load`                  | This command allows you to load a lua source file from your local directory                                                                  |
 | `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                               |
-| `.exit`                  | This command will exit you console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                 |
+| `.exit`                  | This command will exit your console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                |
 
 ### Boot Loading
 
@@ -135,7 +135,7 @@ ao build
 
 ### Develop using os loader
 
-Making changes and debugging can be a challege with aos modules.
+Making changes and debugging can be a challenge with aos modules.
 
 ```
 node ../src/index.js
