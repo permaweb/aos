@@ -1,35 +1,30 @@
-local bint = require('.bint')(256)
 --[[
-  This module implements the ao Standard Token Specification.
+  This module implements the AO Standard Token Specification.
 
   Terms:
     Sender: the wallet or Process that sent the Message
 
   It will first initialize the internal state, and then attach handlers,
-    according to the ao Standard Token Spec API:
+    according to the AO Standard Token Spec API:
 
-    - Info(): return the token parameters, like Name, Ticker, Logo, and Denomination
+    - Info(): Return the token parameters, like Name, Ticker, Logo, and Denomination
 
-    - Balance(Target?: string): return the token balance of the Target. If Target is not provided, the Sender
+    - Balance(Target?: string): Return the token balance of the Target. If Target is not provided, the Sender
         is assumed to be the Target
 
-    - Balances(): return the token balance of all participants
+    - Balances(): Return the token balance of all participants
 
-    - Transfer(Target: string, Quantity: number): if the Sender has a sufficient balance, send the specified Quantity
+    - Transfer(Target: string, Quantity: number): If the Sender has a sufficient balance, send the specified Quantity
         to the Target. It will also issue a Credit-Notice to the Target and a Debit-Notice to the Sender
 
-    - Mint(Quantity: number): if the Sender matches the Process Owner, then mint the desired Quantity of tokens, adding
-        them the Processes' balance
+    - Mint(Quantity: number): If the Sender matches the Process Id, then mint the desired Quantity of tokens, adding
+        them to the Processes' balance
 ]]
---
+
+local bint = require('.bint')(256)
 local json = require('json')
 
---[[
-  utils helper functions to remove the bint complexity.
-]]
---
-
-
+-- Helper functions to remove bint complexity
 local utils = {
   add = function(a, b)
     return tostring(bint(a) + bint(b))
@@ -46,32 +41,26 @@ local utils = {
 }
 
 
---[[
-     Initialize State
-
-     ao.id is equal to the Process.Id
-   ]]
---
-Variant = "0.0.3"
-
--- token should be idempotent and not change previous state updates
+-- Initialize State: Token should be idempotent and not change previous state updates
+Variant = '0.0.3'
 Denomination = Denomination or 12
 Balances = Balances or { [ao.id] = utils.toBalanceValue(10000 * 10 ^ Denomination) }
 TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 Name = Name or 'Points Coin'
 Ticker = Ticker or 'PNTS'
-Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
+Logo = Logo or 'Q7CbXKMkPykHdDIUqSwEiRhZ61keHfjjHpz9FdqJDcU'
 
---[[
-     Add handlers for each incoming Action defined by the ao Standard Token Specification
-   ]]
---
+-- Sync state on spawn
+InitialSync = InitialSync or 'INCOMPLETE'
+if InitialSync == 'INCOMPLETE' then
+  Send({ method = 'PATCH', cache = { Balances = Balances, TotalSupply = TotalSupply } })
+  InitialSync = 'COMPLETE'
+end
 
---[[
-     Info
-   ]]
---
-Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
+-- Add handlers for each incoming Action defined by the AO Standard Token Specification
+
+-- Info
+Handlers.add('info', { Action = 'Info' }, function(msg)
   if msg.reply then
     msg.reply({
       Name = Name,
@@ -80,23 +69,21 @@ Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(m
       Denomination = tostring(Denomination)
     })
   else
-    Send({Target = msg.From, 
-    Name = Name,
-    Ticker = Ticker,
-    Logo = Logo,
-    Denomination = tostring(Denomination)
-   })
+    Send({
+      Target = msg.From,
+      Name = Name,
+      Ticker = Ticker,
+      Logo = Logo,
+      Denomination = tostring(Denomination)
+    })
   end
 end)
 
---[[
-     Balance
-   ]]
---
-Handlers.add('balance', Handlers.utils.hasMatchingTag("Action", "Balance"), function(msg)
+-- Balance
+Handlers.add('balance', { Action = 'Balance' }, function(msg)
   local bal = '0'
 
-  -- If not Recipient is provided, then return the Senders balance
+  -- If a recipient is not provided, then return the senders balance
   if (msg.Tags.Recipient) then
     if (Balances[msg.Tags.Recipient]) then
       bal = Balances[msg.Tags.Recipient]
@@ -124,40 +111,44 @@ Handlers.add('balance', Handlers.utils.hasMatchingTag("Action", "Balance"), func
   end
 end)
 
---[[
-     Balances
-   ]]
---
-Handlers.add('balances', Handlers.utils.hasMatchingTag("Action", "Balances"),
-  function(msg) 
+-- Balances
+Handlers.add('balances', { Action = 'Balances' },
+  function(msg)
     if msg.reply then
       msg.reply({ Data = json.encode(Balances) })
-    else 
-      Send({Target = msg.From, Data = json.encode(Balances) }) 
+    else
+      Send({ Target = msg.From, Data = json.encode(Balances) })
     end
   end)
 
---[[
-     Transfer
-   ]]
---
-Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), function(msg)
+-- Transfer
+Handlers.add('transfer', { Action = 'Transfer' }, function(msg)
   assert(type(msg.Recipient) == 'string', 'Recipient is required!')
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint.__lt(0, bint(msg.Quantity)), 'Quantity must be greater than 0')
 
-  if not Balances[msg.From] then Balances[msg.From] = "0" end
-  if not Balances[msg.Recipient] then Balances[msg.Recipient] = "0" end
+  if not Balances[msg.From] then Balances[msg.From] = '0' end
+  if not Balances[msg.Recipient] then Balances[msg.Recipient] = '0' end
 
   if bint(msg.Quantity) <= bint(Balances[msg.From]) then
     Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Quantity)
     Balances[msg.Recipient] = utils.add(Balances[msg.Recipient], msg.Quantity)
 
+    -- Sync state
+    Send({
+      method = 'PATCH',
+      cache = {
+        Balances = {
+          [msg.From] = Balances[msg.From],
+          [msg.Recipient] = Balances[msg.Recipient]
+        }
+      }
+    })
+
     --[[
          Only send the notifications to the Sender and Recipient
          if the Cast tag is not set on the Transfer message
-       ]]
-    --
+      ]]
     if not msg.Cast then
       -- Debit-Notice message template, that is sent to the Sender of the transfer
       local debitNotice = {
@@ -165,9 +156,10 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
         Recipient = msg.Recipient,
         Quantity = msg.Quantity,
         Data = Colors.gray ..
-            "You transferred " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " to " .. Colors.green .. msg.Recipient .. Colors.reset
+            'You transferred ' ..
+            Colors.blue .. msg.Quantity .. Colors.gray .. ' to ' .. Colors.green .. msg.Recipient .. Colors.reset
       }
+
       -- Credit-Notice message template, that is sent to the Recipient of the transfer
       local creditNotice = {
         Target = msg.Recipient,
@@ -175,14 +167,14 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
         Sender = msg.From,
         Quantity = msg.Quantity,
         Data = Colors.gray ..
-            "You received " ..
-            Colors.blue .. msg.Quantity .. Colors.gray .. " from " .. Colors.green .. msg.From .. Colors.reset
+            'You received ' ..
+            Colors.blue .. msg.Quantity .. Colors.gray .. ' from ' .. Colors.green .. msg.From .. Colors.reset
       }
 
       -- Add forwarded tags to the credit and debit notice messages
       for tagName, tagValue in pairs(msg) do
-        -- Tags beginning with "X-" are forwarded
-        if string.sub(tagName, 1, 2) == "X-" then
+        -- Tags beginning with 'X-' are forwarded
+        if string.sub(tagName, 1, 2) == 'X-' then
           debitNotice[tagName] = tagValue
           creditNotice[tagName] = tagValue
         end
@@ -215,28 +207,29 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
   end
 end)
 
---[[
-    Mint
-   ]]
---
-Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(msg)
+-- Mint
+Handlers.add('mint', { Action = 'Mint' }, function(msg)
   assert(type(msg.Quantity) == 'string', 'Quantity is required!')
   assert(bint(0) < bint(msg.Quantity), 'Quantity must be greater than zero!')
 
-  if not Balances[ao.id] then Balances[ao.id] = "0" end
+  if not Balances[ao.id] then Balances[ao.id] = '0' end
 
   if msg.From == ao.id then
     -- Add tokens to the token pool, according to Quantity
     Balances[msg.From] = utils.add(Balances[msg.From], msg.Quantity)
     TotalSupply = utils.add(TotalSupply, msg.Quantity)
+
+    -- Sync state
+    Send({ method = 'PATCH', cache = { Balances = { [msg.From] = Balances[msg.From] }, TotalSupply = TotalSupply } })
+
     if msg.reply then
       msg.reply({
-        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+        Data = Colors.gray .. 'Successfully minted ' .. Colors.blue .. msg.Quantity .. Colors.reset
       })
     else
       Send({
         Target = msg.From,
-        Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
+        Data = Colors.gray .. 'Successfully minted ' .. Colors.blue .. msg.Quantity .. Colors.reset
       })
     end
   else
@@ -257,11 +250,8 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
   end
 end)
 
---[[
-     Total Supply
-   ]]
---
-Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply"), function(msg)
+-- Total Supply
+Handlers.add('totalSupply', { Action = 'Total-Supply' }, function(msg)
   assert(msg.From ~= ao.id, 'Cannot call Total-Supply from the same process!')
   if msg.reply then
     msg.reply({
@@ -276,23 +266,5 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply
       Data = TotalSupply,
       Ticker = Ticker
     })
-  end
-end)
-
---[[
- Burn
-]] --
-Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
-  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
-  assert(bint(msg.Tags.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
-
-  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity)
-  TotalSupply = utils.subtract(TotalSupply, msg.Tags.Quantity)
-  if msg.reply then
-    msg.reply({
-      Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset
-    })
-  else
-    Send({Target = msg.From,  Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset })
   end
 end)
