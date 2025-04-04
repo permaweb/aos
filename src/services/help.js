@@ -32,7 +32,6 @@ ${chalk.green('Options:')}
   ${chalk.green('[name]')}                    The name of the process you want to spawn or connect to.
                             If you do not specify a name then "default" will be used.
   ${chalk.green('--wallet [file]')}           Set the wallet to interact with your process. By Default one is created for you at ~/.aos.json
-  ${chalk.green('--relay [relay-url]')}       Set the HyperBEAM Relay URL to handle payments in your process.
   ${chalk.green('--watch=[process]')}         Watch the console of a process, even if you are not the owner.
   ${chalk.green('--load [file]')}             Load Lua source file(s) into your process.
   ${chalk.green('--list')}                    Lists the processes for your wallet.

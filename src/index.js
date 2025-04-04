@@ -19,7 +19,6 @@ import { dryEval } from './dry-eval.js'
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import * as connectSvc from './services/connect.js'
-import * as relaySvc from './services/relay.js'
 import * as mainnetSvc from './services/mainnet.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
@@ -44,17 +43,10 @@ const argv = minimist(process.argv.slice(2))
 
 let dryRunMode = false
 let luaData = ''
-let relayMode = false
 
 let {
   spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
 } = connectSvc
-
-let {
-  spawnProcessRelay, sendMessageRelay, readResultRelay,
-  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
-  dryrunRelay, handleRelayTopup
-} = relaySvc
 
 let {
   spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
@@ -121,21 +113,6 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
-if (argv['relay']) {
-  console.log(chalk.cyanBright('Using Relay: ') + chalk.cyan(argv['relay']))
-  process.env.RELAY_URL = argv['relay']
-  // replace services to use relay service
-  sendMessage = sendMessageRelay
-  spawnProcess = spawnProcessRelay
-  readResult = readResultRelay
-  monitorProcess = monitorProcessRelay
-  unmonitorProcess = unmonitorProcessRelay
-  live = liveRelay
-  printLive = printLiveRelay
-  dryrun = dryrunRelay
-
-  relayMode = true
-}
 if (argv['mainnet']) {
   console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
   process.env.AO_URL = argv['mainnet']
@@ -153,8 +130,6 @@ if (argv['mainnet']) {
   live = liveMainnet
   printLive = printLiveMainnet
   dryrun = dryrunMainnet
-
-  relayMode = true
 }
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
@@ -176,10 +151,7 @@ async function runProcess() {
     of()
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
-        // make wallet available to services if relay mode
-        // if (argv['relay'] || argv['mainnet']) {
         process.env.WALLET = JSON.stringify(jwk)
-        // }
         // handle list option, need jwk in order to do it.
         if (argv.list) {
           return list(jwk, { address, gql }).chain(Rejected)
@@ -491,26 +463,6 @@ async function runProcess() {
         if (argv.list) {
           console.log(e)
         } else {
-          if (argv.relay) {
-            let jwk;
-            if (process.env.WALLET) {
-              try {
-                jwk = JSON.parse(process.env.WALLET);
-              } catch (err) {
-                console.error('Error parsing WALLET from environment:', err);
-              }
-            }
-
-            try {
-              const topupSuccess = await handleRelayTopup(jwk);
-              if (topupSuccess) {
-                return runProcess();
-              }
-            } catch (topupError) {
-              console.error('Error handling relay topup:', topupError);
-              process.exit(1);
-            }
-          }
           if (process.env.DEBUG) {
             console.log(e)
           }
