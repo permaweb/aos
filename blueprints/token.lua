@@ -228,8 +228,7 @@ Handlers.add('batch-transfer', Handlers.utils.hasMatchingTag("Action", "Batch-Tr
       Action = 'Batch-Debit-Notice',
       Count = tostring(#transferEntries),
       Total = totalQuantity,
-      ['Batch-Transfer-Init-Id'] = msg.Id,
-      Data = "OK"
+      ['Batch-Transfer-Init-Id'] = msg.Id
     }
 
     -- Forward any X- tags to the debit notice
