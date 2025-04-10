@@ -38,8 +38,6 @@ export function readResultMainnet(params) {
       target: params.process
     })
       .then(async res => {
-        //console.log('Mainnet request response:')
-        //console.log(res)
         
         let parsedMessages = []
         for(let message of res.Messages) {
@@ -224,21 +222,21 @@ export function printLiveMainnet() {
 export async function liveMainnet(id, watch, wallet) {
   _watch = watch
   let ct = null
-  let cursor = 1
-  let count = null
+  let cursor = '1'
   let cursorFile = path.resolve(os.homedir() + `/.${id}.txt`)
 
   if (fs.existsSync(cursorFile)) {
-    cursor = Number(fs.readFileSync(cursorFile, 'utf-8')) || 1
+    cursor = fs.readFileSync(cursorFile, 'utf-8')
   }
-  let stopped = false
-  process.stdin.on('keypress', (str, key) => {
-    if (ct && !stopped) {
-      ct.stop()
-      stopped = true
-      setTimeout(() => { ct.start(); stopped = false }, 60000)
-    }
-  })
+  // let stopped = false
+  // process.stdin.on('keypress', (str, key) => {
+  //   console.log({ str, key, ct, stopped })
+  //   if (ct && !stopped) {
+  //     ct.stop()
+  //     stopped = true
+  //     setTimeout(() => { ct.start(); stopped = false }, 60000)
+  //   }
+  // })
 
   const { request } = setupMainnet(wallet)
  
@@ -246,48 +244,66 @@ export async function liveMainnet(id, watch, wallet) {
 
   const checkLive = async () => {
     
-    
+
     if (!isJobRunning) {
 
       try {
         isJobRunning = true;
-        let params = { process: id, slot: cursor || '1' }
-        
-        // const r = await request({
-        //   method: 'GET',
-        //   path: `/${params.process}/compute&slot=${params.slot}/results/json`,
-        //   accept: 'application/json'
-        // })
-        // .then(r => {
-        //   if (r.Output) {
-        //     cursor = Number(cursor) + 1
-        //   }
-        //   return r
-        // })
-        // .catch(e => {
-        //   console.log('ERROR: ', e.message)
-        //   return ({})
-        // })
+        let slot = cursor
+        try {
+          // Handle legacy cursor format
+          const parsedCursor = JSON.parse(atob(cursor.toString()) || "{}")?.ordinate 
+          if (parsedCursor) {
+            slot = parsedCursor
+          }
+        } catch (_) {} // swallow error
 
-        
+        // Get the current slot
+        const maxSlotPath = `/${id}~process@1.0/slot/current`
+        const maxSlot = await request({
+          method: 'GET',
+          path: maxSlotPath,
+        }).then(r => r.body)
+
+        let params = { process: id, slot: slot }
+        let currSlot = params.slot
         let edges = []
-        if (r.Output?.print === true) {
-          edges.push({
-            node: r
+        while (currSlot <= maxSlot) {
+          const path = `/${params.process}~process@1.0/compute&slot=${currSlot}/results/json`
+          const r = await request({
+            method: 'GET',
+            path
+          }) 
+          .catch(e => {
+            console.log('ERROR: ', e.message)
+            return ({})
           })
+
+          const result = Object.keys(r).filter(key => {
+            return ['Messages', 'Assignments', 'Spawns', 'Output', 'Patches', 'GasUsed'].includes(key)
+          }).reduce((acc, key) => {
+            acc.node[key] = r[key]
+            return acc
+          }, { cursor: currSlot, node: {} })
+          edges.push(result)
+          currSlot++
         }
- 
-        if (edges.length > 0) {
-          edges.map(e => {
-            if (!globalThis.alerts[cursor] && e.node?.Output?.data && e.node?.Output?.data?.length > 0) {
-              globalThis.alerts[cursor] = e.node?.Output
+        let printEdges = []
+        for (let edge of edges) {
+          if (edge.node?.Output?.print === true) {
+            printEdges.push(edge)
+          }
+        }
+        if (printEdges.length > 0) {
+          printEdges.map(e => {
+            if (!globalThis.alerts[e.cursor] && e.node?.Output?.data && e.node?.Output?.data?.length > 0) {
+              globalThis.alerts[e.cursor] = e.node?.Output
             }
           })
 
         }
-        count = edges.length
         if (edges.length > 0) {
-          fs.writeFileSync(cursorFile, String(cursor))
+          fs.writeFileSync(cursorFile, String(edges[edges.length - 1].cursor))
         }
         //process.nextTick(() => null)
 
