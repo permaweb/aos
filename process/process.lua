@@ -3,6 +3,7 @@
 
 -- @dependencies
 local pretty = require('.pretty')
+local ftcsv = require('.ftcsv')
 local base64 = require('.base64')
 local json = require('json')
 local chance = require('.chance')
