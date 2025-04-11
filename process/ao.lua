@@ -369,21 +369,26 @@ function ao.registerHint(msg)
             if name == "From-Process" then
                 -- split by & to get process, hint, and ttl
                 local parts = {}
+
                 for part in string.gmatch(value, "[^&]+") do
                     table.insert(parts, part)
                 end
                 local hintParts = {}
-                for item in string.gmatch(parts[2], "[^=]+") do
-                    table.insert(hintParts, item)
+                if parts[2] then
+                    for item in string.gmatch(parts[2], "[^=]+") do
+                        table.insert(hintParts, item)
+                    end
                 end
                 local ttlParts = {}
-                for item in string.gmatch(parts[3], "[^=]+") do
-                    table.insert(ttlParts, item)
+                if parts[3] then
+                    for item in string.gmatch(parts[3], "[^=]+") do
+                        table.insert(ttlParts, item)
+                    end
                 end
                 
-                fromProcess = parts[1]
-                hint = hintParts[2]
-                hintTTL = ttlParts[2] 
+                fromProcess = parts[1] or nil
+                hint = hintParts[2] or nil
+                hintTTL = ttlParts[2] or nil
                 break
             end
         end
