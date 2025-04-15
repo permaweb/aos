@@ -22,7 +22,7 @@
     "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "file:/Users/sam/src/ao/connect",
+    "@permaweb/aoconnect": "0.0.75",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -57,5 +57,8 @@
     "llama": "O-gTmyhAiakCfZOKNbd2YJvO1JImW2YAIsl-MscTsQg",
     "test": "IzZNCU3hs1_wxD5nRHHPPQDAcYWBWBB3t4NctGRqpEA",
     "version": "2.0.6"
+  },
+  "hyper": {
+    "script": "qMFUCmvmGqWtb95lRkt9ln60NLHDkd_JVXL7RFG6yY4"
   }
 }

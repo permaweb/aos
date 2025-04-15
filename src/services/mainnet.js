@@ -33,40 +33,47 @@ export function readResultMainnet(params) {
     new Promise((resolve) => setTimeout(() => resolve(params), 0))
   )()
     .chain(fromPromise(() => request({
-      path: `/${params.process}~process@1.0/compute&slot=${params.message}/results/json`,
+      path: `/${params.process}~process@1.0/compute&slot=${params.message}/results/outbox/output`,
       method: 'POST',
       target: params.process
     })
-      .then(async res => {
-        
-        let parsedMessages = []
-        for(let message of res.Messages) {
-          let parsedMessage = {}
-          for(let key in message) {
-            if (typeof message[key] === 'function') {
-              parsedMessage[key] = await message[key]()
-            } else {
-              parsedMessage[key] = message[key]
-            }
-          }
-          parsedMessages.push(parsedMessage)
+      // .then(async res => {
+      //
+      //   let parsedMessages = []
+      //   for(let message of res.Messages) {
+      //     let parsedMessage = {}
+      //     for(let key in message) {
+      //       if (typeof message[key] === 'function') {
+      //         parsedMessage[key] = await message[key]()
+      //       } else {
+      //         parsedMessage[key] = message[key]
+      //       }
+      //     }
+      //     parsedMessages.push(parsedMessage)
+      //   }
+      //   delete res.Messages
+      //
+      //   let parsedRes = {}
+      //   for(let key in res) {
+      //     if(typeof res[key] === 'object' && res[key].text && typeof res[key].text === 'function') {
+      //       parsedRes[key] = await res[key].text()
+      //     } else {
+      //       parsedRes[key] = res[key]
+      //     }
+      //   }
+      //   const finalRes = { ...parsedRes, Messages: parsedMessages }
+      //   //console.log('Final mainnet response:')
+      //   //console.log(finalRes)
+      //   return finalRes
+      // })
+      .then(async res => ({ 
+        process: params.process, 
+        slot: params.message,  
+        Output: { 
+          data: res.body, 
+          prompt: await res.prompt.text() 
         }
-        delete res.Messages
-
-        let parsedRes = {}
-        for(let key in res) {
-          if(typeof res[key] === 'object' && res[key].text && typeof res[key].text === 'function') {
-            parsedRes[key] = await res[key].text()
-          } else {
-            parsedRes[key] = res[key]
-          }
-        }
-        const finalRes = { ...parsedRes, Messages: parsedMessages }
-        //console.log('Final mainnet response:')
-        //console.log(finalRes)
-        return finalRes
-      })
-      .then(res => ({ process: params.process, slot: params.message,  Output: res.Output, Messages: res.Messages }))
+      }))
       .catch(e => {
         console.log(e)
         return ({ Error: e.message })
@@ -96,26 +103,6 @@ export function readResultMainnet(params) {
     )
 }
 
-export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
-  const { request } = setupMainnet(wallet)
-  return fromPromise(() =>
-    arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      request({
-        path: `/~relay@1.0?relay-path=http://localhost:3000/dryrun/${processId}`,
-        method: 'POST',
-        body: JSON.stringify({
-          Target: processId,
-          Owner,
-          tags,
-          data
-        })
-      })
-      //dryrun({ process: processId, Owner, tags, data })
-    )
-  )()
-}
-
-
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   let retries = "."
   const { request } = setupMainnet(wallet) 
@@ -143,33 +130,30 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const AUTHORITY = process.env.AUTHORITY
+  const EXECUTION_DEVICE = process.env.EXECUTION_DEVICE
   const { request } = setupMainnet(wallet) 
- 
+  const script = pkg.hyper.script || "qMFUCmvmGqWtb95lRkt9ln60NLHDkd_JVXL7RFG6yY4"
 
   tags = tags.concat([{ name: 'aos-version', value: pkg.version }])
   return fromPromise(() => {
     const params = {
       path: '/push',
       method: 'POST',
-      signingFormat: 'ANS-104',
       'Type': 'Process',
-      'Module': src,
       scheduler: SCHEDULER,
       device: 'process@1.0',
       'scheduler-device': 'scheduler@1.0',
-      'execution-device': 'genesis-wasm@1.0',
+      'execution-device': EXECUTION_DEVICE,
       'push-device': 'push@1.0',
       'Authority': AUTHORITY,
       'scheduler-location': SCHEDULER,
       'Data-Protocol': 'ao',
       Variant: 'ao.N.1',
+      ["script-id"]: script,
       ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data
     }
-    //console.log('Sending spawn request:')
-    //console.log(params)
     return request(params)
-    //.then(x => (console.log(x), x))
    
     .then(x => x.process)
     .then(async result => {
@@ -269,7 +253,7 @@ export async function liveMainnet(id, watch, wallet) {
         let currSlot = params.slot
         let edges = []
         while (currSlot <= maxSlot) {
-          const path = `/${params.process}~process@1.0/compute&slot=${currSlot}/results/json`
+          const path = `/${params.process}~process@1.0/compute&slot=${currSlot}/results/outbox/output`
           const r = await request({
             method: 'GET',
             path
@@ -317,7 +301,7 @@ export async function liveMainnet(id, watch, wallet) {
       }
     }
   }
-  await cron.schedule('*/2 * * * * *', checkLive)
+  //await cron.schedule('*/2 * * * * *', checkLive)
 
   ct = await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
