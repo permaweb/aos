@@ -122,7 +122,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     
     return request(params)
       .then(async res => {
-        return res.slot
+        return ({ 
+          slot: res.slot,  
+          Output: { 
+            data: res['outbox/output'].data, 
+            prompt: res['outbox/output'].prompt + " " 
+          }
+        })
       })
   })()
 }

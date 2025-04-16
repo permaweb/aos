@@ -15,7 +15,7 @@ end
 
 function process.handle(req, base)
   HandlerPrintLogs = state.reset(HandlerPrintLogs)
-  os.time = function () return tonumber(req.['block-timestamp']) end
+  os.time = function () return tonumber(req['block-timestamp']) end
 
   ao.init(base)
   -- initialize state
@@ -31,7 +31,7 @@ function process.handle(req, base)
   ao.clearOutbox()
 
   -- state.checkSlot(msg, ao)
-  Handlers.add("_eval", function (req)
+  Handlers.add("_eval", function (_req)
     local function getMsgFrom(m)
       local from = ""
       Utils.map(
@@ -45,15 +45,19 @@ function process.handle(req, base)
       )
       return from
     end
-    return req.body.action == "Eval" and Owner == getMsgFrom(req.body)
+    return _req.body.action == "Eval" and Owner == getMsgFrom(_req.body)
   end, eval(ao))
 
-  Handlers.append("_default",
+  Handlers.add("_default",
     function () return true end,
     default(state.insertInbox)
   )
 
   local status, error = pcall(Handlers.evaluate, req, base)
+
+  -- cleanup handlers so that they are always at the end of the pipeline
+  Handlers.remove("_eval")
+  Handlers.remove("_default")
 
   local printData = table.concat(HandlerPrintLogs, "\n")
   if not status then

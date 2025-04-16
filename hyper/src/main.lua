@@ -8,8 +8,6 @@ function compute(base, req, opts)
   }
   for i=1,#_results.Messages do
     base.results.outbox[tostring(i)] = _results.Messages[i]
-    -- base.results.outbox["message-" .. i] = _results.Messages[i]
   end
-
   return base
 end

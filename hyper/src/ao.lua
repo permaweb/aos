@@ -137,12 +137,15 @@ function ao.result(result)
   if ao.outbox.Error or result.Error then
     return { Error = result.Error or ao.outbox.Error }
   end
-  return {
-    Output = result.Output or ao.output.Output,
-    Messages = ao.outbox.Messages,
-    Spawns = ao.outbox.Spawns,
-    Assignments = ao.outbox.Assignments
-  }
+  local _result = {}
+  _result.output = result.Output or ao.output.Output or nil
+  return _result
+  -- return {
+  --   Output = result.Output or ao.output.Output,
+  --   Messages = ao.outbox.Messages,
+  --   Spawns = ao.outbox.Spawns,
+  --   Assignments = ao.outbox.Assignments
+  -- }
 end
 
 -- set global Send and Spawn

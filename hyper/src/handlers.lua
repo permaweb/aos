@@ -72,7 +72,7 @@ function handlers.generateResolver(resolveSpec)
       return resolveSpec(msg)
     else
         for matchSpec, func in pairs(resolveSpec) do
-            if utils.matchesSpec(msg.body, matchSpec) then
+            if utils.matchesSpec(msg, matchSpec) then
                 return func(msg)
             end
         end
