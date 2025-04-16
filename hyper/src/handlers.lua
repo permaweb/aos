@@ -54,7 +54,7 @@ local function assertAddArgs(name, pattern, handle, maxRuns)
     (type(pattern) == 'function' or type(pattern) == 'table' or type(pattern) == 'string'),
     'Invalid arguments given. Expected: \n' ..
     '\tname : string, ' ..
-    '\tpattern : Action : string | MsgMatch : table,\n' ..
+    '\tpattern : action : string | MsgMatch : table,\n' ..
     '\t\tfunction(msg: Message) : {-1 = break, 0 = skip, 1 = continue},\n' ..
     '\thandle(msg : Message) : void) | Resolver,\n' ..
     '\tMaxRuns? : number | "inf" | nil')
@@ -72,7 +72,7 @@ function handlers.generateResolver(resolveSpec)
       return resolveSpec(msg)
     else
         for matchSpec, func in pairs(resolveSpec) do
-            if utils.matchesSpec(msg, matchSpec) then
+            if utils.matchesSpec(msg.body, matchSpec) then
                 return func(msg)
             end
         end
@@ -87,16 +87,6 @@ end
 -- @function receive
 -- @tparam {table | function} pattern The pattern to check for in the message
 function handlers.receive(pattern)
-  
-  --local self = coroutine.running()
-  --handlers.once(pattern, function (msg)
-      -- If the result of the resumed coroutine is an error then we should bubble it up to the process
-  --    local _, success, errmsg = coroutine.resume(self, msg)
-  --    if not success then
-  --      error(errmsg)
-  --    end
-  --end)
-  --return coroutine.yield(pattern)
   return 'not implemented'
 end
 
@@ -141,16 +131,16 @@ function handlers.add(...)
     pattern = select(2, ...)
     handle = select(3, ...)
     maxRuns = nil
-  else 
+  else
     name = select(1, ...)
     pattern = select(2, ...)
     handle = select(3, ...)
     maxRuns = select(4, ...)
   end
   assertAddArgs(name, pattern, handle, maxRuns)
-  
+
   handle = handlers.generateResolver(handle)
-  
+
   -- update existing handler by name
   local idx = findIndexByProp(handlers.list, "name", name)
   if idx ~= nil and idx > 0 then
@@ -185,14 +175,14 @@ function handlers.append(...)
     pattern = select(2, ...)
     handle = select(3, ...)
     maxRuns = nil
-  else 
+  else
     name = select(1, ...)
     pattern = select(2, ...)
     handle = select(3, ...)
     maxRuns = select(4, ...)
   end
   assertAddArgs(name, pattern, handle, maxRuns)
-  
+
   handle = handlers.generateResolver(handle)
   -- update existing handler by name
   local idx = findIndexByProp(handlers.list, "name", name)
@@ -202,11 +192,8 @@ function handlers.append(...)
     handlers.list[idx].handle = handle
     handlers.list[idx].maxRuns = maxRuns
   else
-    
     table.insert(handlers.list, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
   end
-
-  
 end
 
 --- Prepends a new handler to the beginning of the handlers list.
@@ -248,8 +235,6 @@ function handlers.prepend(...)
   else  
     table.insert(handlers.list, 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
   end
-
-  
 end
 
 --- Returns an object that allows adding a new handler before a specified handler.
@@ -263,13 +248,10 @@ function handlers.before(handleName)
   return {
     add = function (name, pattern, handle, maxRuns) 
       assertAddArgs(name, pattern, handle, maxRuns)
-      
       handle = handlers.generateResolver(handle)
-      
       if idx then
         table.insert(handlers.list, idx, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
       end
-      
     end
   }
 end
@@ -284,13 +266,10 @@ function handlers.after(handleName)
   return {
     add = function (name, pattern, handle, maxRuns)
       assertAddArgs(name, pattern, handle, maxRuns)
-      
       handle = handlers.generateResolver(handle)
-      
       if idx then
         table.insert(handlers.list, idx + 1, { pattern = pattern, handle = handle, name = name, maxRuns = maxRuns })
       end
-      
     end
   }
 
@@ -303,14 +282,12 @@ function handlers.remove(name)
   assert(type(name) == 'string', 'name MUST be string')
   if #handlers.list == 1 and handlers.list[1].name == name then
     handlers.list = {}
-    
   end
 
   local idx = findIndexByProp(handlers.list, "name", name)
   if idx ~= nil and idx > 0 then
     table.remove(handlers.list, idx)
   end
-  
 end
 
 --- Evaluates each handler against a given message and environment. Handlers are called in the order they appear in the handlers list.
@@ -323,14 +300,12 @@ function handlers.evaluate(msg, env)
   local handled = false
   assert(type(msg) == 'table', 'msg is not valid')
   assert(type(env) == 'table', 'env is not valid')
-  
   for _, o in ipairs(handlers.list) do
     if o.name ~= "_default" then
       local match = utils.matchesSpec(msg, o.pattern)
       if not (type(match) == 'number' or type(match) == 'string' or type(match) == 'boolean') then
         error("Pattern result is not valid, it MUST be string, number, or boolean")
       end
-      
       -- handle boolean returns
       if type(match) == "boolean" and match == true then
         match = -1

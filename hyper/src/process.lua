@@ -3,7 +3,7 @@ Handlers = require('.handlers')
 Utils = require('.utils')
 Dump = require('.dump')
 
-local process = { _version = "2.0.5" }
+local process = { _version = "2.0.7" }
 local state = require('.state')
 local eval = require('.eval')
 local default = require('.default')
@@ -13,25 +13,25 @@ function Prompt()
   return "aos> "
 end
 
-function process.handle(msg, env)
+function process.handle(req, base)
   HandlerPrintLogs = state.reset(HandlerPrintLogs)
-  os.time = function () return tonumber(msg.Timestamp) end
+  os.time = function () return tonumber(req.['block-timestamp']) end
 
-  ao.init(env)
+  ao.init(base)
   -- initialize state
-  state.init(msg, env)
+  state.init(req, base)
 
   -- magic table
-  msg.body.data = msg.body['Content-Type'] == 'application/json'
-    and json.decode(msg.body.data or "{}")
-    or msg.body.data
+  req.body.data = req.body['Content-Type'] == 'application/json'
+    and json.decode(req.body.data or "{}")
+    or req.body.data
 
   Errors = Errors or {}
   -- clear outbox
   ao.clearOutbox()
 
   -- state.checkSlot(msg, ao)
-  Handlers.add("_eval", function (msg)
+  Handlers.add("_eval", function (req)
     local function getMsgFrom(m)
       local from = ""
       Utils.map(
@@ -45,7 +45,7 @@ function process.handle(msg, env)
       )
       return from
     end
-    return msg.body.action == "Eval" and Owner == getMsgFrom(msg.body)
+    return req.body.action == "Eval" and Owner == getMsgFrom(req.body)
   end, eval(ao))
 
   Handlers.append("_default",
@@ -53,11 +53,11 @@ function process.handle(msg, env)
     default(state.insertInbox)
   )
 
-  local status, error = pcall(Handlers.evaluate, msg, env)
+  local status, error = pcall(Handlers.evaluate, req, base)
 
   local printData = table.concat(HandlerPrintLogs, "\n")
   if not status then
-    if msg.body.action == "Eval" then
+    if req.body.action == "Eval" then
       table.insert(Errors, error)
       return {
         Error = table.concat({
@@ -82,16 +82,16 @@ function process.handle(msg, env)
 
   local response = {}
 
-  if msg.body.action == "Eval" then
+  if req.body.action == "Eval" then
     response = ao.result({
-      Output = {
+      output = {
         data = printData,
         prompt = Prompt()
       }
     })
   else
     response = ao.result({
-      Output = {
+      output = {
         data = printData,
         prompt = Prompt(),
         print = true

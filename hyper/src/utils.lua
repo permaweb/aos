@@ -89,26 +89,19 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      -- The key can either be in the top level of the 'msg' object or within the 'Tags' 
-
+      -- The key can either be in the top level of the 'msg' object  
       local msgValue = msg[key]
-      local msgTagValue = msg['Tags'] and msg['Tags'][key]
-  
-      if not msgValue and not msgTagValue then
+      if not msgValue then
         return false
       end
-  
       local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
-      local matchesMsgTagValue = utils.matchesPattern(pattern, msgTagValue, msg)
-  
-      if not matchesMsgValue and not matchesMsgTagValue then
+      if not matchesMsgValue then
         return false
       end
     end
     return true
   end
-  
-  if type(spec) == 'string' and msg.Action and msg.Action == spec then
+  if type(spec) == 'string' and msg.action and msg.action == spec then
     return true
   end
   return false

@@ -13,15 +13,15 @@ local ao = {
     outbox = oldao.outbox or
         {Output = {}, Messages = {}, Spawns = {}, Assignments = {}},
     nonExtractableTags = {
-        'Data-Protocol', 'Variant', 'From-Process', 'From-Module', 'Type',
-        'From', 'Owner', 'Anchor', 'Target', 'Data', 'Tags', 'Read-Only'
+        'data-protocol', 'variant', 'from-process', 'from-module', 'type',
+        'from', 'owner', 'anchor', 'target', 'data', 'tags', 'read-only'
     },
     nonForwardableTags = {
-        'Data-Protocol', 'Variant', 'From-Process', 'From-Module', 'Type',
-        'From', 'Owner', 'Anchor', 'Target', 'Tags', 'TagArray', 'Hash-Chain',
-        'Timestamp', 'Nonce', 'Epoch', 'Signature', 'Forwarded-By',
-        'Pushed-For', 'Read-Only', 'Cron', 'Block-Height', 'Reference', 'Id',
-        'Reply-To'
+        'data-protocol', 'variant', 'from-process', 'from-module', 'type',
+        'from', 'owner', 'anchor', 'target', 'tags', 'tagArray', 'hash-chain',
+        'timestamp', 'nonce', 'slot', 'epoch', 'signature', 'forwarded-by',
+        'pushed-for', 'read-only', 'cron', 'block-height', 'reference', 'id',
+        'reply-to'
     },
     Nonce = nil
 }
@@ -70,7 +70,7 @@ function ao.send(msg)
   ao.reference = ao.reference + 1
   local referenceString = tostring(ao.reference)
   -- set kv
-  msg.Reference = referenceString
+  msg.reference = referenceString
 
   -- clone message info and add to outbox
   table.insert(ao.outbox.Messages, utils.reduce(
@@ -82,19 +82,19 @@ function ao.send(msg)
     utils.keys(msg)
   ))
 
-  if msg.Target then
+  if msg.target then
     msg.onReply = function(...)
       local from, resolver
       if select("#", ...) == 2 then
         from = select(1, ...)
         resolver = select(2, ...)
       else
-        from = msg.Target
+        from = msg.target
         resolver = select(1, ...)
       end
       Handlers.once({
-        From = from,
-        ["X-Reference"] = referenceString
+        from = from,
+        ["x-reference"] = referenceString
       }, resolver)
     end
   end
@@ -109,9 +109,7 @@ function ao.spawn(module, msg)
 
   local spawnRef = tostring(ao.reference)
 
-  
-  msg["Reference"] = spawnRef
-
+  msg["reference"] = spawnRef
 
   -- clone message info and add to outbox
   table.insert(ao.outbox.Spawns, utils.reduce(
@@ -125,9 +123,9 @@ function ao.spawn(module, msg)
 
   msg.onReply = function(cb)
     Handlers.once({
-      Action = "Spawned",
-      From = ao.id,
-      ["X-Reference"] = spawnRef
+      action = "Spawned",
+      from = ao.id,
+      ["x-reference"] = spawnRef
     }, cb)
   end
 

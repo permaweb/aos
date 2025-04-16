@@ -71,7 +71,7 @@ export function readResultMainnet(params) {
         slot: params.message,  
         Output: { 
           data: res.body, 
-          prompt: await res.prompt.text() 
+          prompt: res.prompt 
         }
       }))
       .catch(e => {
@@ -122,7 +122,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     
     return request(params)
       .then(async res => {
-        return await res.slot.text()
+        return res.slot
       })
   })()
 }
@@ -139,27 +139,22 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     const params = {
       path: '/push',
       method: 'POST',
-      'Type': 'Process',
+      type: 'Process',
       scheduler: SCHEDULER,
       device: 'process@1.0',
       'scheduler-device': 'scheduler@1.0',
       'execution-device': EXECUTION_DEVICE,
       'push-device': 'push@1.0',
-      'Authority': AUTHORITY,
+      'authority': AUTHORITY,
       'scheduler-location': SCHEDULER,
-      'Data-Protocol': 'ao',
-      Variant: 'ao.N.1',
+      'data-protocol': 'ao',
+      variant: 'ao.N.1',
       ["script-id"]: script,
       ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data
     }
     return request(params)
-   
     .then(x => x.process)
-    .then(async result => {
-      const process = await result.text()
-      return process
-    })
 })()
 
 }

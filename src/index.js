@@ -125,9 +125,10 @@ if (argv['mainnet']) {
       type: 'select',
       name: 'device',
       message: 'Please select a device',
-      choices: [{ title: 'lua@5.3.a', value: 'lua@5.3a'}, {title: 'genesis_wasm@1.0', value: 'genesis_wasm@1.0'}],
+      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis_wasm@1.0', value: 'genesis_wasm@1.0'}],
       instructions: false
     }).then(res => res.device).catch(e => "genesis_wasm@1.0")
+  console.log(process.env.EXECUTION_DEVICE)
   //console.log('SCHEDULER', process.env.SCHEDULER)
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
