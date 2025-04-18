@@ -10,6 +10,7 @@ local stringify = require('.stringify')
 --
 -- sends message to process
 local function send_message(msg, opts)
+  opts = opts or {}
   local base = {
     process = {
       commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
@@ -32,10 +33,11 @@ t:add('ok', function ()
   assert(true, 'success')
 end)
 
-t:add('get balance', function ()
+t:add('get info', function ()
   -- reset state
   Inbox = {}
   Balances = {}
+  Initialized = nil
 
   -- send init msg
   local base = send_message({
@@ -44,9 +46,45 @@ t:add('get balance', function ()
     authority = {"NETWORK1", "NETWORK2","OWNER" },
     type = "Process"
   }, { slot = 1})
+  -- set balance
+  Balances = { address1 = "59090" }
+  base = send_message({
+    commitments = { MSG = { alg = "rsa-pss-sha512", committer = "address1" }},
+    target = "TOKEN",
+    action = "Info"
+  })
+
+  assert(base.results.outbox["1"].name == "aos", "should get info")
+end)
+
+t:add('get balance', function ()
+  -- reset state
+  Inbox = {}
+  Balances = {}
+  Initialized = nil
+
+  -- send init msg
+  local base = send_message({
+    commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
+    target = "TOKEN",
+    authority = {"NETWORK1", "NETWORK2","OWNER" },
+    type = "Process"
+  }, { slot = 1})
+  -- set balance
+  Balances = { address1 = "59090" }
+  base = send_message({
+    commitments = { MSG = { alg = "rsa-pss-sha512", committer = "address1" }},
+    target = "TOKEN",
+    action = "Balance"
+  })
+  assert(base.results.outbox["1"].data == "59090", "should get callers balance")
 end)
 
 t:add('mint token', function ()
+  -- reset state
+  Inbox = {}
+  Balances = {}
+  Initialized = nil
   -- init with process message
   local base = send_message({
     commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},

@@ -43,7 +43,7 @@ end
 
 local function isFromOwner(m)
   local _owner = getOwnerAddress(m)
-  local _fromProcess = m['from-process'] or nil
+  local _fromProcess = m['from-process'] or _owner
   return _owner ~= nil and _fromProcess == _owner
 end
 

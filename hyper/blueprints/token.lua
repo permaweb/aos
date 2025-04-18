@@ -57,5 +57,32 @@ local function mint(req)
   print('Successfully processed mint request')
 end
 
+local function getBalance(req)
+  local msg = req.body
+  local from = state.getFrom(req)
+  local _account = msg.recipient or from
+  local _balance = Balances[_account] or "0"
+  req.reply({
+    ticker = Ticker,
+    balance = _balance,
+    account = _account,
+    data = _balance,
+    action = "Balance-Notice"
+  })
+end
+
+local function getInfo(req)
+  req.reply({
+    name = Name,
+    ticker = Ticker,
+    denomination = Denomination
+  })
+end
 
 Handlers.add("Mint", mint)
+Handlers.add("Balance", getBalance)
+Handlers.add("Info", getInfo)
+
+-- TODO: Balances
+-- TODO: Transfer
+
