@@ -9,6 +9,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 import os from 'node:os'
 import * as url from 'url'
+import figlet from 'figlet'
 
 
 let __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -42,6 +43,9 @@ export function update() {
   if (args[0]) {
     luaFiles += '\n\n' + fs.readFileSync(__dirname + 'blueprints/' + args[0], 'utf-8')
   }
+  let aosLogo = figlet.textSync('AOS')
+  luaFiles += '\n\n' + `print [[${aosLogo}]]`
+
   return luaFiles
 }
 

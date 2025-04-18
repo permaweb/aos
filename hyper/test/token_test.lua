@@ -6,10 +6,12 @@ require('../blueprints/token')
 
 local stringify = require('.stringify')
 
-local function send_message(msg)
+-- helper functions
+--
+-- sends message to process
+local function send_message(msg, opts)
   local base = {
     process = {
-      id = "1",
       commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
       authority = {"NETWORK1", "NETWORK2","OWNER"},
       type = "Process"
@@ -18,6 +20,9 @@ local function send_message(msg)
   local req = {
     path = "schedule",
     method = "POST",
+    slot = opts.slot or 1,
+    timestamp = opts.timestamp or os.time(),
+    ['block-height'] = opts.height or "1000",
     body = msg
   }
   return compute(base, req)
@@ -27,6 +32,20 @@ t:add('ok', function ()
   assert(true, 'success')
 end)
 
+t:add('get balance', function ()
+  -- reset state
+  Inbox = {}
+  Balances = {}
+
+  -- send init msg
+  local base = send_message({
+    commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
+    target = "TOKEN",
+    authority = {"NETWORK1", "NETWORK2","OWNER" },
+    type = "Process"
+  }, { slot = 1})
+end)
+
 t:add('mint token', function ()
   -- init with process message
   local base = send_message({
@@ -34,7 +53,7 @@ t:add('mint token', function ()
     target = "TOKEN",
     authority = {"NETWORK1", "NETWORK2","OWNER" },
     type = "Process"
-  })
+  }, { slot = 1 })
   assert(Inbox[1].body.type == "Process", 'added to inbox')
   -- send mint message
   base = send_message({
@@ -44,8 +63,7 @@ t:add('mint token', function ()
     data = "Address1,1000\nAddress2,50",
     format = "CSV"
 
-  })
-  _print(stringify.format(base.results))
+  }, {slot = 2})
   assert(base.results.output.data == "Successfully processed mint request")
 end)
 
@@ -54,8 +72,9 @@ t:add('send simple message', function ()
   local base = {
     process = {
       commitments = {
-        OWNER = {
-          alg = "rsa-pss-sha512"
+        PROCESS = {
+          alg = "rsa-pss-sha512",
+          committer = "OWNER"
         }
       }
     }
@@ -68,8 +87,9 @@ t:add('send simple message', function ()
       data = "1 + 1",
       action = "Eval",
       commitments = {
-        OWNER = {
-          alg = "rsa-pss-sha512"
+        MSG = {
+          alg = "rsa-pss-sha512",
+          committer = "OWNER"
         }
       }
     }
