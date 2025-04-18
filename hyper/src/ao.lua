@@ -47,20 +47,20 @@ end
 function ao.init(env)
   if ao.id == "" then ao.id = getId(env.process) end
 
-    -- if ao._module == "" then
-    --   ao._module = env.Module.Id
-    -- end
-    -- TODO: need to deal with assignables
-    -- if #ao.authorities < 1 then
-    --     for _, o in ipairs(env.Process.Tags) do
-    --         if o.name == "Authority" then
-    --             table.insert(ao.authorities, o.value)
-    --         end
-    --     end
-    -- end
+  -- if ao._module == "" then
+  --   ao._module = env.Module.Id
+  -- end
+  -- TODO: need to deal with assignables
+  if #ao.authorities < 1 then
+      if type(env.process.authority) == 'string' then
+        ao.authorities = { env.process.authority }
+      else
+        ao.authorities = env.process.authority
+      end
+  end
 
-    ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
-    ao.env = env
+  ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
+  ao.env = env
 
 end
 
@@ -137,15 +137,12 @@ function ao.result(result)
   if ao.outbox.Error or result.Error then
     return { Error = result.Error or ao.outbox.Error }
   end
-  local _result = {}
-  _result.output = result.Output or ao.output.Output or nil
-  return _result
-  -- return {
-  --   Output = result.Output or ao.output.Output,
-  --   Messages = ao.outbox.Messages,
-  --   Spawns = ao.outbox.Spawns,
-  --   Assignments = ao.outbox.Assignments
-  -- }
+  return {
+    Output = result.Output or ao.output.Output,
+    Messages = ao.outbox.Messages,
+    Spawns = ao.outbox.Spawns,
+    Assignments = ao.outbox.Assignments
+  }
 end
 
 -- set global Send and Spawn

@@ -21,6 +21,7 @@ function process.handle(req, base)
   -- initialize state
   state.init(req, base)
 
+
   -- magic table
   req.body.data = req.body['Content-Type'] == 'application/json'
     and json.decode(req.body.data or "{}")
@@ -29,6 +30,23 @@ function process.handle(req, base)
   Errors = Errors or {}
   -- clear outbox
   ao.clearOutbox()
+
+  if not state.isTrusted(req) then
+    return ao.result({
+      Output = {
+        data = "Message is not trusted."
+      }
+    })
+  end
+
+  req.reply = function (_reply)
+    local _from = state.getFrom(req)
+    _reply.target = _reply.target and _reply.target or _from
+    _reply['x-reference'] = req.body.reference or nil
+    _reply['x-origin'] = req.body['x-origin'] or nil
+    return ao.send(_reply)
+  end
+
 
   -- state.checkSlot(msg, ao)
   Handlers.add("_eval", function (_req)
@@ -62,7 +80,6 @@ function process.handle(req, base)
   local printData = table.concat(HandlerPrintLogs, "\n")
   if not status then
     if req.body.action == "Eval" then
-      table.insert(Errors, error)
       return {
         Error = table.concat({
           printData,
@@ -75,9 +92,11 @@ function process.handle(req, base)
     end
     print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
     print(Colors.green .. error .. Colors.reset)
-    print("\n" .. Colors.gray .. debug.traceback() .. Colors.reset)
+    -- print("\n" .. Colors.gray .. debug.traceback() .. Colors.reset)
     return ao.result({
-      Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. error,
+      Output = {
+        data = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. error
+      },
       Messages = {},
       Spawns = {},
       Assignments = {}
@@ -88,14 +107,14 @@ function process.handle(req, base)
 
   if req.body.action == "Eval" then
     response = ao.result({
-      output = {
+      Output = {
         data = printData,
         prompt = Prompt()
       }
     })
   else
     response = ao.result({
-      output = {
+      Output = {
         data = printData,
         prompt = Prompt(),
         print = true

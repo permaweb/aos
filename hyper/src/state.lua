@@ -19,30 +19,6 @@ function Prompt()
   return "aos> "
 end
 
--- global print function
-function print(a)
-  if type(a) == "table" then
-    a = stringify.format(a)
-  end
-
-  if type(a) == "boolean" then
-    a = Colors.blue .. tostring(a) .. Colors.reset
-  end
-  if type(a) == "nil" then
-    a = Colors.red .. tostring(a) .. Colors.reset
-  end
-  if type(a) == "number" then
-    a = Colors.green .. tostring(a) .. Colors.reset
-  end
-
-  if HandlerPrintLogs then
-    table.insert(HandlerPrintLogs, a)
-    return nil
-  end
-
-  return tostring(a)
-end
-
 local maxInboxCount = 10000
 
 function state.insertInbox(msg)
@@ -51,6 +27,24 @@ function state.insertInbox(msg)
   for i = 1,overflow do
     table.remove(Inbox,1)
   end
+end
+local function getOwnerAddress(m)
+  local _owner = nil 
+  utils.map(function (k)
+    local c = m.commitments[k]
+    if c.alg == "rsa-pss-sha512" then
+      _owner = c.committer
+    elseif c.alg == "signed" and c['commitment-device'] == "ans104" then
+      _owner = c.commiter
+    end
+  end, utils.keys(m.commitments))
+  return _owner
+end
+
+local function isFromOwner(m)
+  local _owner = getOwnerAddress(m)
+  local _fromProcess = m['from-process'] or nil
+  return _owner ~= nil and _fromProcess == _owner
 end
 
 local function getOwner(m)
@@ -82,8 +76,57 @@ function state.init(req, base)
     -- if env.Process.Name then
     --   Name = Name == "aos" and env.Process.Name
     -- end
+    -- global print function
+    function print(a)
+      if type(a) == "table" then
+        a = stringify.format(a)
+      end
+
+      if type(a) == "boolean" then
+        a = Colors.blue .. tostring(a) .. Colors.reset
+      end
+      if type(a) == "nil" then
+        a = Colors.red .. tostring(a) .. Colors.reset
+      end
+      if type(a) == "number" then
+        a = Colors.green .. tostring(a) .. Colors.reset
+      end
+
+      if HandlerPrintLogs then
+        table.insert(HandlerPrintLogs, a)
+        return nil
+      end
+
+      return tostring(a)
+    end
+
     Initialized = true
   end
+end
+
+function state.getFrom(req)
+  return getOwner(req.body)
+end
+
+function state.isTrusted(req)
+  if isFromOwner(req.body) then
+    return true
+  end
+  local _trusted = false
+
+  if req.body['from-process'] then
+    _trusted = utils.includes(
+      req.body['from-process'],
+      ao.authorities
+    )
+  end
+
+  if not _trusted then
+    _trusted = utils.includes(
+      getOwner(req.body), ao.authorities
+    )
+  end
+  return _trusted
 end
 
 function state.checkSlot(req, ao)

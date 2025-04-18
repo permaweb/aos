@@ -27,9 +27,9 @@ export function update() {
   //   .filter(n => /\.lua$/.test(n))
   let luaFiles = ['json.lua', 'stringify.lua', 'eval.lua',
     'utils.lua', 'handlers-utils.lua', 'handlers.lua',
-    'dump.lua','bint.lua', 'pretty.lua', 'chance.lua', 'boot.lua',
-    'default.lua', 'ao.lua', 'base64.lua', 'state.lua', 
-    'process.lua']
+    'dump.lua', 'pretty.lua', 'chance.lua', 'boot.lua',
+    'default.lua', 'ao.lua', 'base64.lua', 
+    'state.lua', 'process.lua'  ]
     .map(name => {
       const code = fs.readFileSync(__dirname + 'src/' + name, 'utf-8')
       const mod = name.replace(/\.lua$/, "")
@@ -38,6 +38,10 @@ export function update() {
     .join('\n\n')
   let main = fs.readFileSync(__dirname + 'src/' + "main.lua", "utf-8")
   luaFiles += '\n\n' + main
+  let args = process.argv.slice(2)
+  if (args[0]) {
+    luaFiles += '\n\n' + fs.readFileSync(__dirname + 'blueprints/' + args[0], 'utf-8')
+  }
   return luaFiles
 }
 

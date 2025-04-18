@@ -122,12 +122,19 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     
     return request(params)
       .then(async res => {
+        if (res['outbox/output']) {
+          return ({
+            slot: res.slot,
+            Output: {
+              data: res['outbox/output'].data,
+              prompt: res['outbox/output'].prompt + " "
+            }
+          })
+        }
+        res.output.prompt = res.output.prompt + " "
         return ({ 
           slot: res.slot,  
-          Output: { 
-            data: res['outbox/output'].data, 
-            prompt: res['outbox/output'].prompt + " " 
-          }
+          Output: res.output 
         })
       })
   })()
