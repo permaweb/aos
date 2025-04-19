@@ -29,8 +29,40 @@ local function send_message(msg, opts)
   return compute(base, req)
 end
 
+local function send_process_message()
+  return send_message({
+    commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
+    target = "TOKEN",
+    authority = {"NETWORK1", "NETWORK2","OWNER" },
+    type = "Process"
+  }, { slot = 1})
+end
 t:add('ok', function ()
   assert(true, 'success')
+end)
+
+t:add('transfer tokens', function ()
+  -- reset state
+  Inbox = {}
+  Balances = {}
+  Initialized = nil
+
+  -- send init msg
+  local base = send_process_message()
+  -- set balance
+  Balances = { address1 = "59090", address2 = "10000" }
+  base = send_message({
+    commitments = { MSG = { alg = "rsa-pss-sha512", committer = "address1" }},
+    target = "TOKEN",
+    action = "Transfer",
+    quantity = "500",
+    recipient = "address3"
+  })
+  assert(base.results.outbox["1"].action == "Debit-Notice", "should get Debit-Notice")
+  assert(base.results.outbox["2"].action == "Credit-Notice", "should get Credit-Notice")
+  _print(stringify.format(Balances))
+  assert(Balances["address3"] == "500", "address3 should have 500")
+  assert(Balances["address1"] == "58590", "address1 should be less 500")
 end)
 
 t:add('get balances', function ()
@@ -53,7 +85,7 @@ t:add('get balances', function ()
     target = "TOKEN",
     action = "Balances"
   })
-  _print(stringify.format(base.results.outbox["1"]))
+  -- _print(stringify.format(base.results.outbox["1"]))
   assert(base.results.outbox["1"].mintedsupply == "69090", "should get balances")
 
 end)

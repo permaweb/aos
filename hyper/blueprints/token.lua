@@ -92,57 +92,87 @@ local function getBalances(req)
 end
 
 local function transferTo(req)
+  -- inputs
   local msg = req.body
   local from = state.getFrom(req)
+  -- validations
   assert(type(msg.recipient) == "string", "Recipient is required")
   assert(type(msg.quantity) == "string", "Quantity is required")
   assert(tonumber(msg.quantity) > 0, "Quanity must be greater than 0")
+  -- helper functions
+  --- Merge two tables, with values from `right` taking precedence.
+  -- @param left table The base table
+  -- @param right table The overriding table
+  -- @treturn table A new table containing all keys from left and right
+  local function mergeRight(left, right)
+    local result = {}
+    -- copy all from left
+    for k, v in pairs(left) do
+      result[k] = v
+    end
+    -- override/add from right
+    for k, v in pairs(right) do
+      result[k] = v
+    end
+    return result
+  end
+  -- filter forward keys
+  local _forward = Utils.filter(function(s)
+    return s:match("^x%-")
+  end)
+  -- create new table with just forward keys
+  local _only = function(filter, msg)
+    local keys = Utils.keys(msg)
+    return Utils.reduce(function (acc, k)
+      acc[k] = msg[k]
+      return acc
+    end, {}, filter(Utils.keys(msg)))
+  end
+  
+  -- implementation details
   Balances[from] = Balances[from] or 0
   Balances[msg.recipient] = Balances[msg.recipient] or 0
+  print("From " .. Balances[from])
+  print("To " .. Balances[msg.recipient])
+  if tonumber(msg.quantity) <= tonumber(Balances[from]) then
+    -- atomically apply transfer
+    Balances[from], Balances[msg.recipient] = utils.subtract(Balances[from], msg.quantity), 
+      utils.add(Balances[msg.recipient], msg.quantity)
 
-  if tonumber(msg.quantity) >= tonumber(Balances[from]) then
-    utils.subtract(Balances[from], msg.quantity)
-    utils.add(Balances[msg.recipient], msg.quantity)
-
-    -- TODO: need to add x- tags to credit and debit
-
-    if not msg.cast then
-      msg.reply({
-        action = "Debit-Notice",
-	recipient = msg.recipient,
-	quantity = msg.quantity,
-	data = table.concat({ 
-	  Colors.gray, 
-	  "You transferred ",
-	  Colors.blue,
-	  msg.quantity,
-	  Colors.gray,
-	  " to ",
-	  Colors.green,
-	  msg.recipient,
-	  Colors.reset
-        })
-      })
-    end
-
-    msg.reply({
-      action = "Credit-Notice",
-      sender = from,
+    local resp = {
       recipient = msg.recipient,
       quantity = msg.quantity,
-      data = table.concat({
+      data = table.concat({ 
+        Colors.gray, 
+        "Transferred ",
+        Colors.blue,
+        msg.quantity,
         Colors.gray,
-	"You received ",
-	Colors.green,
-	msg.quantity,
-	Colors.gray,
-	" from ",
-	Colors.green,
-	from,
-	Colors.reset
-i     })
-    })
+        " to ",
+        Colors.green,
+        msg.recipient,
+        Colors.gray,
+        " from ",
+        Colors.green,
+        from,
+        Colors.reset
       })
+    }
+    resp = mergeRight(resp, _only(_forward, msg))
+
+    if not msg.cast then
+      req.reply(mergeRight(resp, {
+        action = "Debit-Notice"
+      }))
+    end
+    req.reply(mergeRight(resp, {
+      action = "Credit-Notice",
+      target = msg.recipient
+    }))
+  end
+  print("transferred")
+end
+
 
 Handlers.add("Mint", mint)
 Handlers.add("Balance", getBalance)
