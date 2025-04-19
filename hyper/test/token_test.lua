@@ -33,6 +33,31 @@ t:add('ok', function ()
   assert(true, 'success')
 end)
 
+t:add('get balances', function ()
+  -- reset state
+  Inbox = {}
+  Balances = {}
+  Initialized = nil
+
+  -- send init msg
+  local base = send_message({
+    commitments = { PROCESS = { alg = "rsa-pss-sha512", committer = "OWNER" }},
+    target = "TOKEN",
+    authority = {"NETWORK1", "NETWORK2","OWNER" },
+    type = "Process"
+  }, { slot = 1})
+  -- set balance
+  Balances = { address1 = "59090", address2 = "10000" }
+  base = send_message({
+    commitments = { MSG = { alg = "rsa-pss-sha512", committer = "address1" }},
+    target = "TOKEN",
+    action = "Balances"
+  })
+  _print(stringify.format(base.results.outbox["1"]))
+  assert(base.results.outbox["1"].mintedsupply == "69090", "should get balances")
+
+end)
+
 t:add('get info', function ()
   -- reset state
   Inbox = {}

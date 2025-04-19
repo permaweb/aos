@@ -79,10 +79,74 @@ local function getInfo(req)
   })
 end
 
+local function getBalances(req)
+  local mintedSupply = tostring(Utils.reduce(function (acc, v)
+    return utils.add(acc, Balances[v])
+  end, 0, Utils.keys(Balances)))
+
+  req.reply({
+    ticker = Ticker,
+    mintedsupply = mintedSupply,
+    data = Balances
+  })
+end
+
+local function transferTo(req)
+  local msg = req.body
+  local from = state.getFrom(req)
+  assert(type(msg.recipient) == "string", "Recipient is required")
+  assert(type(msg.quantity) == "string", "Quantity is required")
+  assert(tonumber(msg.quantity) > 0, "Quanity must be greater than 0")
+  Balances[from] = Balances[from] or 0
+  Balances[msg.recipient] = Balances[msg.recipient] or 0
+
+  if tonumber(msg.quantity) >= tonumber(Balances[from]) then
+    utils.subtract(Balances[from], msg.quantity)
+    utils.add(Balances[msg.recipient], msg.quantity)
+
+    -- TODO: need to add x- tags to credit and debit
+
+    if not msg.cast then
+      msg.reply({
+        action = "Debit-Notice",
+	recipient = msg.recipient,
+	quantity = msg.quantity,
+	data = table.concat({ 
+	  Colors.gray, 
+	  "You transferred ",
+	  Colors.blue,
+	  msg.quantity,
+	  Colors.gray,
+	  " to ",
+	  Colors.green,
+	  msg.recipient,
+	  Colors.reset
+        })
+      })
+    end
+
+    msg.reply({
+      action = "Credit-Notice",
+      sender = from,
+      recipient = msg.recipient,
+      quantity = msg.quantity,
+      data = table.concat({
+        Colors.gray,
+	"You received ",
+	Colors.green,
+	msg.quantity,
+	Colors.gray,
+	" from ",
+	Colors.green,
+	from,
+	Colors.reset
+i     })
+    })
+      })
+
 Handlers.add("Mint", mint)
 Handlers.add("Balance", getBalance)
 Handlers.add("Info", getInfo)
-
--- TODO: Balances
--- TODO: Transfer
+Handlers.add("Balances", getBalances)
+Handlers.add("Transfer", transferTo)
 
