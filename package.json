@@ -51,9 +51,9 @@
     "shelljs": "^0.9.2"
   },
   "aos": {
-    "module": "URgYpPQzvxxfYQtjrIQ116bl3YBfcImo3JEnNo8Hlrk",
-    "sqlite": "lPkDN7vAoKMW4A6H9O3Q4faegLaXZ3HFix_E0lZkPlg",
-    "llama": "l2C3iKWRxQgW-WnX0fCNuHMj6y2S_NWctnsTWcCwSuY",
+    "module": "QEgxNlbNwBi10VXu5DbP6XHoRDHcynP_Qbq3lpNC97s",
+    "sqlite": "Ka08x7JWLMm_K3vPRnqMU22hh3dehPUUyC7pnW2DvvQ",
+    "llama": "TQ2lVatVR4dcB7ReZ65NfaCJSbF3sxRX1OdM77vO7y8",
     "version": "2.0.4"
   }
 }
