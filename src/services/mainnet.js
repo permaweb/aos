@@ -1,4 +1,4 @@
-import { connect } from '@permaweb/aoconnect'
+import { connect, createSigner } from '@permaweb/aoconnect'
 import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
@@ -15,82 +15,77 @@ const pkg = getPkg()
 const setupMainnet = (wallet) => {
   const info = {
     GATEWAY_URL: process.env.GATEWAY_URL,
-    CU_URL: process.env.CU_URL,
-    MU_URL: process.env.MU_URL,
-    AO_URL : process.env.AO_URL
+    URL : process.env.AO_URL
   } 
   return connect({
     MODE: 'mainnet',
-    wallet, 
+    device: 'process@1.0',
+    signer: createSigner(wallet),
     ...info 
   })
 }
 
 export function readResultMainnet(params) {
   const wallet = JSON.parse(process.env.WALLET)
-  const { result } = setupRelay(wallet) 
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 1000))
-  )()
-    .chain(fromPromise(() => result(params)))
-    .bichain(fromPromise(() =>
-      new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
-    ),
-      Resolved
-    )
+  const { request } = setupMainnet(wallet) 
+  return fromPromise(() => request({
+      path: `/${params.process}~process@1.0/compute&slot+integer=${params.message}/results/json`,
+      method: 'GET'
+    }))()
+    .map(res => JSON.parse(res.body))
 }
-
-export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
-  const { dryrun } = setupMainnet(wallet)
-  return fromPromise(() =>
-    arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      dryrun({ process: processId, Owner, tags, data })
-    )
-  )()
+const assoc = (k,v,o) => {
+  o[k] = v
+  return o
 }
-
 
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
-  let retries = "."
-  const { message, createDataItemSigner } = setupMainnet(wallet) 
+  const { request } = setupMainnet(wallet) 
   
-  const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
-    .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
-      retries += "."
-      return _
+  return fromPromise(() => 
+    request({ 
+      type: 'Message',
+      path: `/${processId}~process@1.0/push`,
+      method: 'POST',
+      ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
+      data: data,
+      'data-protocol': 'ao',
+      variant: 'ao.N.1',
+      target: processId
     })
-    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
-  
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 500))
-  )().chain(fromPromise(() => 
-    message({ process: processId, signer: createDataItemSigner(), tags, data })
-  ))
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)    
+  )()
+    .map(res => res.slot)
 
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+  const AUTHORITY = process.env.AUTHORITY
   const { spawn, createDataItemSigner } = setupMainnet(wallet) 
  
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => spawn({
-    module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
+
+  return fromPromise(() => request({
+    path: '/push',
+    method: 'POST',
+    signingFormat: 'ANS-104',
+    Type: 'process', 
+    Module: src, 
+    scheduler: SCHEDULER,
+    device: 'process@1.0',
+    'scheduler-device': 'scheduler@1.0',
+    'execution-device': 'genesis_wasm@1.0',
+    'push-device': 'push@1.0',
+    'Authority': AUTHORITY,
+    'scheduler-location': SCHEDULER,
+    'data-protocol': 'ao',
+    variant: 'ao.N.1',
+    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    data: data
   })
-    .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
   )()
+  .map(res => res.process)
 
 }
 

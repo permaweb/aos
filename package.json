@@ -22,7 +22,7 @@
     "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.68",
+    "@permaweb/aoconnect": "^0.0.82",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -36,6 +36,7 @@
     "prompts": "^2.4.2",
     "semver": "^7.5.4",
     "tar-stream": "^3.1.7",
+    "undici": "^7.8.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
@@ -46,9 +47,9 @@
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "markdown-toc-gen": "^1.1.0",
+    "shelljs": "^0.9.2",
     "sort-package-json": "^2.10.1",
-    "standard": "^17.1.2",
-    "shelljs": "^0.9.2"
+    "standard": "^17.1.2"
   },
   "aos": {
     "module": "URgYpPQzvxxfYQtjrIQ116bl3YBfcImo3JEnNo8Hlrk",

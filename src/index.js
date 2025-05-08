@@ -174,7 +174,7 @@ async function runProcess() {
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
         // make wallet available to services if relay mode
-        if (argv['relay']) {
+        if (argv['relay'] || argv['mainnet']) {
           process.env.WALLET = JSON.stringify(jwk)
         }
         // handle list option, need jwk in order to do it.
