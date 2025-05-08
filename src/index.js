@@ -140,7 +140,7 @@ if (argv['mainnet']) {
   console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
-  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/address`).then(res => res.text())
+  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet
