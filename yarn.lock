@@ -835,10 +835,10 @@
     ramda "^0.30.0"
     zod "^3.23.5"
 
-"@permaweb/aoconnect@^0.0.82":
-  version "0.0.82"
-  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.82.tgz#caa90a8218f58e1a70a8bfc598ff666521386509"
-  integrity sha512-oVkb0hTmEEPogu5G3YKlpPH4ujkThQ3eoYbUwe1zk3Y1/k1ikzghvRyhVjc8gyifyhk7831gLRf5srCRG1IzWQ==
+"@permaweb/aoconnect@^0.0.83":
+  version "0.0.83"
+  resolved "https://registry.yarnpkg.com/@permaweb/aoconnect/-/aoconnect-0.0.83.tgz#bee623d3b8ec73c790989c2163d06977040d965b"
+  integrity sha512-k+Ac7c8V7ODsSWWfkdfehs458F9nL9wKBOxgk8+jGg6YbPcNzmSNqkGr0F4yVNuHyoDLmYweH3mVM2CBt5g+uw==
   dependencies:
     "@dha-team/arbundles" "1.0.3"
     "@permaweb/ao-scheduler-utils" "~0.0.25"
