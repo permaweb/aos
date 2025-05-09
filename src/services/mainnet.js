@@ -72,7 +72,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const params = {
     path: '/push',
     method: 'POST',
-    signingFormat: 'ANS-104',
+    // signingFormat: 'ANS-104',
     Type: 'Process', 
     Module: src, 
     scheduler: SCHEDULER,
@@ -84,7 +84,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
-    data: data,
+    // data: data,
     'Authority': AUTHORITY,
   }
 
