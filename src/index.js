@@ -190,7 +190,6 @@ async function runProcess() {
       .then(async ({ jwk, id }) => {
         let editorMode = false
         let editorData = ''
-
         const history = readHistory(id)
 
         if (argv.relay && argv.topup) {
@@ -236,6 +235,7 @@ async function runProcess() {
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
+
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
         // check loading files flag

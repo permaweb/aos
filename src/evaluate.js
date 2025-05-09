@@ -26,25 +26,13 @@ export async function evaluate(line, processId, wallet, services, spinner) {
       return x
     })
 
-    .map(message => ({ message, process: processId }))
-    .chain(services.readResult)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
-    .bichain(services.readResult, Resolved)
+    .chain(message => {
+      if (message.Output) {
+        return of(message)
+      } else {
+        return services.readResult({ message, process: processId })
+      }
+    })
     .bichain(services.readResult, Resolved)
     .map(x => {
       if (process.env.DEBUG) {

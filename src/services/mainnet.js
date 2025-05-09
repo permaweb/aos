@@ -34,6 +34,7 @@ export function readResultMainnet(params) {
     }))()
     .map(res => JSON.parse(res.body))
 }
+
 const assoc = (k,v,o) => {
   o[k] = v
   return o
@@ -45,7 +46,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   return fromPromise(() => 
     request({ 
       type: 'Message',
-      path: `/${processId}~process@1.0/push`,
+      path: `/${processId}~process@1.0/push/json~json@1.0`,
       method: 'POST',
       ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
       data: data,
@@ -54,36 +55,40 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
       target: processId
     })
   )()
-    .map(res => res.slot)
+    .map(res => {
+      return JSON.parse(res.body)
+    })
+    //.map(res => res.slot)
 
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const AUTHORITY = process.env.AUTHORITY
-  const { spawn, createDataItemSigner } = setupMainnet(wallet) 
+  const AUTHORITY = process.env.AUTHORITY || SCHEDULER
+  const { request } = setupMainnet(wallet) 
  
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-
-  return fromPromise(() => request({
+  const params = {
     path: '/push',
     method: 'POST',
     signingFormat: 'ANS-104',
-    Type: 'process', 
+    Type: 'Process', 
     Module: src, 
     scheduler: SCHEDULER,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
-    'execution-device': 'genesis_wasm@1.0',
+    'execution-device': 'genesis-wasm@1.0',
     'push-device': 'push@1.0',
-    'Authority': AUTHORITY,
     'scheduler-location': SCHEDULER,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
-    data: data
-  })
+    data: data,
+    'Authority': AUTHORITY,
+  }
+
+  return fromPromise(() => request(params)
   )()
   .map(res => res.process)
 
