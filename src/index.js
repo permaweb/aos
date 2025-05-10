@@ -7,6 +7,7 @@ import chalk from 'chalk'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
+import prompts from 'prompts'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -140,6 +141,14 @@ if (argv['mainnet']) {
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
   process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+  // process.env.EXECUTION_DEVICE = await prompts({
+  //     type: 'select',
+  //     name: 'device',
+  //     message: 'Please select a device',
+  //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+  //     instructions: false
+  // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet

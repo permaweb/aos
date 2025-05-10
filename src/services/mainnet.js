@@ -20,6 +20,7 @@ import path from 'path'
 import os from 'os'
 import { uniqBy, prop, keys } from 'ramda'
 import Arweave from 'arweave'
+import prompts from 'prompts'
 
 const arweave = Arweave.init({})
 
@@ -44,7 +45,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const submitRequest = fromPromise(request)
   const params = { 
     type: 'Message',
-    path: `/${processId}~process@1.0/push/json~json@1.0`,
+    path: `/${processId}~process@1.0/push/serialize~json@1.0`,
     method: 'POST',
     ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
     data: data,
@@ -52,18 +53,39 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     variant: 'ao.N.1',
     target: processId
   }
-
   return of(params)
     .chain(submitRequest)    
     .map(prop('body'))
     .map(JSON.parse)
+    .map(resBody => {
+      if (resBody.json) {
+        return JSON.parse(resBody.json.body)
+      } else {
+        return { Output: resBody.output }
+      }
+
+    })
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const AUTHORITY = process.env.AUTHORITY || SCHEDULER
+
   const { request } = setupMainnet(wallet) 
   const submitRequest = fromPromise(request)
+  
+  const getExecutionDevice = fromPromise(async function (params) {
+    const executionDevice = await prompts({
+      type: 'select',
+      name: 'device',
+      message: 'Please select a device',
+      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+      instructions: false
+    }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+    params['execution-device'] = executionDevice
+    return Promise.resolve(params)
+  })
+
   const params = {
     path: '/push',
     method: 'POST',
@@ -72,17 +94,19 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     scheduler: SCHEDULER,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
-    'execution-device': 'genesis-wasm@1.0',
     'push-device': 'push@1.0',
     'scheduler-location': SCHEDULER,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'Authority': AUTHORITY,
-    'aos-version': pkg.version
+    'aos-version': pkg.version,
+    script: pkg.hyper.script
   }
 
   return of(params)
+    .chain(getExecutionDevice)
+    .map(x => (console.log(x), x))
     .chain(submitRequest)
     .map(prop('process'))
 
