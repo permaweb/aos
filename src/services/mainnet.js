@@ -58,10 +58,10 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     .map(prop('body'))
     .map(JSON.parse)
     .map(resBody => {
-      if (resBody.json) {
-        return JSON.parse(resBody.json.body)
-      } else {
+      if (resBody.info == 'hyper-aos') {
         return { Output: resBody.output }
+      } else {
+        return JSON.parse(resBody.json.body)
       }
 
     })

@@ -1,0 +1,32 @@
+{
+    "TotalInstalls": 76,
+    "Versions": [
+        {
+            "Version": "0.0.1",
+            "PkgID": "HQMZoAQQGIv3Yj6OA4Cd2L0r7274SRQck4x5Zx7wRWg",
+            "Installs": 25
+        },
+        {
+            "Version": "0.0.2",
+            "PkgID": "mb7T9-yEf3M5yEEGsalPw66UAx25iJdseKWAvGa3Gu0",
+            "Installs": 51
+        }
+    ],
+    "Repository": "https://github.com/twilson63/aos-packages/tree/main/packages/test-unit",
+    "Owner": "vh-NTHVvlKZqRxc8LyyTNok65yQ55a_PJ1zWLb9G2JI",
+    "Name": "test-unit",
+    "Authors": [],
+    "Source": "local Test = {}\nTest.__index = Test\n\nfunction Test.new(name)\n  local self = setmetatable({}, Test)\n  self.name = name\n  self.tests = {}\n  return self\nend\n\nfunction Test:add(name, func)\n  table.insert(self.tests, { name = name, func = func })\nend\n\n-- propEq \nlocal propEq = function (prop, value) \n  return function (tbl)\n    return tbl[prop] == value\n  end\nend\n\n-- findIndex\nlocal findIndex = function (func, tbl)\n  for i, v in ipairs(tbl) do \n    if func(tbl[i]) then\n      return i\n    end\n  end\nend\n\nfunction Test:remove(name)\n  local idx = findIndex(propEq('name', name), self.tests)\n  table.remove(self.tests, idx)  \nend\n\nfunction Test:run()\n    local output = \"\"\n    local out = function (txt) \n      output = output .. txt .. '\\n'\n    end\n    out(\"Running tests for \" .. self.name)\n    local passed = 0\n    local failed = 0\n    for _, test in ipairs(self.tests) do\n        local status, err = pcall(test.func)\n        if status then\n            out(Colors.green .. \"✔ \" .. Colors.reset .. test.name)\n            passed = passed + 1\n        else\n            out(Colors.red .. \"✘ \" .. Colors.reset .. test.name .. \": \" .. err)\n            failed = failed + 1\n        end\n    end\n    out(string.format(Colors.blue .. \"Passed: %d, Failed: %d\" .. Colors.reset, passed, failed))\n    return output\nend\n\nreturn Test\n",
+    "PkgID": "mb7T9-yEf3M5yEEGsalPw66UAx25iJdseKWAvGa3Gu0",
+    "Description": "A test runner",
+    "Installs": 51,
+    "Keywords": [],
+    "Warnings": {},
+    "License": "",
+    "Dependencies": {},
+    "Vendor": "@rakis",
+    "Readme": "# Lua Test Module\n\nThis Lua test module provides a simple framework for defining and running unit tests. It allows you to create test suites, add test cases, and run the tests with a summary of the results.\n\n## Features\n\n- Create test suites\n- Add test cases to the suite\n- Run all test cases in the suite\n- Print detailed results for each test case\n- Summary of passed and failed tests\n\n## Installation\n\nInstall with apm\n\n```\n.load-blueprint apm\nAPM.install('@rakis/test-unit')\n```\n\n\n## Usage\n\n### Creating a Test Suite\n\nCreate a new test suite with a given name.\n\n```lua\nlocal Test = require(\"@rakis/test-unit\")\nlocal myTests = Test.new(\"My Test Suite\")\n```\n\n### Adding Tests\n\nAdd test cases to the suite. Each test case is a function that contains assertions to check the expected outcomes.\n\n```lua\nmyTests:add(\"Test Case 1\", function()\n    assert(1 + 1 == 2, \"Math is broken!\")\nend)\n\nmyTests:add(\"Test Case 2\", function()\n    assert(type(\"hello\") == \"string\", \"Type check failed!\")\nend)\n```\n\n### Running Tests\n\nRun all test cases in the suite and print the results.\n\n```lua\nlocal results = myTests:run()\nprint(results)\n```\n\n### Example\n\nHere's a complete example demonstrating how to use the test module:\n\n```lua\nlocal Test = require(\"Test\")\n\n-- Create a new test suite\nlocal myTests = Test.new(\"Example Test Suite\")\n\n-- Add test cases\nmyTests:add(\"Test Addition\", function()\n    assert(1 + 1 == 2, \"Addition failed!\")\nend)\n\nmyTests:add(\"Test Type\", function()\n    assert(type(\"hello\") == \"string\", \"Type check failed!\")\nend)\n\n-- Run the tests and print the results\nlocal results = myTests:run()\nprint(results)\n```\n\n## License\n\nThis project is licensed under the MIT License.\n",
+    "Version": "0.0.2",
+    "ID": 53,
+    "Timestamp": 1723517559630
+}
