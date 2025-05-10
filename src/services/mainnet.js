@@ -1,5 +1,17 @@
+/**
+ * mainnet-interaction.js
+ *
+ * This module provides utilities to interact with AO processes on Arweave's
+ * Permaweb via the mainnet environment. It enables sending messages
+ * (`sendMessageMainnet`), spawning new AO processes (`spawnProcessMainnet`),
+ * and monitoring live process outputs (`liveMainnet`, `printLiveMainnet`). It
+ * leverages functional asynchronous patterns (`hyper-async`), AO Connect SDK
+ * (`@permaweb/aoconnect`), and scheduled tasks (`node-cron`) to facilitate
+ * robust and continuous interactions with the Permaweb and AO network.
+ */
+
 import { connect, createSigner } from '@permaweb/aoconnect'
-import { fromPromise, Resolved, Rejected } from 'hyper-async'
+import { of, fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
 import cron from 'node-cron'
@@ -13,26 +25,13 @@ const arweave = Arweave.init({})
 
 const pkg = getPkg()
 const setupMainnet = (wallet) => {
-  const info = {
-    GATEWAY_URL: process.env.GATEWAY_URL,
-    URL : process.env.AO_URL
-  } 
   return connect({
     MODE: 'mainnet',
     device: 'process@1.0',
     signer: createSigner(wallet),
-    ...info 
+    GATEWAY_URL: process.env.GATEWAY_URL,
+    URL : process.env.AO_URL
   })
-}
-
-export function readResultMainnet(params) {
-  const wallet = JSON.parse(process.env.WALLET)
-  const { request } = setupMainnet(wallet) 
-  return fromPromise(() => request({
-      path: `/${params.process}~process@1.0/compute&slot+integer=${params.message}/results/json`,
-      method: 'GET'
-    }))()
-    .map(res => JSON.parse(res.body))
 }
 
 const assoc = (k,v,o) => {
@@ -42,37 +41,32 @@ const assoc = (k,v,o) => {
 
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const { request } = setupMainnet(wallet) 
-  
-  return fromPromise(() => 
-    request({ 
-      type: 'Message',
-      path: `/${processId}~process@1.0/push/json~json@1.0`,
-      method: 'POST',
-      ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
-      data: data,
-      'data-protocol': 'ao',
-      variant: 'ao.N.1',
-      target: processId
-    })
-  )()
-    .map(res => {
-      return JSON.parse(res.body)
-    })
-    //.map(res => res.slot)
+  const submitRequest = fromPromise(request)
+  const params = { 
+    type: 'Message',
+    path: `/${processId}~process@1.0/push/json~json@1.0`,
+    method: 'POST',
+    ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
+    data: data,
+    'data-protocol': 'ao',
+    variant: 'ao.N.1',
+    target: processId
+  }
 
+  return of(params)
+    .chain(submitRequest)    
+    .map(prop('body'))
+    .map(JSON.parse)
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const AUTHORITY = process.env.AUTHORITY || SCHEDULER
   const { request } = setupMainnet(wallet) 
- 
-
-  tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
+  const submitRequest = fromPromise(request)
   const params = {
     path: '/push',
     method: 'POST',
-    // signingFormat: 'ANS-104',
     Type: 'Process', 
     Module: src, 
     scheduler: SCHEDULER,
@@ -84,29 +78,13 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
-    // data: data,
     'Authority': AUTHORITY,
+    'aos-version': pkg.version
   }
 
-  return fromPromise(() => request(params)
-  )()
-  .map(res => res.process)
-
-}
-
-export function monitorProcessMainnet({ id, wallet }) {
-  const { monitor, createDataItemSigner } = setupRelay(wallet) 
-  
-  return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
-
-}
-
-export function unmonitorProcessMainnet({ id, wallet }) {
-  const { unmonitor, createDataItemSigner } = setupRelay(wallet) 
-
-  return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
+  return of(params)
+    .chain(submitRequest)
+    .map(prop('process'))
 
 }
 
@@ -218,3 +196,4 @@ export async function liveMainnet(id, watch) {
   ct = await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
 }
+

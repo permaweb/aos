@@ -57,9 +57,8 @@ let {
 } = relaySvc
 
 let {
-  spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
-  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
-  dryrunMainnet
+  spawnProcessMainnet, sendMessageMainnet, 
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet
 } = mainnetSvc
 
 if (!process.stdin.isTTY) {
@@ -144,12 +143,12 @@ if (argv['mainnet']) {
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet
-  readResult = readResultMainnet
-  monitorProcess = monitorProcessMainnet
-  unmonitorProcess = unmonitorProcessMainnet
+  readResult = () => null 
+  // monitorProcess = monitorProcessMainnet
+  // unmonitorProcess = unmonitorProcessMainnet
   live = liveMainnet
   printLive = printLiveMainnet
-  dryrun = dryrunMainnet
+  dryrun = () => null 
 
   relayMode = true
 }
