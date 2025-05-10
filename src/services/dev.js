@@ -4,7 +4,7 @@ const argv = minimist(process.argv.slice(2))
 if (argv['dev']) {
   console.log('*** DEV ENVIRONMENT ***')
 
-  process.env.GATEWAY_URL = 'https://arweave.net'
+  process.env.GATEWAY_URL = 'https://arweave-search.goldsky.com'
   process.env.CU_URL = 'https://ao-cu-0.ao-devnet.xyz'
   process.env.MU_URL = 'https://ao-mu-0.ao-devnet.xyz'
   process.env.SCHEDULER = 'gCpQfnG6nWLlKs8jYgV8oUfe38GYrPLv59AC7LCtCGg'

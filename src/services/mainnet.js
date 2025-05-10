@@ -1,5 +1,17 @@
-import { connect } from '@permaweb/aoconnect'
-import { fromPromise, Resolved, Rejected } from 'hyper-async'
+/**
+ * mainnet-interaction.js
+ *
+ * This module provides utilities to interact with AO processes on Arweave's
+ * Permaweb via the mainnet environment. It enables sending messages
+ * (`sendMessageMainnet`), spawning new AO processes (`spawnProcessMainnet`),
+ * and monitoring live process outputs (`liveMainnet`, `printLiveMainnet`). It
+ * leverages functional asynchronous patterns (`hyper-async`), AO Connect SDK
+ * (`@permaweb/aoconnect`), and scheduled tasks (`node-cron`) to facilitate
+ * robust and continuous interactions with the Permaweb and AO network.
+ */
+
+import { connect, createSigner } from '@permaweb/aoconnect'
+import { of, fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
 import cron from 'node-cron'
@@ -8,105 +20,94 @@ import path from 'path'
 import os from 'os'
 import { uniqBy, prop, keys } from 'ramda'
 import Arweave from 'arweave'
+import prompts from 'prompts'
 
 const arweave = Arweave.init({})
 
 const pkg = getPkg()
 const setupMainnet = (wallet) => {
-  const info = {
-    GATEWAY_URL: process.env.GATEWAY_URL,
-    CU_URL: process.env.CU_URL,
-    MU_URL: process.env.MU_URL,
-    AO_URL : process.env.AO_URL
-  } 
   return connect({
     MODE: 'mainnet',
-    wallet, 
-    ...info 
+    device: 'process@1.0',
+    signer: createSigner(wallet),
+    GATEWAY_URL: process.env.GATEWAY_URL,
+    URL : process.env.AO_URL
   })
 }
 
-export function readResultMainnet(params) {
-  const wallet = JSON.parse(process.env.WALLET)
-  const { result } = setupRelay(wallet) 
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 1000))
-  )()
-    .chain(fromPromise(() => result(params)))
-    .bichain(fromPromise(() =>
-      new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
-    ),
-      Resolved
-    )
+const assoc = (k,v,o) => {
+  o[k] = v
+  return o
 }
-
-export function dryrunMainnet({ processId, wallet, tags, data }, spinnner) {
-  const { dryrun } = setupMainnet(wallet)
-  return fromPromise(() =>
-    arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      dryrun({ process: processId, Owner, tags, data })
-    )
-  )()
-}
-
 
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
-  let retries = "."
-  const { message, createDataItemSigner } = setupMainnet(wallet) 
-  
-  const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
-    .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
-      retries += "."
-      return _
-    })
-    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
-  
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 500))
-  )().chain(fromPromise(() => 
-    message({ process: processId, signer: createDataItemSigner(), tags, data })
-  ))
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)    
+  const { request } = setupMainnet(wallet) 
+  const submitRequest = fromPromise(request)
+  const params = { 
+    type: 'Message',
+    path: `/${processId}~process@1.0/push/serialize~json@1.0`,
+    method: 'POST',
+    ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
+    data: data,
+    'data-protocol': 'ao',
+    variant: 'ao.N.1',
+    target: processId
+  }
+  return of(params)
+    .chain(submitRequest)    
+    .map(prop('body'))
+    .map(JSON.parse)
+    .map(resBody => {
+      if (resBody.info == 'hyper-aos') {
+        return { Output: resBody.output }
+      } else {
+        return JSON.parse(resBody.json.body)
+      }
 
+    })
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const { spawn, createDataItemSigner } = setupMainnet(wallet) 
- 
+  const AUTHORITY = process.env.AUTHORITY || SCHEDULER
 
-  tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => spawn({
-    module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
-  })
-    .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
-  )()
-
-}
-
-export function monitorProcessMainnet({ id, wallet }) {
-  const { monitor, createDataItemSigner } = setupRelay(wallet) 
+  const { request } = setupMainnet(wallet) 
+  const submitRequest = fromPromise(request)
   
-  return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
+  const getExecutionDevice = fromPromise(async function (params) {
+    const executionDevice = await prompts({
+      type: 'select',
+      name: 'device',
+      message: 'Please select a device',
+      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+      instructions: false
+    }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+    params['execution-device'] = executionDevice
+    return Promise.resolve(params)
+  })
 
-}
+  const params = {
+    path: '/push',
+    method: 'POST',
+    Type: 'Process', 
+    Module: src, 
+    scheduler: SCHEDULER,
+    device: 'process@1.0',
+    'scheduler-device': 'scheduler@1.0',
+    'push-device': 'push@1.0',
+    'scheduler-location': SCHEDULER,
+    'data-protocol': 'ao',
+    variant: 'ao.N.1',
+    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    'Authority': AUTHORITY,
+    'aos-version': pkg.version,
+    script: pkg.hyper.script
+  }
 
-export function unmonitorProcessMainnet({ id, wallet }) {
-  const { unmonitor, createDataItemSigner } = setupRelay(wallet) 
-
-  return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
+  return of(params)
+    .chain(getExecutionDevice)
+    .chain(submitRequest)
+    .map(prop('process'))
 
 }
 
@@ -218,3 +219,4 @@ export async function liveMainnet(id, watch) {
   ct = await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
 }
+

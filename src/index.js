@@ -7,6 +7,7 @@ import chalk from 'chalk'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
+import prompts from 'prompts'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -57,9 +58,8 @@ let {
 } = relaySvc
 
 let {
-  spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
-  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
-  dryrunMainnet
+  spawnProcessMainnet, sendMessageMainnet, 
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet
 } = mainnetSvc
 
 if (!process.stdin.isTTY) {
@@ -140,16 +140,24 @@ if (argv['mainnet']) {
   console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
-  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/address`).then(res => res.text())
+  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+  // process.env.EXECUTION_DEVICE = await prompts({
+  //     type: 'select',
+  //     name: 'device',
+  //     message: 'Please select a device',
+  //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+  //     instructions: false
+  // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+
   // replace services to use mainnet service
   sendMessage = sendMessageMainnet
   spawnProcess = spawnProcessMainnet
-  readResult = readResultMainnet
-  monitorProcess = monitorProcessMainnet
-  unmonitorProcess = unmonitorProcessMainnet
+  readResult = () => null 
+  // monitorProcess = monitorProcessMainnet
+  // unmonitorProcess = unmonitorProcessMainnet
   live = liveMainnet
   printLive = printLiveMainnet
-  dryrun = dryrunMainnet
+  dryrun = () => null 
 
   relayMode = true
 }
@@ -174,7 +182,7 @@ async function runProcess() {
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
         // make wallet available to services if relay mode
-        if (argv['relay']) {
+        if (argv['relay'] || argv['mainnet']) {
           process.env.WALLET = JSON.stringify(jwk)
         }
         // handle list option, need jwk in order to do it.
@@ -190,7 +198,6 @@ async function runProcess() {
       .then(async ({ jwk, id }) => {
         let editorMode = false
         let editorData = ''
-
         const history = readHistory(id)
 
         if (argv.relay && argv.topup) {
@@ -236,6 +243,7 @@ async function runProcess() {
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
+
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
         // check loading files flag
@@ -542,7 +550,7 @@ async function connect(jwk, id) {
   for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
       spinner.suffixText = chalk.red('[Connecting to process....]')
-      await new Promise(resolve => setTimeout(resolve, 500 * i))
+      // await new Promise(resolve => setTimeout(resolve, 10 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
       // console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
