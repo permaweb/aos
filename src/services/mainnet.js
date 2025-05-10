@@ -106,7 +106,6 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
 
   return of(params)
     .chain(getExecutionDevice)
-    .map(x => (console.log(x), x))
     .chain(submitRequest)
     .map(prop('process'))
 
