@@ -328,6 +328,79 @@ function ao.spawn(module, msg)
     return spawn
 end
 
+-- registerHint
+-- if a From-Process has `hint` and `hint-ttl` then we need to add bounded registry
+function ao.registerHint(msg)
+  -- check if From-Process tag exists
+  local fromProcess = nil
+  local hint = nil
+  local hintTTL = nil
+
+  -- find From-Process tag
+  if msg.Tags then
+      for name, value in pairs(msg.Tags) do
+          if name == "From-Process" then
+              -- split by & to get process, hint, and ttl
+              local parts = {}
+
+              for part in string.gmatch(value, "[^&]+") do
+                  table.insert(parts, part)
+              end
+              local hintParts = {}
+              if parts[2] then
+                  for item in string.gmatch(parts[2], "[^=]+") do
+                      table.insert(hintParts, item)
+                  end
+              end
+              local ttlParts = {}
+              if parts[3] then
+                  for item in string.gmatch(parts[3], "[^=]+") do
+                      table.insert(ttlParts, item)
+                  end
+              end
+
+              fromProcess = parts[1] or nil
+              hint = hintParts[2] or nil
+              hintTTL = ttlParts[2] or nil
+              break
+          end
+      end
+  end
+
+  -- if we found a hint, store it in the registry
+  if hint then
+      if not ao._hints then
+          ao._hints = {}
+      end
+      if not fromProcess then
+        ao._hints[fromProcess] = {
+            hint = hint,
+            ttl = hintTTL
+        }
+      end
+  end
+  -- enforce bounded registry of 1000 keys
+  if ao._hints then
+      local count = 0
+      local oldest = nil
+      local oldestKey = nil
+
+      -- count keys and find oldest entry
+      for k, v in pairs(ao._hints) do
+          count = count + 1
+          if not oldest or v.ttl < oldest then
+              oldest = v.ttl
+              oldestKey = k
+          end
+      end
+
+      -- if over 1000 entries, remove oldest
+      if count > 1000 and oldestKey then
+          ao._hints[oldestKey] = nil
+      end
+  end
+end
+
 --- Assigns a message to a process.
 -- @function assign
 -- @tparam {table} assignment The assignment to assign
