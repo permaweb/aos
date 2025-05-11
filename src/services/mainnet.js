@@ -53,18 +53,25 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     variant: 'ao.N.1',
     target: processId
   }
+  const parseWasmBody = (body) => {
+    try { 
+      return JSON.parse(body) 
+    } catch (e) { 
+      return ({ Error: 'Could not parse result!' })
+    }
+  }
+
+  const handleResults = (resBody) =>
+    resBody.info === 'hyper-aos' 
+    ? ({ Output: resBody.output, Error: resBody.error })
+    : parseWasmBody(resBody.json?.body)
+
   return of(params)
     .chain(submitRequest)    
     .map(prop('body'))
     .map(JSON.parse)
-    .map(resBody => {
-      if (resBody.info == 'hyper-aos') {
-        return { Output: resBody.output }
-      } else {
-        return JSON.parse(resBody.json.body)
-      }
+    .map(handleResults)
 
-    })
 }
 
 export function spawnProcessMainnet({ wallet, src, tags, data }) {
