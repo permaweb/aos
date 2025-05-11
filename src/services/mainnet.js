@@ -90,7 +90,6 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     path: '/push',
     method: 'POST',
     Type: 'Process', 
-    Module: src, 
     scheduler: SCHEDULER,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
@@ -101,11 +100,17 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'Authority': AUTHORITY,
     'aos-version': pkg.version,
-    script: pkg.hyper.script
   }
-
   return of(params)
     .chain(getExecutionDevice)
+    .map(p => {
+      if (p['execution-device'] === 'lua@5.3a') {
+        p.Module = pkg.hyper.module
+      } else {
+        p.Module = src
+      }
+      return p
+    })
     .chain(submitRequest)
     .map(prop('process'))
 
