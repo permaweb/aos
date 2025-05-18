@@ -53,6 +53,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     variant: 'ao.N.1',
     target: processId
   }
+
   const parseWasmBody = (body) => {
     try { 
       return JSON.parse(body) 

@@ -73,3 +73,26 @@ test('test authorities', async () => {
   const result = await handle(start, msg, env)
   assert.ok(result.Output.data.includes('Message is not trusted! From: BAM - Owner: BEEP'))
 })
+
+
+test('test utils', async () => {
+  const handle = await AoLoader(wasm, options)
+  const start = await init(handle)
+  
+  const msg = {
+    Target: 'AOS',
+    Owner: 'BEEP',
+    From: 'BAM',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: `
+return require('.utils).capitalize("foo-bar")
+    `
+  }
+  const result = await handle(start, msg, env)
+  assert.ok(result.Output.data('Foo-Bar'))
+})

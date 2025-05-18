@@ -114,6 +114,16 @@ function utils.matchesSpec(msg, spec)
   return false
 end
 
+--- Capitalize function
+-- @param str
+-- @returns string
+function utils.capitalize(str)
+  if type(str) ~= "string" or str == "" then
+    return str
+  end
+  return str:sub(1,1):upper() .. str:sub(2):lower()
+end
+
 --- Given a table, returns whether it is an array.
 -- An 'array' is defined as a table with integer keys starting from 1 and
 -- having no gaps between the keys.
