@@ -312,7 +312,7 @@ function process.handle(msg, _)
   
   ao.init(env)
   -- relocate custom tags to root message
-  msg = ao.normalize(msg)
+  msg = process.normalize(msg)
   -- set process id
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
@@ -504,4 +504,27 @@ function process.handle(msg, _)
   end
 end
 
+function process.normalize(msg)
+  -- Normalize tag names to title case
+  if msg.Tags and type(msg.Tags) == "table" then
+    for i, tag in ipairs(msg.Tags) do
+      if tag.name and type(tag.name) == "string" then
+        -- Capitalize first letter
+        local newName = tag.name:gsub("^%l", string.upper)
+        -- Capitalize any letter following a dash
+        newName = newName:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
+        -- Capitalize any letter following an underscore
+        newName = newName:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
+        tag.name = newName
+      end
+    end
+  end
+
+  -- Bring tags to root message
+  ao.normalize(msg)
+
+  return msg
+end
+
 return process
+
