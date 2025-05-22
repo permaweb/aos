@@ -508,8 +508,12 @@ function process.normalize(msg)
   -- Helper function to normalize a string
   local function normalizeString(str)
     if type(str) ~= "string" then return str end
+    
+    -- Lowercase all letters
+    local result = str:lower()
+    
     -- Capitalize first letter
-    local result = str:gsub("^%l", string.upper)
+    result = result:gsub("^%l", string.upper)
     -- Capitalize any letter following a dash
     result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
     -- Capitalize any letter following an underscore
@@ -517,7 +521,7 @@ function process.normalize(msg)
     return result
   end
 
-  -- Create a table of normalized keys
+  -- Normalize keys to title case
   for key, value in pairs(msg) do
     local normalizedKey = normalizeString(key)
     -- Only add to normalizedKeys if the key changed during normalization

@@ -31,7 +31,7 @@ async function init(handle) {
   return Memory
 }
 
-test('message normalization - lowercase to uppercase', async () => {
+test('message normalization - to title case', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
   
@@ -53,12 +53,12 @@ Handlers.add("inspect-normalized",
   end, 
   function (msg) 
     -- Print normalized message keys
+    print("TAGS:")
+    print(msg.Tags)
     print("Type: " .. (msg.Tags["Type"] or "nil"))
     print("Data-Protocol: " .. (msg.Tags["Data-Protocol"] or "nil"))
     print("Message: " .. (msg.Tags["Message"] or "nil"))
-    
-    -- Also verify lowercase keys are not accessible
-    print("type (lowercase): " .. (msg.Tags["type"] or "nil"))
+    print("Action: " .. (msg.Tags["Action"] or "nil"))
     
     -- Return true if keys were normalized properly
     return msg.Tags["Type"] == "test-event" and 
@@ -79,8 +79,9 @@ Handlers.add("inspect-normalized",
     Owner: 'FRED',
     Tags: [
       { name: 'type', value: 'test-event' },
-      { name: 'data-protocol', value: 'https://example.com/protocol' },
-      { name: 'message', value: 'Hello, world!' }
+      { name: 'data-PROTOCOL', value: 'https://example.com/protocol' },
+      { name: 'MESSAGE', value: 'Hello, world!' },
+      { name: 'action', value: 'test-action' }
     ],
     Data: 'Test normalized message'
   }
@@ -89,13 +90,13 @@ Handlers.add("inspect-normalized",
   
   console.log(`OUTPUT:`)
   console.log(Output)
+  console.log(`MESSAGES:`)
   
   // Check if output contains the normalized values
   assert.ok(Output.data.includes('Type: test-event'))
   assert.ok(Output.data.includes('Data-Protocol: https://example.com/protocol'))
   assert.ok(Output.data.includes('Message: Hello, world!'))
+  assert.ok(Output.data.includes('Action: test-action'))
 
-  
-  // The lowercase keys should be inaccessible after normalization
-//   assert.ok(!Output.data.includes('type (lowercase): nil'))
+
 }) 
