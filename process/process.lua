@@ -505,17 +505,33 @@ function process.handle(msg, _)
 end
 
 function process.normalize(msg)
+  -- Helper function to normalize a string
+  local function normalizeString(str)
+    if type(str) ~= "string" then return str end
+    -- Capitalize first letter
+    local result = str:gsub("^%l", string.upper)
+    -- Capitalize any letter following a dash
+    result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
+    -- Capitalize any letter following an underscore
+    result = result:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
+    return result
+  end
+
+  -- Create a table of normalized keys
+  for key, value in pairs(msg) do
+    local normalizedKey = normalizeString(key)
+    -- Only add to normalizedKeys if the key changed during normalization
+    if normalizedKey ~= key then
+      msg[key] = nil
+      msg[normalizedKey] = value
+    end
+  end
+
   -- Normalize tag names to title case
   if msg.Tags and type(msg.Tags) == "table" then
     for i, tag in ipairs(msg.Tags) do
       if tag.name and type(tag.name) == "string" then
-        -- Capitalize first letter
-        local newName = tag.name:gsub("^%l", string.upper)
-        -- Capitalize any letter following a dash
-        newName = newName:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
-        -- Capitalize any letter following an underscore
-        newName = newName:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
-        tag.name = newName
+        tag.name = normalizeString(tag.name)
       end
     end
   end
