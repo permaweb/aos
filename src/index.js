@@ -176,6 +176,11 @@ if (argv['mu-url']) {
   process.env.MU_URL = argv['mu-url']
 }
 
+if (argv['authority']) {
+  console.log(chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', ')))
+  process.env.AUTHORITY = argv['authority']
+}
+
 async function runProcess() {
   if (!argv.watch) {
     of()
