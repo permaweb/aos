@@ -53,8 +53,6 @@ Handlers.add("inspect-normalized",
   end, 
   function (msg) 
     -- Print normalized message keys
-    print("TAGS:")
-    print(msg.Tags)
     print("Type: " .. (msg.Tags["Type"] or "nil"))
     print("Data-Protocol: " .. (msg.Tags["Data-Protocol"] or "nil"))
     print("Message: " .. (msg.Tags["Message"] or "nil"))
@@ -88,15 +86,11 @@ Handlers.add("inspect-normalized",
   
   const { Output } = await handle(Memory, testMsg, env)
   
-  console.log(`OUTPUT:`)
-  console.log(Output)
-  console.log(`MESSAGES:`)
   
   // Check if output contains the normalized values
   assert.ok(Output.data.includes('Type: test-event'))
   assert.ok(Output.data.includes('Data-Protocol: https://example.com/protocol'))
   assert.ok(Output.data.includes('Message: Hello, world!'))
   assert.ok(Output.data.includes('Action: test-action'))
-
 
 }) 
