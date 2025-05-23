@@ -41,7 +41,8 @@ Handlers.unstake = function(msg)
   local stakerInfo = Stakers[msg.From]
   assert(stakerInfo and bint(stakerInfo.amount) >= bint(msg.Tags.Quantity), "Insufficient staked amount")
   stakerInfo.amount = utils.subtract(stakerInfo.amount, msg.Tags.Quantity)
-  Unstaking[msg.From] = {
+  Unstaking[msg.Id] = {
+      from = msg.From,
       amount = msg.Tags.Quantity,
       release_at = stakerInfo.unstake_at
   }
@@ -56,10 +57,10 @@ end
 local finalizationHandler = function(msg)
   local currentHeight = tonumber(msg['Block-Height'])
   -- Process unstaking
-  for address, unstakeInfo in pairs(Unstaking) do
+  for msgId, unstakeInfo in pairs(Unstaking) do
       if unstakeInfo.release_at == nil or currentHeight >= unstakeInfo.release_at then
-          Balances[address] = utils.add(Balances[address] or "0", unstakeInfo.amount)
-          Unstaking[address] = nil
+          Balances[unstakeInfo.from] = utils.add(Balances[unstakeInfo.from] or "0", unstakeInfo.amount)
+          Unstaking[msgId] = nil
       end
   end
 end
