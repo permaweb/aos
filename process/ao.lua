@@ -146,13 +146,11 @@ function ao.init(env)
         end
     end
 
-    if #ao.authorities < 1 then
-        for _, o in ipairs(env.Process.Tags) do
-            if o.name == "Authority" then
-                for part in string.gmatch(o.value, "[^,]+") do
+    for _, o in ipairs(env.Process.Tags) do
+        if o.name == "Authority" then
+            for part in string.gmatch(o.value, "[^,]+") do
                 if part ~= "" and part ~= nil and not _includes(ao.authorities)(part) then
-                        table.insert(ao.authorities, part)
-                    end
+                    table.insert(ao.authorities, part)
                 end
             end
         end
