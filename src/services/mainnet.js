@@ -150,77 +150,71 @@ export function printLiveMainnet() {
 export async function liveMainnet(id, watch) {
   _watch = watch
   let ct = null
-  let cursor = null
-  let count = null
   let cursorFile = path.resolve(os.homedir() + `/.${id}.txt`)
-
+  let cursor = 1
   if (fs.existsSync(cursorFile)) {
-    cursor = fs.readFileSync(cursorFile, 'utf-8')
-  }
-  let stopped = false
-  process.stdin.on('keypress', (str, key) => {
-    if (ct && !stopped) {
-      ct.stop()
-      stopped = true
-      setTimeout(() => { ct.start(); stopped = false }, 60000)
-    }
-  })
+    cursor = parseInt(fs.readFileSync(cursorFile, 'utf-8'))
+  } 
 
   let isJobRunning = false
 
   const checkLive = async () => {
-    const wallet = process.env.WALLET
-    const { results } = setupMainnet(wallet)
+    const wallet = typeof process.env.WALLET == 'string' ? JSON.parse(process.env.WALLET) : process.env.WALLET
+    const { request } = setupMainnet(wallet)
     if (!isJobRunning) {
-
       try {
         isJobRunning = true;
-        let params = { process: id, limit: 1000 }
-        if (cursor) {
-          params["from"] = cursor
-        } else {
-          params["limit"] = 5
-          params["sort"] = "DESC"
+
+        // Get the current slot
+        const currentSlotPath = `/${id}~process@1.0/slot/current/body/serialize~json@1.0`        // LIVE PARAMS
+        const currentSlotParams = { 
+          path: currentSlotPath,
+          method: 'GET',
+          device: 'process@1.0',
+          'data-protocol': 'ao',
+          variant: 'ao.N.1',
+          'aos-version': pkg.version,
         }
+        const currentSlot = await request(currentSlotParams)
+          .then(res => res.body)
+          .then(JSON.parse)
+          .then(res => res.body)
+        
+        // Eval up to the current slot
+        while (cursor <= currentSlot) {
 
-        const _relayResults = await results(params)
-
-        let edges = uniqBy(prop('cursor'))(_relayResults.edges.filter(function (e) {
-          if (e.node?.Output?.print === true) {
-            return true
+          const path = `/${id}~process@1.0/compute&slot=${cursor}/results/json/body/serialize~json@1.0`        // LIVE PARAMS
+          const params = {
+            path,
+            method: 'GET', 
+            device: 'process@1.0',
+            'data-protocol': 'ao',
+            'scheduler-device': 'scheduler@1.0',
+            'push-device': 'push@1.0',
+            variant: 'ao.N.1',
+            'aos-version': pkg.version,
           }
-          if (e.cursor === cursor) {
-            return false
+          const results = await request(params)
+            .then(res => res.body)
+            .then(JSON.parse)
+            .then(res => res.body)
+            .then(JSON.parse)
+
+          // If results, add to alerts
+          if (!globalThis.alerts[cursor]) {
+            globalThis.alerts[cursor] = results.Output
+          }  
+
+          // Update cursor
+          if (results.Output) {
+            cursor++
+            fs.writeFileSync(cursorFile, cursor.toString())
           }
-          return false
-        }))
-
-        // Sort the edges by ordinate value to ensure they are printed in the correct order.
-        // TODO: Handle sorting with Cron jobs, considering nonces and timestamps. Review cursor usage for compatibility with future CU implementations.
-        edges = edges.sort((a, b) => JSON.parse(atob(a.cursor)).ordinate - JSON.parse(atob(b.cursor)).ordinate);
-
-        // --- peek on previous line and if delete line if last prompt.
-        // --- key event can detect 
-        // count !== null && 
-        if (edges.length > 0) {
-          edges.map(e => {
-            if (!globalThis.alerts[e.cursor]) {
-              globalThis.alerts[e.cursor] = e.node?.Output
-            }
-          })
-
         }
-        count = edges.length
-        if (results.edges.length > 0) {
-          cursor = results.edges[results.edges.length - 1].cursor
-          fs.writeFileSync(cursorFile, cursor)
-        }
-        //process.nextTick(() => null)
-
       } catch (e) {
         // surpress error messages #195
 
-        // console.log(chalk.red('An error occurred with live updates...'))
+        // console.log(chalk.red('An error occurred with live updates...'), { e })
         // console.log('Message: ', chalk.gray(e.message))
       } finally {
         isJobRunning = false
