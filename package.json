@@ -22,7 +22,7 @@
     "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.84",
+    "@permaweb/aoconnect": "^0.0.85",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -52,9 +52,9 @@
     "standard": "^17.1.2"
   },
   "aos": {
-    "module": "URgYpPQzvxxfYQtjrIQ116bl3YBfcImo3JEnNo8Hlrk",
-    "sqlite": "lPkDN7vAoKMW4A6H9O3Q4faegLaXZ3HFix_E0lZkPlg",
-    "llama": "l2C3iKWRxQgW-WnX0fCNuHMj6y2S_NWctnsTWcCwSuY",
+    "module": "QXOgurltd0r5eh0_VQ0k7gwUKljqbeDHEcu8GtycPd4",
+    "sqlite": "x2028pCeB7szgLnrNM3fNMc-dPIXf6_VVmtg49yh0fM",
+    "llama": "QkFLfRXw8MOeHMNoHK0tyno17wbSxCecATohFMaULKM",
     "version": "2.0.4"
   },
   "hyper": {

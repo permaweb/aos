@@ -221,9 +221,9 @@ export async function liveMainnet(id, watch) {
       }
     }
   }
-  await cron.schedule('*/2 * * * * *', checkLive)
+  ct = await cron.schedule('*/2 * * * * *', checkLive)
 
-  ct = await cron.schedule('*/2 * * * * *', printLiveMainnet)
+  await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
 }
 
