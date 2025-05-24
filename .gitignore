@@ -9,3 +9,4 @@ aos.json
 
 .vscode
 .DS_Store
+bun.lock

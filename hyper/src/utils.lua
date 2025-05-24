@@ -44,7 +44,6 @@ function utils.matchesPattern(pattern, value, msg)
       return false
     end
   end
-  
   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
   -- and exact string match mode
   if (type(pattern) == 'string') then
@@ -89,30 +88,28 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      if not msg[key] then
+      -- The key can either be in the top level of the 'msg' object  
+      -- or in the body table of the msg
+      local msgValue = msg[key] or msg.body[key]
+      if not msgValue then
         return false
       end
-      if not utils.matchesPattern(pattern, msg[key], msg) then
+      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
+      if not matchesMsgValue then
         return false
       end
+
     end
     return true
   end
 
-  if type(spec) == 'string' and msg.Action and msg.Action == spec then
+  if type(spec) == 'string' and msg.action and msg.action == spec then
+    return true
+  end
+  if type(spec) == 'string' and msg.body.action and msg.body.action == spec then
     return true
   end
   return false
-end
-
---- Capitalize function
--- @param str
--- @returns string
-function utils.capitalize(str)
-  if type(str) ~= "string" or str == "" then
-    return str
-  end
-  return str:sub(1,1):upper() .. str:sub(2):lower()
 end
 
 --- Given a table, returns whether it is an array.
@@ -364,5 +361,20 @@ utils.values = function (t)
   end
   return values
 end
+
+--- Convert a message's tags to a table of key-value pairs
+-- @function Tab
+-- @tparam {table} msg The message containing tags
+-- @treturn {table} A table with tag names as keys and their values
+function utils.Tab(msg)
+  local inputs = {}
+  for _, o in ipairs(msg.Tags) do
+    if not inputs[o.name] then
+      inputs[o.name] = o.value
+    end
+  end
+  return inputs
+end
+
 
 return utils
