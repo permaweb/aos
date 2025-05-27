@@ -72,21 +72,21 @@ function utils.matchesPattern(pattern, value, msg)
   return false
 end
 
---- Normalizes a string to title case
+--- Normalizes a string to title case and converts underscores to dashes
 -- @function utils.normalize
 -- @tparam {string} str The string to normalize
 -- @treturn {string} The normalized string
 utils.normalize = function(str)
   if type(str) ~= "string" then return str end
   
+  -- Convert underscores to dashes first
+  local result = str:gsub("_", "-")
   -- Lowercase all letters
-  local result = str:lower()
+  result = result:lower()
   -- Capitalize first letter
   result = result:gsub("^%l", string.upper)
   -- Capitalize any letter following a dash
   result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
-  -- Capitalize any letter following an underscore
-  result = result:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
   return result
 end
 
