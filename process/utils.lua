@@ -19,7 +19,6 @@
 -- @field includes The includes function
 -- @field keys The keys function
 -- @field values The values function
--- @field normalize The normalize function
 local utils = { _version = "0.0.5" }
 
 --- Given a pattern, a value, and a message, returns whether there is a pattern match.
@@ -47,14 +46,16 @@ function utils.matchesPattern(pattern, value, msg)
   end
   
   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-  -- and exact string match mode
+  -- and exact string match mode with case-insensitive matching
   if (type(pattern) == 'string') then
     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-      if string.match(value, pattern) then
+      -- For regex patterns, use case-insensitive matching
+      if string.match(string.lower(value or ""), string.lower(pattern)) then
         return true
       end
     else
-      if value == pattern then
+      -- For exact string matches, compare case-insensitively
+      if string.lower(value or "") == string.lower(pattern) then
         return true
       end
     end
@@ -69,6 +70,49 @@ function utils.matchesPattern(pattern, value, msg)
     end
   end
 
+  return false
+end
+
+--- Given a message and a spec, returns whether there is a spec match.
+-- @usage utils.matchesSpec(msg, spec)
+-- @param msg The message to check for the spec
+-- @param spec The spec to check for in the message
+-- @treturn {boolean} Whether there is a spec match
+function utils.matchesSpec(msg, spec)
+  if type(spec) == 'function' then
+    return spec(msg)
+  -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
+  -- Supported pattern types:
+  --   - Exact string match
+  --   - Lua gmatch string
+  --   - '_' (wildcard: Message has tag, but can be any value)
+  --   - Function execution on the tag, optionally using the msg as the second argument
+  --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
+  end
+  if type(spec) == 'table' then
+    for key, pattern in pairs(spec) do
+      -- The key can either be in the top level of the 'msg' object or within the 'Tags' 
+
+      local msgValue = msg[key]
+      local msgTagValue = msg['Tags'] and msg['Tags'][key]
+  
+      if not msgValue and not msgTagValue then
+        return false
+      end
+  
+      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
+      local matchesMsgTagValue = utils.matchesPattern(pattern, msgTagValue, msg)
+  
+      if not matchesMsgValue and not matchesMsgTagValue then
+        return false
+      end
+    end
+    return true
+  end
+  
+  if type(spec) == 'string' and msg.Action and msg.Action == spec then
+    return true
+  end
   return false
 end
 
@@ -88,45 +132,6 @@ utils.normalize = function(str)
   -- Capitalize any letter following a dash
   result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
   return result
-end
-
---- Given a message and a spec, returns whether there is a spec match.
--- @usage utils.matchesSpec(msg, spec)
--- @param msg The message to check for the spec
--- @param spec The spec to check for in the message
--- @treturn {boolean} Whether there is a spec match
-function utils.matchesSpec(msg, spec)
-  if type(spec) == 'function' then
-    return spec(msg)
-  end
-  
-  if type(spec) == 'table' then
-    for key, pattern in pairs(spec) do
-      local normalizedKey = utils.normalize(key)
-      
-      -- Check both the normalized key and original key for backward compatibility
-      local msgValue = msg[normalizedKey] or msg[key]
-      local msgTagValue = msg.Tags and (msg.Tags[normalizedKey] or msg.Tags[key])
-      
-      if not msgValue and not msgTagValue then
-        return false
-      end
-      
-      local matchesMsgValue = msgValue and utils.matchesPattern(pattern, msgValue, msg)
-      local matchesMsgTagValue = msgTagValue and utils.matchesPattern(pattern, msgTagValue, msg)
-      
-      if not matchesMsgValue and not matchesMsgTagValue then
-        return false
-      end
-    end
-    return true
-  end
-  
-  if type(spec) == 'string' and msg.Action then
-    return msg.Action == spec
-  end
-  
-  return false
 end
 
 --- Capitalize function
