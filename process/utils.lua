@@ -19,6 +19,7 @@
 -- @field includes The includes function
 -- @field keys The keys function
 -- @field values The values function
+-- @field normalize The normalize function
 local utils = { _version = "0.0.5" }
 
 --- Given a pattern, a value, and a message, returns whether there is a pattern match.
@@ -71,6 +72,24 @@ function utils.matchesPattern(pattern, value, msg)
   return false
 end
 
+--- Normalizes a string to title case
+-- @function utils.normalize
+-- @tparam {string} str The string to normalize
+-- @treturn {string} The normalized string
+utils.normalize = function(str)
+  if type(str) ~= "string" then return str end
+  
+  -- Lowercase all letters
+  local result = str:lower()
+  -- Capitalize first letter
+  result = result:gsub("^%l", string.upper)
+  -- Capitalize any letter following a dash
+  result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
+  -- Capitalize any letter following an underscore
+  result = result:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
+  return result
+end
+
 --- Given a message and a spec, returns whether there is a spec match.
 -- @usage utils.matchesSpec(msg, spec)
 -- @param msg The message to check for the spec
@@ -79,28 +98,23 @@ end
 function utils.matchesSpec(msg, spec)
   if type(spec) == 'function' then
     return spec(msg)
-  -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
-  -- Supported pattern types:
-  --   - Exact string match
-  --   - Lua gmatch string
-  --   - '_' (wildcard: Message has tag, but can be any value)
-  --   - Function execution on the tag, optionally using the msg as the second argument
-  --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
   end
+  
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      -- The key can either be in the top level of the 'msg' object or within the 'Tags' 
-
-      local msgValue = msg[key]
-      local msgTagValue = msg['Tags'] and msg['Tags'][key]
-  
+      local normalizedKey = utils.normalize(key)
+      
+      -- Check both the normalized key and original key for backward compatibility
+      local msgValue = msg[normalizedKey] or msg[key]
+      local msgTagValue = msg.Tags and (msg.Tags[normalizedKey] or msg.Tags[key])
+      
       if not msgValue and not msgTagValue then
         return false
       end
-  
-      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
-      local matchesMsgTagValue = utils.matchesPattern(pattern, msgTagValue, msg)
-  
+      
+      local matchesMsgValue = msgValue and utils.matchesPattern(pattern, msgValue, msg)
+      local matchesMsgTagValue = msgTagValue and utils.matchesPattern(pattern, msgTagValue, msg)
+      
       if not matchesMsgValue and not matchesMsgTagValue then
         return false
       end
@@ -108,9 +122,10 @@ function utils.matchesSpec(msg, spec)
     return true
   end
   
-  if type(spec) == 'string' and msg.Action and msg.Action == spec then
-    return true
+  if type(spec) == 'string' and msg.Action then
+    return msg.Action == spec
   end
+  
   return false
 end
 
