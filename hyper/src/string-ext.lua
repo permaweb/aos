@@ -76,14 +76,13 @@
   end
 
   --- Install string extensions into the global string table.
-  -- Adds `string.gmatch` if the host runtime does not already provide it.
+  -- Adds `string.gmatch` even if string.gmatch exists but is broken (like in Luerl)
   -- @function install
   function string_ext.install()
-    -- Always override, even if string.gmatch exists but is broken (like in Luerl)
       --- Iterator that finds successive matches of *pattern* in *s*.
       -- Behaves like native `string.gmatch` in Lua 5.3+.
-      -- * If the pattern contains captures, each iterator step returns all captures.
-      -- * Otherwise, it returns the full match substring.
+      -- If the pattern contains captures, each iterator step returns all captures.
+      -- Otherwise, it returns the full match substring.
       -- @function string.gmatch
       -- @tparam string s       The string to search
       -- @tparam string pattern The Lua pattern (must be non-empty)
@@ -110,7 +109,7 @@
         
         validate_pattern(pattern)
 
-        -- current search position (1-based)
+        -- current search position (idx is 1-based)
         local pos = 1
         local iteration_count = 0
         local last_pos = 0  -- Track last position to detect zero-width matches
