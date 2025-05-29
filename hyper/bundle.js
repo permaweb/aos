@@ -26,7 +26,7 @@ export function dry() {
 export function update() {
   // let luaFiles = fs.readdirSync(__dirname)
   //   .filter(n => /\.lua$/.test(n))
-  let luaFiles = ['json.lua', 'stringify.lua', 'eval.lua',
+  let luaFiles = ['json.lua', 'string-ext.lua', 'stringify.lua', 'eval.lua',
     'utils.lua', 'handlers-utils.lua', 'handlers.lua',
     'dump.lua', 'pretty.lua', 'chance.lua', 'boot.lua',
     'default.lua', 'ao.lua', 'base64.lua', 
