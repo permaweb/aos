@@ -68,24 +68,9 @@ end
 -- @tparam {table} msg The message to normalize
 -- @treturn {table} The normalized message
 local function normalizeMsg(msg)
-  -- Helper function to normalize a string
-  local function normalizeString(str)
-    if type(str) ~= "string" then return str end
-    
-    -- Lowercase all letters
-    local result = str:lower()
-    -- Capitalize first letter
-    result = result:gsub("^%l", string.upper)
-    -- Capitalize any letter following a dash
-    result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
-    -- Capitalize any letter following an underscore
-    result = result:gsub("_(%l)", function(match) return "_" .. string.upper(match) end)
-    return result
-  end
-
   -- Normalize keys to title case
   for key, value in pairs(msg) do
-    local normalizedKey = normalizeString(key)
+    local normalizedKey = Utils.normalize(key)
     -- Only add to normalizedKeys if the key changed during normalization
     if normalizedKey ~= key then
       msg[key] = nil
@@ -97,7 +82,7 @@ local function normalizeMsg(msg)
   if msg.Tags and type(msg.Tags) == "table" then
     for i, tag in ipairs(msg.Tags) do
       if tag.name and type(tag.name) == "string" then
-        tag.name = normalizeString(tag.name)
+        tag.name = Utils.normalize(tag.name)
       end
     end
   end
