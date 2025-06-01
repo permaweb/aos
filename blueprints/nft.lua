@@ -125,11 +125,7 @@ Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(m
     description = Description,
     logo = Logo,
     totalSupply = utils.toNumber(TotalSupply),
-    Data = json.encode({
-      version = Variant,
-      standard = "AO-ERC721",
-      royalty = DefaultRoyalty
-    })
+    type = "NFT",
   })
 end)
 
