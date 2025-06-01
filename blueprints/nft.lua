@@ -407,7 +407,7 @@ Handlers.add('token-by-index', Handlers.utils.hasMatchingTag("Action", "Token-By
   local index = tonumber(msg.Tags.Index)
 
   assert(index, 'Index is required!')
-  assert(index >= 1 and index < #Tokens, 'Index out of bounds!')
+  assert(index >= 1 and index <= #Tokens, 'Index out of bounds!')
 
   local tokenId = Tokens[index]
 
