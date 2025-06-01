@@ -719,10 +719,4 @@ end)
 
  Custom Project Extensions:
  "myproject.custom": { "specialFeature": "value", "projectSpecific": true }
- "x-experimental.beta": { "newFeature": "testing", "version": "0.1.0" }
-
- Reserved Namespaces:
- - core.* (reserved for future standard)
- - ao.* (AO platform specific)
- - arweave.* (Arweave ecosystem specific)
 ]]
