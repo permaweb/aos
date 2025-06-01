@@ -3,7 +3,7 @@ local json = require('json')
 
 --[[
   --Author: https://gist.github.com/skyf0xx
-  ==Author: https://github.com/ALLiDoizCode
+  --Author: https://github.com/ALLiDoizCode
   This module implements the AO NFT Standard based on ERC-721 with royalty support.
 
   Features:
