@@ -7,9 +7,8 @@ local json = require('json')
   This module implements the AO NFT Standard based on ERC-721 with royalty support.
 
   Features:
-  - Full ERC-721 compatibility
+  - Inspired by ERC-721
   - Royalty support (EIP-2981 inspired)
-  - Enumeration support
   - Rich metadata with extensible data format
   - Creator monetization features
 
