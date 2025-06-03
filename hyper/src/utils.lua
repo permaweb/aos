@@ -21,96 +21,158 @@
 -- @field values The values function
 local utils = { _version = "0.0.5" }
 
+local function match_field(val, patt)
+  if patt == '_' or patt == '*' then return true end
+  if type(patt) == "string" and patt:sub(1, 1) == '^' then
+    local ok, res = pcall(string.match, tostring(val), patt)
+    return ok and res ~= nil
+  end
+  return val == patt
+end
+
+local function compile(spec)
+  -- top-level keys
+  local field_preds = {}
+  for k, v in pairs(spec) do
+    if k ~= "tags" then
+      field_preds[#field_preds + 1] = function(msg) return match_field(msg[k], v) end
+    end
+  end
+
+  -- tag matcher
+  local tag_pred = function() return true end
+  if type(spec.tags) == "table" then
+    local wanted = spec.tags
+    tag_pred = function(msg)
+      if type(msg.tags) ~= "table" then return false end
+      for tk, tv in pairs(wanted) do
+        if not match_field(msg.tags[tk], tv) then return false end
+      end
+      return true
+    end
+  end
+
+  return function(msg)
+    for _, fn in ipairs(field_preds) do
+      if not fn(msg) then return false end
+    end
+    return tag_pred(msg)
+  end
+end
+
+--- Given a message and a spec, returns whether there is a spec match.
+-- Supports:
+--   * exact equality
+--   * wildcard '_' or '*'
+--   * Lua regex (pattern beginning with '^')
+--   * tags sub-table
+function utils.matchesSpec(msg, spec)
+  if not spec then return false end
+  if type(spec) == "function" then return spec(msg) end
+
+  local fn = rawget(spec, "__matcher")
+  if not fn then
+    fn = compile(spec)
+    rawset(spec, "__matcher", fn)
+  end
+  return fn(msg)
+end
+
+--- Backwards-compat matchesPattern helper
+function utils.matchesPattern(pattern, value, msg)
+  return utils.matchesSpec({ value = value, tags = msg and msg.tags or nil }, { value = pattern })
+end
+
 --- Given a pattern, a value, and a message, returns whether there is a pattern match.
 -- @usage utils.matchesPattern(pattern, value, msg)
 -- @param pattern The pattern to match
 -- @param value The value to check for in the pattern
 -- @param msg The message to check for the pattern
 -- @treturn {boolean} Whether there is a pattern match
-function utils.matchesPattern(pattern, value, msg)
-  -- If the key is not in the message, then it does not match
-  if (not pattern) then
-    return false
-  end
-  -- if the patternMatchSpec is a wildcard, then it always matches
-  if pattern == '_' then
-    return true
-  end
-  -- if the patternMatchSpec is a function, then it is executed on the tag value
-  if type(pattern) == "function" then
-    if pattern(value, msg) then
-      return true
-    else
-      return false
-    end
-  end
-  -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-  -- and exact string match mode
-  if (type(pattern) == 'string') then
-    if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-      if string.match(value, pattern) then
-        return true
-      end
-    else
-      if value == pattern then
-        return true
-      end
-    end
-  end
+-- function utils.matchesPattern(pattern, value, msg)
+--   -- If the key is not in the message, then it does not match
+--   if (not pattern) then
+--     return false
+--   end
+--   -- if the patternMatchSpec is a wildcard, then it always matches
+--   if pattern == '_' then
+--     return true
+--   end
+--   -- if the patternMatchSpec is a function, then it is executed on the tag value
+--   if type(pattern) == "function" then
+--     if pattern(value, msg) then
+--       return true
+--     else
+--       return false
+--     end
+--   end
+--   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
+--   -- and exact string match mode
+--   if (type(pattern) == 'string') then
+--     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
+--       if string.match(value, pattern) then
+--         return true
+--       end
+--     else
+--       if value == pattern then
+--         return true
+--       end
+--     end
+--   end
 
-  -- if the pattern is a table, recursively check if any of its sub-patterns match
-  if type(pattern) == 'table' then
-    for _, subPattern in pairs(pattern) do
-      if utils.matchesPattern(subPattern, value, msg) then
-        return true
-      end
-    end
-  end
+--   -- if the pattern is a table, recursively check if any of its sub-patterns match
+--   if type(pattern) == 'table' then
+--     for _, subPattern in pairs(pattern) do
+--       if utils.matchesPattern(subPattern, value, msg) then
+--         return true
+--       end
+--     end
+--   end
 
-  return false
-end
+--   return false
+-- end
 
---- Given a message and a spec, returns whether there is a spec match.
+-- - Given a message and a spec, returns whether there is a spec match.
 -- @usage utils.matchesSpec(msg, spec)
 -- @param msg The message to check for the spec
 -- @param spec The spec to check for in the message
 -- @treturn {boolean} Whether there is a spec match
-function utils.matchesSpec(msg, spec)
-  if type(spec) == 'function' then
-    return spec(msg)
-  -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
-  -- Supported pattern types:
-  --   - Exact string match
-  --   - Lua gmatch string
-  --   - '_' (wildcard: Message has tag, but can be any value)
-  --   - Function execution on the tag, optionally using the msg as the second argument
-  --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
-  end
-  if type(spec) == 'table' then
-    for key, pattern in pairs(spec) do
-      -- The key can either be in the top level of the 'msg' object  
-      -- or in the body table of the msg
-      local msgValue = msg[key] or msg.body[key]
-      if not msgValue then
-        return false
-      end
-      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
-      if not matchesMsgValue then
-        return false
-      end
+-- function utils.matchesSpec(msg, spec)
+--   if type(spec) == 'function' then
+--     return spec(msg)
+--   -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
+--   -- Supported pattern types:
+--   --   - Exact string match
+--   --   - Lua gmatch string
+--   --   - '_' (wildcard: Message has tag, but can be any value)
+--   --   - Function execution on the tag, optionally using the msg as the second argument
+--   --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
+--   end
+--   if type(spec) == 'table' then
+--     for key, pattern in pairs(spec) do
+--       -- The key can either be in the top level of the 'msg' object  
+--       -- or in the body table of the msg
+--       local msgValue = msg[key] or msg.body[key]
+--       if not msgValue then
+--         return false
+--       end
+--       local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
+--       if not matchesMsgValue then
+--         return false
+--       end
 
-    end
-    return true
-  end
+--     end
+--     return true
+--   end
 
-  if type(spec) == 'string' and msg.action and msg.action == spec then
-    return true
-  end
-  if type(spec) == 'string' and msg.body.action and msg.body.action == spec then
-    return true
-  end
-  return false
-end
+--   if type(spec) == 'string' and msg.action and msg.action == spec then
+--     return true
+--   end
+--   if type(spec) == 'string' and msg.body.action and msg.body.action == spec then
+--     return true
+--   end
+--   return false
+-- end
 
 --- Given a table, returns whether it is an array.
 -- An 'array' is defined as a table with integer keys starting from 1 and
