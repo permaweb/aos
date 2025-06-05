@@ -1,4 +1,4 @@
-ao = ao or require('.ao')
+aos = aos or require('.aos')
 local state = {}
 local stringify = require('.stringify')
 local utils = require('.utils')
@@ -16,7 +16,13 @@ Inbox = Inbox or {}
 
 -- global prompt function
 function Prompt()
-  return "aos> "
+  if not Colors then
+    return "aos> "
+  end
+  return Colors.green .. Name .. Colors.gray
+    .. "@" .. Colors.blue .. "aos-" .. process._version .. Colors.gray
+    .. "[Inbox:" .. Colors.red .. tostring(#Inbox or -1) .. Colors.gray
+    .. "]" .. Colors.reset .. "> "
 end
 
 local maxInboxCount = 10000
@@ -32,9 +38,9 @@ local function getOwnerAddress(m)
   local _owner = nil 
   utils.map(function (k)
     local c = m.commitments[k]
-    if c.alg == "rsa-pss-sha512" then
+    if c.type == "rsa-pss-sha512" then
       _owner = c.committer
-    elseif c.alg == "signed" and c['commitment-device'] == "ans104" then
+    elseif c.type == "signed" and c['commitment-device'] == "ans104" then
       _owner = c.commiter
     end
   end, utils.keys(m.commitments))

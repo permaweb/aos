@@ -51,7 +51,10 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     data: data,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
-    target: processId
+    target: processId,
+    "accept-bundle": "true",
+    "accept-codec": "httpsig@1.0",
+    "signingFormat": "ANS-104"
   }
 
   const parseWasmBody = (body) => {
@@ -108,6 +111,8 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'Authority': AUTHORITY,
     'aos-version': pkg.version,
+    'accept-bundle': 'true',
+    'signingFormat': 'ANS-104'
   }
   return of(params)
     .chain(getExecutionDevice)

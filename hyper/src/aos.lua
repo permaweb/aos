@@ -1,16 +1,16 @@
 Handlers = Handlers or require('.handlers')
 
-local oldao = ao or {}
+local oldaos = aos or {}
 
 local utils = require('.utils')
 
-local ao = {
+aos = {
     _version = "0.0.6",
-    id = oldao.id or "",
-    _module = oldao._module or "",
-    authorities = oldao.authorities or {},
-    reference = oldao.reference or 0,
-    outbox = oldao.outbox or
+    id = oldaos.id or "",
+    _module = oldaos._module or "",
+    authorities = oldaos.authorities or {},
+    reference = oldaos.reference or 0,
+    outbox = oldaos.outbox or
         {Output = {}, Messages = {}, Spawns = {}, Assignments = {}},
     nonExtractableTags = {
         'data-protocol', 'variant', 'from-process', 'from-module', 'type',
@@ -26,17 +26,17 @@ local ao = {
     Nonce = nil
 }
 
-function ao.clearOutbox()
-  ao.outbox = { Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
+function aos.clearOutbox()
+  aos.outbox = { Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
 end
 
 local function getId(m)
   local id = ""
   utils.map(function (k)
     local c = m.commitments[k]
-    if c.alg == "rsa-pss-sha512" then
+    if string.match(c.type,"rsa-pss-sha") then
       id = k
-    elseif c.alg == "signed" and c['commitment-device'] == "ans104" then
+    elseif c.type == "signed" and c['commitment-device'] == "ans104" then
       id = k
     end
   end, utils.keys(m.commitments)
@@ -44,36 +44,36 @@ local function getId(m)
   return id
 end
 
-function ao.init(env)
-  if ao.id == "" then ao.id = getId(env.process) end
+function aos.init(env)
+  if aos.id == "" then aos.id = getId(env.process) end
 
-  -- if ao._module == "" then
-  --   ao._module = env.Module.Id
+  -- if aos._module == "" then
+  --   aos._module = env.Module.Id
   -- end
   -- TODO: need to deal with assignables
-  if #ao.authorities < 1 then
+  if #aos.authorities < 1 then
       if type(env.process.authority) == 'string' then
-        ao.authorities = { env.process.authority }
+        aos.authorities = { env.process.authority }
       else
-        ao.authorities = env.process.authority
+        aos.authorities = env.process.authority
       end
   end
 
-  ao.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
-  ao.env = env
+  aos.outbox = {Output = {}, Messages = {}, Spawns = {}, Assignments = {}}
+  aos.env = env
 
 end
 
-function ao.send(msg)
+function aos.send(msg)
   assert(type(msg) == 'table', 'msg should be a table')
 
-  ao.reference = ao.reference + 1
-  local referenceString = tostring(ao.reference)
+  aos.reference = aos.reference + 1
+  local referenceString = tostring(aos.reference)
   -- set kv
   msg.reference = referenceString
 
   -- clone message info and add to outbox
-  table.insert(ao.outbox.Messages, utils.reduce(
+  table.insert(aos.outbox.Messages, utils.reduce(
     function (acc, key)
       acc[key] = msg[key]
       return acc
@@ -101,18 +101,18 @@ function ao.send(msg)
   return msg
 end
 
-function ao.spawn(module, msg)
+function aos.spawn(module, msg)
   assert(type(module) == "string", "Module source id is required!")
   assert(type(msg) == "table", "Message must be a table.")
 
-  ao.reference = ao.reference + 1
+  aos.reference = aos.reference + 1
 
-  local spawnRef = tostring(ao.reference)
+  local spawnRef = tostring(aos.reference)
 
   msg["reference"] = spawnRef
 
   -- clone message info and add to outbox
-  table.insert(ao.outbox.Spawns, utils.reduce(
+  table.insert(aos.outbox.Spawns, utils.reduce(
     function (acc, key)
       acc[key] = msg[key]
       return acc
@@ -124,7 +124,7 @@ function ao.spawn(module, msg)
   msg.onReply = function(cb)
     Handlers.once({
       action = "Spawned",
-      from = ao.id,
+      from = aos.id,
       ["x-reference"] = spawnRef
     }, cb)
   end
@@ -135,7 +135,7 @@ end
 
 -- registerHint
 --
-function ao.registerHint(msg)
+function aos.registerHint(msg)
   -- check if From-Process tag exists
   local fromProcess = nil
   local hint = nil
@@ -174,22 +174,22 @@ function ao.registerHint(msg)
 
   -- if we found a hint, store it in the registry
   if hint then
-      if not ao._hints then
-          ao._hints = {}
+      if not aos._hints then
+          aos._hints = {}
       end
-      ao._hints[fromProcess] = {
+      aos._hints[fromProcess] = {
           hint = hint,
           ttl = hintTTL
       }
   end
   -- enforce bounded registry of 1000 keys
-  if ao._hints then
+  if aos._hints then
       local count = 0
       local oldest = nil
       local oldestKey = nil
 
       -- count keys and find oldest entry
-      for k, v in pairs(ao._hints) do
+      for k, v in pairs(aos._hints) do
           count = count + 1
           if not oldest or v.ttl < oldest then
               oldest = v.ttl
@@ -199,25 +199,25 @@ function ao.registerHint(msg)
 
       -- if over 1000 entries, remove oldest
       if count > 1000 and oldestKey then
-          ao._hints[oldestKey] = nil
+          aos._hints[oldestKey] = nil
       end
   end
 end
 
-function ao.result(result)
-  if ao.outbox.Error or result.Error then
-    return { Error = result.Error or ao.outbox.Error }
+function aos.result(result)
+  if aos.outbox.Error or result.Error then
+    return { Error = result.Error or aos.outbox.Error }
   end
   return {
-    Output = result.Output or ao.output.Output,
-    Messages = ao.outbox.Messages,
-    Spawns = ao.outbox.Spawns,
-    Assignments = ao.outbox.Assignments
+    Output = result.Output or aos.output.Output,
+    Messages = aos.outbox.Messages,
+    Spawns = aos.outbox.Spawns,
+    Assignments = aos.outbox.Assignments
   }
 end
 
 -- set global Send and Spawn
-Send = Send or ao.send
-Spawn = Spawn or ao.spawn
+Send = Send or aos.send
+Spawn = Spawn or aos.spawn
 
-return ao
+return aos

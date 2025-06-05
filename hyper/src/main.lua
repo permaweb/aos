@@ -1,6 +1,5 @@
 ---@diagnostic disable lowercase-global
 function compute(base, req, opts)
-  -- local _ao = require('.ao')
   local _process = require('.process')
 
   ao.event(base.process)

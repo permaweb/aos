@@ -1,4 +1,4 @@
-ao = ao or require('.ao')
+aos = aos or require('.aos')
 Handlers = require('.handlers')
 Utils = require('.utils')
 Dump = require('.dump')
@@ -9,15 +9,24 @@ local eval = require('.eval')
 local default = require('.default')
 local json = require('.json')
 
+--- Generate a prompt string for the current process
+-- @function Prompt
+-- @treturn {string} The custom command prompt string
 function Prompt()
-  return "aos> "
+  if not Colors then
+    return "hyper> "
+  end
+  return Colors.green .. Name .. Colors.gray
+    .. "@" .. Colors.blue .. "hyper-aos-" .. process._version .. Colors.gray
+    .. "[Inbox:" .. Colors.red .. tostring(#Inbox or -1) .. Colors.gray
+    .. "]" .. Colors.reset .. "> "
 end
 
 function process.handle(req, base)
   HandlerPrintLogs = state.reset(HandlerPrintLogs)
   os.time = function () return tonumber(req['block-timestamp']) end
 
-  ao.init(base)
+  aos.init(base)
   -- initialize state
   state.init(req, base)
 
@@ -29,7 +38,7 @@ function process.handle(req, base)
 
   Errors = Errors or {}
   -- clear outbox
-  ao.clearOutbox()
+  aos.clearOutbox()
 
   if not state.isTrusted(req) then
     return ao.result({
@@ -55,7 +64,7 @@ function process.handle(req, base)
       Utils.map(
         function (k)
           local c = m.commitments[k]
-          if c.alg == "rsa-pss-sha512" then
+          if c.type == "rsa-pss-sha512" then
             from = c.committer
           end
         end,
@@ -64,7 +73,7 @@ function process.handle(req, base)
       return from
     end
     return _req.body.action == "Eval" and Owner == getMsgFrom(_req.body)
-  end, eval(ao))
+  end, eval(aos))
 
   Handlers.add("_default",
     function () return true end,
@@ -93,7 +102,7 @@ function process.handle(req, base)
     print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
     print(Colors.green .. error .. Colors.reset)
     -- print("\n" .. Colors.gray .. debug.traceback() .. Colors.reset)
-    return ao.result({
+    return aos.result({
       Output = {
         data = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. error
       },
@@ -106,14 +115,14 @@ function process.handle(req, base)
   local response = {}
 
   if req.body.action == "Eval" then
-    response = ao.result({
+    response = aos.result({
       Output = {
         data = printData,
         prompt = Prompt()
       }
     })
   else
-    response = ao.result({
+    response = aos.result({
       Output = {
         data = printData,
         prompt = Prompt(),

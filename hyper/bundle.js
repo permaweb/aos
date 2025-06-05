@@ -29,7 +29,7 @@ export function update() {
   let luaFiles = ['json.lua', 'stringify.lua', 'eval.lua',
     'utils.lua', 'handlers-utils.lua', 'handlers.lua',
     'dump.lua', 'pretty.lua', 'chance.lua', 'boot.lua',
-    'default.lua', 'ao.lua', 'base64.lua', 
+    'default.lua', 'aos.lua', 'base64.lua', 
     'state.lua', 'process.lua'  ]
     .map(name => {
       const code = fs.readFileSync(__dirname + 'src/' + name, 'utf-8')
