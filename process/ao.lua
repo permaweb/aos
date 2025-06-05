@@ -146,10 +146,12 @@ function ao.init(env)
         end
     end
 
-    if #ao.authorities < 1 then
-        for _, o in ipairs(env.Process.Tags) do
-            if o.name == "Authority" then
-                table.insert(ao.authorities, o.value)
+    for _, o in ipairs(env.Process.Tags) do
+        if o.name == "Authority" then
+            for part in string.gmatch(o.value, "[^,]+") do
+                if part ~= "" and part ~= nil and not _includes(ao.authorities)(part) then
+                    table.insert(ao.authorities, part)
+                end
             end
         end
     end
@@ -410,6 +412,7 @@ function ao.assign(assignment)
     assert(type(assignment.Message) == "string", "Message should be a string")
     table.insert(ao.outbox.Assignments, assignment)
 end
+
 
 --- Checks if a message is trusted.
 -- The default security model of AOS processes: Trust all and *only* those on the ao.authorities list.

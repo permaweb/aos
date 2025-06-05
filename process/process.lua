@@ -63,6 +63,36 @@ ao.spawn = function (module, msg)
   return aospawn(module, msg)
 end
 
+--- Normalizes a message's keys and tags to title case
+-- @function normalize
+-- @tparam {table} msg The message to normalize
+-- @treturn {table} The normalized message
+local function normalizeMsg(msg)
+  -- Normalize keys to title case
+  for key, value in pairs(msg) do
+    local normalizedKey = Utils.normalize(key)
+    -- Only add to normalizedKeys if the key changed during normalization
+    if normalizedKey ~= key then
+      msg[key] = nil
+      msg[normalizedKey] = value
+    end
+  end
+
+  -- Normalize tag names to title case
+  if msg.Tags and type(msg.Tags) == "table" then
+    for i, tag in ipairs(msg.Tags) do
+      if tag.name and type(tag.name) == "string" then
+        tag.name = Utils.normalize(tag.name)
+      end
+    end
+  end
+
+  -- Bring tags to root message
+  ao.normalize(msg)
+
+  return msg
+end
+
 --- Remove the last three lines from a string
 -- @lfunction removeLastThreeLines
 -- @tparam {string} input The string to remove the last three lines from
@@ -312,7 +342,7 @@ function process.handle(msg, _)
   
   ao.init(env)
   -- relocate custom tags to root message
-  msg = ao.normalize(msg)
+  msg = normalizeMsg(msg)
   -- set process id
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
@@ -505,3 +535,4 @@ function process.handle(msg, _)
 end
 
 return process
+

@@ -10,8 +10,10 @@ function compute(base, req, opts)
     outbox = {},
     output = _results.Output
   }
-  for i=1,#_results.Messages do
-    base.results.outbox[tostring(i)] = _results.Messages[i]
+  if _results.Messages then
+    for i=1,#_results.Messages do
+      base.results.outbox[tostring(i)] = _results.Messages[i]
+    end
   end
   return base
 end

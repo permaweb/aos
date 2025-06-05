@@ -46,14 +46,16 @@ function utils.matchesPattern(pattern, value, msg)
   end
   
   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-  -- and exact string match mode
+  -- and exact string match mode with case-insensitive matching
   if (type(pattern) == 'string') then
     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-      if string.match(value, pattern) then
+      -- For regex patterns, use case-insensitive matching
+      if string.match(string.lower(value or ""), string.lower(pattern)) then
         return true
       end
     else
-      if value == pattern then
+      -- For exact string matches, compare case-insensitively
+      if string.lower(value or "") == string.lower(pattern) then
         return true
       end
     end
@@ -112,6 +114,24 @@ function utils.matchesSpec(msg, spec)
     return true
   end
   return false
+end
+
+--- Normalizes a string to title case and converts underscores to dashes
+-- @function utils.normalize
+-- @tparam {string} str The string to normalize
+-- @treturn {string} The normalized string
+utils.normalize = function(str)
+  if type(str) ~= "string" then return str end
+  
+  -- Convert underscores to dashes first
+  local result = str:gsub("_", "-")
+  -- Lowercase all letters
+  result = result:lower()
+  -- Capitalize first letter
+  result = result:gsub("^%l", string.upper)
+  -- Capitalize any letter following a dash
+  result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
+  return result
 end
 
 --- Capitalize function

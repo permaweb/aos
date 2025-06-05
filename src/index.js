@@ -176,6 +176,11 @@ if (argv['mu-url']) {
   process.env.MU_URL = argv['mu-url']
 }
 
+if (argv['authority']) {
+  console.log(chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', ')))
+  process.env.AUTHORITY = argv['authority']
+}
+
 async function runProcess() {
   if (!argv.watch) {
     of()
@@ -250,6 +255,7 @@ async function runProcess() {
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)
+        cron.start()
 
         const spinner = ora({
           spinner: 'dots',
@@ -312,6 +318,7 @@ async function runProcess() {
           }
           // pause live
           if (!editorMode && line === '.pause') {
+            console.log("=== pausing live feed ===")
             // pause live feed
             cron.stop()
             rl.prompt(true)
@@ -473,9 +480,9 @@ async function runProcess() {
             console.timeEnd(chalk.gray('Elapsed'))
           }
 
-          if (cron) {
-            cron.start()
-          }
+          // if (cron) {
+          //   cron.start()
+          // }
 
           // rl.close()
           // repl()

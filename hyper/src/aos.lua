@@ -44,16 +44,37 @@ local function getId(m)
   return id
 end
 
+local function splitOnComma(str)
+  print(str)
+  local curr = ""
+  local parts = {}
+  for i = 1, #str do
+    local c = str:sub(i, i)
+    if c == "," then
+      table.insert(parts, curr)
+      curr = ""
+    else
+      curr = curr .. c
+    end
+  end
+  table.insert(parts, curr)
+  return parts
+end
+
 function aos.init(env)
   if aos.id == "" then aos.id = getId(env.process) end
-
   -- if aos._module == "" then
   --   aos._module = env.Module.Id
   -- end
   -- TODO: need to deal with assignables
   if #aos.authorities < 1 then
       if type(env.process.authority) == 'string' then
-        aos.authorities = { env.process.authority }
+        aos.authorities = {}
+        for part in splitOnComma(env.process.authority) do
+          if part ~= "" and part ~= nil and not utils.includes(part, aos.authorities) then
+            table.insert(aos.authorities, part)
+          end
+        end
       else
         aos.authorities = env.process.authority
       end
