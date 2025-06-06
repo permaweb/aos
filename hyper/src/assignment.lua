@@ -5,8 +5,9 @@
 -- @table Assignment
 -- @field _version The version number of the assignment module
 -- @field init The init function
-local Assignment = { _version = "0.1.1" } -- Version bump for pattern caching
+local Assignment = { _version = "0.1.2" } -- Version bump for assignment processing
 local utils = require 'src.utils'
+local json = require 'src.json'
 
 
 --- Implement assignable polyfills on ao.
@@ -32,7 +33,43 @@ function Assignment.init (ao)
     return nil
   end
 
+  -- Filter message based on exclude list while preserving Owner
+  local function filterMessage(msg, excludeList)
+    excludeList = excludeList or {}
+    local filtered = {}
+    
+    -- Always preserve these critical fields
+    local preserveFields = { "Id", "Target", "Owner", "From", "Timestamp" }
+    
+    for key, value in pairs(msg) do
+      local shouldInclude = true
+      
+      -- Check if field is in exclude list
+      for _, excludeField in ipairs(excludeList) do
+        if key == excludeField then
+          shouldInclude = false
+          break
+        end
+      end
+      
+      -- Always preserve critical fields (override exclude)
+      for _, preserveField in ipairs(preserveFields) do
+        if key == preserveField then
+          shouldInclude = true
+          break
+        end
+      end
+      
+      if shouldInclude then
+        filtered[key] = value
+      end
+    end
+    
+    return filtered
+  end
+
   ao.assignables = ao.assignables or {}
+  ao.messages = ao.messages or {}
 
   ao.addAssignable = ao.addAssignable or function (...)
     local name = nil
@@ -109,6 +146,63 @@ function Assignment.init (ao)
     -- and this expression will execute.
     --
     -- In other words, all msgs are not assignable, by default.
+    return false
+  end
+
+  -- Process assignment messages that match our patterns
+  ao.processAssignment = ao.processAssignment or function (msg, excludeList)
+    -- Only process if it's an assignment we care about
+    if not ao.isAssignment(msg) or not ao.isAssignable(msg) then
+      return false
+    end
+    
+    -- Filter the message (exclude unwanted fields, preserve Owner)
+    local filteredMsg = filterMessage(msg, excludeList)
+    
+    -- Store the filtered message
+    ao.messages[msg.Id] = filteredMsg
+    
+    return true
+  end
+
+  -- Handle remote assignable management via messages
+  ao.handleAssignableActions = ao.handleAssignableActions or function (msg)
+    local action = msg.Tags and msg.Tags.Action
+    if not action then return false end
+    
+    if action == "AddAssignable" then
+      local name = msg.Tags.Name
+      local pattern = nil
+      
+      if msg.Data then
+        local success, result = pcall(json.decode, msg.Data)
+        if success then
+          pattern = result
+        end
+      end
+      
+      if pattern then
+        if name then
+          ao.addAssignable(name, pattern)
+        else
+          ao.addAssignable(pattern)
+        end
+        return true
+      end
+      
+    elseif action == "RemoveAssignable" then
+      local name = msg.Tags.Name
+      local index = msg.Tags.Index and tonumber(msg.Tags.Index)
+      
+      if name then
+        ao.removeAssignable(name)
+        return true
+      elseif index then
+        ao.removeAssignable(index)
+        return true
+      end
+    end
+    
     return false
   end
 end

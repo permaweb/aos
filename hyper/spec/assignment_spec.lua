@@ -14,6 +14,7 @@ assignment module
 
 local Assignment = require "src/assignment"
 local utils = require "src/utils"
+local json = require "src/json"
 
 describe("Enhanced Assignment Module", function()
   local ao
@@ -348,7 +349,7 @@ describe("Enhanced Assignment Module", function()
 
   describe("Version Information", function()
     it("should have updated version number", function()
-      assert.equal("0.1.1", Assignment._version)
+      assert.equal("0.1.2", Assignment._version)
     end)
   end)
 
@@ -601,39 +602,264 @@ describe("Enhanced Assignment Module", function()
         },
         user_id = "^[0-9]+$"
       }
-             ao.addAssignable("complexHandler", spec)
+      ao.addAssignable("complexHandler", spec)
+      
+      -- Should match: action in table, function pattern for type, table pattern for priority, regex for user_id
+      local msg1 = {
+        action = "process",
+        tags = { type = "msg_important", priority = "high" },
+        user_id = "12345"
+      }
+      assert.is_true(ao.isAssignable(msg1))
+      
+      -- Should match: regex action, function pattern for type, wildcard priority, regex user_id
+      local msg2 = {
+        action = "handle_request",
+        tags = { type = "msg_data", priority = "medium" },  -- wildcard matches any
+        user_id = "67890"
+      }
+      assert.is_true(ao.isAssignable(msg2))
+      
+      -- Should not match: wrong action
+      local msg3 = {
+        action = "other",
+        tags = { type = "msg_test", priority = "high" },
+        user_id = "12345"
+      }
+      assert.is_false(ao.isAssignable(msg3))
+      
+      -- Should not match: type doesn't start with msg_
+      local msg4 = {
+        action = "process",
+        tags = { type = "other_test", priority = "high" },
+        user_id = "12345"
+      }
+      assert.is_false(ao.isAssignable(msg4))
+    end)
+  end)
+
+  -- Test assignment message processing
+  describe("Assignment Message Processing", function()
+    it("should process assignment messages that match patterns", function()
+      -- Setup a pattern
+      ao.addAssignable("transfer-pattern", { Action = "Transfer" })
+      
+      local assignment_msg = {
+        Id = "msg123",
+        Target = "other-process", -- Assignment (not targeting us)
+        Action = "Transfer",
+        Amount = "1000",
+        Data = "sensitive data",
+        Owner = "sender123",
+        From = "sender123",
+        Timestamp = 1234567890
+      }
+      
+      -- Process with exclude list
+      local result = ao.processAssignment(assignment_msg, {"Data"})
+      assert.is_true(result)
+      
+      -- Check stored message
+      local stored = ao.messages["msg123"]
+      assert.is_not_nil(stored)
+      assert.equal("Transfer", stored.Action)
+      assert.equal("1000", stored.Amount)
+      assert.equal("sender123", stored.Owner) -- Owner preserved
+      assert.is_nil(stored.Data) -- Data excluded
+    end)
+    
+    it("should not process messages that aren't assignments", function()
+      ao.addAssignable("any-pattern", { Action = "*" })
+      
+      local self_msg = {
+        Id = "self123",
+        Target = ao.id, -- Self-targeted (not assignment)
+        Action = "Test"
+      }
+      
+      local result = ao.processAssignment(self_msg)
+      assert.is_false(result)
+      assert.is_nil(ao.messages["self123"])
+    end)
+    
+    it("should not process assignments that don't match patterns", function()
+      ao.addAssignable("transfer-only", { Action = "Transfer" })
+      
+      local non_matching_msg = {
+        Id = "nomatch123",
+        Target = "other-process",
+        Action = "Send" -- Doesn't match Transfer pattern
+      }
+      
+      local result = ao.processAssignment(non_matching_msg)
+      assert.is_false(result)
+      assert.is_nil(ao.messages["nomatch123"])
+    end)
+    
+    it("should preserve critical fields even when excluded", function()
+      ao.addAssignable("test-pattern", { Action = "Test" })
+      
+      local msg = {
+        Id = "preserve123",
+        Target = "other-process",
+        Action = "Test",
+        Owner = "owner123",
+        From = "from123",
+        Timestamp = 9876543210,
+        Extra = "should be removed"
+      }
+      
+      -- Try to exclude critical fields (should be preserved anyway)
+      local result = ao.processAssignment(msg, {"Id", "Owner", "From", "Extra"})
+      assert.is_true(result)
+      
+      local stored = ao.messages["preserve123"]
+      assert.equal("preserve123", stored.Id) -- Preserved despite exclude
+      assert.equal("owner123", stored.Owner) -- Preserved despite exclude
+      assert.equal("from123", stored.From) -- Preserved despite exclude
+      assert.equal(9876543210, stored.Timestamp) -- Preserved
+      assert.is_nil(stored.Extra) -- Excluded (not critical)
+    end)
+    
+    it("should handle empty exclude list", function()
+      ao.addAssignable("all-fields", { Action = "Keep" })
+      
+      local msg = {
+        Id = "all123",
+        Target = "other-process",
+        Action = "Keep",
+        Data = "keep this",
+        Owner = "owner"
+      }
+      
+      local result = ao.processAssignment(msg, {}) -- Empty exclude list
+      assert.is_true(result)
+      
+      local stored = ao.messages["all123"]
+      assert.equal("keep this", stored.Data) -- Should be kept
+      assert.equal("owner", stored.Owner)
+    end)
+  end)
+  
+  -- Test remote assignable management
+  describe("Remote Assignable Management", function()
+    it("should handle AddAssignable action with name", function()
+      local msg = {
+        Tags = {
+          Action = "AddAssignable",
+          Name = "remote-pattern"
+        },
+        Data = '{"Action": "RemoteTransfer", "Amount": "^[0-9]+$"}'
+      }
+      
+             local result = ao.handleAssignableActions(msg)
+       assert.is_true(result)
        
-       -- Should match: action in table, function pattern for type, table pattern for priority, regex for user_id
-       local msg1 = {
-         action = "process",
-         tags = { type = "msg_important", priority = "high" },
-         user_id = "12345"
-       }
-       assert.is_true(ao.isAssignable(msg1))
-       
-       -- Should match: regex action, function pattern for type, wildcard priority, regex user_id
-       local msg2 = {
-         action = "handle_request",
-         tags = { type = "msg_data", priority = "medium" },  -- wildcard matches any
-         user_id = "67890"
-       }
-       assert.is_true(ao.isAssignable(msg2))
-       
-       -- Should not match: wrong action
-       local msg3 = {
-         action = "other",
-         tags = { type = "msg_test", priority = "high" },
-         user_id = "12345"
-       }
-       assert.is_false(ao.isAssignable(msg3))
-       
-       -- Should not match: type doesn't start with msg_
-       local msg4 = {
-         action = "process",
-         tags = { type = "other_test", priority = "high" },
-         user_id = "12345"
-       }
-       assert.is_false(ao.isAssignable(msg4))
+       -- Check if pattern was added
+       local found = false
+       for _, assignable in ipairs(ao.assignables) do
+         if assignable.name == "remote-pattern" then
+           found = true
+           assert.equal("RemoteTransfer", assignable.pattern.Action)
+           break
+         end
+       end
+       assert.is_true(found)
+    end)
+    
+    it("should handle AddAssignable action without name", function()
+      local msg = {
+        Tags = {
+          Action = "AddAssignable"
+        },
+        Data = '{"Action": "Anonymous"}'
+      }
+      
+             local initial_count = #ao.assignables
+       local result = ao.handleAssignableActions(msg)
+       assert.is_true(result)
+       assert.equal(initial_count + 1, #ao.assignables)
+    end)
+    
+    it("should handle RemoveAssignable action by name", function()
+      -- Add a pattern first
+      ao.addAssignable("to-remove", { Action = "Delete" })
+      local initial_count = #ao.assignables
+      
+      local msg = {
+        Tags = {
+          Action = "RemoveAssignable",
+          Name = "to-remove"
+        }
+      }
+      
+      local result = ao.handleAssignableActions(msg)
+      assert.is_true(result)
+      assert.equal(initial_count - 1, #ao.assignables)
+      
+      -- Verify it was actually removed
+      for _, assignable in ipairs(ao.assignables) do
+        assert.is_not.equal("to-remove", assignable.name)
+      end
+    end)
+    
+    it("should handle RemoveAssignable action by index", function()
+      -- Add some patterns
+      ao.addAssignable("first", { Action = "First" })
+      ao.addAssignable("second", { Action = "Second" })
+      local initial_count = #ao.assignables
+      
+      local msg = {
+        Tags = {
+          Action = "RemoveAssignable",
+          Index = "1" -- Remove first pattern
+        }
+      }
+      
+      local result = ao.handleAssignableActions(msg)
+      assert.is_true(result)
+      assert.equal(initial_count - 1, #ao.assignables)
+    end)
+    
+    it("should return false for unknown actions", function()
+      local msg = {
+        Tags = {
+          Action = "UnknownAction"
+        }
+      }
+      
+      local result = ao.handleAssignableActions(msg)
+      assert.is_false(result)
+    end)
+    
+    it("should return false for messages without Action tag", function()
+      local msg = {
+        Tags = {
+          Name = "test"
+        }
+      }
+      
+      local result = ao.handleAssignableActions(msg)
+      assert.is_false(result)
+    end)
+    
+    it("should handle invalid JSON patterns gracefully", function()
+      local msg = {
+        Tags = {
+          Action = "AddAssignable",
+          Name = "bad-pattern"
+        },
+        Data = 'invalid json{'
+      }
+      
+             local result = ao.handleAssignableActions(msg)
+       assert.is_false(result)
+    end)
+  end)
+
+  describe("Version Information", function()
+    it("should have updated version number", function()
+      assert.equal("0.1.2", Assignment._version)
     end)
   end)
 end) 
