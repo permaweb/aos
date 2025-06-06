@@ -207,11 +207,11 @@ export async function liveMainnet(id, watch) {
 
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {
-            globalThis.alerts[cursor] = results.Output
+            globalThis.alerts[cursor] = results.Output || results.Error
           }
 
           // Update cursor
-          if (results.Output) {
+          if (results.Output || results.Error) {
             cursor++
             fs.writeFileSync(cursorFile, cursor.toString())
           }

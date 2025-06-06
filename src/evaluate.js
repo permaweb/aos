@@ -30,7 +30,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
 
   // read the result unless it is provided.
   function readResult(message) {
-    return message.Output 
+    return message.Output || message.Error
     ? of(message)
     : services.readResult({ message, process: processId })
   }
