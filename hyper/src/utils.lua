@@ -23,10 +23,35 @@ local utils = { _version = "0.0.5" }
 
 local function match_field(val, patt)
   if patt == '_' or patt == '*' then return true end
-  if type(patt) == "string" and patt:sub(1, 1) == '^' then
-    local ok, res = pcall(string.match, tostring(val), patt)
-    return ok and res ~= nil
+  
+  -- Handle function patterns
+  if type(patt) == "function" then
+    return patt(val)
   end
+  
+  -- Handle string patterns with full regex support
+  if type(patt) == "string" then
+    -- Check for regex special characters (legacy pattern detection)
+    if string.match(patt, "[%^%$%(%)%%%.%[%]%*%+%?]") then
+      local ok, res = pcall(string.match, tostring(val), patt)
+      return ok and res ~= nil
+    else
+      -- Exact string match
+      return val == patt
+    end
+  end
+  
+  -- Handle table patterns (OR logic - any sub-pattern matches)
+  if type(patt) == "table" then
+    for _, subPattern in pairs(patt) do
+      if match_field(val, subPattern) then
+        return true
+      end
+    end
+    return false
+  end
+  
+  -- Default exact equality
   return val == patt
 end
 
@@ -35,7 +60,15 @@ local function compile(spec)
   local field_preds = {}
   for k, v in pairs(spec) do
     if k ~= "tags" then
-      field_preds[#field_preds + 1] = function(msg) return match_field(msg[k], v) end
+      field_preds[#field_preds + 1] = function(msg) 
+        -- Check both top-level and body for backward compatibility
+        local msgValue = msg[k] or (msg.body and msg.body[k])
+        -- Strict validation: fail if expected field is missing
+        if msgValue == nil then
+          return false
+        end
+        return match_field(msgValue, v) 
+      end
     end
   end
 
@@ -46,7 +79,12 @@ local function compile(spec)
     tag_pred = function(msg)
       if type(msg.tags) ~= "table" then return false end
       for tk, tv in pairs(wanted) do
-        if not match_field(msg.tags[tk], tv) then return false end
+        local tagValue = msg.tags[tk]
+        -- Strict validation: fail if expected tag is missing
+        if tagValue == nil then
+          return false
+        end
+        if not match_field(tagValue, tv) then return false end
       end
       return true
     end
@@ -64,115 +102,86 @@ end
 -- Supports:
 --   * exact equality
 --   * wildcard '_' or '*'
---   * Lua regex (pattern beginning with '^')
+--   * Lua regex with full pattern support
+--   * function patterns
+--   * table patterns (OR logic)
 --   * tags sub-table
 function utils.matchesSpec(msg, spec)
   if not spec then return false end
   if type(spec) == "function" then return spec(msg) end
 
-  local fn = rawget(spec, "__matcher")
-  if not fn then
-    fn = compile(spec)
-    rawset(spec, "__matcher", fn)
+  -- Handle string specs for backward compatibility
+  if type(spec) == "string" then
+    if msg.action and msg.action == spec then
+      return true
+    end
+    if msg.body and msg.body.action and msg.body.action == spec then
+      return true
+    end
+    return false
   end
-  return fn(msg)
-end
 
---- Backwards-compat matchesPattern helper
-function utils.matchesPattern(pattern, value, msg)
-  return utils.matchesSpec({ value = value, tags = msg and msg.tags or nil }, { value = pattern })
+  -- Handle table specs with compilation and caching
+  if type(spec) == "table" then
+    local fn = rawget(spec, "__matcher")
+    if not fn then
+      fn = compile(spec)
+      rawset(spec, "__matcher", fn)
+    end
+    return fn(msg)
+  end
+
+  return false
 end
 
 --- Given a pattern, a value, and a message, returns whether there is a pattern match.
--- @usage utils.matchesPattern(pattern, value, msg)
--- @param pattern The pattern to match
--- @param value The value to check for in the pattern
--- @param msg The message to check for the pattern
--- @treturn {boolean} Whether there is a pattern match
--- function utils.matchesPattern(pattern, value, msg)
---   -- If the key is not in the message, then it does not match
---   if (not pattern) then
---     return false
---   end
---   -- if the patternMatchSpec is a wildcard, then it always matches
---   if pattern == '_' then
---     return true
---   end
---   -- if the patternMatchSpec is a function, then it is executed on the tag value
---   if type(pattern) == "function" then
---     if pattern(value, msg) then
---       return true
---     else
---       return false
---     end
---   end
---   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
---   -- and exact string match mode
---   if (type(pattern) == 'string') then
---     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
---       if string.match(value, pattern) then
---         return true
---       end
---     else
---       if value == pattern then
---         return true
---       end
---     end
---   end
-
---   -- if the pattern is a table, recursively check if any of its sub-patterns match
---   if type(pattern) == 'table' then
---     for _, subPattern in pairs(pattern) do
---       if utils.matchesPattern(subPattern, value, msg) then
---         return true
---       end
---     end
---   end
-
---   return false
--- end
-
--- - Given a message and a spec, returns whether there is a spec match.
--- @usage utils.matchesSpec(msg, spec)
--- @param msg The message to check for the spec
--- @param spec The spec to check for in the message
--- @treturn {boolean} Whether there is a spec match
--- function utils.matchesSpec(msg, spec)
---   if type(spec) == 'function' then
---     return spec(msg)
---   -- If the spec is a table, step through every key/value pair in the pattern and check if the msg matches
---   -- Supported pattern types:
---   --   - Exact string match
---   --   - Lua gmatch string
---   --   - '_' (wildcard: Message has tag, but can be any value)
---   --   - Function execution on the tag, optionally using the msg as the second argument
---   --   - Table of patterns, where ANY of the sub-patterns matching the tag will result in a match
---   end
---   if type(spec) == 'table' then
---     for key, pattern in pairs(spec) do
---       -- The key can either be in the top level of the 'msg' object  
---       -- or in the body table of the msg
---       local msgValue = msg[key] or msg.body[key]
---       if not msgValue then
---         return false
---       end
---       local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
---       if not matchesMsgValue then
---         return false
---       end
-
---     end
---     return true
---   end
-
---   if type(spec) == 'string' and msg.action and msg.action == spec then
---     return true
---   end
---   if type(spec) == 'string' and msg.body.action and msg.body.action == spec then
---     return true
---   end
---   return false
--- end
+-- Supports all legacy functionality:
+--   * exact string match
+--   * wildcard '_' or '*'
+--   * full Lua regex patterns
+--   * function patterns (called with value and msg)
+--   * table patterns (OR logic - any sub-pattern matching)
+function utils.matchesPattern(pattern, value, msg)
+  -- If the pattern is nil, then it does not match
+  if not pattern then
+    return false
+  end
+  
+  -- Wildcard patterns
+  if pattern == '_' or pattern == '*' then
+    return true
+  end
+  
+  -- Function patterns - execute with value and optional msg
+  if type(pattern) == "function" then
+    return pattern(value, msg)
+  end
+  
+  -- String patterns - check for regex or exact match
+  if type(pattern) == "string" then
+    -- Check for regex special characters
+    if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
+      local ok, res = pcall(string.match, tostring(value), pattern)
+      return ok and res ~= nil
+    else
+      -- Exact string match
+      return value == pattern
+    end
+  end
+  
+  -- Table patterns - OR logic (any sub-pattern matches)
+  if type(pattern) == "table" then
+    for _, subPattern in pairs(pattern) do
+      if utils.matchesPattern(subPattern, value, msg) then
+        return true
+      end
+    end
+    return false
+  end
+  
+  -- Default: exact equality
+  return value == pattern
+end
 
 --- Given a table, returns whether it is an array.
 -- An 'array' is defined as a table with integer keys starting from 1 and

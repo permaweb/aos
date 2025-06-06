@@ -5,8 +5,8 @@
 -- @table Assignment
 -- @field _version The version number of the assignment module
 -- @field init The init function
-local Assignment = { _version = "0.1.0" }
-local utils = require 'hyper.src.utils'
+local Assignment = { _version = "0.1.1" } -- Version bump for pattern caching
+local utils = require 'src.utils'
 
 
 --- Implement assignable polyfills on ao.
@@ -37,7 +37,6 @@ function Assignment.init (ao)
   ao.addAssignable = ao.addAssignable or function (...)
     local name = nil
     local matchSpec = nil
-
     local idx = nil
 
     -- Initialize the parameters based on arguments
@@ -51,19 +50,35 @@ function Assignment.init (ao)
 
     if name then idx = findIndexByProp(ao.assignables, "name", name) end
 
+    -- Create assignable entry with pattern caching support
+    local assignable_entry = { 
+      pattern = matchSpec, 
+      name = name
+    }
+    
+    -- Pre-trigger compilation for table patterns using utils.matchesSpec
+    -- This will cause the pattern to be compiled and cached on the __matcher field
+    if type(matchSpec) == "table" then
+      -- Create a dummy message to trigger compilation and caching
+      local dummy_msg = {}
+      utils.matchesSpec(dummy_msg, matchSpec)
+      assignable_entry.__pattern_cached = true
+    end
+
     if idx ~= nil and idx > 0 then
       -- found update
-      ao.assignables[idx].pattern = matchSpec
+      ao.assignables[idx] = assignable_entry
     else
       -- append the new assignable, including potentially nil name
-      table.insert(ao.assignables, { pattern = matchSpec, name = name })
+      table.insert(ao.assignables, assignable_entry)
     end
   end
 
   ao.removeAssignable = ao.removeAssignable or function (name)
     local idx = nil
 
-    if type(name) == 'string' then idx = findIndexByProp(ao.assignables, "name", name)
+    if type(name) == 'string' then 
+      idx = findIndexByProp(ao.assignables, "name", name)
     else
       assert(type(name) == 'number', 'index MUST be a number')
       idx = name
@@ -74,11 +89,20 @@ function Assignment.init (ao)
     table.remove(ao.assignables, idx)
   end
 
-  ao.isAssignment = ao.isAssignment or function (msg) return msg.Target ~= ao.id end
+  ao.isAssignment = ao.isAssignment or function (msg) 
+    return msg.Target ~= ao.id 
+  end
 
   ao.isAssignable = ao.isAssignable or function (msg)
+    -- Handle nil message gracefully
+    if not msg then return false end
+    
     for _, assignable in pairs(ao.assignables) do
-      if utils.matchesSpec(msg, assignable.pattern) then return true end
+      -- Use utils.matchesSpec which will automatically use cached compiled patterns
+      -- The caching happens internally on the pattern's __matcher field
+      if utils.matchesSpec(msg, assignable.pattern) then 
+        return true 
+      end
     end
 
     -- If assignables is empty, the the above loop will noop,
