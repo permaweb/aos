@@ -31,19 +31,19 @@ const setupMainnet = (wallet) => {
     device: 'process@1.0',
     signer: createSigner(wallet),
     GATEWAY_URL: process.env.GATEWAY_URL,
-    URL : process.env.AO_URL
+    URL: process.env.AO_URL
   })
 }
 
-const assoc = (k,v,o) => {
+const assoc = (k, v, o) => {
   o[k] = v
   return o
 }
 
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
-  const { request } = setupMainnet(wallet) 
+  const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
-  const params = { 
+  const params = {
     type: 'Message',
     path: `/${processId}~process@1.0/push/serialize~json@1.0`,
     method: 'POST',
@@ -51,24 +51,27 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     data: data,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
-    target: processId
+    target: processId,
+    "accept-bundle": "true",
+    "accept-codec": "httpsig@1.0",
+    "signingFormat": "ANS-104"
   }
 
   const parseWasmBody = (body) => {
-    try { 
-      return JSON.parse(body) 
-    } catch (e) { 
+    try {
+      return JSON.parse(body)
+    } catch (e) {
       return ({ Error: 'Could not parse result!' })
     }
   }
 
   const handleResults = (resBody) =>
-    resBody.info === 'hyper-aos' 
-    ? ({ Output: resBody.output, Error: resBody.error })
-    : parseWasmBody(resBody.json?.body)
+    resBody.info === 'hyper-aos'
+      ? ({ Output: resBody.output, Error: resBody.error })
+      : parseWasmBody(resBody.json?.body)
 
   return of(params)
-    .chain(submitRequest)    
+    .chain(submitRequest)
     .map(prop('body'))
     .map(JSON.parse)
     .map(handleResults)
@@ -79,15 +82,15 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const AUTHORITY = process.env.AUTHORITY || SCHEDULER
 
-  const { request } = setupMainnet(wallet) 
+  const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
-  
+
   const getExecutionDevice = fromPromise(async function (params) {
     const executionDevice = await prompts({
       type: 'select',
       name: 'device',
       message: 'Please select a device',
-      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a' }, { title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0' }],
       instructions: false
     }).then(res => res.device).catch(e => "genesis-wasm@1.0")
     params['execution-device'] = executionDevice
@@ -97,7 +100,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
   const params = {
     path: '/push',
     method: 'POST',
-    Type: 'Process', 
+    Type: 'Process',
     scheduler: SCHEDULER,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
@@ -108,6 +111,8 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'Authority': AUTHORITY,
     'aos-version': pkg.version,
+    'accept-bundle': 'true',
+    'signingFormat': 'ANS-104'
   }
   return of(params)
     .chain(getExecutionDevice)
@@ -154,7 +159,7 @@ export async function liveMainnet(id, watch) {
   let cursor = 1
   if (fs.existsSync(cursorFile)) {
     cursor = parseInt(fs.readFileSync(cursorFile, 'utf-8'))
-  } 
+  }
 
   let isJobRunning = false
 
@@ -167,7 +172,7 @@ export async function liveMainnet(id, watch) {
 
         // Get the current slot
         const currentSlotPath = `/${id}~process@1.0/slot/current/body/serialize~json@1.0`        // LIVE PARAMS
-        const currentSlotParams = { 
+        const currentSlotParams = {
           path: currentSlotPath,
           method: 'GET',
           device: 'process@1.0',
@@ -179,14 +184,14 @@ export async function liveMainnet(id, watch) {
           .then(res => res.body)
           .then(JSON.parse)
           .then(res => res.body)
-        
+
         // Eval up to the current slot
         while (cursor <= currentSlot) {
 
           const path = `/${id}~process@1.0/compute&slot=${cursor}/results/json/body/serialize~json@1.0`        // LIVE PARAMS
           const params = {
             path,
-            method: 'GET', 
+            method: 'GET',
             device: 'process@1.0',
             'data-protocol': 'ao',
             'scheduler-device': 'scheduler@1.0',
@@ -203,7 +208,7 @@ export async function liveMainnet(id, watch) {
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {
             globalThis.alerts[cursor] = results.Output
-          }  
+          }
 
           // Update cursor
           if (results.Output) {
