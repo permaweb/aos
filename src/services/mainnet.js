@@ -90,7 +90,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
       type: 'select',
       name: 'device',
       message: 'Please select a device',
-      choices: [{ title: 'lua@5.3a', value: 'lua@5.3a' }, { title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0' }],
+      choices: [{title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}, { title: 'lua@5.3a (experimental)', value: 'lua@5.3a'}],
       instructions: false
     }).then(res => res.device).catch(e => "genesis-wasm@1.0")
     params['execution-device'] = executionDevice
