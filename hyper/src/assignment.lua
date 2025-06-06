@@ -6,7 +6,8 @@
 -- @field _version The version number of the assignment module
 -- @field init The init function
 local Assignment = { _version = "0.1.0" }
-local utils = require('.utils')
+local utils = require 'hyper.src.utils'
+
 
 --- Implement assignable polyfills on ao.
 -- Creates addAssignable, removeAssignable, isAssignment, and isAssignable fields on ao.
