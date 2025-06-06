@@ -185,6 +185,9 @@ export async function liveMainnet(id, watch) {
           .then(JSON.parse)
           .then(res => res.body)
 
+        if (isNaN(cursor)) {
+          cursor = currentSlot + 1
+        }
         // Eval up to the current slot
         while (cursor <= currentSlot) {
 
