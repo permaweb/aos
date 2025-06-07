@@ -25,31 +25,7 @@ defaults:
     shell: bash
 
 jobs:
-  test-console:
-    if: github.event_name != 'workflow_dispatch'
-    runs-on: ubuntu-latest
-    timeout-minutes: 5
-    steps:
-      - name: ⬇️ Checkout repo
-        uses: actions/checkout@v4
-
-      - name: ⎔ Setup node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-
-      - name: 📥 Download deps
-        run: |
-          yarn
-
-      - name: ⚡ Run Tests
-        run: |
-          # yarn test
-          echo "::warning::TODO: Fix aos Console tests. Skipping for now..."
-        env:
-          CI: true
-
-  test-process:
+  test:
     if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -66,22 +42,84 @@ jobs:
         run: |
           curl -fsSL https://install_ao.g8way.io | bash
 
-      - name: 📥 Download deps
+      - name: 📥 Download Process deps
         working-directory: process
         run: |
           yarn
 
-      - name: 🏗 Build Module
+      - name: 📥 Download Extensions deps
+        working-directory: extensions/weavedrive
+        run: |
+          yarn
+
+      - name: 🏗 Build Process Module
         working-directory: process
         run: |
           /home/runner/.ao/bin/ao build
 
       - name: ⚡ Run Tests
-        working-directory: process
         run: |
-          yarn test
+          yarn test-all
         env:
           CI: true
+
+  # test-console:
+  #   if: github.event_name != 'workflow_dispatch'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   steps:
+  #     - name: ⬇️ Checkout repo
+  #       uses: actions/checkout@v4
+
+  #     - name: ⎔ Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+
+  #     - name: 📥 Download deps
+  #       run: |
+  #         yarn
+
+  #     - name: ⚡ Run Tests
+  #       run: |
+  #         # yarn test
+  #         echo "::warning::TODO: Fix aos Console tests. Skipping for now..."
+  #       env:
+  #         CI: true
+
+  # test-process:
+  #   if: github.event_name != 'workflow_dispatch'
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 5
+  #   steps:
+  #     - name: ⬇️ Checkout repo
+  #       uses: actions/checkout@v4
+
+  #     - name: ⎔ Setup node
+  #       uses: actions/setup-node@v4
+  #       with:
+  #         node-version: 22
+
+  #     - name: 🤖 Setup ao dev-cli
+  #       run: |
+  #         curl -fsSL https://install_ao.g8way.io | bash
+
+  #     - name: 📥 Download deps
+  #       working-directory: process
+  #       run: |
+  #         yarn
+
+  #     - name: 🏗 Build Module
+  #       working-directory: process
+  #       run: |
+  #         /home/runner/.ao/bin/ao build
+
+  #     - name: ⚡ Run Tests
+  #       working-directory: process
+  #       run: |
+  #         yarn test
+  #       env:
+  #         CI: true
 
   release:
     # Releases are performed via a workflow dispatch
@@ -194,6 +232,22 @@ jobs:
           name: aos-llama.wasm
           path: ${{ steps.aos_llama_module.outputs.aos_module_path }}
           retention-days: 10
+
+      # Set up Lua
+      - name: 🔧 Set up Lua
+        uses: leafo/gh-actions-lua@v10
+        with:
+          luaVersion: 5.3
+
+      # Install LDoc
+      - name: 📦 Install LDoc
+        run: |
+          luarocks install ldoc
+
+      # Build process docs
+      - name: 📄 Build Process Docs
+        run: |
+          yarn build-docs
 
       # TODO: update manifests with new version and txids
 

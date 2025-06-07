@@ -1,20 +1,20 @@
 {
   "name": "@permaweb/weavedrive",
-  "version": "0.0.13",
+  "version": "0.0.18",
   "license": "MIT",
   "main": "./dist/index.cjs",
+  "files": [
+    "./dist"
+  ],
   "scripts": {
     "build": "node build.js",
     "test": "node --experimental-wasm-memory64 --test"
   },
-  "files": [
-    "./dist"
-  ],
   "dependencies": {
     "arweave": "^1.15.5"
   },
   "devDependencies": {
-    "@permaweb/ao-loader": "^0.0.43",
+    "@permaweb/ao-loader": "^0.0.44",
     "esbuild": "^0.24.0"
   }
 }

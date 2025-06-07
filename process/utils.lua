@@ -1,8 +1,35 @@
+--- The Utils module provides a collection of utility functions for functional programming in Lua. It includes functions for array manipulation such as concatenation, mapping, reduction, filtering, and finding elements, as well as a property equality checker.
+-- @module utils
+
+--- The utils table
+-- @table utils
+-- @field _version The version number of the utils module
+-- @field matchesPattern The matchesPattern function
+-- @field matchesSpec The matchesSpec function
+-- @field curry The curry function
+-- @field concat The concat function
+-- @field reduce The reduce function
+-- @field map The map function
+-- @field filter The filter function
+-- @field find The find function
+-- @field propEq The propEq function
+-- @field reverse The reverse function
+-- @field compose The compose function
+-- @field prop The prop function
+-- @field includes The includes function
+-- @field keys The keys function
+-- @field values The values function
 local utils = { _version = "0.0.5" }
 
+--- Given a pattern, a value, and a message, returns whether there is a pattern match.
+-- @usage utils.matchesPattern(pattern, value, msg)
+-- @param pattern The pattern to match
+-- @param value The value to check for in the pattern
+-- @param msg The message to check for the pattern
+-- @treturn {boolean} Whether there is a pattern match
 function utils.matchesPattern(pattern, value, msg)
   -- If the key is not in the message, then it does not match
-  if(not pattern) then
+  if (not pattern) then
     return false
   end
   -- if the patternMatchSpec is a wildcard, then it always matches
@@ -19,14 +46,16 @@ function utils.matchesPattern(pattern, value, msg)
   end
   
   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-  -- and exact string match mode
+  -- and exact string match mode with case-insensitive matching
   if (type(pattern) == 'string') then
     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-      if string.match(value, pattern) then
+      -- For regex patterns, use case-insensitive matching
+      if string.match(string.lower(value or ""), string.lower(pattern)) then
         return true
       end
     else
-      if value == pattern then
+      -- For exact string matches, compare case-insensitively
+      if string.lower(value or "") == string.lower(pattern) then
         return true
       end
     end
@@ -44,6 +73,11 @@ function utils.matchesPattern(pattern, value, msg)
   return false
 end
 
+--- Given a message and a spec, returns whether there is a spec match.
+-- @usage utils.matchesSpec(msg, spec)
+-- @param msg The message to check for the spec
+-- @param spec The spec to check for in the message
+-- @treturn {boolean} Whether there is a spec match
 function utils.matchesSpec(msg, spec)
   if type(spec) == 'function' then
     return spec(msg)
@@ -57,21 +91,65 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      if not msg[key] then
+      -- The key can either be in the top level of the 'msg' object or within the 'Tags' 
+
+      local msgValue = msg[key]
+      local msgTagValue = msg['Tags'] and msg['Tags'][key]
+  
+      if not msgValue and not msgTagValue then
         return false
       end
-      if not utils.matchesPattern(pattern, msg[key], msg) then
+  
+      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
+      local matchesMsgTagValue = utils.matchesPattern(pattern, msgTagValue, msg)
+  
+      if not matchesMsgValue and not matchesMsgTagValue then
         return false
       end
     end
     return true
   end
+  
   if type(spec) == 'string' and msg.Action and msg.Action == spec then
     return true
   end
   return false
 end
 
+--- Normalizes a string to title case and converts underscores to dashes
+-- @function utils.normalize
+-- @tparam {string} str The string to normalize
+-- @treturn {string} The normalized string
+utils.normalize = function(str)
+  if type(str) ~= "string" then return str end
+  
+  -- Convert underscores to dashes first
+  local result = str:gsub("_", "-")
+  -- Lowercase all letters
+  result = result:lower()
+  -- Capitalize first letter
+  result = result:gsub("^%l", string.upper)
+  -- Capitalize any letter following a dash
+  result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
+  return result
+end
+
+--- Capitalize function
+-- @param str
+-- @returns string
+function utils.capitalize(str)
+  if type(str) ~= "string" or str == "" then
+    return str
+  end
+  return str:sub(1,1):upper() .. str:sub(2):lower()
+end
+
+--- Given a table, returns whether it is an array.
+-- An 'array' is defined as a table with integer keys starting from 1 and
+-- having no gaps between the keys.
+-- @lfunction isArray
+-- @param table The table to check
+-- @treturn {boolean} Whether the table is an array
 local function isArray(table)
   if type(table) == "table" then
       local maxIndex = 0
@@ -87,8 +165,10 @@ local function isArray(table)
   return false
 end
 
--- @param {function} fn
--- @param {number} arity
+--- Curries a function.
+-- @tparam {function} fn The function to curry
+-- @tparam {number} arity The arity of the function
+-- @treturn {function} The curried function
 utils.curry = function (fn, arity)
   assert(type(fn) == "function", "function is required as first argument")
   arity = arity or debug.getinfo(fn, "u").nparams
@@ -107,9 +187,13 @@ utils.curry = function (fn, arity)
   end
 end
 
---- Concat two Array Tables.
--- @param {table<Array>} a
--- @param {table<Array>} b
+--- Concat two Array Tables
+-- @function concat
+-- @usage utils.concat(a)(b)
+-- @usage utils.concat({1, 2})({3, 4}) --> {1, 2, 3, 4}
+-- @tparam {table<Array>} a The first array
+-- @tparam {table<Array>} b The second array
+-- @treturn {table<Array>} The concatenated array
 utils.concat = utils.curry(function (a, b)
   assert(type(a) == "table", "first argument should be a table that is an array")
   assert(type(b) == "table", "second argument should be a table that is an array")
@@ -124,13 +208,16 @@ utils.concat = utils.curry(function (a, b)
       result[#result + 1] = b[i]
   end
   return result
-  --return table.concat(a,b)
 end, 2)
 
---- reduce applies a function to a table
--- @param {function} fn
--- @param {any} initial
--- @param {table<Array>} t
+--- Applies a function to each element of a table, reducing it to a single value.
+-- @function utils.reduce
+-- @usage utils.reduce(fn)(initial)(t)
+-- @usage utils.reduce(function(acc, x) return acc + x end)(0)({1, 2, 3}) --> 6
+-- @tparam {function} fn The function to apply
+-- @param initial The initial value
+-- @tparam {table<Array>} t The table to reduce
+-- @return The reduced value
 utils.reduce = utils.curry(function (fn, initial, t)
   assert(type(fn) == "function", "first argument should be a function that accepts (result, value, key)")
   assert(type(t) == "table" and isArray(t), "third argument should be a table that is an array")
@@ -145,8 +232,13 @@ utils.reduce = utils.curry(function (fn, initial, t)
   return result
 end, 3)
 
--- @param {function} fn
--- @param {table<Array>} data
+--- Applies a function to each element of an array table, mapping it to a new value.
+-- @function utils.map
+-- @usage utils.map(fn)(t)
+-- @usage utils.map(function(x) return x * 2 end)({1, 2, 3}) --> {2, 4, 6}
+-- @tparam {function} fn The function to apply to each element
+-- @tparam {table<Array>} data The table to map over
+-- @treturn {table<Array>} The mapped table
 utils.map = utils.curry(function (fn, data)
   assert(type(fn) == "function", "first argument should be a unary function")
   assert(type(data) == "table" and isArray(data), "second argument should be an Array")
@@ -159,8 +251,13 @@ utils.map = utils.curry(function (fn, data)
   return utils.reduce(map, {}, data)
 end, 2)
 
--- @param {function} fn
--- @param {table<Array>} data
+--- Filters an array table based on a predicate function.
+-- @function utils.filter
+-- @usage utils.filter(fn)(t)
+-- @usage utils.filter(function(x) return x > 1 end)({1, 2, 3}) --> {2,3}
+-- @tparam {function} fn The predicate function to determine if an element should be included.
+-- @tparam {table<Array>} data The array to filter
+-- @treturn {table<Array>} The filtered table
 utils.filter = utils.curry(function (fn, data)
   assert(type(fn) == "function", "first argument should be a unary function")
   assert(type(data) == "table" and isArray(data), "second argument should be an Array")
@@ -175,8 +272,13 @@ utils.filter = utils.curry(function (fn, data)
   return utils.reduce(filter,{}, data)
 end, 2)
 
--- @param {function} fn
--- @param {table<Array>} t
+--- Finds the first element in an array table that satisfies a predicate function.
+-- @function utils.find
+-- @usage utils.find(fn)(t)
+-- @usage utils.find(function(x) return x > 1 end)({1, 2, 3}) --> 2
+-- @tparam {function} fn The predicate function to determine if an element should be included.
+-- @tparam {table<Array>} t The array table to search
+-- @treturn The first element that satisfies the predicate function
 utils.find = utils.curry(function (fn, t)
   assert(type(fn) == "function", "first argument should be a unary function")
   assert(type(t) == "table", "second argument should be a table that is an array")
@@ -187,18 +289,28 @@ utils.find = utils.curry(function (fn, t)
   end
 end, 2)
 
--- @param {string} propName
--- @param {string} value 
--- @param {table} object
+--- Checks if a property of an object is equal to a value.
+-- @function utils.propEq
+-- @usage utils.propEq(propName)(value)(object)
+-- @usage utils.propEq("name")("Lua")({name = "Lua"}) --> true
+-- @tparam {string} propName The property name to check
+-- @tparam {string} value The value to check against
+-- @tparam {table} object The object to check
+-- @treturn {boolean} Whether the property is equal to the value
 utils.propEq = utils.curry(function (propName, value, object)
   assert(type(propName) == "string", "first argument should be a string")
-  -- assert(type(value) == "string", "second argument should be a string")
+  assert(type(value) == "string", "second argument should be a string")
   assert(type(object) == "table", "third argument should be a table<object>")
   
   return object[propName] == value
 end, 3)
 
--- @param {table<Array>} data
+--- Reverses an array table.
+-- @function utils.reverse
+-- @usage utils.reverse(data)
+-- @usage utils.reverse({1, 2, 3}) --> {3, 2, 1}
+-- @tparam {table<Array>} data The array table to reverse
+-- @treturn {table<Array>} The reversed array table
 utils.reverse = function (data)
   assert(type(data) == "table", "argument needs to be a table that is an array")
   return utils.reduce(
@@ -211,7 +323,12 @@ utils.reverse = function (data)
   )
 end
 
--- @param {function} ... 
+--- Composes a series of functions into a single function.
+-- @function utils.compose
+-- @usage utils.compose(fn1)(fn2)(fn3)(v)
+-- @usage utils.compose(function(x) return x + 1 end)(function(x) return x * 2 end)(3) --> 7
+-- @tparam {function} ... The functions to compose
+-- @treturn {function} The composed function
 utils.compose = utils.curry(function (...)
   local mutations = utils.reverse({...})
 
@@ -225,20 +342,35 @@ utils.compose = utils.curry(function (...)
   end
 end, 2)
 
--- @param {string} propName
--- @param {table} object
+--- Returns the value of a property of an object.
+-- @function utils.prop
+-- @usage utils.prop(propName)(object)
+-- @usage utils.prop("name")({name = "Lua"}) --> "Lua"
+-- @tparam {string} propName The property name to get
+-- @tparam {table} object The object to get the property from
+-- @treturn The value of the property
 utils.prop = utils.curry(function (propName, object) 
   return object[propName]
 end, 2)
 
--- @param {any} val
--- @param {table<Array>} t
+--- Checks if an array table includes a value.
+-- @function utils.includes
+-- @usage utils.includes(val)(t)
+-- @usage utils.includes(2)({1, 2, 3}) --> true
+-- @param val The value to check for
+-- @tparam {table<Array>} t The array table to check
+-- @treturn {boolean} Whether the value is in the array table
 utils.includes = utils.curry(function (val, t)
   assert(type(t) == "table", "argument needs to be a table")
+  assert(isArray(t), "argument should be a table that is an array")
   return utils.find(function (v) return v == val end, t) ~= nil
 end, 2)
 
--- @param {table} t
+--- Returns the keys of a table.
+-- @usage utils.keys(t)
+-- @usage utils.keys({name = "Lua", age = 25}) --> {"name", "age"}
+-- @tparam {table} t The table to get the keys from
+-- @treturn {table<Array>} The keys of the table
 utils.keys = function (t)
   assert(type(t) == "table", "argument needs to be a table")
   local keys = {}
@@ -248,7 +380,11 @@ utils.keys = function (t)
   return keys
 end
 
--- @param {table} t
+--- Returns the values of a table.
+-- @usage utils.values(t)
+-- @usage utils.values({name = "Lua", age = 25}) --> {"Lua", 25}
+-- @tparam {table} t The table to get the values from
+-- @treturn {table<Array>} The values of the table
 utils.values = function (t)
   assert(type(t) == "table", "argument needs to be a table")
   local values = {}

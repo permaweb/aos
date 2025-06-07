@@ -5,13 +5,15 @@
   "main": "index.js",
   "license": "MIT",
   "dependencies": {
-    "@permaweb/ao-loader": "^0.0.37"
+    "@permaweb/ao-loader": "^0.0.44"
   },
   "scripts": {
     "build": "ao build",
     "test": "node --test --experimental-wasm-memory64",
-    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.1 -t Name -v aos-lg-2.0.1",
-    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.1 -t Name -v sqlite-lg-2.0.1",
-    "deploy-llama": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 16-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.1 -t Name -v llama-xxl-2.0.1 -t Extension -v WeaveDrive"
+    "deploy": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.6 -t Name -v aos-lg-2.0.6",
+    "deploy-xxl": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 16-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.6 -t Name -v aos-xxl-2.0.6",
+    "deploy-test": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.6 -t Name -v aos-test",
+    "deploy-sqlite": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 1-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.6 -t Name -v sqlite-lg-2.0.6",
+    "deploy-llama": "ao publish -w ~/.wallet.json process.wasm -t Memory-Limit -v 16-gb -t Compute-Limit -v 9000000000000 -t Module-Format -v wasm64-unknown-emscripten-draft_2024_02_15 -t AOS-Version -v 2.0.6 -t Name -v llama-xxl-2.0.6 -t Extension -v WeaveDrive"
   }
 }

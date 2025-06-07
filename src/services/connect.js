@@ -19,6 +19,13 @@ const getInfo = () => ({
   MU_URL: process.env.MU_URL
 })
 
+const retryAsync = (fn, left, right, retries = 3) =>
+  fn().bichain(
+    err => (retries > 0 ? retryAsync(fn, retries - 1) : left(err)),
+    res => right(res)
+  );
+
+
 export function readResult(params) {
 
   return fromPromise(() =>
@@ -160,7 +167,7 @@ export async function live(id, watch) {
         if (cursor) {
           params["from"] = cursor
         } else {
-          params["limit"] = 1
+          params["limit"] = 5
           params["sort"] = "DESC"
         }
 

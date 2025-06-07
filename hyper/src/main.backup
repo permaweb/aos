@@ -1,0 +1,40 @@
+ao = require('.ao')
+local _process = require('.process')
+
+function compute(base, req, opts)
+  local message = {
+    Id = req.body.target,
+    Action = req.body.action,
+    Data = req.body.body,
+    Type = req.body.type,
+    Target = req.body.target,
+    Owner = "OWNER",
+    From = "OWNER",
+    Timestamp = tostring(req['timestamp']),
+    ['Block-Height'] = tostring(req['block-height']),
+    ["Hash-Chain"] = req['hash-chain'],
+    ['Block-Hash'] = tostring(req['block-hash']),
+    ['Data-Protocol'] = req['data-protocol'],
+    ['Path'] = req.path,
+    ['Slot'] = req.slot,
+    ['Epoch'] = req.epoch
+  }
+  base.process.script = nil
+  local process = {
+    Id = req.body.target,
+    Type = base.process.type,
+    Device = base.process.device,
+    Owner = "OWNER",
+    ['Execution-Device'] = base.process['execution-device'],
+    ['Scheduler-Device'] = base.process['scheduler-device'],
+    ['Random-Seed'] = base.process['test-random-seed'],
+    commitments = base.process.commitments
+  }
+
+  base.results = _process.handle(message, { 
+    Process = process, 
+    Module = { Id = "1" } 
+  })
+
+  return base
+end

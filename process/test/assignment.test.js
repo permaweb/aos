@@ -17,9 +17,26 @@ const env = {
   }
 }
 
+async function init(handle) {
+  const {Memory} = await handle(null, {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    'Block-Height': '999',
+    Id: 'AOS',
+    Module: 'WOOPAWOOPA',
+    Tags: [
+      { name: 'Name', value: 'Thomas' }
+    ]
+  }, env)
+  return Memory
+}
+
 describe('add the assignable MatchSpec', async () => {
   test('by name', async () => {
     const handle = await AoLoader(wasm, options)
+    
+    const Memory = await init(handle)
 
     const msg = {
       Target: 'AOS',
@@ -39,14 +56,14 @@ describe('add the assignable MatchSpec', async () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { length: 1, name: 'foobar' })
   })
 
   test('update by name', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -66,14 +83,14 @@ describe('add the assignable MatchSpec', async () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { length: 1, name: 'foobar' })
   })
 
   test('by index', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -92,14 +109,14 @@ describe('add the assignable MatchSpec', async () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { length: 1 })
   })
 
   test('require name to be a string', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -117,7 +134,7 @@ describe('add the assignable MatchSpec', async () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.ok(result.Error.includes('MatchSpec name MUST be a string'))
   })
@@ -126,7 +143,7 @@ describe('add the assignable MatchSpec', async () => {
 describe('remove the assignable MatchSpec', () => {
   test('by name', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -149,7 +166,7 @@ describe('remove the assignable MatchSpec', () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { length: 2, name: 'foobar' })
     assert.deepStrictEqual(JSON.parse(result.Messages[1].Data), { length: 1 })
@@ -157,7 +174,7 @@ describe('remove the assignable MatchSpec', () => {
 
   test('by index', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -180,7 +197,7 @@ describe('remove the assignable MatchSpec', () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
 
     assert.deepStrictEqual(JSON.parse(result.Messages[0].Data), { length: 2, name: 'foobar' })
     assert.deepStrictEqual(JSON.parse(result.Messages[1].Data), { length: 1, name: 'foobar' })
@@ -188,7 +205,7 @@ describe('remove the assignable MatchSpec', () => {
 
   test('require name to be a string or number', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const Memory = await init(handle)
     const msg = {
       Target: 'AOS',
       From: 'FOOBAR',
@@ -206,7 +223,7 @@ describe('remove the assignable MatchSpec', () => {
       `
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(Memory, msg, env)
     assert.ok(result.Error.includes('index MUST be a number'))
   })
 })
@@ -214,7 +231,7 @@ describe('remove the assignable MatchSpec', () => {
 describe('determine whether the msg is an assignment or not', () => {
   test('is an assignment', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const addAssignableMsg = {
       Target: 'AOS',
       Owner: 'FOOBAR',
@@ -238,7 +255,7 @@ describe('determine whether the msg is an assignment or not', () => {
       `
     }
 
-    const { Memory } = await handle(null, addAssignableMsg, env)
+    const { Memory } = await handle(start, addAssignableMsg, env)
 
     const msg = {
       Target: 'NOT_AOS',
@@ -260,7 +277,7 @@ describe('determine whether the msg is an assignment or not', () => {
 
   test('is NOT an assignment', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const addAssignableMsg = {
       Target: 'AOS',
       Owner: 'FOOBAR',
@@ -284,7 +301,7 @@ describe('determine whether the msg is an assignment or not', () => {
       `
     }
 
-    const { Memory } = await handle(null, addAssignableMsg, env)
+    const { Memory } = await handle(start, addAssignableMsg, env)
 
     const msg = {
       Target: 'AOS',
@@ -309,7 +326,7 @@ describe('determine whether the msg is an assignment or not', () => {
 describe('run handles on assignment based on assignables configured', () => {
   test('at least 1 assignable allows specific assignment', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const addAssignableMsg = {
       Target: 'AOS',
       Owner: 'FOOBAR',
@@ -327,7 +344,7 @@ describe('run handles on assignment based on assignables configured', () => {
       `
     }
 
-    const { Memory } = await handle(null, addAssignableMsg, env)
+    const { Memory } = await handle(start, addAssignableMsg, env)
 
     const msg = {
       Target: 'NOT_AOS',
@@ -349,7 +366,7 @@ describe('run handles on assignment based on assignables configured', () => {
 
   test('assignables do NOT allow specific assignment', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const addAssignableMsg = {
       Target: 'AOS',
       Owner: 'FOOBAR',
@@ -367,7 +384,7 @@ describe('run handles on assignment based on assignables configured', () => {
       `
     }
 
-    const { Memory } = await handle(null, addAssignableMsg, env)
+    const { Memory } = await handle(start, addAssignableMsg, env)
 
     const msg = {
       Target: 'NOT_AOS',
@@ -389,7 +406,7 @@ describe('run handles on assignment based on assignables configured', () => {
 
   test('assignable does NOT allow specific assignment', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const addAssignableMsg = {
       Target: 'AOS',
       Owner: 'FOOBAR',
@@ -406,7 +423,7 @@ describe('run handles on assignment based on assignables configured', () => {
       `
     }
 
-    const { Memory } = await handle(null, addAssignableMsg, env)
+    const { Memory } = await handle(start, addAssignableMsg, env)
 
     const msg = {
       Target: 'NOT_AOS',
@@ -428,7 +445,7 @@ describe('run handles on assignment based on assignables configured', () => {
 
   test('no assignables defaults to no assignments allowed', async () => {
     const handle = await AoLoader(wasm, options)
-
+    const start = await init(handle)
     const msg = {
       Target: 'NOT_AOS',
       Owner: 'FOOBAR',
@@ -443,7 +460,7 @@ describe('run handles on assignment based on assignables configured', () => {
       Data: '2 + 2'
     }
 
-    const result = await handle(null, msg, env)
+    const result = await handle(start, msg, env)
     assert.deepStrictEqual(result.Messages[0].Data, 'Assignment is not trusted by this process!')
   })
 })

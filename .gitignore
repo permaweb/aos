@@ -8,3 +8,5 @@ aos.json
 .prettierignore
 
 .vscode
+.DS_Store
+bun.lock

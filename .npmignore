@@ -3,6 +3,13 @@ node_modules
 wallet.json
 backup
 echo
-potato
+hyper
+modules
+logos
+extensions
+process
+.gitpod
+.husky
+.github
 aos.json
 *.tgz

@@ -12,15 +12,14 @@ if (os.platform() === 'win32') {
 
 export function blueprints(dir) {
   try {
-    if (dir === true) {
-      dir = __dirname + "../../blueprints"
-    }
-    let prints = fs.readdirSync(path.resolve(dir))
+    const blueprintsDir = __dirname + "../../blueprints" 
+    const outputDir = process.cwd() + '/' + (dir === true ? '' : dir)
 
+    let prints = fs.readdirSync(path.resolve(blueprintsDir))
     prints.map(n => {
-      return [n, fs.readFileSync(path.resolve(dir + '/' + n), 'utf-8')]
+      return [n, fs.readFileSync(path.resolve(blueprintsDir + '/' + n), 'utf-8')]
     }).map(([n, lua]) => {
-      fs.writeFileSync(path.resolve(process.cwd() + '/' + n), lua)
+      fs.writeFileSync(path.resolve(outputDir + '/' + n), lua)
     })
   } catch (e) {
     console.error(chalk.red('BLUEPRINT ERROR: Having trouble finding directory or reading files!'))

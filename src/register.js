@@ -1,8 +1,13 @@
 /**
- * create a new account for a given wallet, for this demo only one process per jwk.
- * 
- * register -w ./wallet.json
- * 
+ * Process Registration Module
+ *
+ * Exports the `register` function to manage AO processes on Arweave's Permaweb:
+ * - Finds existing processes/modules via GraphQL queries.
+ * - Interactively prompts CLI users when multiple results are found.
+ * - Creates AO processes with optional data payloads, cron schedules, and tags.
+ *
+ * Built with functional async (`hyper-async`), minimist (CLI args), prompts
+ * (interactive selection), and file-system utilities for enhanced flexibility.
  */
 
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
@@ -37,39 +42,29 @@ export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = (ctx) => {
     const { address, name } = ctx
-
     const argv = minimist(process.argv.slice(2))
+    const gqlQueryError = _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }) 
+    const handleQueryResults = results => results?.length > 0
+      ? Resolved(results.reverse())
+      : Rejected({ ...ctx, ok: true })
 
     return services
       .gql(queryForAOS(name), { owners: [address, argv.address || ""] })
       .map(utils.path(['data', 'transactions', 'edges']))
-      .bichain(
-        _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }),
-        results => results?.length > 0
-            ? Resolved(results.reverse())
-            /**
-             * No process was found that matches the name, module and owners
-             * But no catastrophic error occured. 
-             * 
-             * By rejecting with 'ok: true' we are signaling that a 
-             * new process should be spawned with the given criteria
-             */
-            : Rejected({ ...ctx, ok: true })
-      )
+      .bichain(gqlQueryError, handleQueryResults)
   }
+  
+  const getResultId = results => results.length === 1
+    ? Resolved(results[0].node.id)
+    : Rejected(results)
 
   const selectModule = (results) =>
-    of(results).chain((results) => {
-      if (!results?.length) return Rejected({ ok: false, error: 'No module found with provided name.' })
-
-      return of(results)
-        .chain((results) => {
-          if (results.length === 1) return Resolved(results[0].node.id)
-          return Rejected(results)
-        })
+    of(results).chain((results) => !results?.length
+      ? Rejected({ ok: false, error: 'No module found with provided name.' })
+      : of(results)
+        .chain(getResultId)
         .bichain(fromPromise(promptUser), Resolved)
-    })
-  
+    )
 
   const findModule = ctx => {
     const AOS_MODULE = process.env.AOS_MODULE;
@@ -77,7 +72,7 @@ export function register(jwk, services) {
 
     if (!AOS_MODULE && !AOS_MODULE_NAME) return Resolved({ ...ctx, module: getPkg().aos.module });
     if (AOS_MODULE) return Resolved({ ...ctx, module: AOS_MODULE });
-
+    
     return services
       .gql(findAoModuleByName(), { name: ctx.module })
       .map(utils.path(['data', 'transactions', 'edges']))
@@ -98,8 +93,10 @@ export function register(jwk, services) {
       ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))
+    const cronExp = /^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/
+
     if (argv.cron) {
-      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(argv.cron)) {
+      if (cronExp.test(argv.cron)) {
         tags = [...tags,
         { name: 'Cron-Interval', value: argv.cron },
         { name: 'Cron-Tag-Action', value: 'Cron' }
@@ -123,7 +120,30 @@ export function register(jwk, services) {
     })
   }
 
-  const alreadyRegistered = results => Resolved(results[0].node.id)
+  const alreadyRegistered = async (results) => {
+    if (results.length == 1) {
+      return Promise.resolve(results[0].node.id)
+    }
+
+    const processes = results.map((r, i) => {
+      const version = r.node.tags.find(t => t.name == "aos-Version")?.value
+      return {
+        title: `${i + 1} - ${version} - ${r.node.id}`,
+        value: r.node.id
+      }
+    })
+
+    return prompts({
+      type: 'select',
+      name: 'process',
+      message: 'Please select a process',
+      choices: processes,
+      instructions: false
+    })
+      .then(r => r.process)
+      .catch(() => Promise.reject({ ok: false, error: 'Error selecting process' }))
+  }
+
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
 
@@ -141,52 +161,19 @@ export function register(jwk, services) {
   if (services.isAddress(name)) {
     return of(name)
   }
-
+  const doRegister = ctx => !ctx.ok ? Rejected(ctx) : findModule(ctx).chain(createProcess)
+  const resolveId = fromPromise(alreadyRegistered)
   return of({ jwk, name, spawnTags, module: argv.module })
     .chain(getAddress)
     .chain(findProcess)
-    .bichain(
-      (ctx) => {
-        if (!ctx.ok) return Rejected(ctx)
-        return findModule(ctx).chain(createProcess)
-      },
-      alreadyRegistered
-    )
+    .bichain(doRegister, resolveId)
     
 }
-
-// function queryForTransfered(name) {
-//   return `query ($recipients: [String!]!) {
-//     transactions(
-//       first: 100,
-//       recipients: $recipients,
-//       tags:[
-//         { name:"Data-Protocol", values: ["ao"]},
-//         { name:"Variant", values:["ao.TN.1"]},
-//         { name:"Type", values:["Process-Transfer"]},
-//         { name:"Name", values:["${name}"]}
-//       ],
-//       sort:HEIGHT_ASC
-//     ) {
-//       edges {
-//         node {
-//           id
-//           tags {
-//             name 
-//             value 
-//           }
-
-//         }
-//       }
-//     }
-//   }
-//   `
-// }
 
 function queryForAOS(name) {
   return `query ($owners: [String!]!) {
     transactions(
-      first: 1,
+      first: 10,
       owners: $owners,
       tags: [
         { name: "Data-Protocol", values: ["ao"] },
@@ -197,6 +184,10 @@ function queryForAOS(name) {
       edges {
         node {
           id
+          tags {
+            name
+            value
+          }
         }
       }
     }

@@ -28,7 +28,7 @@ export function checkLoadArgs() {
  * @returns {[string, Module[]]}
  */
 export function createExecutableFromProject(project) {
-  const getModFnName = (name) => name.replace(/\./g, '_').replace(/^_/, '')
+  const getModFnName = (name) => name.replace(/\.|-/g, '_').replace(/^_/, '')
   /** @type {Module[]} */
   const contents = []
 
@@ -108,13 +108,16 @@ function exploreNodes(node, cwd) {
   // set content
   node.content = fs.readFileSync(node.path, 'utf-8')
 
-  const requirePattern = /(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/g
+  // Don't include requires that are commented (start with --)
+  const requirePattern = /(?<!^.*--.*)(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/gm
   const requiredModules = node.content.match(requirePattern)?.map(
-    (mod) => ({
-      name: mod,
-      path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
-      content: undefined
-    })
+    (mod) => {
+      return {
+        name: mod,
+        path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
+        content: undefined
+      }
+    }
   ) || []
 
   return requiredModules

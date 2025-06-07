@@ -1,0 +1,296 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+<head>
+    <title>Reference</title>
+    <link rel="stylesheet" href="../ldoc.css" type="text/css" />
+</head>
+<body>
+
+<div id="container">
+
+<div id="product">
+	<div id="product_logo"></div>
+	<div id="product_name"><big><b></b></big></div>
+	<div id="product_description"></div>
+</div> <!-- id="product" -->
+
+
+<div id="main">
+
+
+<!-- Menu -->
+
+<div id="navigation">
+<br/>
+<h1>AOS</h1>
+
+
+<ul>
+  <li><a href="../index.html">Index</a></li>
+</ul>
+
+<h2>Contents</h2>
+<ul>
+<li><a href="#Functions">Functions</a></li>
+<li><a href="#Tables">Tables</a></li>
+</ul>
+
+
+<h2>Modules</h2>
+<ul class="nowrap">
+  <li><a href="../modules/ao.html">ao</a></li>
+  <li><a href="../modules/assignment.html">assignment</a></li>
+  <li><a href="../modules/boot.html">boot</a></li>
+  <li><a href="../modules/chance.html">chance</a></li>
+  <li><a href="../modules/eval.html">eval</a></li>
+  <li><strong>handlers-utils</strong></li>
+  <li><a href="../modules/handlers.html">handlers</a></li>
+  <li><a href="../modules/pretty.html">pretty</a></li>
+  <li><a href="../modules/process.html">process</a></li>
+  <li><a href="../modules/stringify.html">stringify</a></li>
+  <li><a href="../modules/utils.html">utils</a></li>
+</ul>
+
+</div>
+
+<div id="content">
+
+<h1>Module <code>handlers-utils</code></h1>
+<p>The Handler Utils module is a lightweight Lua utility library designed to provide common functionalities for handling and processing messages within the AOS computer system.</p>
+<p> It offers a set of functions to check message attributes and send replies, simplifying the development of more complex scripts and modules. This document will guide you through the module's functionalities, installation, and usage. Returns the _utils table.</p>
+
+
+<h2><a href="#Functions">Functions</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#hasMatchingTag">hasMatchingTag (name, value)</a></td>
+	<td class="summary">Checks if a given message has a tag that matches the specified name and value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#hasMatchingTagOf">hasMatchingTagOf (name, values)</a></td>
+	<td class="summary">Checks if a given message has a tag that matches the specified name and one of the specified values.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#hasMatchingData">hasMatchingData (value)</a></td>
+	<td class="summary">Checks if a given message has data that matches the specified value.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#reply">reply (string)</a></td>
+	<td class="summary">Given an input, returns a function that takes a message and replies to it.</td>
+	</tr>
+	<tr>
+	<td class="name" nowrap><a href="#continue">continue (function)</a></td>
+	<td class="summary">Inverts the provided pattern's result if it matches, so that it continues execution with the next matching handler.</td>
+	</tr>
+</table>
+<h2><a href="#Tables">Tables</a></h2>
+<table class="function_list">
+	<tr>
+	<td class="name" nowrap><a href="#_utils">_utils</a></td>
+	<td class="summary">The _utils table</td>
+	</tr>
+</table>
+
+<br/>
+<br/>
+
+
+    <h2 class="section-header "><a name="Functions"></a>Functions</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "hasMatchingTag"></a>
+    <strong>hasMatchingTag (name, value)</strong>
+    </dt>
+    <dd>
+    Checks if a given message has a tag that matches the specified name and value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The tag name to check
+        </li>
+        <li><span class="parameter">value</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The value to match for in the tag
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        A function that takes a message and returns whether there is a tag match (-1 if matches, 0 otherwise)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "hasMatchingTagOf"></a>
+    <strong>hasMatchingTagOf (name, values)</strong>
+    </dt>
+    <dd>
+    Checks if a given message has a tag that matches the specified name and one of the specified values.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">name</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The tag name to check
+        </li>
+        <li><span class="parameter">values</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string[]}</a></span>
+         The list of values of which one should match
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        A function that takes a message and returns whether there is a tag match (-1 if matches, 0 otherwise)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "hasMatchingData"></a>
+    <strong>hasMatchingData (value)</strong>
+    </dt>
+    <dd>
+    Checks if a given message has data that matches the specified value.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">value</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.4">{string}</a></span>
+         The value to match against the message data
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        A function that takes a message and returns whether the data matches the value (-1 if matches, 0 otherwise)
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "reply"></a>
+    <strong>reply (string)</strong>
+    </dt>
+    <dd>
+    Given an input, returns a function that takes a message and replies to it.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">string</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table</a></span>
+        } input The content to send back. If a string, it sends it as data. If a table, it assumes a structure with `Tags`.
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        A function that takes a message and replies to it
+    </ol>
+
+
+
+
+</dd>
+    <dt>
+    <a name = "continue"></a>
+    <strong>continue (function)</strong>
+    </dt>
+    <dd>
+    Inverts the provided pattern's result if it matches, so that it continues execution with the next matching handler.
+
+
+    <h3>Parameters:</h3>
+    <ul>
+        <li><span class="parameter">function</span>
+            <span class="types"><a class="type" href="https://www.lua.org/manual/5.4/manual.html#6.6">{table</a></span>
+        } pattern The pattern to check for in the message
+        </li>
+    </ul>
+
+    <h3>Returns:</h3>
+    <ol>
+
+           <span class="types"><span class="type">{function}</span></span>
+        Function that executes the pattern matching function and returns `1` (continue), so that the execution of handlers continues.
+    </ol>
+
+
+
+
+</dd>
+</dl>
+    <h2 class="section-header "><a name="Tables"></a>Tables</h2>
+
+    <dl class="function">
+    <dt>
+    <a name = "_utils"></a>
+    <strong>_utils</strong>
+    </dt>
+    <dd>
+    The _utils table
+
+
+    <h3>Fields:</h3>
+    <ul>
+        <li><span class="parameter">_version</span>
+         The version number of the _utils module
+        </li>
+        <li><span class="parameter">hasMatchingTag</span>
+         The hasMatchingTag function
+        </li>
+        <li><span class="parameter">hasMatchingTagOf</span>
+         The hasMatchingTagOf function
+        </li>
+        <li><span class="parameter">hasMatchingData</span>
+         The hasMatchingData function
+        </li>
+        <li><span class="parameter">reply</span>
+         The reply function
+        </li>
+        <li><span class="parameter">continue</span>
+         The continue function
+        </li>
+    </ul>
+
+
+
+
+
+</dd>
+</dl>
+
+
+</div> <!-- id="content" -->
+</div> <!-- id="main" -->
+<div id="about">
+<i>generated by <a href="http://github.com/lunarmodules/LDoc">LDoc 1.5.0</a></i>
+<i style="float:right;">Last updated 2024-10-29 14:41:25 </i>
+</div> <!-- id="about" -->
+</div> <!-- id="container" -->
+</body>
+</html>
