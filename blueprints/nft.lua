@@ -2,15 +2,8 @@ local bint = require('.bint')(256)
 local json = require('json')
 
 --[[
-  --Author: https://github.com/skyf0xx
-  --Author: https://github.com/ALLiDoizCode
-  This module implements the AO NFT Standard based on ERC-721 with royalty support.
 
-  Features:
-  - Inspired by ERC-721
-  - Royalty support (EIP-2981 inspired)
-  - Rich metadata with extensible data format
-  - Creator monetization features
+  This module implements the AO NFT Standard.
 
   Terms:
     Sender: the wallet or Process that sent the Message
