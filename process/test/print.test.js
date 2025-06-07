@@ -131,3 +131,61 @@ test('Print Errors in Handlers', async () => {
   assert.ok(result.Error.includes('handling message'))
   assert.ok(true)
 })
+
+test('print nil should not add newline to output', async () => {
+  const handle = await AoLoader(wasm, options)
+  const start = await init(handle)
+  
+  const msg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: 'print(nil)'
+  }
+  const result = await handle(start, msg, env)
+  // When printing nil, it should output "nil" (colored) but no extra newlines
+  assert.ok(result.Output?.data.includes('nil'))
+  assert.ok(!result.Output?.data.includes('\n'))
+})
+
+test('handler with no print should not produce extra newline', async () => {
+  const handle = await AoLoader(wasm, options)
+  const start = await init(handle)
+
+  // First, add a handler that doesn't print anything
+  const setupMsg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1000",
+    Id: "1234xyxfoo",
+    Module: "WOOPAWOOPA",
+    Tags: [
+      { name: 'Action', value: 'Eval' }
+    ],
+    Data: 'Handlers.add("test", Handlers.utils.hasMatchingData("test"), function (m) local x = 1 + 1 end)'
+  }
+  const { Memory } = await handle(start, setupMsg, env)
+
+  // Now send a message that triggers the handler
+  const triggerMsg = {
+    Target: 'AOS',
+    From: 'FOOBAR',
+    Owner: 'FOOBAR',
+    ['Block-Height']: "1001",
+    Id: "5678abcd",
+    Module: "WOOPAWOOPA",
+    Tags: [],
+    Data: "test"
+  }
+  const result = await handle(Memory, triggerMsg, env)
+  
+  // Should have empty output data, no extra newlines
+  assert.equal(result.Output?.data, '')
+})
