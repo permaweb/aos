@@ -12,7 +12,7 @@
 import { of, fromPromise, Resolved } from 'hyper-async'
 import chalk from 'chalk'
 
-export async function evaluate(line, processId, wallet, services, spinner) {
+export async function evaluate(line, processId, wallet, services, spinner, swallowError = false) {
   return of({ processId, wallet, tags: [{ name: 'Action', value: 'Eval' }], data: line })
     .map(tStart('Send'))
     .chain(pushMessage)
@@ -64,7 +64,7 @@ export async function evaluate(line, processId, wallet, services, spinner) {
   
   // log error of promise return empty obj
   function logError(err) {
-    console.log(err)
+    if (!swallowError) console.log(err)
     return {}
   }
 }
