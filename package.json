@@ -1,6 +1,6 @@
 {
   "name": "@permaweb/aos",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": true,
   "repository": "https://github.com/permaweb/aos.git",
   "license": "MIT",
@@ -58,6 +58,6 @@
     "version": "2.0.4"
   },
   "hyper": {
-    "module": "8DvyaxF8xpHMgPdmpMnhcb1mjY-M8qr2kGxnCpGMb60"
+    "module": "u-LhXIXp-chS15XqOjlBgaDYZo0AG3dV-KvstLGtQmI"
   }
 }

@@ -174,11 +174,14 @@ export async function liveMainnet(id, watch) {
         const currentSlotPath = `/${id}~process@1.0/slot/current/body/serialize~json@1.0`        // LIVE PARAMS
         const currentSlotParams = {
           path: currentSlotPath,
-          method: 'GET',
+          method: 'POST',
           device: 'process@1.0',
           'data-protocol': 'ao',
           variant: 'ao.N.1',
           'aos-version': pkg.version,
+          signingFormat: 'ANS-104',
+          "accept-bundle": "true",
+          "accept-codec": "httpsig@1.0"
         }
         const currentSlot = await request(currentSlotParams)
           .then(res => res.body)
@@ -191,13 +194,16 @@ export async function liveMainnet(id, watch) {
           const path = `/${id}~process@1.0/compute&slot=${cursor}/results/json/body/serialize~json@1.0`        // LIVE PARAMS
           const params = {
             path,
-            method: 'GET',
+            method: 'POST',
             device: 'process@1.0',
             'data-protocol': 'ao',
             'scheduler-device': 'scheduler@1.0',
             'push-device': 'push@1.0',
             variant: 'ao.N.1',
             'aos-version': pkg.version,
+            signingFormat: 'ANS-104',
+            "accept-bundle": "true",
+            "accept-codec": "httpsig@1.0"
           }
           const results = await request(params)
             .then(res => res.body)
