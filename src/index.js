@@ -140,7 +140,11 @@ if (argv['mainnet']) {
   console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
   process.env.AO_URL = argv['mainnet']
   // get scheduler if in mainnetmode
-  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+  process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
+  process.env.AUTHORITY = process.env.SCHEDULER
+  //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
+  // TODO: Need to allow these to be overridden if set via CLI and also need to 
+  // fallback to scheduler@1.0 for both
   // process.env.EXECUTION_DEVICE = await prompts({
   //     type: 'select',
   //     name: 'device',

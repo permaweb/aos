@@ -40,6 +40,19 @@ const assoc = (k, v, o) => {
   return o
 }
 
+const parseWasmBody = (body) => {
+  try {
+    return JSON.parse(body)
+  } catch (e) {
+    return ({ Error: 'Could not parse result!' })
+  }
+}
+
+const handleResults = (resBody) =>
+  resBody.info === 'hyper-aos'
+    ? ({ Output: resBody.output, Error: resBody.error })
+    : parseWasmBody(resBody.json?.body)
+
 export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
@@ -56,19 +69,6 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     "accept-codec": "httpsig@1.0",
     "signingFormat": "ANS-104"
   }
-
-  const parseWasmBody = (body) => {
-    try {
-      return JSON.parse(body)
-    } catch (e) {
-      return ({ Error: 'Could not parse result!' })
-    }
-  }
-
-  const handleResults = (resBody) =>
-    resBody.info === 'hyper-aos'
-      ? ({ Output: resBody.output, Error: resBody.error })
-      : parseWasmBody(resBody.json?.body)
 
   return of(params)
     .chain(submitRequest)
@@ -194,7 +194,7 @@ export async function liveMainnet(id, watch) {
         // Eval up to the current slot
         while (cursor <= currentSlot) {
 
-          const path = `/${id}~process@1.0/compute&slot=${cursor}/results/json/body/serialize~json@1.0`        // LIVE PARAMS
+          const path = `/${id}~process@1.0/compute&slot=${cursor}/results/serialize~json@1.0`        // LIVE PARAMS
           const params = {
             path,
             method: 'POST',
@@ -211,9 +211,8 @@ export async function liveMainnet(id, watch) {
           const results = await request(params)
             .then(res => res.body)
             .then(JSON.parse)
-            .then(res => res.body)
-            .then(JSON.parse)
-
+            .then(handleResults)
+          
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {
             globalThis.alerts[cursor] = results.Output || results.Error
