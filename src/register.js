@@ -49,7 +49,7 @@ export function register(jwk, services) {
             ? Resolved(results.reverse())
             /**
              * No process was found that matches the name, module and owners
-             * But no catastrophic error occured. 
+             * But no catastrophic error occurred. 
              * 
              * By rejecting with 'ok: true' we are signaling that a 
              * new process should be spawned with the given criteria
@@ -88,7 +88,7 @@ export function register(jwk, services) {
   const createProcess = (ctx) => {
     const { ok, name, spawnTags, module, error } = ctx
     if (!ok) {
-      return Rejected({ error: error || 'Unknown error occured' })
+      return Rejected({ error: error || 'Unknown error occurred' })
     }
     let data = "1984"
     let tags = [
