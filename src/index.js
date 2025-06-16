@@ -54,12 +54,13 @@ let {
 let {
   spawnProcessRelay, sendMessageRelay, readResultRelay,
   monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
-  dryrunRelay, handleRelayTopup
+  dryrunRelay
 } = relaySvc
 
 let {
-  spawnProcessMainnet, sendMessageMainnet, 
-  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet
+  spawnProcessMainnet, sendMessageMainnet,
+  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
+  handleNodeTopup
 } = mainnetSvc
 
 if (!process.stdin.isTTY) {
@@ -137,33 +138,45 @@ if (argv['relay']) {
   relayMode = true
 }
 if (argv['mainnet']) {
-  console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
-  process.env.AO_URL = argv['mainnet']
-  // get scheduler if in mainnetmode
-  process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
-  process.env.AUTHORITY = process.env.SCHEDULER
-  //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
-  // TODO: Need to allow these to be overridden if set via CLI and also need to 
-  // fallback to scheduler@1.0 for both
-  // process.env.EXECUTION_DEVICE = await prompts({
-  //     type: 'select',
-  //     name: 'device',
-  //     message: 'Please select a device',
-  //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
-  //     instructions: false
-  // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+  if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
+    console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'));
+    process.exit(1);
+  }
 
-  // replace services to use mainnet service
-  sendMessage = sendMessageMainnet
-  spawnProcess = spawnProcessMainnet
-  readResult = () => null 
-  // monitorProcess = monitorProcessMainnet
-  // unmonitorProcess = unmonitorProcessMainnet
-  live = liveMainnet
-  printLive = printLiveMainnet
-  dryrun = () => null 
+  try {
+    console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
+    process.env.AO_URL = argv['mainnet']
+    // get scheduler if in mainnetmode
+    // process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
+    process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+    process.env.AUTHORITY = process.env.SCHEDULER
+    //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
+    // TODO: Need to allow these to be overridden if set via CLI and also need to 
+    // fallback to scheduler@1.0 for both
+    // process.env.EXECUTION_DEVICE = await prompts({
+    //     type: 'select',
+    //     name: 'device',
+    //     message: 'Please select a device',
+    //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+    //     instructions: false
+    // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
 
-  relayMode = true
+    // replace services to use mainnet service
+    sendMessage = sendMessageMainnet
+    spawnProcess = spawnProcessMainnet
+    readResult = () => null
+    // monitorProcess = monitorProcessMainnet
+    // unmonitorProcess = unmonitorProcessMainnet
+    live = liveMainnet
+    printLive = printLiveMainnet
+    dryrun = () => null
+
+    relayMode = true
+  }
+  catch (e) {
+    console.error(chalk.red('Error connecting to ' + argv['mainnet']));
+    process.exit(1);
+  }
 }
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
@@ -209,8 +222,8 @@ async function runProcess() {
         let editorData = ''
         const history = readHistory(id)
 
-        if (argv.relay && argv.topup) {
-          await handleRelayTopup(jwk, false);
+        if (argv.mainnet && argv.topup) {
+          await handleNodeTopup(jwk, false);
         }
 
         if (luaData.length > 0 && argv.load) {
@@ -509,7 +522,7 @@ async function runProcess() {
         if (argv.list) {
           console.log(e)
         } else {
-          if (argv.relay) {
+          if (argv.mainnet) {
             let jwk;
             if (process.env.WALLET) {
               try {
@@ -520,12 +533,12 @@ async function runProcess() {
             }
 
             try {
-              const topupSuccess = await handleRelayTopup(jwk, true);
+              const topupSuccess = await handleNodeTopup(jwk, true);
               if (topupSuccess) {
                 return runProcess();
               }
             } catch (topupError) {
-              console.error('Error handling relay topup:', topupError);
+              console.error('Error handling node topup:', topupError);
               process.exit(1);
             }
           }
@@ -535,7 +548,6 @@ async function runProcess() {
           if (argv.load) {
             console.log(e.message)
           } else {
-            console.log(e)
             console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
             process.exit(1)
           }

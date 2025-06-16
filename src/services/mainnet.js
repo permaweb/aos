@@ -18,6 +18,8 @@ import cron from 'node-cron'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
+import ora from 'ora'
+import readline from 'readline';
 import { uniqBy, prop, keys } from 'ramda'
 import Arweave from 'arweave'
 import prompts from 'prompts'
@@ -90,7 +92,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
       type: 'select',
       name: 'device',
       message: 'Please select a device',
-      choices: [{title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}, { title: 'lua@5.3a (experimental)', value: 'lua@5.3a'}],
+      choices: [{ title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0' }, { title: 'lua@5.3a (experimental)', value: 'lua@5.3a' }],
       instructions: false
     }).then(res => res.device).catch(e => "genesis-wasm@1.0")
     params['execution-device'] = executionDevice
@@ -212,7 +214,7 @@ export async function liveMainnet(id, watch) {
             .then(res => res.body)
             .then(JSON.parse)
             .then(handleResults)
-          
+
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {
             globalThis.alerts[cursor] = results.Output || results.Error
@@ -240,3 +242,210 @@ export async function liveMainnet(id, watch) {
   return ct
 }
 
+function formatTopupAmount(num) {
+  let fixed = num.toFixed(12);
+  fixed = fixed.replace(/(\.\d*?[1-9])0+$/, '$1'); // trim trailing zeros
+  fixed = fixed.replace(/\.0+$/, ''); // remove trailing .0 if no decimals
+  return fixed;
+}
+
+function fromDenominatedAmount(num) {
+  const result = num / Math.pow(10, 12);
+  return result.toFixed(12).replace(/\.?0+$/, '');
+}
+
+export async function handleNodeTopup(jwk, insufficientBalance) {
+  const aoLegacy = connect({ MODE: 'legacy' });
+  const aoMainnet = connect({ MODE: 'mainnet', signer: createSigner(jwk), URL: process.env.AO_URL });
+
+  const PAYMENT = {
+    token: '0syT13r0s0tgPmIed95bJnuSqaD29HQNN8D3ElLSrsc',
+    subledger: 'iVplXcMZwiu5mn0EZxY-PxAkz_A9KOU0cmRE0rwej3E',
+    ticker: 'AO'
+  };
+
+  const walletAddress = await arweave.wallets.getAddress(jwk)
+  console.log(`\n${chalk.gray('Wallet Address:')} ${chalk.yellow(walletAddress)}\n`);
+
+  if (insufficientBalance) console.log(chalk.gray(`You must transfer some ${PAYMENT.ticker} to this node in order to start sending messages.`));
+
+  let spinner = ora({
+    spinner: 'dots',
+    suffixText: chalk.gray(`[Getting your ${PAYMENT.ticker} balance...]`)
+  });
+  spinner.start();
+
+  let balanceResponse;
+  try {
+    balanceResponse = await aoLegacy.dryrun({
+      process: PAYMENT.token,
+      tags: [
+        { name: 'Action', value: 'Balance' },
+        { name: 'Recipient', value: walletAddress },
+      ]
+    });
+    spinner.stop();
+  }
+  catch (e) {
+    spinner.stop();
+    console.log(chalk.red('Error getting your balance'));
+    process.exit(1);
+  }
+
+  const balance = balanceResponse?.Messages?.[0]?.Data;
+  if (balance) {
+    const getChalk = balance > 0 ? chalk.green : chalk.yellow;
+    console.log(chalk.gray('Current balance in wallet: ' + getChalk(`${fromDenominatedAmount(balance)} ${PAYMENT.ticker}`)));
+    if (balance <= 0) {
+      console.log(chalk.red(`This wallet must hold some ${PAYMENT.ticker} in order to transfer to the relay.`));
+      process.exit(1);
+    }
+  }
+
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  const ask = (question) => new Promise(resolve => rl.question(question, answer => resolve(answer)));
+
+  let continueWithTopup = true;
+
+  console.log(chalk.gray('\nGetting current balance in node...'));
+  let currentNodeBalance;
+  try {
+    const balanceRes = await fetch(`${process.env.AO_URL}/ledger~node-process@1.0/now/balance/${walletAddress}`);
+
+    if (balanceRes.ok) {
+      const balance = await balanceRes.text();
+      currentNodeBalance = Number.isNaN(balance) ? 0 : balance;
+    }
+    else {
+      currentNodeBalance = 0;
+    }
+
+    console.log(chalk.gray('Current balance in node: ' + chalk.green(`${fromDenominatedAmount(currentNodeBalance)} ${PAYMENT.ticker}\n`)));
+
+  } catch (e) {
+    console.error(e);
+    process.exit(1);
+  }
+
+  if (insufficientBalance) {
+    const answer = await ask(chalk.gray('Insufficient funds. Would you like to top up? (Y/N): '));
+    continueWithTopup = answer.trim().toLowerCase().startsWith('y');
+  }
+
+  if (continueWithTopup) {
+    let topupAmount = 0.0000001;
+
+    if (insufficientBalance) console.log(chalk.gray('Minimum amount required: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)));
+    const amountAnswer = await ask(chalk.gray(`Enter topup amount (leave blank for ${chalk.green(formatTopupAmount(topupAmount))} ${PAYMENT.ticker}): `));
+    if (amountAnswer?.length) topupAmount = parseFloat(amountAnswer);
+
+    if (isNaN(topupAmount) || topupAmount <= 0) {
+      console.log(chalk.red('Invalid topup amount provided. Topup cancelled.'));
+      rl.close();
+      process.exit(1);
+    }
+
+    console.log(chalk.gray('Topping up with amount: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}\n`)));
+
+    spinner = ora({
+      spinner: 'dots',
+      suffixText: chalk.gray('[Transferring balance to node...]')
+    });
+    spinner.start();
+
+    const sendQuantity = (topupAmount * Math.pow(10, 12)).toString();
+
+    const currentBetaGZAOBalance = (await aoLegacy.dryrun({
+      process: PAYMENT.subledger,
+      tags: [
+        { name: 'Action', value: 'Balance' },
+        { name: 'Recipient', value: walletAddress }
+      ]
+    })).Messages[0].Data;
+
+    const transferId = await aoLegacy.message({
+      process: PAYMENT.token,
+      tags: [
+        { name: 'Action', value: 'Transfer' },
+        { name: 'Quantity', value: sendQuantity },
+        { name: 'Recipient', value: PAYMENT.subledger },
+      ],
+      signer: createSigner(jwk)
+    });
+
+    await aoLegacy.result({
+      process: PAYMENT.token,
+      message: transferId
+    });
+
+    let updatedBetaGZAOBalance;
+    do {
+      await new Promise((r) => setTimeout(r, 2000));
+      updatedBetaGZAOBalance = (await aoLegacy.dryrun({
+        process: PAYMENT.subledger,
+        tags: [
+          { name: 'Action', value: 'Balance' },
+          { name: 'Recipient', value: walletAddress }
+        ]
+      })).Messages[0].Data;
+    }
+    while (updatedBetaGZAOBalance === currentBetaGZAOBalance)
+
+    const ledgerAddressRes = await fetch(`${process.env.AO_URL}/ledger~node-process@1.0/commitments/keys/1`);
+    const ledgerAddress = await ledgerAddressRes.text();
+
+    const transferParams = {
+      type: 'Message',
+      path: `/${PAYMENT.subledger}~process@1.0/push/serialize~json@1.0`,
+      method: 'POST',
+      'data-protocol': 'ao',
+      variant: 'ao.N.1',
+      target: PAYMENT.subledger,
+      'accept-bundle': 'true',
+      'accept-codec': 'httpsig@1.0',
+      'signingFormat': 'ANS-104',
+      action: 'Transfer',
+      Recipient: walletAddress,
+      Route: ledgerAddress,
+      Quantity: sendQuantity
+    }
+
+    const transferRes = await aoMainnet.request(transferParams);
+    if (transferRes.status === '200') {
+      let updatedNodeBalance;
+      do {
+        try {
+          const balanceRes = await fetch(`${process.env.AO_URL}/ledger~node-process@1.0/now/balance/${walletAddress}`);
+
+          if (balanceRes.ok) {
+            const balance = await balanceRes.text();
+            updatedNodeBalance = Number.isNaN(balance) ? 0 : balance;
+          }
+          else {
+            updatedNodeBalance = 0;
+          }
+
+          if (currentNodeBalance !== updatedNodeBalance) {
+            spinner.stop();
+            console.log(chalk.gray('Updated balance in node: ' + chalk.green(`${fromDenominatedAmount(updatedNodeBalance)} ${PAYMENT.ticker}`)));
+          }
+
+        } catch (e) {
+          console.error(e);
+          process.exit(1);
+        }
+      }
+      while (currentNodeBalance === updatedNodeBalance);
+
+      return true;
+    }
+    else {
+      console.log(chalk.red('Error handling node topup.'));
+      process.exit(1);
+    }
+  }
+}
