@@ -345,12 +345,12 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
 
     if (isNaN(topupAmount) || topupAmount <= 0) {
       console.log(chalk.red('Invalid topup amount provided. Topup cancelled.'));
-      rl.close();
       process.exit(1);
     }
 
     console.log(chalk.gray('Topping up with amount: ' + chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}\n`)));
 
+    rl.close();
     spinner = ora({
       spinner: 'dots',
       suffixText: chalk.gray('[Transferring balance to node...]')
