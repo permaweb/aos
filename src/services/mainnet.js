@@ -120,7 +120,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     .chain(getExecutionDevice)
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
-        p.Module = pkg.hyper.module
+        p.Module = process.env.AOS_MODULE || pkg.hyper.module
       } else {
         p.Module = src
       }
