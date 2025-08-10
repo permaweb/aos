@@ -86,7 +86,7 @@ export function register(jwk, services) {
       type: 'select',
       name: 'device',
       message: 'Please select',
-      choices: [{ title: 'aos (stable-production-ready)', value: 'aos' }, { title: 'hyper-aos (experimental - DO NOT USE FOR PRODUCTION)', value: 'hyper' }],
+      choices: [{ title: 'aos', value: 'aos' }, { title: 'hyper-aos (experimental - DO NOT USE FOR PRODUCTION)', value: 'hyper' }],
       instructions: false
     }).then(res => res.device).catch(e => "aos")
     ctx.processType = processOS
