@@ -154,7 +154,6 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
       }
       return p
     })
-    .map(x => (console.log(x), x))
     .chain(submitRequest)
     .map(prop('process'))
     
