@@ -122,12 +122,16 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
-if (argv['url']) {
-  process.env.AO_URL = argv['url']
-}
-
 if (argv['scheduler']) {
   process.env.SCHEDULER = argv['scheduler']
+}
+
+if (argv['authority']) {
+  process.env.AUTHORITY = argv['authority']
+}
+
+if (argv['url']) {
+  process.env.AO_URL = argv['url']
 }
 
 if (argv['mainnet']) {

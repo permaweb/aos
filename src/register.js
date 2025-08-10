@@ -98,9 +98,13 @@ export function register(jwk, services) {
     if (!ok) {
       return Rejected({ error: error || 'Unknown error occured' })
     }
+    let appName = "aos"
+    if (process.env.AO_URL !== "undefined") {
+      appName = "hyper-aos"
+    }
     let data = "1984"
     let tags = [
-      { name: 'App-Name', value: 'aos' },
+      { name: 'App-Name', value: appName },
       { name: 'Name', value: name },
       { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
       ...(spawnTags || [])
@@ -129,6 +133,11 @@ export function register(jwk, services) {
     // if process type is hyper then lets spawn a process
     // using mainnet for pure hyperbeam aos
     if (ctx.processType === "hyper") {
+      if (process.env.AO_URL === "undefined") {
+        process.env.AO_URL = "https://forward.computer"
+        process.env.SCHEDULER = "NoZH3pueH0Cih6zjSNu_KRAcmg4ZJV1aGHKi0Pi5_Hc"
+        process.env.AUTHORITY = "undefined"
+      }
       return services.spawnProcessMainnet({
         wallet: jwk,
         src: module,
@@ -149,6 +158,14 @@ export function register(jwk, services) {
 
   const alreadyRegistered = async (results) => {
     if (results.length == 1) {
+      // this handles the case when a user enters a process name
+      // we can check to see if it is a hyper-aos process
+      if (process.env.AO_URL === "undefined") {
+        const appName = results[0].node.tags.find(t => t.name == "App-Name")?.value || 'aos'
+        if (appName === "hyper-aos") {
+          process.env.AO_URL = "https://forward.computer"
+        }
+      }
       return Promise.resolve(results[0].node.id)
     }
 
@@ -168,6 +185,10 @@ export function register(jwk, services) {
       instructions: false
     })
       .then(r => r.process)
+      .then(id => {
+        // TODO: we need to locate this process and check to see if the process
+        // is a hyper-aos process then set the AO_URL if not already set
+      })
       .catch(() => Promise.reject({ ok: false, error: 'Error selecting process' }))
   }
 

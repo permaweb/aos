@@ -81,9 +81,36 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 
 }
 
+const setScheduler = fromPromise(async function (ctx) {
+  // if (process.env.SCHEDULER === "undefined") {
+    const scheduler = await fetch(
+      process.env.AO_URL + '/~meta@1.0/info/address')
+    .then(r => r.text())
+    
+    ctx['scheduler'] = scheduler
+    ctx['scheduler-location'] = scheduler
+  // }
+  return ctx
+
+})
+
+const setAuthority = fromPromise(async function (ctx) {
+  // https://forward.computer/~meta@1.0/info/node_processes/router/trusted
+  // or https://forward.computer/~meta@1.0/info/node_processes/router/trusted
+  //if (process.env.AUTHORITY === "undefined") {
+    const authority = await fetch(
+      process.env.AO_URL + '/~meta@1.0/info/address')
+    .then(r => r.text())
+    
+    ctx['Authority'] = authority
+    ctx['Authority'] = authority
+  //}
+  return ctx
+})
+
 export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
-  const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  const AUTHORITY = process.env.AUTHORITY || SCHEDULER
+  // const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+  // const AUTHORITY = process.env.AUTHORITY || SCHEDULER
 
   const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
@@ -104,21 +131,20 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     path: '/push',
     method: 'POST',
     Type: 'Process',
-    scheduler: SCHEDULER,
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
     'push-device': 'push@1.0',
     'execution-device': 'lua@5.3a',
-    'scheduler-location': SCHEDULER,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
-    'Authority': AUTHORITY,
     'aos-version': pkg.version,
     'accept-bundle': 'true',
     'signingFormat': 'ANS-104'
   }
   return of(params)
+    .chain(setScheduler)
+    .chain(setAuthority)
     .chain(params => isHyper ? of(params) : getExecutionDevice(params))
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
@@ -128,6 +154,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
       }
       return p
     })
+    .map(x => (console.log(x), x))
     .chain(submitRequest)
     .map(prop('process'))
     
