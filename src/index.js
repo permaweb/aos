@@ -222,6 +222,7 @@ async function runProcess() {
         // this can be improved, but for now if ao-url is set
         // we will use hyper mode
         if (process.env.AO_URL !== "undefined") {
+          process.env.WALLET = JSON.stringify(jwk)
           sendMessage = sendMessageMainnet
           readResult = () => null
           live = liveMainnet

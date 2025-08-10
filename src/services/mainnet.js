@@ -200,7 +200,6 @@ export async function liveMainnet(id, watch) {
     if (!isJobRunning) {
       try {
         isJobRunning = true;
-
         // Get the current slot
         const currentSlotPath = `/${id}~process@1.0/slot/current/body/serialize~json@1.0`        // LIVE PARAMS
         const currentSlotParams = {
