@@ -601,7 +601,10 @@ async function connect(jwk, id) {
   }
   const aosVersion = getPkg().aos.version
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
-    console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+    // only prompt for updates if version is not eq to dev
+    if (promptResult.Output.data !== "dev") {
+      console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+    }
   }
   return _prompt
 }

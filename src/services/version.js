@@ -13,7 +13,7 @@ const pkg = getPkg()
 
 export function version(id) {
   console.log(chalk.gray(`
-AOS Client Version: ${pkg.version}. 2024`))
+AOS Client Version: ${pkg.version}. 2025`))
   if (id) {
     console.log(chalk.gray('Type "Ctrl-C" twice to exit\n'))
     console.log(`${chalk.gray("Your AOS process: ")} ${chalk.green(id)}`)
