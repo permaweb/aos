@@ -28,13 +28,14 @@ const arweave = Arweave.init({})
 
 const pkg = getPkg()
 const setupMainnet = (wallet) => {
-  return connect({
+  const options = {
     MODE: 'mainnet',
     device: 'process@1.0',
     signer: createSigner(wallet),
     GATEWAY_URL: process.env.GATEWAY_URL,
     URL: process.env.AO_URL
-  })
+  }
+  return connect(options)
 }
 
 const assoc = (k, v, o) => {
@@ -107,6 +108,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
     'push-device': 'push@1.0',
+    'execution-device': 'lua@5.3a',
     'scheduler-location': SCHEDULER,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
@@ -117,7 +119,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     'signingFormat': 'ANS-104'
   }
   return of(params)
-    .chain(params => isHyper ? params : getExecutionDevice(params))
+    .chain(params => isHyper ? of(params) : getExecutionDevice(params))
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
         p.Module = process.env.AOS_MODULE || pkg.hyper.module
@@ -128,6 +130,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     })
     .chain(submitRequest)
     .map(prop('process'))
+    
 
 }
 

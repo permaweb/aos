@@ -122,21 +122,14 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
-if (argv['relay']) {
-  console.log(`\n${chalk.gray('Using Relay:')} ${chalk.yellow(argv['relay'])}`);
-  process.env.RELAY_URL = argv['relay']
-  // replace services to use relay service
-  sendMessage = sendMessageRelay
-  spawnProcess = spawnProcessRelay
-  readResult = readResultRelay
-  monitorProcess = monitorProcessRelay
-  unmonitorProcess = unmonitorProcessRelay
-  live = liveRelay
-  printLive = printLiveRelay
-  dryrun = dryrunRelay
-
-  relayMode = true
+if (argv['url']) {
+  process.env.AO_URL = argv['url']
 }
+
+if (argv['scheduler']) {
+  process.env.SCHEDULER = argv['scheduler']
+}
+
 if (argv['mainnet']) {
   if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
     console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'));
@@ -221,6 +214,15 @@ async function runProcess() {
         let editorMode = false
         let editorData = ''
         const history = readHistory(id)
+
+        // this can be improved, but for now if ao-url is set
+        // we will use hyper mode
+        if (process.env.AO_URL !== "undefined") {
+          sendMessage = sendMessageMainnet
+          readResult = () => null
+          live = liveMainnet
+          printLive = printLiveMainnet
+        }
 
         if (argv.mainnet && argv.topup) {
           await handleNodeTopup(jwk, false);
