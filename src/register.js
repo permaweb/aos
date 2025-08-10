@@ -79,6 +79,19 @@ export function register(jwk, services) {
       .chain(selectModule)
       .map((moduleId) => ({ ...ctx, ok: true, module: moduleId }))
   }
+ 
+  // pick the process type for new process, it can be either aos or hyper-aos
+  const pickProcessType = fromPromise(async function (ctx) {
+    const processOS = await prompts({
+      type: 'select',
+      name: 'device',
+      message: 'Please select',
+      choices: [{ title: 'aos (stable-production-ready)', value: 'aos' }, { title: 'hyper-aos (experimental - DO NOT USE FOR PRODUCTION)', value: 'hyper' }],
+      instructions: false
+    }).then(res => res.device).catch(e => "aos")
+    ctx.processType = processOS
+    return ctx
+  })
 
   const createProcess = (ctx) => {
     const { ok, name, spawnTags, module, error } = ctx
@@ -111,6 +124,20 @@ export function register(jwk, services) {
         data = fs.readFileSync(path.resolve(argv.data), 'utf-8')
       }
     }
+
+
+    // if process type is hyper then lets spawn a process
+    // using mainnet for pure hyperbeam aos
+    if (ctx.processType === "hyper") {
+      return services.spawnProcessMainnet({
+        wallet: jwk,
+        src: module,
+        tags,
+        data,
+        isHyper: true
+      })
+    }
+
 
     return services.spawnProcess({
       wallet: jwk,
@@ -161,8 +188,12 @@ export function register(jwk, services) {
   if (services.isAddress(name)) {
     return of(name)
   }
-  const doRegister = ctx => !ctx.ok ? Rejected(ctx) : findModule(ctx).chain(createProcess)
+  const doRegister = ctx => !ctx.ok ? Rejected(ctx) : findModule(ctx)
+    .chain(pickProcessType)
+    .chain(createProcess)
+
   const resolveId = fromPromise(alreadyRegistered)
+
   return of({ jwk, name, spawnTags, module: argv.module })
     .chain(getAddress)
     .chain(findProcess)

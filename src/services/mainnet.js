@@ -80,7 +80,7 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 
 }
 
-export function spawnProcessMainnet({ wallet, src, tags, data }) {
+export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const AUTHORITY = process.env.AUTHORITY || SCHEDULER
 
@@ -117,7 +117,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data }) {
     'signingFormat': 'ANS-104'
   }
   return of(params)
-    .chain(getExecutionDevice)
+    .chain(params => isHyper ? params : getExecutionDevice(params))
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
         p.Module = process.env.AOS_MODULE || pkg.hyper.module

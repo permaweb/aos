@@ -213,7 +213,7 @@ async function runProcess() {
         }
         return Resolved(jwk)
       })
-      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
+      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
         .map(id => ({ jwk, id }))
       )
       .toPromise()
