@@ -152,8 +152,10 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     'aos-version': pkg.version,
     'accept-bundle': 'true',
     'codec-device': 'ans104@1.0',
-    'signingFormat': 'ANS-104',
-    data: data
+    'signingFormat': 'ANS-104'
+  }
+  if (data) {
+    params.data = data
   }
   return of(params)
     .chain(setScheduler)

@@ -102,7 +102,7 @@ export function register(jwk, services) {
     if (process.env.AO_URL !== "undefined") {
       appName = "hyper-aos"
     }
-    let data = "1984"
+    let data = ""
     let tags = [
       { name: 'App-Name', value: appName },
       { name: 'Name', value: name },
