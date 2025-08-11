@@ -129,7 +129,6 @@ export function register(jwk, services) {
       }
     }
 
-
     // if process type is hyper then lets spawn a process
     // using mainnet for pure hyperbeam aos
     if (ctx.processType === "hyper") {
