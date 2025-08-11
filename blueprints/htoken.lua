@@ -60,7 +60,7 @@ Balances = Balances or { [id] = utils.toBalanceValue(10000 * 10 ^ Denomination) 
 TotalSupply = TotalSupply or utils.toBalanceValue(10000 * 10 ^ Denomination)
 Name = Name or 'Hyper Test Coin'
 Ticker = Ticker or 'HYPER'
-Logo = Logo or ''
+Logo = Logo or 'eskTHZQzCLOFrpzkr7zeaf4RxmkaNVYvHuPLh4CLpX4'
 
 --[[
      Add handlers for each incoming Action defined by the ao Standard Token Specification
