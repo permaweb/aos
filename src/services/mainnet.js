@@ -91,7 +91,6 @@ const setScheduler = fromPromise(async function (ctx) {
     scheduler = await fetch(schedulerUrl + '/~meta@1.0/info/address')
       .then(r => r.text())
   } 
-  console.log(scheduler)
   ctx['scheduler'] = scheduler
   ctx['scheduler-location'] = scheduler
   
