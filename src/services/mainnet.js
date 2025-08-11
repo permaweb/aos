@@ -82,29 +82,40 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
 }
 
 const setScheduler = fromPromise(async function (ctx) {
-  // if (process.env.SCHEDULER === "undefined") {
-    const scheduler = await fetch(
-      process.env.AO_URL + '/~meta@1.0/info/address')
-    .then(r => r.text())
-    
-    ctx['scheduler'] = scheduler
-    ctx['scheduler-location'] = scheduler
-  // }
+  let scheduler = process.env.SCHEDULER
+  if (scheduler === "undefined" || scheduler === undefined) {
+    let schedulerUrl = process.env.AO_URL
+    if (schedulerUrl === 'https://forward.computer') {
+      schedulerUrl = 'https://scheduler.forward.computer'
+    }
+    scheduler = await fetch(schedulerUrl + '/~meta@1.0/info/address')
+      .then(r => r.text())
+  } 
+  console.log(scheduler)
+  ctx['scheduler'] = scheduler
+  ctx['scheduler-location'] = scheduler
+  
   return ctx
 
 })
 
 const setAuthority = fromPromise(async function (ctx) {
+  let authority = process.env.AUTHORITY
+
   // https://forward.computer/~meta@1.0/info/node_processes/router/trusted
   // or https://forward.computer/~meta@1.0/info/node_processes/router/trusted
-  //if (process.env.AUTHORITY === "undefined") {
-    const authority = await fetch(
-      process.env.AO_URL + '/~meta@1.0/info/address')
-    .then(r => r.text())
-    
-    ctx['Authority'] = authority
-    ctx['Authority'] = authority
-  //}
+  if (authority === "undefined" || authority === undefined ) {
+    if (process.env.AO_URL === 'https://forward.computer') {
+      authority = "QWg43UIcJhkdZq6ourr1VbnkwcP762Lppd569bKWYKY"
+    } else {
+      authority = await fetch(process.env.AO_URL + '/~meta@1.0/info/address')
+        .then(r => r.text())
+    }
+    authority = authority + ',fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY'
+  }
+  ctx['Authority'] = authority
+  ctx['Authority'] = authority
+
   return ctx
 })
 
