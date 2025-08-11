@@ -22,7 +22,7 @@
     "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.85",
+    "@permaweb/aoconnect": "^0.0.89",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
