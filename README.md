@@ -52,10 +52,10 @@ yarn start
 
 ### Command-line options
 
-You can provide a name for a specific Process, if the Process does not exist aos will spawn the process, then every time you run `aos [name]` it will locate that process and interact with it.
+You can provide a name for a specific Process, if the Process does not exist aos will spawn the process, then every time you run `aos [name]` it will locate that process and interact with it. Alternatively, you can specify a process ID to connect to an existing process with `aos [process-id]`.
 
 ```sh
-aos [name]
+aos [name/process-id]
 ```
 
 #### Flags
