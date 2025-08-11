@@ -44,18 +44,15 @@ function utils.matchesPattern(pattern, value, msg)
       return false
     end
   end
-  
   -- if the patternMatchSpec is a string, check it for special symbols (less `-` alone)
-  -- and exact string match mode with case-insensitive matching
+  -- and exact string match mode
   if (type(pattern) == 'string') then
     if string.match(pattern, "[%^%$%(%)%%%.%[%]%*%+%?]") then
-      -- For regex patterns, use case-insensitive matching
-      if string.match(string.lower(value or ""), string.lower(pattern)) then
+      if string.match(value, pattern) then
         return true
       end
     else
-      -- For exact string matches, compare case-insensitively
-      if string.lower(value or "") == string.lower(pattern) then
+      if value == pattern then
         return true
       end
     end
@@ -91,48 +88,28 @@ function utils.matchesSpec(msg, spec)
   end
   if type(spec) == 'table' then
     for key, pattern in pairs(spec) do
-      if not msg[key] then
+      -- The key can either be in the top level of the 'msg' object  
+      -- or in the body table of the msg
+      local msgValue = msg[key] or msg.body[key]
+      if not msgValue then
         return false
       end
-      if not utils.matchesPattern(pattern, msg[key], msg) then
+      local matchesMsgValue = utils.matchesPattern(pattern, msgValue, msg)
+      if not matchesMsgValue then
         return false
       end
+
     end
     return true
   end
 
-  if type(spec) == 'string' and msg.Action and msg.Action == spec then
+  if type(spec) == 'string' and msg.action and msg.action == spec then
+    return true
+  end
+  if type(spec) == 'string' and msg.body.action and msg.body.action == spec then
     return true
   end
   return false
-end
-
---- Normalizes a string to title case and converts underscores to dashes
--- @function utils.normalize
--- @tparam {string} str The string to normalize
--- @treturn {string} The normalized string
-utils.normalize = function(str)
-  if type(str) ~= "string" then return str end
-  
-  -- Convert underscores to dashes first
-  local result = str:gsub("_", "-")
-  -- Lowercase all letters
-  result = result:lower()
-  -- Capitalize first letter
-  result = result:gsub("^%l", string.upper)
-  -- Capitalize any letter following a dash
-  result = result:gsub("%-(%l)", function(match) return "-" .. string.upper(match) end)
-  return result
-end
-
---- Capitalize function
--- @param str
--- @returns string
-function utils.capitalize(str)
-  if type(str) ~= "string" or str == "" then
-    return str
-  end
-  return str:sub(1,1):upper() .. str:sub(2):lower()
 end
 
 --- Given a table, returns whether it is an array.
@@ -384,5 +361,20 @@ utils.values = function (t)
   end
   return values
 end
+
+--- Convert a message's tags to a table of key-value pairs
+-- @function Tab
+-- @tparam {table} msg The message containing tags
+-- @treturn {table} A table with tag names as keys and their values
+function utils.Tab(msg)
+  local inputs = {}
+  for _, o in ipairs(msg.Tags) do
+    if not inputs[o.name] then
+      inputs[o.name] = o.value
+    end
+  end
+  return inputs
+end
+
 
 return utils

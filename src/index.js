@@ -7,6 +7,7 @@ import chalk from 'chalk'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
+import prompts from 'prompts'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -53,13 +54,13 @@ let {
 let {
   spawnProcessRelay, sendMessageRelay, readResultRelay,
   monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
-  dryrunRelay, handleRelayTopup
+  dryrunRelay
 } = relaySvc
 
 let {
-  spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
+  spawnProcessMainnet, sendMessageMainnet,
   monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
-  dryrunMainnet
+  handleNodeTopup
 } = mainnetSvc
 
 if (!process.stdin.isTTY) {
@@ -121,37 +122,58 @@ if (argv.watch && argv.watch.length === 43) {
 
 splash()
 
-if (argv['relay']) {
-  console.log(`\n${chalk.gray('Using Relay:')} ${chalk.yellow(argv['relay'])}`);
-  process.env.RELAY_URL = argv['relay']
-  // replace services to use relay service
-  sendMessage = sendMessageRelay
-  spawnProcess = spawnProcessRelay
-  readResult = readResultRelay
-  monitorProcess = monitorProcessRelay
-  unmonitorProcess = unmonitorProcessRelay
-  live = liveRelay
-  printLive = printLiveRelay
-  dryrun = dryrunRelay
-
-  relayMode = true
+if (argv['scheduler']) {
+  process.env.SCHEDULER = argv['scheduler']
 }
-if (argv['mainnet']) {
-  console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
-  process.env.AO_URL = argv['mainnet']
-  // get scheduler if in mainnetmode
-  process.env.SCHEDULER = await fetch(`${process.env.AO_URL}/~meta@1.0/address`).then(res => res.text())
-  // replace services to use mainnet service
-  sendMessage = sendMessageMainnet
-  spawnProcess = spawnProcessMainnet
-  readResult = readResultMainnet
-  monitorProcess = monitorProcessMainnet
-  unmonitorProcess = unmonitorProcessMainnet
-  live = liveMainnet
-  printLive = printLiveMainnet
-  dryrun = dryrunMainnet
 
-  relayMode = true
+if (argv['authority']) {
+  process.env.AUTHORITY = argv['authority']
+}
+
+if (argv['url']) {
+  process.env.AO_URL = argv['url']
+}
+
+if (argv['mainnet']) {
+  if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
+    console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'));
+    process.exit(1);
+  }
+
+  try {
+    console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
+    process.env.AO_URL = argv['mainnet']
+    // get scheduler if in mainnetmode
+    // process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
+    process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
+    process.env.AUTHORITY = process.env.SCHEDULER
+    //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
+    // TODO: Need to allow these to be overridden if set via CLI and also need to 
+    // fallback to scheduler@1.0 for both
+    // process.env.EXECUTION_DEVICE = await prompts({
+    //     type: 'select',
+    //     name: 'device',
+    //     message: 'Please select a device',
+    //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
+    //     instructions: false
+    // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+
+    // replace services to use mainnet service
+    sendMessage = sendMessageMainnet
+    spawnProcess = spawnProcessMainnet
+    readResult = () => null
+    // monitorProcess = monitorProcessMainnet
+    // unmonitorProcess = unmonitorProcessMainnet
+    live = liveMainnet
+    printLive = printLiveMainnet
+    dryrun = () => null
+
+    relayMode = true
+  }
+  catch (e) {
+    console.error(chalk.red('Error connecting to ' + argv['mainnet']));
+    process.exit(1);
+  }
 }
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
@@ -168,13 +190,18 @@ if (argv['mu-url']) {
   process.env.MU_URL = argv['mu-url']
 }
 
+if (argv['authority']) {
+  console.log(chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', ')))
+  process.env.AUTHORITY = argv['authority']
+}
+
 async function runProcess() {
   if (!argv.watch) {
     of()
       .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
       .chain(jwk => {
         // make wallet available to services if relay mode
-        if (argv['relay']) {
+        if (argv['relay'] || argv['mainnet']) {
           process.env.WALLET = JSON.stringify(jwk)
         }
         // handle list option, need jwk in order to do it.
@@ -183,18 +210,27 @@ async function runProcess() {
         }
         return Resolved(jwk)
       })
-      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql })
+      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
         .map(id => ({ jwk, id }))
       )
       .toPromise()
       .then(async ({ jwk, id }) => {
         let editorMode = false
         let editorData = ''
-
         const history = readHistory(id)
 
-        if (argv.relay && argv.topup) {
-          await handleRelayTopup(jwk, false);
+        // this can be improved, but for now if ao-url is set
+        // we will use hyper mode
+        if (process.env.AO_URL !== "undefined") {
+          process.env.WALLET = JSON.stringify(jwk)
+          sendMessage = sendMessageMainnet
+          readResult = () => null
+          live = liveMainnet
+          printLive = printLiveMainnet
+        }
+
+        if (argv.mainnet && argv.topup) {
+          await handleNodeTopup(jwk, false);
         }
 
         if (luaData.length > 0 && argv.load) {
@@ -236,12 +272,14 @@ async function runProcess() {
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
+
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
         // check loading files flag
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)
+        cron.start()
 
         const spinner = ora({
           spinner: 'dots',
@@ -304,6 +342,7 @@ async function runProcess() {
           }
           // pause live
           if (!editorMode && line === '.pause') {
+            console.log("=== pausing live feed ===")
             // pause live feed
             cron.stop()
             rl.prompt(true)
@@ -465,9 +504,9 @@ async function runProcess() {
             console.timeEnd(chalk.gray('Elapsed'))
           }
 
-          if (cron) {
-            cron.start()
-          }
+          // if (cron) {
+          //   cron.start()
+          // }
 
           // rl.close()
           // repl()
@@ -490,7 +529,7 @@ async function runProcess() {
         if (argv.list) {
           console.log(e)
         } else {
-          if (argv.relay) {
+          if (argv.mainnet) {
             let jwk;
             if (process.env.WALLET) {
               try {
@@ -501,12 +540,12 @@ async function runProcess() {
             }
 
             try {
-              const topupSuccess = await handleRelayTopup(jwk, true);
+              const topupSuccess = await handleNodeTopup(jwk, true);
               if (topupSuccess) {
                 return runProcess();
               }
             } catch (topupError) {
-              console.error('Error handling relay topup:', topupError);
+              console.error('Error handling node topup:', topupError);
               process.exit(1);
             }
           }
@@ -516,7 +555,6 @@ async function runProcess() {
           if (argv.load) {
             console.log(e.message)
           } else {
-            console.log(e)
             console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
             process.exit(1)
           }
@@ -536,13 +574,20 @@ async function connect(jwk, id) {
   spinner.start()
   spinner.suffixText = chalk.gray('[Connecting to process...]')
 
+  // TODO: remove swallow first error
+  let promptResult = undefined
+  let _prompt = undefined
   // need to check if a process is registered or create a process
-  let promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
-  let _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
+  promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner, true)
+  _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
-      spinner.suffixText = chalk.red('[Connecting to process....]')
-      await new Promise(resolve => setTimeout(resolve, 500 * i))
+      if (i === 0) {
+        spinner.suffixText = chalk.gray('[Connecting to process...]')
+      } else {
+        spinner.suffixText = chalk.red('[Connecting to process...]')
+      }
+      // await new Promise(resolve => setTimeout(resolve, 10 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
       // console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
@@ -557,7 +602,10 @@ async function connect(jwk, id) {
   }
   const aosVersion = getPkg().aos.version
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
-    console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+    // only prompt for updates if version is not eq to dev
+    if (promptResult.Output.data !== "dev") {
+      console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+    }
   }
   return _prompt
 }

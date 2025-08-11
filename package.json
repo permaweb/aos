@@ -1,6 +1,6 @@
 {
   "name": "@permaweb/aos",
-  "version": "2.0.6",
+  "version": "2.0.7",
   "private": true,
   "repository": "https://github.com/permaweb/aos.git",
   "license": "MIT",
@@ -22,7 +22,7 @@
     "test-all": "yarn workspaces --parallel run test"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "^0.0.68",
+    "@permaweb/aoconnect": "^0.0.85",
     "arweave": "^1.15.1",
     "chalk": "^5.3.0",
     "figlet": "^1.7.0",
@@ -36,6 +36,7 @@
     "prompts": "^2.4.2",
     "semver": "^7.5.4",
     "tar-stream": "^3.1.7",
+    "undici": "^7.8.0",
     "yargs": "^17.7.2"
   },
   "devDependencies": {
@@ -46,14 +47,17 @@
     "husky": "^9.1.6",
     "lint-staged": "^15.2.10",
     "markdown-toc-gen": "^1.1.0",
+    "shelljs": "^0.9.2",
     "sort-package-json": "^2.10.1",
-    "standard": "^17.1.2",
-    "shelljs": "^0.9.2"
+    "standard": "^17.1.2"
   },
   "aos": {
-    "module": "QEgxNlbNwBi10VXu5DbP6XHoRDHcynP_Qbq3lpNC97s",
-    "sqlite": "Ka08x7JWLMm_K3vPRnqMU22hh3dehPUUyC7pnW2DvvQ",
-    "llama": "TQ2lVatVR4dcB7ReZ65NfaCJSbF3sxRX1OdM77vO7y8",
+    "module": "ISShJH1ij-hPPt9St5UFFr_8Ys3Kj5cyg7zrMGt7H9s",
+    "sqlite": "ei1VSwheQnNIG87iqlwxiQk-sWY5ikj4DFBxcpFZ-S4",
+    "llama": "QkFLfRXw8MOeHMNoHK0tyno17wbSxCecATohFMaULKM",
     "version": "2.0.4"
+  },
+  "hyper": {
+    "module": "xVcnPK8MPmcocS6zwq1eLmM2KhfyarP8zzmz3UVi1g4"
   }
 }

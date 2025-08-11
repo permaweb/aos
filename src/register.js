@@ -1,8 +1,13 @@
 /**
- * create a new account for a given wallet, for this demo only one process per jwk.
- * 
- * register -w ./wallet.json
- * 
+ * Process Registration Module
+ *
+ * Exports the `register` function to manage AO processes on Arweave's Permaweb:
+ * - Finds existing processes/modules via GraphQL queries.
+ * - Interactively prompts CLI users when multiple results are found.
+ * - Creates AO processes with optional data payloads, cron schedules, and tags.
+ *
+ * Built with functional async (`hyper-async`), minimist (CLI args), prompts
+ * (interactive selection), and file-system utilities for enhanced flexibility.
  */
 
 import { of, Resolved, Rejected, fromPromise } from 'hyper-async'
@@ -37,39 +42,29 @@ export function register(jwk, services) {
   const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
   const findProcess = (ctx) => {
     const { address, name } = ctx
-
     const argv = minimist(process.argv.slice(2))
+    const gqlQueryError = _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }) 
+    const handleQueryResults = results => results?.length > 0
+      ? Resolved(results.reverse())
+      : Rejected({ ...ctx, ok: true })
 
     return services
       .gql(queryForAOS(name), { owners: [address, argv.address || ""] })
       .map(utils.path(['data', 'transactions', 'edges']))
-      .bichain(
-        _ => Rejected({ ok: false, error: 'GRAPHQL Error trying to locate process.' }),
-        results => results?.length > 0
-            ? Resolved(results.reverse())
-            /**
-             * No process was found that matches the name, module and owners
-             * But no catastrophic error occured. 
-             * 
-             * By rejecting with 'ok: true' we are signaling that a 
-             * new process should be spawned with the given criteria
-             */
-            : Rejected({ ...ctx, ok: true })
-      )
+      .bichain(gqlQueryError, handleQueryResults)
   }
+  
+  const getResultId = results => results.length === 1
+    ? Resolved(results[0].node.id)
+    : Rejected(results)
 
   const selectModule = (results) =>
-    of(results).chain((results) => {
-      if (!results?.length) return Rejected({ ok: false, error: 'No module found with provided name.' })
-
-      return of(results)
-        .chain((results) => {
-          if (results.length === 1) return Resolved(results[0].node.id)
-          return Rejected(results)
-        })
+    of(results).chain((results) => !results?.length
+      ? Rejected({ ok: false, error: 'No module found with provided name.' })
+      : of(results)
+        .chain(getResultId)
         .bichain(fromPromise(promptUser), Resolved)
-    })
-  
+    )
 
   const findModule = ctx => {
     const AOS_MODULE = process.env.AOS_MODULE;
@@ -84,22 +79,41 @@ export function register(jwk, services) {
       .chain(selectModule)
       .map((moduleId) => ({ ...ctx, ok: true, module: moduleId }))
   }
+ 
+  // pick the process type for new process, it can be either aos or hyper-aos
+  const pickProcessType = fromPromise(async function (ctx) {
+    const processOS = await prompts({
+      type: 'select',
+      name: 'device',
+      message: 'Please select',
+      choices: [{ title: 'aos', value: 'aos' }, { title: 'hyper-aos (experimental - DO NOT USE FOR PRODUCTION)', value: 'hyper' }],
+      instructions: false
+    }).then(res => res.device).catch(e => "aos")
+    ctx.processType = processOS
+    return ctx
+  })
 
   const createProcess = (ctx) => {
     const { ok, name, spawnTags, module, error } = ctx
     if (!ok) {
       return Rejected({ error: error || 'Unknown error occured' })
     }
-    let data = "1984"
+    let appName = "aos"
+    if (process.env.AO_URL !== "undefined") {
+      appName = "hyper-aos"
+    }
+    let data = ""
     let tags = [
-      { name: 'App-Name', value: 'aos' },
+      { name: 'App-Name', value: appName },
       { name: 'Name', value: name },
       { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
       ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))
+    const cronExp = /^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/
+
     if (argv.cron) {
-      if (/^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/.test(argv.cron)) {
+      if (cronExp.test(argv.cron)) {
         tags = [...tags,
         { name: 'Cron-Interval', value: argv.cron },
         { name: 'Cron-Tag-Action', value: 'Cron' }
@@ -115,6 +129,24 @@ export function register(jwk, services) {
       }
     }
 
+    // if process type is hyper then lets spawn a process
+    // using mainnet for pure hyperbeam aos
+    if (ctx.processType === "hyper") {
+      if (process.env.AO_URL === "undefined") {
+        process.env.AO_URL = "https://forward.computer"
+        process.env.SCHEDULER = "NoZH3pueH0Cih6zjSNu_KRAcmg4ZJV1aGHKi0Pi5_Hc"
+        process.env.AUTHORITY = "undefined"
+      }
+      return services.spawnProcessMainnet({
+        wallet: jwk,
+        src: module,
+        tags,
+        data,
+        isHyper: true
+      })
+    }
+
+
     return services.spawnProcess({
       wallet: jwk,
       src: module,
@@ -125,6 +157,14 @@ export function register(jwk, services) {
 
   const alreadyRegistered = async (results) => {
     if (results.length == 1) {
+      // this handles the case when a user enters a process name
+      // we can check to see if it is a hyper-aos process
+      if (process.env.AO_URL === "undefined") {
+        const appName = results[0].node.tags.find(t => t.name == "App-Name")?.value || 'aos'
+        if (appName === "hyper-aos") {
+          process.env.AO_URL = "https://forward.computer"
+        }
+      }
       return Promise.resolve(results[0].node.id)
     }
 
@@ -135,6 +175,7 @@ export function register(jwk, services) {
         value: r.node.id
       }
     })
+
     return prompts({
       type: 'select',
       name: 'process',
@@ -143,6 +184,10 @@ export function register(jwk, services) {
       instructions: false
     })
       .then(r => r.process)
+      .then(id => {
+        // TODO: we need to locate this process and check to see if the process
+        // is a hyper-aos process then set the AO_URL if not already set
+      })
       .catch(() => Promise.reject({ ok: false, error: 'Error selecting process' }))
   }
 
@@ -163,47 +208,18 @@ export function register(jwk, services) {
   if (services.isAddress(name)) {
     return of(name)
   }
+  const doRegister = ctx => !ctx.ok ? Rejected(ctx) : findModule(ctx)
+    .chain(pickProcessType)
+    .chain(createProcess)
+
+  const resolveId = fromPromise(alreadyRegistered)
 
   return of({ jwk, name, spawnTags, module: argv.module })
     .chain(getAddress)
     .chain(findProcess)
-    .bichain(
-      (ctx) => {
-        if (!ctx.ok) return Rejected(ctx)
-        return findModule(ctx).chain(createProcess)
-      },
-      fromPromise(alreadyRegistered)
-    )
+    .bichain(doRegister, resolveId)
     
 }
-
-// function queryForTransfered(name) {
-//   return `query ($recipients: [String!]!) {
-//     transactions(
-//       first: 100,
-//       recipients: $recipients,
-//       tags:[
-//         { name:"Data-Protocol", values: ["ao"]},
-//         { name:"Variant", values:["ao.TN.1"]},
-//         { name:"Type", values:["Process-Transfer"]},
-//         { name:"Name", values:["${name}"]}
-//       ],
-//       sort:HEIGHT_ASC
-//     ) {
-//       edges {
-//         node {
-//           id
-//           tags {
-//             name 
-//             value 
-//           }
-
-//         }
-//       }
-//     }
-//   }
-//   `
-// }
 
 function queryForAOS(name) {
   return `query ($owners: [String!]!) {

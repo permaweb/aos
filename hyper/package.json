@@ -1,0 +1,14 @@
+{
+  "type": "module",
+  "name": "hyper",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "node bundle.js > hyper-aos.lua",
+    "deploy": "arx upload hyper-aos.lua -t arweave -w $WALLET_FILE --content-type text/x-lua --tags data-protocol ao"
+  },
+  "dependencies": {
+    "figlet": "^1.8.1"
+  }
+}
