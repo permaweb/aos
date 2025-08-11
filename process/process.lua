@@ -48,14 +48,14 @@ local maxInboxCount = 10000
 local aosend = ao.send
 local aospawn = ao.spawn
 
-ao.send = function (msg)
+ao.send = function(msg)
   if msg.Data and type(msg.Data) == 'table' then
     msg['Content-Type'] = 'application/json'
     msg.Data = require('json').encode(msg.Data)
   end
   return aosend(msg)
 end
-ao.spawn = function (module, msg) 
+ao.spawn = function(module, msg)
   if msg.Data and type(msg.Data) == 'table' then
     msg['Content-Type'] = 'application/json'
     msg.Data = require('json').encode(msg.Data)
@@ -100,12 +100,12 @@ end
 local function removeLastThreeLines(input)
   local lines = {}
   for line in input:gmatch("([^\n]*)\n?") do
-      table.insert(lines, line)
+    table.insert(lines, line)
   end
 
   -- Remove the last three lines
   for i = 1, 3 do
-      table.remove(lines)
+    table.remove(lines)
   end
 
   -- Concatenate the remaining lines
@@ -119,7 +119,7 @@ local function insertInbox(msg)
   table.insert(Inbox, msg)
   if #Inbox > maxInboxCount then
     local overflow = #Inbox - maxInboxCount
-    for i = 1,overflow do
+    for i = 1, overflow do
       table.remove(Inbox, 1)
     end
   end
@@ -158,9 +158,9 @@ end
 -- @treturn {string} The custom command prompt string
 function Prompt()
   return Colors.green .. Name .. Colors.gray
-    .. "@" .. Colors.blue .. "aos-" .. process._version .. Colors.gray
-    .. "[Inbox:" .. Colors.red .. tostring(#Inbox) .. Colors.gray
-    .. "]" .. Colors.reset .. "> "
+      .. "@" .. Colors.blue .. "aos-" .. process._version .. Colors.gray
+      .. "[Inbox:" .. Colors.red .. tostring(#Inbox) .. Colors.gray
+      .. "]" .. Colors.reset .. "> "
 end
 
 --- Print a value, formatting tables and converting non-string types
@@ -182,15 +182,15 @@ In order to print non string types we need to convert to string
   if type(a) == "number" then
     a = Colors.green .. tostring(a) .. Colors.reset
   end
-  
+
   local data = a
   if ao.outbox.Output.data then
-    data =  ao.outbox.Output.data .. "\n" .. a
+    data = ao.outbox.Output.data .. "\n" .. a
   end
   ao.outbox.Output = { data = data, prompt = Prompt(), print = true }
 
   -- Only supported for newer version of AOS
-  if HANDLER_PRINT_LOGS then 
+  if HANDLER_PRINT_LOGS then
     table.insert(HANDLER_PRINT_LOGS, a)
     return nil
   end
@@ -269,8 +269,8 @@ Seeded = Seeded or false
 local function stringToSeed(s)
   local seed = 0
   for i = 1, #s do
-      local char = string.byte(s, i)
-      seed = seed + char
+    local char = string.byte(s, i)
+    seed = seed + char
   end
   return seed
 end
@@ -282,8 +282,8 @@ end
 local function initializeState(msg, env)
   if not Seeded then
     chance.seed(tonumber(msg['Block-Height'] .. stringToSeed(msg.Owner .. msg.Module .. msg.Id)))
-    math.random = function (...)
-      local args = {...}
+    math.random = function(...)
+      local args = { ... }
       local n = #args
       if n == 0 then
         return chance.random()
@@ -319,7 +319,6 @@ local function initializeState(msg, env)
       Name = 'aos'
     end
   end
-
 end
 
 --- Prints the version of the process
@@ -339,7 +338,7 @@ function process.handle(msg, _)
   else
     env = _.env
   end
-  
+
   ao.init(env)
   -- relocate custom tags to root message
   msg = normalizeMsg(msg)
@@ -347,9 +346,9 @@ function process.handle(msg, _)
   ao.id = ao.env.Process.Id
   initializeState(msg, ao.env)
   HANDLER_PRINT_LOGS = {}
-  
+
   -- set os.time to return msg.Timestamp
-  os.time = function () return msg.Timestamp end
+  os.time = function() return msg.Timestamp end
 
   -- tagify msg
   msg.TagArray = msg.Tags
@@ -386,19 +385,19 @@ function process.handle(msg, _)
     --   Send({Target = msg.From, Data = "Message is not trusted by this process!"})
     -- end
     print('Message is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
-    return ao.result({ }) 
+    return ao.result({})
   end
 
   if ao.isAssignment(msg) and not ao.isAssignable(msg) then
     if msg.From ~= ao.id then
-      Send({Target = msg.From, Data = "Assignment is not trusted by this process!"})
+      Send({ Target = msg.From, Data = "Assignment is not trusted by this process!" })
     end
     print('Assignment is not trusted! From: ' .. msg.From .. ' - Owner: ' .. msg.Owner)
-    return ao.result({ })
+    return ao.result({})
   end
 
   Handlers.add("_eval",
-    function (msg)
+    function(msg)
       return msg.Action == "Eval" and Owner == msg.From
     end,
     require('.eval')(ao)
@@ -409,46 +408,46 @@ function process.handle(msg, _)
   -- Only run bootloader when Process Message is First Message
   if env.Process.Id == msg.Id then
     Handlers.once("_boot",
-      function (msg)
-        return msg.Tags.Type == "Process" and Owner == msg.From 
+      function(msg)
+        return msg.Tags.Type == "Process" and Owner == msg.From
       end,
       require('.boot')(ao)
     )
   end
 
-  Handlers.append("_default", function () return true end, require('.default')(insertInbox))
+  Handlers.append("_default", function() return true end, require('.default')(insertInbox))
 
   -- call evaluate from handlers passing env
   msg.reply =
-    function(replyMsg)
-      replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
-      replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
-      replyMsg["X-Origin"] = msg["X-Origin"] or nil
+      function(replyMsg)
+        replyMsg.Target = msg["Reply-To"] or (replyMsg.Target or msg.From)
+        replyMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+        replyMsg["X-Origin"] = msg["X-Origin"] or nil
 
-      return ao.send(replyMsg)
-    end
-  
-  msg.forward =
-    function(target, forwardMsg)
-      -- Clone the message and add forwardMsg tags
-      local newMsg =  ao.sanitize(msg)
-      forwardMsg = forwardMsg or {}
-
-      for k,v in pairs(forwardMsg) do
-        newMsg[k] = v
+        return ao.send(replyMsg)
       end
 
-      -- Set forward-specific tags
-      newMsg.Target = target
-      newMsg["Reply-To"] = msg["Reply-To"] or msg.From
-      newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
-      newMsg["X-Origin"] = msg["X-Origin"] or msg.From
-      -- clear functions
-      newMsg.reply = nil
-      newMsg.forward = nil 
-      
-      ao.send(newMsg)
-    end
+  msg.forward =
+      function(target, forwardMsg)
+        -- Clone the message and add forwardMsg tags
+        local newMsg = ao.sanitize(msg)
+        forwardMsg = forwardMsg or {}
+
+        for k, v in pairs(forwardMsg) do
+          newMsg[k] = v
+        end
+
+        -- Set forward-specific tags
+        newMsg.Target = target
+        newMsg["Reply-To"] = msg["Reply-To"] or msg.From
+        newMsg["X-Reference"] = msg["X-Reference"] or msg.Reference
+        newMsg["X-Origin"] = msg["X-Origin"] or msg.From
+        -- clear functions
+        newMsg.reply = nil
+        newMsg.forward = nil
+
+        ao.send(newMsg)
+      end
 
   local co = coroutine.create(
     function()
@@ -472,22 +471,22 @@ function process.handle(msg, _)
       table.insert(Errors, result)
       local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
       return { Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result }
-    end 
+    end
     --table.insert(Errors, result)
     --ao.outbox.Output.data = ""
     if msg.Action then
-      print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action  .. Colors.reset)
+      print(Colors.red .. "Error" .. Colors.gray .. " handling message with Action = " .. msg.Action .. Colors.reset)
     else
       print(Colors.red .. "Error" .. Colors.gray .. " handling message " .. Colors.reset)
     end
     print(Colors.green .. result .. Colors.reset)
     print("\n" .. Colors.gray .. removeLastThreeLines(debug.traceback()) .. Colors.reset)
     local printData = table.concat(HANDLER_PRINT_LOGS, "\n")
-    return ao.result({Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
+    return ao.result({ Error = printData .. '\n\n' .. Colors.red .. 'error:\n' .. Colors.reset .. result, Messages = {}, Spawns = {}, Assignments = {} })
   end
-  
+
   if msg.Action == "Eval" then
-    local response = ao.result({ 
+    local response = ao.result({
       Output = {
         data = table.concat(HANDLER_PRINT_LOGS, "\n"),
         prompt = Prompt(),
@@ -497,8 +496,8 @@ function process.handle(msg, _)
     HANDLER_PRINT_LOGS = {} -- clear logs
     ao.Nonce = msg.Nonce
     return response
-  elseif msg.Tags.Type == "Process" and Owner == msg.From then 
-    local response = ao.result({ 
+  elseif msg.Tags.Type == "Process" and Owner == msg.From then
+    local response = ao.result({
       Output = {
         data = table.concat(HANDLER_PRINT_LOGS, "\n"),
         prompt = Prompt(),
@@ -510,7 +509,7 @@ function process.handle(msg, _)
     return response
 
     -- local response = nil
-  
+
     -- -- detect if there was any output from the boot loader call
     -- for _, value in pairs(HANDLER_PRINT_LOGS) do
     --   if value ~= "" then
@@ -519,8 +518,8 @@ function process.handle(msg, _)
     --     break
     --   end
     -- end
-  
-    -- if response == nil then 
+
+    -- if response == nil then
     --   -- there was no output from the Boot Loader eval, so we shouldn't print it
     --   response = ao.result({ Output = { data = "", prompt = Prompt() } })
     -- end
@@ -534,6 +533,9 @@ function process.handle(msg, _)
     return response
   end
 end
+
+-- Install latest apm
+apm = require('.apm')
 
 return process
 
