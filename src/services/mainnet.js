@@ -64,15 +64,17 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     path: `/${processId}~process@1.0/push/serialize~json@1.0`,
     method: 'POST',
     ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
-    data: data,
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     target: processId,
     "accept-bundle": "true",
     // "accept-codec": "httpsig@1.0",
-    "signingFormat": "ANS-104"
+    "signing-format": "ANS-104"
   }
-
+  // set data if needed
+  if (data) {
+    params.data = data
+  }
   return of(params)
     .chain(submitRequest)
     .map(prop('body'))
@@ -93,7 +95,8 @@ const setScheduler = fromPromise(async function (ctx) {
       .then(r => r.text())
   } 
   ctx['scheduler'] = scheduler
-  ctx['scheduler-location'] = scheduler
+  // should no longer need scheduler-location
+  // ctx['scheduler-location'] = scheduler
   
   return ctx
 
@@ -152,7 +155,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     'aos-version': pkg.version,
     'accept-bundle': 'true',
     'codec-device': 'ans104@1.0',
-    'signingFormat': 'ANS-104'
+    'signing-format': 'ANS-104'
   }
   if (data) {
     params.data = data
