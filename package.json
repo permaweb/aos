@@ -1,6 +1,6 @@
 {
   "name": "@permaweb/aos",
-  "version": "2.0.7",
+  "version": "2.0.8-alpha",
   "private": true,
   "repository": "https://github.com/permaweb/aos.git",
   "license": "MIT",

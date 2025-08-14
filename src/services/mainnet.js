@@ -60,15 +60,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
   const params = {
-    Type: 'Message',
+    type: 'Message',
     path: `/${processId}~process@1.0/push/serialize~json@1.0`,
     method: 'POST',
-    ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
+    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     target: processId,
-    "accept-bundle": "true",
-    // "accept-codec": "httpsig@1.0",
     "signing-format": "ANS-104"
   }
   // set data if needed
@@ -95,8 +93,6 @@ const setScheduler = fromPromise(async function (ctx) {
       .then(r => r.text())
   } 
   ctx['scheduler'] = scheduler
-  // should no longer need scheduler-location
-  // ctx['scheduler-location'] = scheduler
   
   return ctx
 
@@ -116,8 +112,8 @@ const setAuthority = fromPromise(async function (ctx) {
     }
     authority = authority + ',fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY'
   }
-  ctx['Authority'] = authority
-  ctx['Authority'] = authority
+  // ctx['authority'] = authority
+  ctx['authority'] = authority
 
   return ctx
 })
@@ -144,17 +140,16 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
   const params = {
     path: '/push',
     method: 'POST',
-    Type: 'Process',
+    type: 'Process',
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
     'push-device': 'push@1.0',
     'execution-device': 'lua@5.3a',
     'data-protocol': 'ao',
     variant: 'ao.N.1',
-    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'aos-version': pkg.version,
-    'accept-bundle': 'true',
-    'codec-device': 'ans104@1.0',
+    // 'accept-bundle': 'true',
     'signing-format': 'ANS-104'
   }
   if (data) {
@@ -166,9 +161,9 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     .chain(params => isHyper ? of(params) : getExecutionDevice(params))
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
-        p.Module = process.env.AOS_MODULE || pkg.hyper.module
+        p.module = process.env.AOS_MODULE || pkg.hyper.module
       } else {
-        p.Module = src
+        p.module = src
       }
       return p
     })
