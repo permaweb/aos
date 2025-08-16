@@ -15,7 +15,7 @@
 -- Built with ❤️ by BetterIDEa
 
 
-local apm_id = "DKF8oXtPvh3q8s0fJFIeHFyHNM6oKrwMCUrPxEMroak"
+local apm_id = "RLvG3tclmALLBCrwc17NqzNFqZCrUf3-RKZ5v8VRHiU"
 
 function Hexencode(str)
     return (str:gsub(".", function(char) return string.format("%02x", char:byte()) end))
