@@ -60,15 +60,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
   const params = {
-    Type: 'Message',
+    type: 'Message',
     path: `/${processId}~process@1.0/push/serialize~json@1.0`,
     method: 'POST',
-    ...tags.filter(t => t.name !== 'device').reduce((a, t) => assoc(t.name, t.value, a), {}),
+    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     target: processId,
-    "accept-bundle": "true",
-    // "accept-codec": "httpsig@1.0",
     "signing-format": "ANS-104"
   }
   // set data if needed
@@ -144,17 +142,16 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
   const params = {
     path: '/push',
     method: 'POST',
-    Type: 'Process',
+    type: 'Process',
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
     'push-device': 'push@1.0',
     'execution-device': 'lua@5.3a',
     'data-protocol': 'ao',
     variant: 'ao.N.1',
+    // ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
     'aos-version': pkg.version,
-    'accept-bundle': 'true',
-    'codec-device': 'ans104@1.0',
     'signing-format': 'ANS-104'
   }
   if (data) {
@@ -219,7 +216,7 @@ export async function liveMainnet(id, watch) {
       try {
         isJobRunning = true;
         // Get the current slot
-        const currentSlotPath = `/${id}~process@1.0/slot/current/body/serialize~json@1.0`        // LIVE PARAMS
+        const currentSlotPath = `/${id}~process@1.0/slot/current`        // LIVE PARAMS
         const currentSlotParams = {
           path: currentSlotPath,
           method: 'POST',
@@ -227,14 +224,12 @@ export async function liveMainnet(id, watch) {
           'data-protocol': 'ao',
           variant: 'ao.N.1',
           'aos-version': pkg.version,
-          signingFormat: 'ANS-104',
-          "accept-bundle": "true",
-          "accept-codec": "httpsig@1.0"
+          'signing-format': 'ANS-104'
         }
         const currentSlot = await request(currentSlotParams)
           .then(res => res.body)
-          .then(JSON.parse)
-          .then(res => res.body)
+          // .then(JSON.parse)
+          // .then(res => res.body)
 
         if (isNaN(cursor)) {
           cursor = currentSlot + 1
@@ -252,9 +247,7 @@ export async function liveMainnet(id, watch) {
             'push-device': 'push@1.0',
             variant: 'ao.N.1',
             'aos-version': pkg.version,
-            signingFormat: 'ANS-104',
-            "accept-bundle": "true",
-            "accept-codec": "httpsig@1.0"
+            'signing-format': 'ANS-104',
           }
           const results = await request(params)
             .then(res => res.body)
@@ -451,13 +444,11 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
       'data-protocol': 'ao',
       variant: 'ao.N.1',
       target: PAYMENT.subledger,
-      'accept-bundle': 'true',
-      'accept-codec': 'httpsig@1.0',
-      'signingFormat': 'ANS-104',
+      'signing-format': 'ANS-104',
       action: 'Transfer',
-      Recipient: walletAddress,
-      Route: ledgerAddress,
-      Quantity: sendQuantity
+      recipient: walletAddress,
+      route: ledgerAddress,
+      quantity: sendQuantity
     }
 
     const transferRes = await aoMainnet.request(transferParams);
