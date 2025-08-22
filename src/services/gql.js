@@ -17,7 +17,7 @@ export function gql(query, variables) {
 }
 
 const ARWEAVE_GRAPHQL = process.env.ARWEAVE_GRAPHQL || (
-  process.env.GATEWAY_URL ? new URL('/graphql', process.env.GATEWAY_URL) : 'https://arweave.net/graphql'
+  process.env.GATEWAY_URL ? new URL('/graphql', process.env.GATEWAY_URL) : 'https://ao-search-gateway.goldsky.com'
 )
 function queryArweave(body) {
   return fromPromise(() => fetch(ARWEAVE_GRAPHQL, {
