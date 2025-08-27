@@ -14,7 +14,7 @@ if (argv['dev']) {
   console.log('MU', process.env.MU_URL)
   console.log('SCHEDULER', process.env.SCHEDULER)
 } else {
-  process.env.GATEWAY_URL ||= 'https://arweave.net'
+  process.env.GATEWAY_URL ||= 'https://ao-search-gateway.goldsky.com'
   process.env.CU_URL ||= 'https://cu.ao-testnet.xyz'
   process.env.MU_URL ||= 'https://mu.ao-testnet.xyz'
 }

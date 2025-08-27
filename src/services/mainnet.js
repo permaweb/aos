@@ -431,13 +431,11 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
       'data-protocol': 'ao',
       variant: 'ao.N.1',
       target: PAYMENT.subledger,
-      'accept-bundle': 'true',
-      'accept-codec': 'httpsig@1.0',
-      'signingFormat': 'ANS-104',
+      'signing-format': 'ANS-104',
       action: 'Transfer',
-      Recipient: walletAddress,
-      Route: ledgerAddress,
-      Quantity: sendQuantity
+      recipient: walletAddress,
+      route: ledgerAddress,
+      quantity: sendQuantity
     }
 
     const transferRes = await aoMainnet.request(transferParams);
