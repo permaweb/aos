@@ -61,13 +61,13 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const submitRequest = fromPromise(request)
   const params = {
     type: 'Message',
-    path: `/${processId}~process@1.0/push/serialize~json@1.0`,
+    path: `/${processId}/push`,
     method: 'POST',
-    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'data-protocol': 'ao',
-    variant: 'ao.N.1',
     target: processId,
-    "signing-format": "ANS-104"
+    "signing-format": "ANS-104",
+    accept: 'application/json'
   }
   // set data if needed
   if (data) {
@@ -78,8 +78,6 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
     .map(prop('body'))
     .map(JSON.parse)
     .map(handleResults)
-
-
 }
 
 const setScheduler = fromPromise(async function (ctx) {
@@ -93,8 +91,6 @@ const setScheduler = fromPromise(async function (ctx) {
       .then(r => r.text())
   } 
   ctx['scheduler'] = scheduler
-  // should no longer need scheduler-location
-  // ctx['scheduler-location'] = scheduler
   
   return ctx
 
@@ -114,8 +110,8 @@ const setAuthority = fromPromise(async function (ctx) {
     }
     authority = authority + ',fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY'
   }
-  ctx['Authority'] = authority
-  ctx['Authority'] = authority
+  // ctx['authority'] = authority
+  ctx['authority'] = authority
 
   return ctx
 })
@@ -149,8 +145,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     'execution-device': 'lua@5.3a',
     'data-protocol': 'ao',
     variant: 'ao.N.1',
-    // ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
-    ...tags.reduce((a, t) => assoc(t.name, t.value, a), {}),
+    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'aos-version': pkg.version,
     'signing-format': 'ANS-104'
   }
@@ -163,9 +158,9 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     .chain(params => isHyper ? of(params) : getExecutionDevice(params))
     .map(p => {
       if (p['execution-device'] === 'lua@5.3a') {
-        p.Module = process.env.AOS_MODULE || pkg.hyper.module
+        p.module = process.env.AOS_MODULE || pkg.hyper.module
       } else {
-        p.Module = src
+        p.module = src
       }
       return p
     })
@@ -179,7 +174,10 @@ let _watch = false
 
 export function printLiveMainnet() {
   keys(globalThis.alerts).map(k => {
-    if (globalThis.alerts[k].print) {
+    // if (globalThis.alerts[k]) {
+    //   console.log(globalThis.alerts[k])
+    // }
+    if (globalThis.alerts[k] && globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
 
       if (!_watch) {
@@ -216,43 +214,32 @@ export async function liveMainnet(id, watch) {
       try {
         isJobRunning = true;
         // Get the current slot
-        const currentSlotPath = `/${id}~process@1.0/slot/current`        // LIVE PARAMS
+        const currentSlotPath = `/${id}/slot/current/body`        // LIVE PARAMS
         const currentSlotParams = {
           path: currentSlotPath,
-          method: 'POST',
-          device: 'process@1.0',
-          'data-protocol': 'ao',
-          variant: 'ao.N.1',
-          'aos-version': pkg.version,
-          'signing-format': 'ANS-104'
+          method: 'GET'
         }
         const currentSlot = await request(currentSlotParams)
-          .then(res => res.body)
-          // .then(JSON.parse)
-          // .then(res => res.body)
+          .then(res => Number(res.body || '0'))
 
         if (isNaN(cursor)) {
           cursor = currentSlot + 1
         }
         // Eval up to the current slot
         while (cursor <= currentSlot) {
-
-          const path = `/${id}~process@1.0/compute&slot=${cursor}/results/serialize~json@1.0`        // LIVE PARAMS
+          const path = `/${id}/compute=${cursor}`        // LIVE PARAMS
           const params = {
             path,
-            method: 'POST',
-            device: 'process@1.0',
-            'data-protocol': 'ao',
-            'scheduler-device': 'scheduler@1.0',
-            'push-device': 'push@1.0',
-            variant: 'ao.N.1',
-            'aos-version': pkg.version,
-            'signing-format': 'ANS-104',
+            method: 'GET',
+            accept: 'application/json',
+            'accept-bundle': 'true'
           }
           const results = await request(params)
             .then(res => res.body)
             .then(JSON.parse)
+            .then(prop('results'))
             .then(handleResults)
+            // .catch(e => ({ Output: {}}))
 
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {
