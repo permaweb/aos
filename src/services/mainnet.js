@@ -60,14 +60,15 @@ export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
   const { request } = setupMainnet(wallet)
   const submitRequest = fromPromise(request)
   const params = {
-    type: 'Message',
+    Type: 'Message',
     path: `/${processId}/push`,
     method: 'POST',
     ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'data-protocol': 'ao',
     target: processId,
     "signing-format": "ANS-104",
-    accept: 'application/json'
+    accept: 'application/json',
+    'accept-bundle': 'true'
   }
   // set data if needed
   if (data) {
@@ -214,12 +215,15 @@ export async function liveMainnet(id, watch) {
       try {
         isJobRunning = true;
         // Get the current slot
-        const currentSlotPath = `/${id}/slot/current/body`        // LIVE PARAMS
+        const currentSlotPath = `/${id}/slot/current`        // LIVE PARAMS
         const currentSlotParams = {
           path: currentSlotPath,
-          method: 'GET'
+          method: 'GET',
+          // accept: 'application/json',
+          // 'accept-bundle': 'true'
         }
         const currentSlot = await request(currentSlotParams)
+          // .then(res => res.json())
           .then(res => Number(res.body || '0'))
 
         if (isNaN(cursor)) {
