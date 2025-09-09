@@ -214,7 +214,7 @@ export async function liveMainnet(id, watch) {
       try {
         isJobRunning = true;
         // Get the current slot
-        const currentSlotPath = `/${id}/slot/current/body`        // LIVE PARAMS
+        const currentSlotPath = `/${id}/slot/current`        // LIVE PARAMS
         const currentSlotParams = {
           path: currentSlotPath,
           method: 'GET'
