@@ -205,9 +205,56 @@ export function register(jwk, services) {
       value: String(argv["tag-value"] || "")
     }]
   }
+
+  const getvariant = (url) => fromPromise(async (id) => {
+    return await fetch(`${url}/${id}/variant`)
+      .then(res => res.text())
+      .catch(err => Promise.rejected(id))
+
+  })
+
+  const queryGetVariant = (url) => fromPromise(async (id) => {
+    // return Promise.resolve({ name: "variant", value: "ao.TN.1" })
+    const res = await fetch(`${url}/graphql`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        query: `query ($id: ID!) { transaction(id: $id) { tags { name value } } }`,
+        variables: { id }
+      })
+    })
+    if (!res.ok) throw new Error('Failed')
+    const data = await res.json()
+    const tags = data.data.transaction.tags
+    const variantTag = tags.find(tag => tag.name.toLowerCase() === 'variant')
+    return variantTag?.value || null
+  })
+
   if (services.isAddress(name)) {
     return of(name)
+      .chain(getvariant('https://cache.forward.computer'))
+      .bichain(queryGetVariant('https://arweave-search.goldsky.com'), Resolved)
+      .map((variant) => {
+        if (variant === 'ao.N.1') {
+          if (!process.env.AO_URL || process.env.AO_URL === "undefined") {
+            process.env.AO_URL = "https://forward.computer"
+          }
+          return name
+        } else {
+          return name
+        }
+      })
   }
+
+  // if (services.isAddress(name)) {
+  //   return of(name)
+  //   // need to get the process from 
+  //   // https://cache.forward.computer or 
+  //   // https://arweave.net in a fall back mode
+  //   // check if variant is ao.N.1 and if so
+  //   // we need to put console into hyperbeam mode
+  //   // by setting the 
+  // }
   const doRegister = ctx => !ctx.ok ? Rejected(ctx) : findModule(ctx)
     .chain(pickProcessType)
     .chain(createProcess)
