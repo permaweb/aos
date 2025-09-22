@@ -142,7 +142,9 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     device: 'process@1.0',
     'scheduler-device': 'scheduler@1.0',
     'push-device': 'push@1.0',
-    'execution-device': 'lua@5.3a',
+    'execution-device': 'stack@1.0',
+    'device-stack/1': 'dedup@1.0',
+    'device-stack/2': 'lua@5.3a',
     'data-protocol': 'ao',
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
@@ -157,7 +159,7 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     .chain(setAuthority)
     .chain(params => isHyper ? of(params) : getExecutionDevice(params))
     .map(p => {
-      if (p['execution-device'] === 'lua@5.3a') {
+      if (p['execution-device'] === 'stack@1.0') {
         p.module = process.env.AOS_MODULE || pkg.hyper.module
       } else {
         p.module = src
