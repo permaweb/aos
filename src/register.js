@@ -94,6 +94,7 @@ export function register(jwk, services) {
   })
 
   const createProcess = (ctx) => {
+    const authority = process.env.AUTHORITY || 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY'
     const { ok, name, spawnTags, module, error } = ctx
     if (!ok) {
       return Rejected({ error: error || 'Unknown error occured' })
@@ -106,7 +107,7 @@ export function register(jwk, services) {
     let tags = [
       { name: 'App-Name', value: appName },
       { name: 'Name', value: name },
-      { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
+      { name: 'Authority', value: authority },
       ...(spawnTags || [])
     ]
     const argv = minimist(process.argv.slice(2))
