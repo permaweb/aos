@@ -35,6 +35,8 @@ ${chalk.green('Options:')}
   ${chalk.green('--topup')}                            Topup balance on an AO Mainnet (HyperBEAM) node (must be used alongside --mainnet).
   ${chalk.green('--watch=[process]')}                  Watch the console of a process, even if you are not the owner.
   ${chalk.green('--load [file]')}                      Load Lua source file(s) into your process.
+  ${chalk.green('--run "<lua code>"')}               Execute a single Lua expression non-interactively and exit (suppressing splash output).
+  ${chalk.green('--hyper')}                           Prefer hyper-aos when used with --run for non-interactive execution.
   ${chalk.green('--list')}                             Lists the processes for your wallet.
   ${chalk.green('--data [file]')}                      Set a file as the data when spawning a new process.
   ${chalk.green('--tag-name [name]')}                  Set a tag name for your process when spawning. Pair with --tag-value.

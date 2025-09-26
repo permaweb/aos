@@ -8,6 +8,7 @@ import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
 import prompts from 'prompts'
+import { resolveProcessTypeFromFlags, shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
 
 import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
 
@@ -42,6 +43,8 @@ import { readHistory, writeHistory } from './services/history-service.js'
 import { pad } from './commands/pad.js'
 
 const argv = minimist(process.argv.slice(2))
+const splashEnabled = shouldShowSplash(argv)
+const suppressVersionBanner = shouldSuppressVersionBanner(argv)
 
 let dryRunMode = false
 let luaData = ''
@@ -120,7 +123,9 @@ if (argv.watch && argv.watch.length === 43) {
   })
 }
 
-splash()
+if (splashEnabled) {
+  splash()
+}
 
 if (argv['scheduler']) {
   process.env.SCHEDULER = argv['scheduler']
@@ -232,7 +237,7 @@ async function runProcess() {
           await handleNodeTopup(jwk, false);
         }
 
-        if (luaData.length > 0 && argv.load) {
+        if (!argv.run && luaData.length > 0 && argv.load) {
           const spinner = ora({
             spinner: 'dots',
             suffixText: ''
@@ -254,7 +259,7 @@ async function runProcess() {
           console.error(chalk.red('Error! Could not find process ID.'))
           process.exit(0)
         }
-        version(id)
+        version(id, { suppressOutput: suppressVersionBanner })
 
         // kick start monitor if monitor option
         if (argv.monitor) {
@@ -268,6 +273,31 @@ async function runProcess() {
           const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
 
           await installUpdate(update, path.join(__dirname, '../'))
+        }
+
+        if (argv.run) {
+          if (!argv._.length) {
+            console.error(chalk.red('The --run flag requires a process name or address.'))
+            process.exit(1)
+          }
+
+          const spinner = ora({
+            spinner: 'dots',
+            suffixText: ''
+          })
+
+          spinner.start()
+          spinner.suffixText = chalk.gray('[Connecting to process...]')
+
+          const { ok } = await evaluateAndPrint({
+            line: argv.run,
+            id,
+            jwk,
+            spinner,
+            dryRunMode: argv['dry-run'] || argv.dryrun
+          })
+
+          process.exit(ok ? 0 : 1)
         }
 
         if (process.env.DEBUG) console.time(chalk.gray('Connecting'))
@@ -625,55 +655,106 @@ async function handleLoadArgs(jwk, id) {
   }
 }
 
-async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
-  spinner.start()
-  spinner.suffixText = chalk.gray('[Dispatching message...]')
-
-  // create message and publish to ao
-  let result = null
-  if (dryRunMode) {
-    result = await dryEval(line, id, jwk, { dryrun }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
-  } else {
-    result = await evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+async function evaluateAndPrint({
+  line,
+  id,
+  jwk,
+  spinner,
+  loadedModules = [],
+  dryRunMode = false,
+  setPrompt
+}) {
+  if (spinner) {
+    spinner.start()
+    spinner.suffixText = chalk.gray('[Dispatching message...]')
   }
-  const output = result.Output // JSON.parse(result.Output ? result.Output : '{"data": { "output": "error: could not parse result."}}')
-  // log output
-  // console.log(output)
-  spinner.stop()
 
-  if (result?.Error || result?.error) {
-    const error = parseError(result.Error || result.error)
+  const evaluator = dryRunMode
+    ? () => dryEval(line, id, jwk, { dryrun }, spinner)
+    : () => evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
+
+  const result = await evaluator()
+    .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+
+  if (spinner) {
+    spinner.stop()
+  }
+
+  const handled = handleEvaluationResult({
+    line,
+    result,
+    loadedModules,
+    dryRunMode,
+    setPrompt
+  })
+
+  return { ...handled, result }
+}
+
+function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPrompt }) {
+  const output = result?.Output
+  const errorPayload = result?.Error || result?.error
+
+  if (errorPayload) {
+    const error = parseError(errorPayload)
     if (error) {
-      // get what file the error comes from,
-      // if the line was loaded
       const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
-      // print error
       outputError(line, error, errorOrigin)
     } else {
-      console.log(chalk.red(result.Error || result.error))
+      console.log(chalk.red(errorPayload))
     }
-  } else {
-    if (output?.data) {
-      if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
-        console.log(output.data.output)
-      } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
-        console.log('')
-      } else {
-        console.log(output.data)
-      }
-      if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
-        globalThis.prompt = output.data.prompt ? output.data.prompt : globalThis.prompt
-      } else {
-        globalThis.prompt = output.prompt ? output.prompt : globalThis.prompt
-      }
-      rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
-      // rl.setPrompt(globalThis.prompt)
+
+    return { ok: false }
+  }
+
+  if (output?.data) {
+    if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
+      console.log(output.data.output)
+    } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
+      console.log('')
     } else {
-      if (!output) {
-        console.log(chalk.red('An unknown error occurred.'))
+      console.log(output.data)
+    }
+
+    const nextPrompt = Object.prototype.hasOwnProperty.call(output.data, 'prompt')
+      ? output.data.prompt
+      : output.prompt
+
+    if (nextPrompt) {
+      globalThis.prompt = nextPrompt
+      if (typeof setPrompt === 'function') {
+        setPrompt(dryRunMode ? chalk.red('*') + nextPrompt : nextPrompt)
       }
     }
+
+    return { ok: true, prompt: globalThis.prompt }
+  }
+
+  if (!output) {
+    console.log(chalk.red('An unknown error occurred.'))
+    return { ok: false }
+  }
+
+  if (typeof output === 'string') {
+    console.log(output)
+    return { ok: true, prompt: globalThis.prompt }
+  }
+
+  console.log(output)
+  return { ok: true, prompt: globalThis.prompt }
+}
+
+async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode) {
+  await evaluateAndPrint({
+    line,
+    id,
+    jwk,
+    spinner,
+    loadedModules,
+    dryRunMode,
+    setPrompt: (prompt) => rl.setPrompt(prompt)
+  })
+  if (dryRunMode) {
+    rl.setPrompt(chalk.red('*') + globalThis.prompt)
   }
 }
