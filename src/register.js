@@ -17,6 +17,7 @@ import minimist from 'minimist'
 import { getPkg } from './services/get-pkg.js'
 import fs from 'fs'
 import path from 'path'
+import { resolveProcessTypeFromFlags } from './services/process-type.js'
 
 const promptUser = (results) => {
   const choices = results.map((res, i) => {
@@ -82,13 +83,21 @@ export function register(jwk, services) {
  
   // pick the process type for new process, it can be either aos or hyper-aos
   const pickProcessType = fromPromise(async function (ctx) {
+    const argv = minimist(process.argv.slice(2))
+    const resolved = resolveProcessTypeFromFlags(argv)
+
+    if (resolved) {
+      ctx.processType = resolved
+      return ctx
+    }
+
     const processOS = await prompts({
       type: 'select',
       name: 'device',
       message: 'Please select',
       choices: [{ title: 'aos', value: 'aos' }, { title: 'hyper-aos (experimental - DO NOT USE FOR PRODUCTION)', value: 'hyper' }],
       instructions: false
-    }).then(res => res.device).catch(e => "aos")
+    }).then(res => res.device).catch(() => 'aos')
     ctx.processType = processOS
     return ctx
   })

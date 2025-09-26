@@ -11,7 +11,11 @@ import fs from 'fs'
 const UPDATE_URL = process.env.UPDATE_URL || 'https://get_ao.arweave.net'
 const pkg = getPkg()
 
-export function version(id) {
+export function version(id, options = {}) {
+  if (options.suppressOutput) {
+    return
+  }
+
   console.log(chalk.gray(`
 AOS Client Version: ${pkg.version}. 2025`))
   if (id) {
