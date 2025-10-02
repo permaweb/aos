@@ -290,21 +290,3 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply
     })
   end
 end)
-
---[[
- Burn
-]] --
-Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
-  assert(type(msg.Tags.Quantity) == 'string', 'Quantity is required!')
-  assert(bint(msg.Tags.Quantity) <= bint(Balances[msg.From]), 'Quantity must be less than or equal to the current balance!')
-
-  Balances[msg.From] = utils.subtract(Balances[msg.From], msg.Tags.Quantity)
-  TotalSupply = utils.subtract(TotalSupply, msg.Tags.Quantity)
-  if msg.reply then
-    msg.reply({
-      Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset
-    })
-  else
-    Send({Target = msg.From,  Data = Colors.gray .. "Successfully burned " .. Colors.blue .. msg.Tags.Quantity .. Colors.reset })
-  end
-end)
