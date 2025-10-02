@@ -197,6 +197,13 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
       end
       Send(creditNotice)
     end
+    
+    -- update process base state
+    local patchMsg = { device = "patch@1.0", balances = {} }
+    patchMsg.balances[msg.Recipient] = Balances[msg.Recipient]
+    patchMsg.balances[msg.From] = Balances[msg.From]
+    Send(patchMsg)
+
   else
     if msg.reply then
       msg.reply({
@@ -239,6 +246,11 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
         Data = Colors.gray .. "Successfully minted " .. Colors.blue .. msg.Quantity .. Colors.reset
       })
     end
+    -- update process base state
+    local patchMsg = { device = "patch@1.0", balances = {} }
+    patchMsg.balances[msg.From] = Balances[msg.From]
+    Send(patchMsg)
+    
   else
     if msg.reply then
       msg.reply({
