@@ -290,3 +290,11 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply
     })
   end
 end)
+
+
+-[[
+ Burn
+]] --
+Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
+  print('not implemented')
+end)
