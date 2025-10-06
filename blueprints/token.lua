@@ -77,14 +77,16 @@ Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(m
       Name = Name,
       Ticker = Ticker,
       Logo = Logo,
-      Denomination = tostring(Denomination)
+      Denomination = tostring(Denomination),
+      TotalSupply = TotalSupply
     })
   else
     Send({Target = msg.From, 
     Name = Name,
     Ticker = Ticker,
     Logo = Logo,
-    Denomination = tostring(Denomination)
+    Denomination = tostring(Denomination),
+    TotalSupply = TotalSupply
    })
   end
 end)
@@ -197,9 +199,17 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
       end
       Send(creditNotice)
     end
-    
     -- update process base state
-    local patchMsg = { device = "patch@1.0", balances = {} }
+    local patchMsg = { 
+      device = "patch@1.0",
+      balances = {},
+      ['token-info'] = {
+        Name = Name,
+        Ticker = Ticker,
+        Logo = Logo,
+        Denomination = tostring(Denomination),
+        TotalSupply = TotalSupply
+    }}
     patchMsg.balances[msg.Recipient] = Balances[msg.Recipient]
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
@@ -247,7 +257,16 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
       })
     end
     -- update process base state
-    local patchMsg = { device = "patch@1.0", balances = {} }
+    local patchMsg = { 
+      device = "patch@1.0",
+      balances = {},
+      ['token-info'] = {
+        Name = Name,
+        Ticker = Ticker,
+        Logo = Logo,
+        Denomination = tostring(Denomination),
+        TotalSupply = TotalSupply
+    }}
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
     
