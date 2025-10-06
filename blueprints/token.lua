@@ -204,11 +204,11 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
       device = "patch@1.0",
       balances = {},
       ['token-info'] = {
-        Name = Name,
-        Ticker = Ticker,
-        Logo = Logo,
-        Denomination = tostring(Denomination),
-        TotalSupply = TotalSupply
+        name = Name,
+        ticker = Ticker,
+        logo = Logo,
+        denomination = tostring(Denomination),
+        ["total-supply"] = TotalSupply
     }}
     patchMsg.balances[msg.Recipient] = Balances[msg.Recipient]
     patchMsg.balances[msg.From] = Balances[msg.From]
@@ -261,11 +261,11 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
       device = "patch@1.0",
       balances = {},
       ['token-info'] = {
-        Name = Name,
-        Ticker = Ticker,
-        Logo = Logo,
-        Denomination = tostring(Denomination),
-        TotalSupply = TotalSupply
+        name = Name,
+        ticker = Ticker,
+        logo = Logo,
+        denomination = tostring(Denomination),
+        ["total-supply"] = TotalSupply
     }}
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
