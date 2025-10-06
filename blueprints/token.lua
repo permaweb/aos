@@ -74,19 +74,19 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
   if msg.reply then
     msg.reply({
-      Name = Name,
-      Ticker = Ticker,
-      Logo = Logo,
-      Denomination = tostring(Denomination),
-      TotalSupply = TotalSupply
+      name = Name,
+      ticker = Ticker,
+      logo = Logo,
+      denomination = tostring(Denomination),
+      supply = TotalSupply
     })
   else
     Send({Target = msg.From, 
-    Name = Name,
-    Ticker = Ticker,
-    Logo = Logo,
-    Denomination = tostring(Denomination),
-    TotalSupply = TotalSupply
+      name = Name,
+      ticker = Ticker,
+      logo = Logo,
+      denomination = tostring(Denomination),
+      supply = TotalSupply
    })
   end
 end)
@@ -208,7 +208,7 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
         ticker = Ticker,
         logo = Logo,
         denomination = tostring(Denomination),
-        ["total-supply"] = TotalSupply
+        supply = TotalSupply
     }}
     patchMsg.balances[msg.Recipient] = Balances[msg.Recipient]
     patchMsg.balances[msg.From] = Balances[msg.From]
@@ -265,7 +265,7 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
         ticker = Ticker,
         logo = Logo,
         denomination = tostring(Denomination),
-        ["total-supply"] = TotalSupply
+        supply = TotalSupply
     }}
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
