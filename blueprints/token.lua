@@ -269,7 +269,6 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
     }}
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
-    
   else
     if msg.reply then
       msg.reply({
