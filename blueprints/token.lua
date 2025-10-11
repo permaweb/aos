@@ -74,17 +74,19 @@ Logo = Logo or 'SBCCXwwecBlDqRLUjb8dYABExTJXLieawf7m2aBJ-KY'
 Handlers.add('info', Handlers.utils.hasMatchingTag("Action", "Info"), function(msg)
   if msg.reply then
     msg.reply({
-      Name = Name,
-      Ticker = Ticker,
-      Logo = Logo,
-      Denomination = tostring(Denomination)
+      name = Name,
+      ticker = Ticker,
+      logo = Logo,
+      denomination = tostring(Denomination),
+      supply = TotalSupply
     })
   else
     Send({Target = msg.From, 
-    Name = Name,
-    Ticker = Ticker,
-    Logo = Logo,
-    Denomination = tostring(Denomination)
+      name = Name,
+      ticker = Ticker,
+      logo = Logo,
+      denomination = tostring(Denomination),
+      supply = TotalSupply
    })
   end
 end)
@@ -197,9 +199,17 @@ Handlers.add('transfer', Handlers.utils.hasMatchingTag("Action", "Transfer"), fu
       end
       Send(creditNotice)
     end
-    
     -- update process base state
-    local patchMsg = { device = "patch@1.0", balances = {} }
+    local patchMsg = { 
+      device = "patch@1.0",
+      balances = {},
+      ['token-info'] = {
+        name = Name,
+        ticker = Ticker,
+        logo = Logo,
+        denomination = tostring(Denomination),
+        supply = TotalSupply
+    }}
     patchMsg.balances[msg.Recipient] = Balances[msg.Recipient]
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
@@ -247,10 +257,18 @@ Handlers.add('mint', Handlers.utils.hasMatchingTag("Action","Mint"), function(ms
       })
     end
     -- update process base state
-    local patchMsg = { device = "patch@1.0", balances = {} }
+    local patchMsg = { 
+      device = "patch@1.0",
+      balances = {},
+      ['token-info'] = {
+        name = Name,
+        ticker = Ticker,
+        logo = Logo,
+        denomination = tostring(Denomination),
+        supply = TotalSupply
+    }}
     patchMsg.balances[msg.From] = Balances[msg.From]
     Send(patchMsg)
-    
   else
     if msg.reply then
       msg.reply({
@@ -292,7 +310,7 @@ Handlers.add('totalSupply', Handlers.utils.hasMatchingTag("Action","Total-Supply
 end)
 
 
--[[
+--[[
  Burn
 ]] --
 Handlers.add('burn', Handlers.utils.hasMatchingTag("Action",'Burn'), function(msg)
