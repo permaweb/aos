@@ -1,5 +1,4 @@
 import { connect, createDataItemSigner } from "@permaweb/aoconnect"
-import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
 import cron from 'node-cron'
@@ -11,7 +10,6 @@ import Arweave from 'arweave'
 
 const arweave = Arweave.init({})
 
-
 const pkg = getPkg()
 const getInfo = () => ({
   GATEWAY_URL: process.env.GATEWAY_URL,
@@ -19,99 +17,81 @@ const getInfo = () => ({
   MU_URL: process.env.MU_URL
 })
 
-const retryAsync = (fn, left, right, retries = 3) =>
-  fn().bichain(
-    err => (retries > 0 ? retryAsync(fn, retries - 1) : left(err)),
-    res => right(res)
-  );
+// Helper function to retry with delay
+async function retryWithDelay(fn, maxRetries = 21, delayMs = 500, spinner = null, initialRetries = ".") {
+  let retries = initialRetries
+  let lastError
 
-
-export function readResult(params) {
-
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 500))
-  )().chain(fromPromise(() => connect(getInfo()).result(params)))
-    // log the error messages most seem related to 503
-    // .bimap(_ => (console.log(_), _), _ => (console.log(_), _))
-    .bichain(fromPromise(() =>
-      new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
-    ),
-      Resolved
-    )
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, delayMs))
+        if (spinner) {
+          spinner.suffixText = chalk.gray('[Processing' + retries + ']')
+        } else {
+          console.log(chalk.gray('.'))
+        }
+        retries += "."
+      }
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (attempt === maxRetries - 1) {
+        throw lastError
+      }
+    }
+  }
+  throw lastError
 }
 
-export function dryrun({ processId, wallet, tags, data }, spinnner) {
-  return fromPromise(() =>
-    arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      connect(getInfo()).dryrun({ process: processId, Owner, tags, data })
-    )
-  )()
+export async function readResult(params) {
+  await new Promise(resolve => setTimeout(resolve, 500))
+
+  try {
+    return await connect(getInfo()).result(params)
+  } catch (error) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    throw params
+  }
 }
 
-export function sendMessage({ processId, wallet, tags, data }, spinner) {
-  let retries = "."
+export async function dryrun({ processId, wallet, tags, data }, spinner) {
+  const Owner = await arweave.wallets.jwkToAddress(wallet)
+  return await connect(getInfo()).dryrun({ process: processId, Owner, tags, data })
+}
+
+export async function sendMessage({ processId, wallet, tags, data }, spinner) {
   const signer = createDataItemSigner(wallet)
 
-  const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
-    .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
-      retries += "."
-      return _
-    })
-    .chain(fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data })))
-
-  return fromPromise(() => connect(getInfo()).message({ process: processId, signer, tags, data }))()
-    //.bimap(function (e) { console.log(e); return e }, function (a) { console.log(a); return a; })
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-  //.map(result => (console.log(result), result))
-
+  return await retryWithDelay(
+    () => connect(getInfo()).message({ process: processId, signer, tags, data }),
+    21,
+    500,
+    spinner
+  )
 }
 
-export function spawnProcess({ wallet, src, tags, data }) {
+export async function spawnProcess({ wallet, src, tags, data }) {
   const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
   const signer = createDataItemSigner(wallet)
 
   tags = tags.concat([{ name: 'aos-Version', value: pkg.version }])
-  return fromPromise(() => connect(getInfo()).spawn({
+  const result = await connect(getInfo()).spawn({
     module: src, scheduler: SCHEDULER, signer, tags, data
   })
-    .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
-  )()
 
+  await new Promise(resolve => setTimeout(resolve, 500))
+  return result
 }
 
-export function monitorProcess({ id, wallet }) {
+export async function monitorProcess({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).monitor({ process: id, signer }))()
-  //.map(result => (console.log(result), result))
-
+  return await connect(getInfo()).monitor({ process: id, signer })
 }
 
-export function unmonitorProcess({ id, wallet }) {
+export async function unmonitorProcess({ id, wallet }) {
   const signer = createDataItemSigner(wallet)
-  return fromPromise(() => connect(getInfo()).unmonitor({ process: id, signer }))()
-  //.map(result => (console.log(result), result))
-
+  return await connect(getInfo()).unmonitor({ process: id, signer })
 }
 
 let _watch = false
@@ -188,8 +168,8 @@ export async function live(id, watch) {
         edges = edges.sort((a, b) => JSON.parse(atob(a.cursor)).ordinate - JSON.parse(atob(b.cursor)).ordinate);
 
         // --- peek on previous line and if delete line if last prompt.
-        // --- key event can detect 
-        // count !== null && 
+        // --- key event can detect
+        // count !== null &&
         if (edges.length > 0) {
           edges.map(e => {
             if (!globalThis.alerts[e.cursor]) {

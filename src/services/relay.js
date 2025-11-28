@@ -1,6 +1,5 @@
 import { createPrivateKey } from 'node:crypto'
 import { connect } from '@permaweb/aoconnect'
-import { fromPromise, Resolved, Rejected } from 'hyper-async'
 import readline from 'readline';
 import ora from 'ora'
 import chalk from 'chalk'
@@ -34,92 +33,93 @@ const setupRelay = (wallet) => {
   })
 }
 
-export function readResultRelay(params) {
+// Helper function to retry with delay
+async function retryWithDelay(fn, maxRetries = 10, delayMs = 500, spinner = null, initialRetries = ".") {
+  let retries = initialRetries
+  let lastError
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      if (attempt > 0) {
+        await new Promise(r => setTimeout(r, delayMs))
+        if (spinner) {
+          spinner.suffixText = chalk.gray('[Processing' + retries + ']')
+        } else {
+          console.log(chalk.gray('.'))
+        }
+        retries += "."
+      }
+      return await fn()
+    } catch (error) {
+      lastError = error
+      if (attempt === maxRetries - 1) {
+        throw lastError
+      }
+    }
+  }
+  throw lastError
+}
+
+export async function readResultRelay(params) {
   const wallet = JSON.parse(process.env.WALLET)
   const { result } = setupRelay(wallet)
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(params), 1000))
-  )()
-    .chain(fromPromise(() => result(params)))
-    .bichain(fromPromise(() =>
-      new Promise((resolve, reject) => setTimeout(() => reject(params), 500))
-    ),
-      Resolved
-    )
+
+  await new Promise(resolve => setTimeout(resolve, 1000))
+
+  try {
+    return await result(params)
+  } catch (error) {
+    await new Promise(resolve => setTimeout(resolve, 500))
+    throw params
+  }
 }
 
-export function dryrunRelay({ processId, wallet, tags, data }, spinnner) {
+export async function dryrunRelay({ processId, wallet, tags, data }, spinner) {
   const { dryrun } = setupRelay(wallet)
-  return fromPromise(() =>
-    arweave.wallets.jwkToAddress(wallet).then(Owner =>
-      dryrun({ process: processId, Owner, tags, data })
-    )
-  )()
+  const Owner = await arweave.wallets.jwkToAddress(wallet)
+  return await dryrun({ process: processId, Owner, tags, data })
 }
 
 
-export function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
-  let retries = "."
+export async function sendMessageRelay({ processId, wallet, tags, data }, spinner) {
   const { message, createDataItemSigner } = setupRelay(wallet)
 
-  const retry = () => fromPromise(() => new Promise(r => setTimeout(r, 500)))()
-    .map(_ => {
-      spinner ? spinner.suffixText = chalk.gray('[Processing' + retries + ']') : console.log(chalk.gray('.'))
-      retries += "."
-      return _
-    })
-    .chain(fromPromise(() => message({ process: processId, signer: createDataItemSigner(), tags, data })))
+  // Initial delay
+  await new Promise(resolve => setTimeout(resolve, 500))
 
-  return fromPromise(() =>
-    new Promise((resolve) => setTimeout(() => resolve(), 500))
-  )().chain(fromPromise(() =>
-    message({ process: processId, signer: createDataItemSigner(), tags, data })
-  ))
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-    .bichain(retry, Resolved)
-
+  return await retryWithDelay(
+    () => message({ process: processId, signer: createDataItemSigner(), tags, data }),
+    10,
+    500,
+    spinner
+  )
 }
 
-export function spawnProcessRelay({ wallet, src, tags, data }) {
-  // const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
+export async function spawnProcessRelay({ wallet, src, tags, data }) {
   const SCHEDULER = "eyhFer638JG-fJFEC3X3Q5kAl78aTe1eljYDiQo0vuU"
   const { spawn, createDataItemSigner } = setupRelay(wallet)
-
 
   tags = tags.concat([
     { name: 'aos-Version', value: pkg.version },
     { name: 'Authority', value: 'tYRUqrx6zuFFiix3MoSBYSPP3nMzi5EKf-lVYDEQz8A' }
   ])
-  return fromPromise(() => spawn({
+
+  const result = await spawn({
     module: src, scheduler: SCHEDULER, signer: createDataItemSigner(), tags, data
   })
-    .then(result => new Promise((resolve) => setTimeout(() => resolve(result), 500)))
-  )()
 
+  await new Promise(resolve => setTimeout(resolve, 500))
+  return result
 }
 
-export function monitorProcessRelay({ id, wallet }) {
+export async function monitorProcessRelay({ id, wallet }) {
   const { monitor, createDataItemSigner } = setupRelay(wallet)
-
-  return fromPromise(() => monitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
-
+  return await monitor({ process: id, signer: createDataItemSigner() })
 }
 
-export function unmonitorProcessRelay({ id, wallet }) {
+export async function unmonitorProcessRelay({ id, wallet }) {
   const { unmonitor, createDataItemSigner } = setupRelay(wallet)
-
-  return fromPromise(() => unmonitor({ process: id, signer: createDataItemSigner() }))()
-  //.map(result => (console.log(result), result))
-
+  return await unmonitor({ process: id, signer: createDataItemSigner() })
 }
 
 let _watch = false
@@ -198,8 +198,8 @@ export async function liveRelay(id, watch) {
         edges = edges.sort((a, b) => JSON.parse(atob(a.cursor)).ordinate - JSON.parse(atob(b.cursor)).ordinate);
 
         // --- peek on previous line and if delete line if last prompt.
-        // --- key event can detect 
-        // count !== null && 
+        // --- key event can detect
+        // count !== null &&
         if (edges.length > 0) {
           edges.map(e => {
             if (!globalThis.alerts[e.cursor]) {
@@ -273,7 +273,7 @@ export async function handleRelayTopup(jwk, insufficientBalance) {
 
   const walletAddress = await arweave.wallets.getAddress(jwk)
   console.log(`${chalk.gray('Wallet Address:')} ${chalk.yellow(walletAddress)}\n`);
-  
+
   if (insufficientBalance) console.log(chalk.gray(`You must transfer some ${PAYMENT.ticker} to this relay in order to start sending messages.`));
 
   let spinner = ora({
@@ -338,7 +338,7 @@ export async function handleRelayTopup(jwk, insufficientBalance) {
   const ask = (question) => new Promise(resolve => rl.question(question, answer => resolve(answer)));
 
   let continueWithTopup = true;
-  
+
   let currentRelayBalance;
   if (insufficientBalance) {
     const answer = await ask(chalk.gray('Insufficient funds. Would you like to top up? (Y/N): '));
@@ -350,7 +350,7 @@ export async function handleRelayTopup(jwk, insufficientBalance) {
       const balance = parseInt(await response.text(), 10);
       currentRelayBalance = Number.isNaN(balance) ? 0 : balance;
         console.log(chalk.gray('Current balance in relay: ' + chalk.green(`${fromDenominatedAmount(currentRelayBalance)} ${PAYMENT.ticker}\n`)));
-      
+
     } catch (e) {
       console.error('Error fetching balance endpoint:', e);
     }
@@ -378,7 +378,7 @@ export async function handleRelayTopup(jwk, insufficientBalance) {
     });
     spinner.start();
 
-    
+
     if (!currentRelayBalance) {
       try {
         const response = await fetch(RELAY.url, { method, headers });

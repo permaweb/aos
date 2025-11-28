@@ -7,17 +7,16 @@ import chalk from 'chalk'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
-import prompts from 'prompts'
-import { resolveProcessTypeFromFlags, shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
+import { shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
 
-import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
+// Removed hyper-async - refactored to use async/await
 
-// actions
+// Actions
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
 import { dryEval } from './dry-eval.js'
 
-// services
+// Services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import * as connectSvc from './services/connect.js'
@@ -30,7 +29,7 @@ import { checkForUpdate, installUpdate, version } from './services/version.js'
 import { getErrorOrigin, outputError, parseError } from './services/errors.js'
 import { getPkg } from './services/get-pkg.js'
 
-// commands
+// Commands
 import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
@@ -55,13 +54,7 @@ let {
 } = connectSvc
 
 let {
-  spawnProcessRelay, sendMessageRelay, readResultRelay,
-  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
-  dryrunRelay
-} = relaySvc
-
-let {
-  spawnProcessMainnet, sendMessageMainnet,
+  spawnProcessMainnet, sendMessageMainnet, readResultMainnet,
   monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
   handleNodeTopup
 } = mainnetSvc
@@ -71,11 +64,10 @@ if (!process.stdin.isTTY) {
     luaData = luaData + chunk
   }
   process.stdin.on('data', onData)
-  // process.stdin.on('end', onEnd)
 }
 
 globalThis.alerts = {}
-// make prompt global :(
+// Make prompt global :(
 globalThis.prompt = 'aos> '
 
 if (argv['get-blueprints']) {
@@ -148,11 +140,14 @@ if (argv['mainnet']) {
   try {
     console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
     process.env.AO_URL = argv['mainnet']
+    
     // get scheduler if in mainnetmode
     // process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
+    
     process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
     process.env.AUTHORITY = process.env.SCHEDULER
-    //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
+    
+    // process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
     // TODO: Need to allow these to be overridden if set via CLI and also need to 
     // fallback to scheduler@1.0 for both
     // process.env.EXECUTION_DEVICE = await prompts({
@@ -180,6 +175,7 @@ if (argv['mainnet']) {
     process.exit(1);
   }
 }
+
 if (argv['gateway-url']) {
   console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
   process.env.GATEWAY_URL = argv['gateway-url']
@@ -199,36 +195,40 @@ if (argv['authority']) {
   console.log(chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', ')))
   process.env.AUTHORITY = argv['authority']
 }
+
 async function runProcess() {
   if (!argv.watch) {
-    of()
-      .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
-      .chain(jwk => {
-        // make wallet available to services if relay mode
-        if (argv['relay'] || argv['mainnet']) {
-          process.env.WALLET = JSON.stringify(jwk)
-        }
-        // handle list option, need jwk in order to do it.
-        if (argv.list) {
-          return list(jwk, { address, gql }).chain(Rejected)
-        }
-        return Resolved(jwk)
-      })
-      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
-        .map(id => ({ jwk, id }))
-      )
-      .toPromise()
-      .then(async ({ jwk, id }) => {
+    try {
+      // Get wallet
+      const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
+
+      // Make wallet available to services if relay mode
+      if (argv['relay'] || argv['mainnet']) {
+        process.env.WALLET = JSON.stringify(jwk)
+      }
+
+      // Handle list option
+      if (argv.list) {
+        const listOutput = await list(jwk, { address, gql })
+        console.log(listOutput)
+        return
+      }
+
+      // Register/find process
+      const id = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
+
+      // Continue with the process
+      {
         let editorMode = false
         let editorData = ''
         const history = readHistory(id)
 
-        // this can be improved, but for now if ao-url is set
-        // we will use hyper mode
-        if (process.env.AO_URL !== "undefined") {
+        // This can be improved, but for now if ao-url is set
+        // We will use hyper mode
+        if (process.env.AO_URL !== 'undefined') {
           process.env.WALLET = JSON.stringify(jwk)
           sendMessage = sendMessageMainnet
-          readResult = () => null
+          readResult = readResultMainnet
           live = liveMainnet
           printLive = printLiveMainnet
         }
@@ -261,13 +261,13 @@ async function runProcess() {
         }
         version(id, { suppressOutput: suppressVersionBanner })
 
-        // kick start monitor if monitor option
+        // Kick start monitor if monitor option
         if (argv.monitor) {
           const result = await monitor(jwk, id, { monitorProcess })
           console.log(chalk.green(result))
         }
 
-        // check for update and install if needed
+        // Check for update and install if needed
         const update = await checkForUpdate()
         if (update.available && !process.env.DEBUG) {
           const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
@@ -304,7 +304,7 @@ async function runProcess() {
 
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
-        // check loading files flag
+        // Check loading files flag
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)
@@ -328,51 +328,35 @@ async function runProcess() {
           rl.setPrompt(p)
         }
 
-        // async function repl() {
-
-        // process.stdin.on('keypress', (str, key) => {
-        //   if (ct) {
-        //     ct.stop()
-        //   }
-        // })
-
         rl.on('history', e => {
           history.concat(e)
         })
 
-        // rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
         rl.setPrompt(globalThis.prompt)
         if (!editorMode) rl.prompt(true)
 
         rl.on('line', async line => {
           if (!editorMode && line.trim() === '') {
             console.log(undefined)
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
 
           if (!editorMode && line === '.help') {
             replHelp()
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
 
           if (!editorMode && line === '.live') {
-            // printLive()
             cron.start()
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
-          // pause live
+
+          // Pause live
           if (!editorMode && line === '.pause') {
             console.log("=== pausing live feed ===")
-            // pause live feed
             cron.stop()
             rl.prompt(true)
             return
@@ -394,8 +378,6 @@ async function runProcess() {
           if (!editorMode && line === '.monitor') {
             const result = await monitor(jwk, id, { monitorProcess }).catch(_ => chalk.gray('⚡️ could not monitor process!'))
             console.log(chalk.green(result))
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
@@ -403,8 +385,6 @@ async function runProcess() {
           if (!editorMode && line === '.unmonitor') {
             const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ => chalk.gray('⚡️ monitor not found!'))
             console.log(chalk.green(result))
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
@@ -412,21 +392,17 @@ async function runProcess() {
           if (/^\.load-blueprint/.test(line)) {
             try { line = loadBlueprint(line) } catch (e) {
               console.log(e.message)
-              // rl.close()
-              // repl()
               rl.prompt(true)
               return
             }
           }
 
-          // modules loaded
+          // Modules loaded
           /** @type {Module[]} */
           let loadedModules = []
           if (/^\.load/.test(line)) {
             try { [line, loadedModules] = load(line) } catch (e) {
               console.log(e.message)
-              // rl.close()
-              // repl()
               rl.prompt(true)
               return
             }
@@ -436,9 +412,6 @@ async function runProcess() {
             console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
             editorMode = true
             rl.setPrompt('')
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -471,7 +444,6 @@ async function runProcess() {
             console.log(editorData)
             editorData = ''
             editorMode = false
-            // rl.setPrompt(globalThis.prompt)
             rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
             rl.prompt(true)
             return
@@ -480,11 +452,7 @@ async function runProcess() {
           if (editorMode && line === '.cancel') {
             editorData = ''
             editorMode = false
-            // rl.setPrompt(globalThis.prompt)
             rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -492,9 +460,6 @@ async function runProcess() {
 
           if (editorMode) {
             editorData += line + '\n'
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -504,7 +469,6 @@ async function runProcess() {
             rl.pause()
             pad(id, async (err, content) => {
               if (!err) {
-                // console.log(content)
                 await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
               }
               rl.resume()
@@ -532,63 +496,32 @@ async function runProcess() {
           if (process.env.DEBUG) {
             console.timeEnd(chalk.gray('Elapsed'))
           }
-
-          // if (cron) {
-          //   cron.start()
-          // }
-
-          // rl.close()
-          // repl()
           rl.prompt(true)
         })
 
         process.on('SIGINT', function () {
-          // save the input history when the user exits
+          // Save the input history when the user exits
           if (id) {
             writeHistory(id, history)
           }
           process.exit(0)
         })
-
-        // }
-
-        // repl()
-      })
-      .catch(async e => {
-        if (argv.list) {
+      }
+    } catch (e) {
+      if (argv.list) {
+        console.log(e)
+      } else {
+        if (process.env.DEBUG) {
           console.log(e)
-        } else {
-          if (argv.mainnet) {
-            let jwk;
-            if (process.env.WALLET) {
-              try {
-                jwk = JSON.parse(process.env.WALLET);
-              } catch (err) {
-                console.error('Error parsing WALLET from environment:', err);
-              }
-            }
-
-            try {
-              const topupSuccess = await handleNodeTopup(jwk, true);
-              if (topupSuccess) {
-                return runProcess();
-              }
-            } catch (topupError) {
-              console.error('Error handling node topup:', topupError);
-              process.exit(1);
-            }
-          }
-          if (process.env.DEBUG) {
-            console.log(e)
-          }
-          if (argv.load) {
-            console.log(e.message)
-          } else {
-            console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
-            process.exit(1)
-          }
         }
-      })
+        if (argv.load) {
+          console.log(e.message)
+        } else {
+          console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
+          process.exit(1)
+        }
+      }
+    }
   }
 }
 
@@ -606,7 +539,7 @@ async function connect(jwk, id) {
   // TODO: remove swallow first error
   let promptResult = undefined
   let _prompt = undefined
-  // need to check if a process is registered or create a process
+  // Need to check if a process is registered or create a process
   promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner, true)
   _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (let i = 0; i < 50; i++) {
@@ -616,9 +549,7 @@ async function connect(jwk, id) {
       } else {
         spinner.suffixText = chalk.red('[Connecting to process...]')
       }
-      // await new Promise(resolve => setTimeout(resolve, 10 * i))
       promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
-      // console.log({ promptResult })
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break

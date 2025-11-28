@@ -5,13 +5,10 @@
  * Permaweb via the mainnet environment. It enables sending messages
  * (`sendMessageMainnet`), spawning new AO processes (`spawnProcessMainnet`),
  * and monitoring live process outputs (`liveMainnet`, `printLiveMainnet`). It
- * leverages functional asynchronous patterns (`hyper-async`), AO Connect SDK
- * (`@permaweb/aoconnect`), and scheduled tasks (`node-cron`) to facilitate
- * robust and continuous interactions with the Permaweb and AO network.
+ * uses async/await for clearer control flow.
  */
 
 import { connect, createSigner } from '@permaweb/aoconnect'
-import { of, fromPromise, Resolved, Rejected } from 'hyper-async'
 import chalk from 'chalk'
 import { getPkg } from './get-pkg.js'
 import cron from 'node-cron'
@@ -20,27 +17,22 @@ import path from 'path'
 import os from 'os'
 import ora from 'ora'
 import readline from 'readline';
-import { uniqBy, prop, keys } from 'ramda'
+import { prop, keys } from 'ramda'
 import Arweave from 'arweave'
-import prompts from 'prompts'
 
 const arweave = Arweave.init({})
 
 const pkg = getPkg()
+
 const setupMainnet = (wallet) => {
   const options = {
     MODE: 'mainnet',
-    device: 'process@1.0',
     signer: createSigner(wallet),
     GATEWAY_URL: process.env.GATEWAY_URL,
-    URL: process.env.AO_URL
+    URL: process.env.AO_URL,
+    SCHEDULER: process.env.SCHEDULER,
   }
   return connect(options)
-}
-
-const assoc = (k, v, o) => {
-  o[k] = v
-  return o
 }
 
 const parseWasmBody = (body) => {
@@ -56,131 +48,67 @@ const handleResults = (resBody) =>
     ? ({ Output: resBody.output, Error: resBody.error })
     : parseWasmBody(resBody.json?.body)
 
-export function sendMessageMainnet({ processId, wallet, tags, data }, spinner) {
-  const { request } = setupMainnet(wallet)
-  const submitRequest = fromPromise(request)
-  const params = {
-    type: 'Message',
-    path: `/${processId}/push`,
-    method: 'POST',
-    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
-    'data-protocol': 'ao',
-    target: processId,
-    "signing-format": "ANS-104",
-    accept: 'application/json'
+export async function spawnProcessMainnet({ wallet, src, tags, data }) {
+  const { spawn } = setupMainnet(wallet);
+  try {
+    const processId = await spawn({
+      tags: [...tags,
+      { name: 'aos-version', value: pkg.version },
+      { name: 'process-timestamp', value: Date.now().toString() },
+      ],
+      scheduler: process.env.SCHEDULER,
+      authority: 'TODO',
+      module: src,
+      data: data
+    })
+    return processId
   }
-  // set data if needed
-  if (data) {
-    params.data = data
+  catch (e) {
+    throw new Error(e.message ?? 'Error spawning process')
   }
-  return of(params)
-    .chain(submitRequest)
-    .map(prop('body'))
-    .map(JSON.parse)
-    .map(handleResults)
 }
 
-const setScheduler = fromPromise(async function (ctx) {
-  let scheduler = process.env.SCHEDULER
-  if (scheduler === "undefined" || scheduler === undefined) {
-    let schedulerUrl = process.env.AO_URL
-    if (schedulerUrl === 'https://forward.computer') {
-      schedulerUrl = 'https://scheduler.forward.computer'
-    }
-    scheduler = await fetch(schedulerUrl + '/~meta@1.0/info/address')
-      .then(r => r.text())
-  } 
-  ctx['scheduler'] = scheduler
-  
-  return ctx
-
-})
-
-const setAuthority = fromPromise(async function (ctx) {
-  let authority = process.env.AUTHORITY
-
-  // https://forward.computer/~meta@1.0/info/node_processes/router/trusted
-  // or https://forward.computer/~meta@1.0/info/node_processes/router/trusted
-  if (authority === "undefined" || authority === undefined ) {
-    if (process.env.AO_URL === 'https://forward.computer') {
-      authority = "QWg43UIcJhkdZq6ourr1VbnkwcP762Lppd569bKWYKY"
-    } else {
-      authority = await fetch(process.env.AO_URL + '/~meta@1.0/info/address')
-        .then(r => r.text())
-    }
-    authority = authority + ',fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY'
-  }
-  // ctx['authority'] = authority
-  ctx['authority'] = authority
-
-  return ctx
-})
-
-export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
-  // const SCHEDULER = process.env.SCHEDULER || "_GQ33BkPtZrqxA84vM8Zk-N2aO0toNNu_C-l-rawrBA"
-  // const AUTHORITY = process.env.AUTHORITY || SCHEDULER
-
-  const { request } = setupMainnet(wallet)
-  const submitRequest = fromPromise(request)
-
-  const getExecutionDevice = fromPromise(async function (params) {
-    const executionDevice = await prompts({
-      type: 'select',
-      name: 'device',
-      message: 'Please select a device',
-      choices: [{ title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0' }, { title: 'lua@5.3a (experimental)', value: 'lua@5.3a' }],
-      instructions: false
-    }).then(res => res.device).catch(e => "genesis-wasm@1.0")
-    params['execution-device'] = executionDevice
-    return Promise.resolve(params)
-  })
-
-  const params = {
-    path: '/push',
-    method: 'POST',
-    type: 'Process',
-    device: 'process@1.0',
-    'scheduler-device': 'scheduler@1.0',
-    'push-device': 'push@1.0',
-    'execution-device': 'lua@5.3a',
-    // 'execution-device': 'stack@1.0',
-    // 'device-stack/1': 'dedup@1.0',
-    // 'device-stack/2': 'lua@5.3a',
-    'data-protocol': 'ao',
-    variant: 'ao.N.1',
-    ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
-    'aos-version': pkg.version,
-    'signing-format': 'ANS-104'
-  }
-  if (data) {
-    params.data = data
-  }
-  return of(params)
-    .chain(setScheduler)
-    .chain(setAuthority)
-    .chain(params => isHyper ? of(params) : getExecutionDevice(params))
-    .map(p => {
-      //if (p['execution-device'] === 'stack@1.0') {
-      if (p['execution-device'] === 'lua@5.3a') {
-        p.module = process.env.AOS_MODULE || pkg.hyper.module
-      } else {
-        p.module = src
-      }
-      return p
+export async function sendMessageMainnet({ processId, wallet, tags, data }) {
+  const { message, result } = setupMainnet(wallet);
+  try {
+    const messageId = await message({
+      process: processId,
+      tags: [...tags, { name: 'message-timestamp', value: Date.now().toString() }],
+      data: data
     })
-    .chain(submitRequest)
-    .map(prop('process'))
-    
 
+    // Fetch the result
+    const resultData = await result({
+      message: messageId,
+      process: processId
+    })
+
+    return resultData
+  }
+  catch (e) {
+    throw new Error(e.message ?? 'Error sending message')
+  }
+}
+
+export async function readResultMainnet({ message, process: processId }) {
+  const wallet = typeof process.env.WALLET == 'string' ? JSON.parse(process.env.WALLET) : process.env.WALLET
+  const { result } = setupMainnet(wallet);
+
+  try {
+    return await result({
+      message: message,
+      process: processId
+    })
+  }
+  catch (e) {
+    throw new Error(e.message ?? 'Error reading result')
+  }
 }
 
 let _watch = false
 
 export function printLiveMainnet() {
   keys(globalThis.alerts).map(k => {
-    // if (globalThis.alerts[k]) {
-    //   console.log(globalThis.alerts[k])
-    // }
     if (globalThis.alerts[k] && globalThis.alerts[k].print) {
       globalThis.alerts[k].print = false
 
@@ -243,7 +171,7 @@ export async function liveMainnet(id, watch) {
             .then(JSON.parse)
             .then(prop('results'))
             .then(handleResults)
-            // .catch(e => ({ Output: {}}))
+          // .catch(e => ({ Output: {}}))
 
           // If results, add to alerts
           if (!globalThis.alerts[cursor]) {

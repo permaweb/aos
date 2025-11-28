@@ -1,4 +1,3 @@
-import { fromPromise } from 'hyper-async'
 import Arweave from 'arweave'
 
 const ARWEAVE_HOST = process.env.ARWEAVE_HOST || 'arweave.net'
@@ -11,8 +10,8 @@ const arweave = Arweave.init({
   protocol: ARWEAVE_PROTOCOL
 })
 
-export function address(jwk) {
-  return fromPromise(() => arweave.wallets.jwkToAddress(jwk))()
+export async function address(jwk) {
+  return await arweave.wallets.jwkToAddress(jwk)
 }
 
 export function isAddress(candidate) {
