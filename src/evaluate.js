@@ -6,7 +6,7 @@
  * retrieving the computed result. Uses async/await for clearer control flow.
  */
 
-import chalk from 'chalk'
+import { chalk } from './utils/colors.js'
 
 export async function evaluate(line, processId, wallet, services, spinner, swallowError = false) {
   try {
@@ -15,26 +15,27 @@ export async function evaluate(line, processId, wallet, services, spinner, swall
     // Send message
     if (process.env.DEBUG) console.time('Send')
     const messageId = await services.sendMessage(msg, spinner)
-    
+
     if (process.env.DEBUG) {
-      console.log("\n>>>>>>>>>")
+      console.log('\n>>>>>>>>>')
       console.timeEnd('Send')
-      console.log(">>>>>>>>>\n")
+      console.log('>>>>>>>>>\n')
     }
 
     // Update spinner
-    spinner.suffixText = `${chalk.gray("[Computing")} ${chalk.green(messageId)}${chalk.gray("...]")}`
+    spinner.suffixText = `${chalk.gray('[Computing')} ${chalk.green(messageId)}${chalk.gray('...]')}`
 
     // Read result if not already provided
     if (process.env.DEBUG) console.time('Read')
-    const result = messageId?.Output || messageId?.Error
-      ? messageId
-      : await services.readResult({ message: messageId, process: processId })
+    const result =
+      messageId?.Output || messageId?.Error
+        ? messageId
+        : await services.readResult({ message: messageId, process: processId })
 
     if (process.env.DEBUG) {
-      console.log("\n>>>>>>>>>")
+      console.log('\n>>>>>>>>>')
       console.timeEnd('Read')
-      console.log(">>>>>>>>>\n")
+      console.log('>>>>>>>>>\n')
     }
 
     return result

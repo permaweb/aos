@@ -33,8 +33,7 @@ getTx takes a arweave txId and returns the transaction headers for that tx
 
 getDataItem takes a L2 or bundled txId and returns the MetaData for that `id`
 
-
-### getBlock(blockHeight) 
+### getBlock(blockHeight)
 
 getBlock takes a blockHeight and returns the blockHeight Headers
 
@@ -232,4 +231,3 @@ getBlock takes a blockHeight and returns the blockHeight Headers
 npm i -g apm-tool
 apm publish
 ```
-

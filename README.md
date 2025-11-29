@@ -7,8 +7,6 @@
 Client Version: 2.0.6
 AOS Version: 2.0.4
 
-
-
 ## Requirements
 
 - [NodeJS](https://nodejs.org) version 20+
@@ -41,14 +39,13 @@ The aos console is a command-line application that provides an easy to use DX ex
 
 ### Setup
 
-Use yarn to build the project and run.
+Use npm to build the project and run.
 
 ```sh
-yarn
-yarn build
-yarn start
+npm install
+npm run build
+npm start
 ```
-
 
 ### Command-line options
 
@@ -60,31 +57,31 @@ aos [name/process-id]
 
 #### Flags
 
-| Name                                          | Description                                                                                                                                                                                                                        | Required |
-| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| `--cron [Interval]`                           | The cron flag can only be used when spawning a process, it instructs the Process to generate messages every `Interval`. An Interval can be defined with a [n]-(period) for example: 1-minute, 10-minutes, 5-hours, 10-blocks, etc. | 0-1      |
-| `--get-blueprints [dir]`                      | This command will grab blueprints from the `/blueprints` folder or a folder specified by the user. These blueprints are small lua files that can be applied to your process to automatically give it some functionality.           | 0-1      |
-| `--tag-name [name]` and `--tag-value [value]` | These flags are also only when aos is spawning a Process. You may add many of these combinations as you would like and they will appear on the Process tags object                                                                 | 0-n      |
-| `--authority [authority]` | The authority flag will allow you to set your authority when spawning a Process. Can be a single address or a comma-separated list. | 0-1 |
-| `--load [luaFile]`                            | The load command allows you to load lua source files from your local directory.                                                                                                                                                    | 0-n      |
-| `--run "<lua code>"`                         | Evaluate a single Lua command once, print the result, exit without entering the interactive shell, and suppress the splash banner for cleaner stdout.                                                                              | 0-1      |
-| `--hyper`                                     | Combine with `--run` to target hyper-aos without prompting.                                                                                                                                                                        | 0-1      |
-| `--gateway-url [url]`                         | The gateway-url flag allows you to specify a custom Gateway to connect to.                                                                                                                                                         | 0-1      |
-| `--cu-url [url]`                              | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1      |
-| `--mu-url [url]`                                | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1      |
-| `--sqlite` | 0-1 | Use sqlite aos module when spawning new process |
-| `--data [filepath]` | 0-1 | Set file contents as the data field of your Process. Will run when the process boots up if the On-Boot tag is set to Data, if On-Boot is set to Data make sure the file contains valid lua code |
+| Name                                          | Description                                                                                                                                                                                                                        | Required                                                                                                                                                                                        |
+| --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `--cron [Interval]`                           | The cron flag can only be used when spawning a process, it instructs the Process to generate messages every `Interval`. An Interval can be defined with a [n]-(period) for example: 1-minute, 10-minutes, 5-hours, 10-blocks, etc. | 0-1                                                                                                                                                                                             |
+| `--get-blueprints [dir]`                      | This command will grab blueprints from the `/blueprints` folder or a folder specified by the user. These blueprints are small lua files that can be applied to your process to automatically give it some functionality.           | 0-1                                                                                                                                                                                             |
+| `--tag-name [name]` and `--tag-value [value]` | These flags are also only when aos is spawning a Process. You may add many of these combinations as you would like and they will appear on the Process tags object                                                                 | 0-n                                                                                                                                                                                             |
+| `--authority [authority]`                     | The authority flag will allow you to set your authority when spawning a Process. Can be a single address or a comma-separated list.                                                                                                | 0-1                                                                                                                                                                                             |
+| `--load [luaFile]`                            | The load command allows you to load lua source files from your local directory.                                                                                                                                                    | 0-n                                                                                                                                                                                             |
+| `--run "<lua code>"`                          | Evaluate a single Lua command once, print the result, exit without entering the interactive shell, and suppress the splash banner for cleaner stdout.                                                                              | 0-1                                                                                                                                                                                             |
+| `--hyper`                                     | Combine with `--run` to target hyper-aos without prompting.                                                                                                                                                                        | 0-1                                                                                                                                                                                             |
+| `--gateway-url [url]`                         | The gateway-url flag allows you to specify a custom Gateway to connect to.                                                                                                                                                         | 0-1                                                                                                                                                                                             |
+| `--cu-url [url]`                              | The cu-url flag allows you to specify a custom Computer Unit to connect to.                                                                                                                                                        | 0-1                                                                                                                                                                                             |
+| `--mu-url [url]`                              | The mu-url flag allows you to specify a custom Memory Unit to connect to.                                                                                                                                                          | 0-1                                                                                                                                                                                             |
+| `--sqlite`                                    | 0-1                                                                                                                                                                                                                                | Use sqlite aos module when spawning new process                                                                                                                                                 |
+| `--data [filepath]`                           | 0-1                                                                                                                                                                                                                                | Set file contents as the data field of your Process. Will run when the process boots up if the On-Boot tag is set to Data, if On-Boot is set to Data make sure the file contains valid lua code |
 
 ### Commands
 
 When running the console, you can type `dot` commands to instruct the console to perform special instructions.
 
-| Command                  | Description                                                                                                                                  |
-| ------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `.editor`                | This command opens a simple cli editor that you can type on multiple lines, and then you can type `.done` or `.cancel` to exit editor mode.  |
-| `.load`                  | This command allows you to load a lua source file from your local directory                                                                  |
-| `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                               |
-| `.exit`                  | This command will exit your console, but you can also do `Ctrl-C` or `Ctrl-D`                                                                |
+| Command                  | Description                                                                                                                                 |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `.editor`                | This command opens a simple cli editor that you can type on multiple lines, and then you can type `.done` or `.cancel` to exit editor mode. |
+| `.load`                  | This command allows you to load a lua source file from your local directory                                                                 |
+| `.load-blueprint [name]` | This command will grab a lua file from the blueprints directory and load it into your process.                                              |
+| `.exit`                  | This command will exit your console, but you can also do `Ctrl-C` or `Ctrl-D`                                                               |
 
 ### Boot Loading
 
@@ -112,8 +109,8 @@ license, or a traditional OSS license (GPLv3/v2, MIT, etc).
 
 ### Requirements
 
-* Docker
-* Nodejs
+- Docker
+- Nodejs
 
 ### Setup
 
@@ -146,12 +143,11 @@ aos> .update
 
 Will load the current changes into a process. This workflow will allow you to make changes and update the os verify changes. Rinse Repeat.
 
-
 ### Run AOS Tests
 
 ```
-yarn
-yarn test
+npm install
+npm test
 ```
 
 ### Deploy WASM Module
@@ -160,7 +156,7 @@ yarn test
 > Add keyfile to $HOME/.wallet.json file
 
 ```
-yarn deploy
+npm run deploy
 ```
 
 ### Copy the new module id
@@ -183,11 +179,9 @@ Update README.md with new Module ID and new Version
 ```
 cd process
 docker run -v .:/src p3rmaw3b/aos-sqlite:0.0.0 emcc-lua
-yarn 
-yarn test
-yarn deploy-sqlite
+npm install
+npm test
+npm run deploy-sqlite
 ```
 
 copy module id to package.json and readme
-
-

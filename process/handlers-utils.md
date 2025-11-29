@@ -1,9 +1,11 @@
-# README for Lua Module: _utils (v0.0.1)
+# README for Lua Module: \_utils (v0.0.1)
 
 ## Overview
+
 The `_utils` module is a lightweight Lua utility library designed to provide common functionalities for handling and processing messages within the AOS computer system. It offers a set of functions to check message attributes and send replies, simplifying the development of more complex scripts and modules. This document will guide you through the module's functionalities, installation, and usage.
 
 ### Version
+
 0.0.1
 
 ## Installation
@@ -15,6 +17,7 @@ The `_utils` module is a lightweight Lua utility library designed to provide com
 ## Features
 
 ### hasMatchingTag(name, value)
+
 Checks if a given message has a tag that matches the specified name and value.
 
 - **Parameters:**
@@ -24,6 +27,7 @@ Checks if a given message has a tag that matches the specified name and value.
 - **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
 
 ### hasMatchingTagOf(name, values)
+
 Checks if a given message has a tag that matches the specified name and one of the specified values.
 
 - **Parameters:**
@@ -33,6 +37,7 @@ Checks if a given message has a tag that matches the specified name and one of t
 - **Returns:** Function that takes a message object and returns `-1` if the tag matches, `0` otherwise.
 
 ### hasMatchingData(value)
+
 Checks if the message data matches the specified value.
 
 - **Parameters:**
@@ -41,6 +46,7 @@ Checks if the message data matches the specified value.
 - **Returns:** Function that takes a message object and returns `-1` if the data matches, `0` otherwise.
 
 ### reply(input)
+
 Sends a reply to the sender of a message. The reply can be a simple string or a table with more complex data and tags.
 
 - **Parameters:**
@@ -49,6 +55,7 @@ Sends a reply to the sender of a message. The reply can be a simple string or a 
 - **Returns:** Function that takes a message object and sends the specified reply.
 
 ### continue(pattern)
+
 Inverts the provided pattern's result if it matches, so that it continues execution with the next matching handler.
 
 - **Parameters:**
@@ -74,7 +81,7 @@ Inverts the provided pattern's result if it matches, so that it continues execut
    ```
 
 3. **Check for a specific tag with multiple possible values allowed:**
-   
+
    ```lua
    local isNotUrgent = _utils.hasMatchingTagOf('priority', { 'trivial', 'unimportant' })
    if isNotUrgent(message) == -1 then
@@ -106,7 +113,7 @@ Inverts the provided pattern's result if it matches, so that it continues execut
    ```
 
 6. **Continue execution shortcut:**
-   
+
    ```lua
    local isUrgent = _utils.continue(_utils.hasMatchingTag('priority', 'urgent'))
    if isUrgent(message) ~= 0 then
@@ -117,9 +124,9 @@ Inverts the provided pattern's result if it matches, so that it continues execut
    ```
 
 ## Conventions and Requirements
+
 - This module assumes that the message objects provided to functions follow a specific structure with `Tags` and `Data` attributes.
 - Error handling is implemented using assertions. Ensure that your AOS environment appropriately handles or logs assertion failures.
-
 
 ## License
 

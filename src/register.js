@@ -5,8 +5,6 @@
  * - Finds existing processes/modules via GraphQL queries.
  * - Interactively prompts CLI users when multiple results are found.
  * - Creates AO processes with optional data payloads, cron schedules, and tags.
- *
- * Refactored to use async/await for clearer control flow.
  */
 
 import * as utils from './hyper-utils.js'
@@ -17,6 +15,7 @@ import fs from 'fs'
 import path from 'path'
 import os from 'os'
 import { resolveProcessTypeFromFlags } from './services/process-type.js'
+import { config } from './config.js'
 
 // Local cache for process IDs
 const PROCESS_CACHE_FILE = path.join(os.homedir(), '.aos-process-cache.json')
@@ -58,13 +57,13 @@ function cacheProcess(address, name, processId, isMainnet = false) {
   saveProcessCache(cache)
 }
 
-const promptUser = (results) => {
+const promptUser = results => {
   const choices = results.map((res, i) => {
-    const format = res.node.tags.find((t) => t.name === 'Module-Format')?.value ?? 'Unknown Format'
+    const format = res.node.tags.find(t => t.name === 'Module-Format')?.value ?? 'Unknown Format'
     const date = new Date(res.node.block.timestamp * 1000)
     const title = `${i + 1} - ${format} - ${res.node.id} - ${date.toLocaleString()}`
 
-    return {title, value: res.node.id}
+    return { title, value: res.node.id }
   })
 
   return prompts({
@@ -82,36 +81,42 @@ export async function register(jwk, services) {
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
 
-  let spawnTags = Array.isArray(argv["tag-name"]) ?
-    argv["tag-name"].map((name, i) => ({
-      name: String(name || ""),
-      value: String(argv["tag-value"][i] || "")
-    })) : [];
-  if (spawnTags.length === 0 && typeof argv["tag-name"] === "string") {
-    spawnTags = [{
-      name: String(argv["tag-name"] || ""),
-      value: String(argv["tag-value"] || "")
-    }]
+  let spawnTags = Array.isArray(argv['tag-name'])
+    ? argv['tag-name'].map((name, i) => ({
+        name: String(name || ''),
+        value: String(argv['tag-value'][i] || '')
+      }))
+    : []
+  if (spawnTags.length === 0 && typeof argv['tag-name'] === 'string') {
+    spawnTags = [
+      {
+        name: String(argv['tag-name'] || ''),
+        value: String(argv['tag-value'] || '')
+      }
+    ]
   }
 
   // Handle direct address lookup
   if (services.isAddress(name)) {
     try {
       // Try cache first
-      const cacheUrl = 'https://cache.forward.computer'
+      const cacheUrl = config.urls.CACHE
       const variantFromCache = await fetch(`${cacheUrl}/${name}/variant`)
         .then(res => res.text())
         .catch(() => null)
 
       if (variantFromCache) {
-        if (variantFromCache === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === "undefined")) {
-          process.env.AO_URL = "https://forward.computer"
+        if (
+          variantFromCache === 'ao.N.1' &&
+          (!process.env.AO_URL || process.env.AO_URL === 'undefined')
+        ) {
+          process.env.AO_URL = config.urls.DEFAULT_HB_NODE
         }
         return name
       }
 
       // Fallback to GraphQL
-      const gqlUrl = 'https://ao-search-gateway.goldsky.com'
+      const gqlUrl = config.urls.GATEWAY
       const res = await fetch(`${gqlUrl}/graphql`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -127,8 +132,8 @@ export async function register(jwk, services) {
         const variantTag = tags.find(tag => tag.name.toLowerCase() === 'variant')
         const variant = variantTag?.value
 
-        if (variant === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === "undefined")) {
-          process.env.AO_URL = "https://forward.computer"
+        if (variant === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === 'undefined')) {
+          process.env.AO_URL = config.urls.DEFAULT_HB_NODE
         }
       }
 
@@ -147,7 +152,9 @@ export async function register(jwk, services) {
     // Find existing process
     let processId
     try {
-      const gqlResult = await services.gql(queryForAOS(name), { owners: [address, argv.address || ""] })
+      const gqlResult = await services.gql(queryForAOS(name), {
+        owners: [address, argv.address || '']
+      })
       const edges = utils.path(['data', 'transactions', 'edges'], gqlResult)
 
       if (edges && edges.length > 0) {
@@ -163,7 +170,6 @@ export async function register(jwk, services) {
     const module = await findModule(services, argv.module)
     processId = await createProcess(jwk, name, spawnTags, module, services)
     return processId
-
   } catch (error) {
     throw error
   }
@@ -172,16 +178,16 @@ export async function register(jwk, services) {
 async function handleExistingProcess(results) {
   if (results.length === 1) {
     // Single process found
-    const appName = results[0].node.tags.find(t => t.name == "App-Name")?.value || 'aos'
-    if (appName === "hyper-aos" && process.env.AO_URL === "undefined") {
-      process.env.AO_URL = "https://forward.computer"
+    const appName = results[0].node.tags.find(t => t.name == 'App-Name')?.value || 'aos'
+    if (appName === 'hyper-aos' && process.env.AO_URL === 'undefined') {
+      process.env.AO_URL = config.urls.DEFAULT_HB_NODE
     }
     return results[0].node.id
   }
 
   // Multiple processes found - prompt user
   const processes = results.map((r, i) => {
-    const version = r.node.tags.find(t => t.name == "aos-Version")?.value
+    const version = r.node.tags.find(t => t.name == 'aos-Version')?.value
     return {
       title: `${i + 1} - ${version} - ${r.node.id}`,
       value: r.node.id
@@ -204,8 +210,8 @@ async function handleExistingProcess(results) {
 }
 
 async function findModule(services, moduleArg) {
-  const AOS_MODULE = process.env.AOS_MODULE;
-  const AOS_MODULE_NAME = process.env.AOS_MODULE_NAME;
+  const AOS_MODULE = process.env.AOS_MODULE
+  const AOS_MODULE_NAME = process.env.AOS_MODULE_NAME
 
   // Use default module
   if (!AOS_MODULE && !AOS_MODULE_NAME) {
@@ -234,19 +240,18 @@ async function findModule(services, moduleArg) {
     // Multiple modules - prompt user
     const moduleId = await promptUser(edges)
     return moduleId
-
   } catch (error) {
     throw new Error(error.message || 'Error finding module')
   }
 }
 
 async function createProcess(jwk, name, spawnTags, module, services) {
-  let appName = "aos"
-  if (process.env.AO_URL !== "undefined") {
-    appName = "hyper-aos"
+  let appName = 'aos'
+  if (process.env.AO_URL !== 'undefined') {
+    appName = 'hyper-aos'
   }
 
-  let data = ""
+  let data = ''
   let tags = [
     { name: 'App-Name', value: appName },
     { name: 'Name', value: name },
@@ -255,11 +260,13 @@ async function createProcess(jwk, name, spawnTags, module, services) {
   ]
 
   const argv = minimist(process.argv.slice(2))
-  const cronExp = /^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/
+  const cronExp =
+    /^\d+\-(second|seconds|minute|minutes|hour|hours|day|days|month|months|year|years|block|blocks|Second|Seconds|Minute|Minutes|Hour|Hours|Day|Days|Month|Months|Year|Years|Block|Blocks)$/
 
   if (argv.cron) {
     if (cronExp.test(argv.cron)) {
-      tags = [...tags,
+      tags = [
+        ...tags,
         { name: 'Cron-Interval', value: argv.cron },
         { name: 'Cron-Tag-Action', value: 'Cron' }
       ]
@@ -277,11 +284,11 @@ async function createProcess(jwk, name, spawnTags, module, services) {
   // Use appropriate spawn service
   const processType = resolveProcessTypeFromFlags(argv)
 
-  if (processType === "mainnet" || process.env.AO_URL !== "undefined") {
-    if (process.env.AO_URL === "undefined") {
-      process.env.AO_URL = "https://forward.computer"
-      process.env.SCHEDULER = "NoZH3pueH0Cih6zjSNu_KRAcmg4ZJV1aGHKi0Pi5_Hc"
-      process.env.AUTHORITY = "undefined"
+  if (processType === 'mainnet' || process.env.AO_URL !== 'undefined') {
+    if (process.env.AO_URL === 'undefined') {
+      process.env.AO_URL = config.urls.DEFAULT_HB_NODE
+      process.env.SCHEDULER = config.addresses.SCHEDULER_MAINNET
+      process.env.AUTHORITY = 'undefined'
     }
 
     return await services.spawnProcessMainnet({

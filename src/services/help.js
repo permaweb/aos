@@ -1,4 +1,4 @@
-import chalk from 'chalk'
+import { chalk } from '../utils/colors.js'
 
 export function replHelp() {
   console.log(`
@@ -52,5 +52,4 @@ ${chalk.green('Options:')}
   ${chalk.green('--version')}                          Show AOS client version number
   ${chalk.green('--help')}                             Shows this help page.
 `)
-
 }

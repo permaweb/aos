@@ -1,6 +1,8 @@
-const ARWEAVE_GRAPHQL = process.env.ARWEAVE_GRAPHQL || (
-  process.env.GATEWAY_URL ? new URL('/graphql', process.env.GATEWAY_URL) : 'https://ao-search-gateway.goldsky.com'
-)
+import { config } from '../config.js'
+
+const ARWEAVE_GRAPHQL =
+  process.env.ARWEAVE_GRAPHQL ||
+  (process.env.GATEWAY_URL ? new URL('/graphql', process.env.GATEWAY_URL) : config.urls.GATEWAY)
 
 export async function gql(query, variables) {
   const body = { query, variables }

@@ -15,5 +15,5 @@ export async function address(jwk) {
 }
 
 export function isAddress(candidate) {
-  return (/^([a-zA-Z0-9_-]{43})$/).test(candidate)
+  return /^([a-zA-Z0-9_-]{43})$/.test(candidate)
 }

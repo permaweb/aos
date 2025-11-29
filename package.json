@@ -14,21 +14,21 @@
   ],
   "scripts": {
     "build-docs": "rm -rf process/docs && ldoc .",
+    "clean:install": "rm -rf node_modules package-lock.json || true && npm cache clean --force && npm install",
+    "format": "prettier --write \"**/*.{js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{js,json,md}\"",
     "deploy": "npx -y ardrive-cli@2.0.4 upload-file --turbo --local-path=./$(npm pack) -w ~/.wallet.json -F 0d009773-ce2c-4539-8e0d-c331db9ab348 | jq .created[0].dataTxId",
     "generate-wallet": "node -e \"require('arweave').init({}).wallets.generate().then(JSON.stringify).then(console.log.bind(console))\" > wallet.json",
     "staged": "lint-staged",
     "start": "node src/index.js",
     "test": "node --test test",
-    "test-all": "yarn workspaces --parallel run test"
+    "test-all": "npm run test --workspaces"
   },
   "dependencies": {
     "@permaweb/aoconnect": "0.0.91",
     "arweave": "1.15.1",
-    "chalk": "5.3.0",
     "figlet": "1.7.0",
     "http-message-signatures": "1.0.4",
-    "https-proxy-agent": "7.0.4",
-    "hyper-async": "1.1.2",
     "minimist": "1.2.8",
     "node-cron": "3.0.3",
     "ora": "7.0.1",
@@ -36,8 +36,7 @@
     "prompts": "2.4.2",
     "semver": "7.5.4",
     "tar-stream": "3.1.7",
-    "undici": "7.8.0",
-    "yargs": "17.7.2"
+    "undici": "7.8.0"
   },
   "devDependencies": {
     "@commitlint/cli": "19.5.0",
@@ -47,6 +46,7 @@
     "husky": "9.1.6",
     "lint-staged": "15.2.10",
     "markdown-toc-gen": "1.1.0",
+    "prettier": "^3.7.2",
     "shelljs": "0.9.2",
     "sort-package-json": "2.10.1",
     "standard": "17.1.2"
