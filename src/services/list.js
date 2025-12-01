@@ -1,28 +1,30 @@
 import { map, find } from 'ramda'
 import minimist from 'minimist'
 import * as utils from '../utils/hyper-utils.js'
-import { getPkg } from './get-pkg.js'
+import { printWithBorder } from '../utils/print.js'
+import { chalk } from '../utils/colors.js'
 
 export async function list(jwk, services) {
   const argv = minimist(process.argv.slice(2))
-  const AOS_MODULE = process.env.AOS_MODULE || argv.module || getPkg().aos.module
 
   const address = await services.address(jwk)
   const gqlResult = await services.gql(queryForAOSs(), { owners: [address] })
-  const edges = utils.path(['data', 'transactions', 'edges'], gqlResult)
+  const edges = utils.path(['data', 'transactions', 'edges'])(gqlResult)
 
   const processList = map(({ node }) => {
     const pid = node.id
-    const name = find(t => t.name == 'Name', node.tags)?.value
-    const version = find(t => t.name == 'aos-Version', node.tags)?.value
-    return `${name}:v${version || 'unknown'} - ${pid}`
+    const name = find(t => t.name === 'Name', node.tags)?.value
+    const version = find(t => t.name.toLowerCase() === 'aos-version', node.tags)?.value
+    return `${chalk.white(`${name}`)} - ${chalk.green(pid)} ${chalk.gray(`(v${version})`)}`
   }, edges)
 
-  return `
-  Your Processes:
-
-  ${processList.join('\n  ')}
-      `
+  printWithBorder([
+    ...processList
+  ], {
+    title: 'Your Processes',
+    borderColor: chalk.gray,
+    titleColor: chalk.green
+  })
 }
 
 function queryForAOSs() {

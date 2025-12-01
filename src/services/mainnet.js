@@ -20,6 +20,7 @@ import readline from 'readline'
 import { prop, keys } from 'ramda'
 import { config } from '../config.js'
 import Arweave from 'arweave'
+import { printWithoutDisruption } from '../utils/terminal.js'
 
 const arweave = Arweave.init({})
 
@@ -147,16 +148,21 @@ export function printLiveMainnet() {
       globalThis.alerts[k].print = false
       _processedSlots.add(slotNum)
 
-      if (!_watch) {
-        process.stdout.write('\u001b[2K')
-      } else {
-        process.stdout.write('\n')
+      // Update prompt if needed
+      if (globalThis.alerts[k].prompt) {
+        globalThis.prompt = globalThis.alerts[k].prompt
+        if (globalThis.setPrompt) {
+          globalThis.setPrompt(globalThis.prompt)
+        }
       }
-      process.stdout.write('\u001b[0G' + globalThis.alerts[k].data)
 
-      globalThis.prompt = globalThis.alerts[k].prompt || 'aos> '
-      globalThis.setPrompt(globalThis.prompt || 'aos> ')
-      process.stdout.write('\n' + globalThis.prompt || 'aos> ')
+      // Print without disrupting user input (don't show separator - it's handled by prompt)
+      if (globalThis.rl) {
+        printWithoutDisruption(globalThis.alerts[k].data, globalThis.rl, false)
+      } else {
+        // Fallback if readline not available
+        process.stdout.write('\n' + globalThis.alerts[k].data + '\n')
+      }
     }
   })
 }

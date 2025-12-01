@@ -202,9 +202,8 @@ async function runProcess() {
 
       // Handle list option
       if (argv.list) {
-        const listOutput = await list(jwk, { address, gql })
-        console.log(listOutput)
-        return
+        await list(jwk, { address, gql })
+        process.exit(0)
       }
 
       // Register/find process
@@ -318,8 +317,18 @@ async function runProcess() {
           historySize: 100,
           prompt: globalThis.prompt
         })
+
+        // Make readline interface globally available for printLiveMainnet
+        globalThis.rl = rl
+
         globalThis.setPrompt = p => {
           rl.setPrompt(p)
+        }
+
+        // Override prompt
+        const originalPrompt = rl.prompt.bind(rl)
+        rl.prompt = (preserveCursor) => {
+          originalPrompt(preserveCursor)
         }
 
         rl.on('history', e => {
@@ -330,11 +339,26 @@ async function runProcess() {
         if (!editorMode) rl.prompt(true)
 
         rl.on('line', async line => {
+          // If empty input, just redisplay prompt
           if (!editorMode && line.trim() === '') {
-            console.log(undefined)
+            printWithFormat()
             rl.prompt(true)
             return
           }
+
+          // Calculate how many lines the prompt + input took (accounting for line wrapping)
+          const terminalWidth = process.stdout.columns || 80
+          const promptLength = rl.getPrompt().replace(/\x1b\[[0-9;]*m/g, '').length
+          const totalLength = promptLength + line.length
+          const linesUsed = Math.ceil(totalLength / terminalWidth)
+
+          // Clear all the lines (prompt + wrapped lines)
+          for (let i = 0; i < linesUsed; i++) {
+            process.stdout.write('\x1b[1A\r\x1b[K') // Move up and clear line
+          }
+
+          // Log user input
+          printWithFormat(chalk.gray(line))
 
           if (!editorMode && line === '.help') {
             replHelp()
@@ -667,10 +691,12 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
   if (output?.data) {
     if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
       console.log(output.data.output)
+      console.log('') // Add newline after output
     } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
       console.log('')
     } else {
       console.log(output.data)
+      console.log('') // Add newline after data
     }
 
     const nextPrompt = Object.prototype.hasOwnProperty.call(output.data, 'prompt')
@@ -689,15 +715,18 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
 
   if (!output) {
     console.log(chalk.red('An unknown error occurred.'))
+    console.log('') // Add newline after error
     return { ok: false }
   }
 
   if (typeof output === 'string') {
     console.log(output)
+    console.log('') // Add newline after output
     return { ok: true, prompt: globalThis.prompt }
   }
 
   console.log(output)
+  console.log('') // Add newline after output
   return { ok: true, prompt: globalThis.prompt }
 }
 

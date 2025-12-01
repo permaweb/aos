@@ -1,65 +1,51 @@
-import readline from 'readline'
-
 /**
- * Terminal utility for managing a fixed prompt line
- * This keeps the prompt at the bottom of the terminal while output scrolls above
+ * Terminal utility for preserving user input while printing output
+ * Uses ANSI escape codes to save/restore cursor and clear lines
  */
 
-export class FixedPromptTerminal {
-  constructor() {
-    this.promptLine = ''
-    this.outputBuffer = []
-  }
+let savedInput = ''
+let savedCursorPosition = 0
 
-  /**
-   * Set up the terminal with a scrolling region
-   */
-  setup() {
-    const rows = process.stdout.rows || 24
-    // Set scrolling region (leave last 2 lines for prompt)
-    process.stdout.write(`\x1b[1;${rows - 2}r`)
-    // Move cursor to bottom
-    process.stdout.write(`\x1b[${rows - 1};1H`)
-  }
+/**
+ * Save the current input line and cursor position
+ * Should be called before printing any async output
+ */
+export function saveInput(rl) {
+  if (!rl) return
 
-  /**
-   * Write output to the scrolling region
-   */
-  writeOutput(text) {
-    const rows = process.stdout.rows || 24
-    // Save cursor position
-    process.stdout.write('\x1b7')
-    // Move to scrolling region
-    process.stdout.write(`\x1b[${rows - 3};1H`)
-    // Write the output
-    process.stdout.write(text + '\n')
-    // Restore cursor position
-    process.stdout.write('\x1b8')
-  }
+  savedInput = rl.line || ''
+  savedCursorPosition = rl.cursor || 0
 
-  /**
-   * Update the prompt line at the bottom
-   */
-  updatePrompt(promptText) {
-    const rows = process.stdout.rows || 24
-    // Move to prompt line
-    process.stdout.write(`\x1b[${rows - 1};1H`)
-    // Clear the line
-    process.stdout.write('\x1b[2K')
-    // Write prompt
-    process.stdout.write(promptText)
-    this.promptLine = promptText
-  }
+  // Clear the current line (prompt + input)
+  process.stdout.write('\r\x1b[K')
+}
 
-  /**
-   * Cleanup terminal settings
-   */
-  cleanup() {
-    // Reset scrolling region
-    process.stdout.write('\x1b[r')
-    // Clear screen
-    process.stdout.write('\x1b[2J')
-    // Move cursor to top
-    process.stdout.write('\x1b[H')
+/**
+ * Restore the saved input line and cursor position
+ * Should be called after printing async output
+ */
+export function restoreInput(rl, showSeparator = false) {
+  if (!rl) return
+
+  // Add newline before prompt for spacing
+  process.stdout.write('\n')
+
+  // Rewrite the prompt and saved input
+  process.stdout.write(rl.getPrompt() + savedInput)
+
+  // Move cursor back to saved position
+  if (savedCursorPosition < savedInput.length) {
+    const charsToMoveBack = savedInput.length - savedCursorPosition
+    process.stdout.write(`\x1b[${charsToMoveBack}D`)
   }
+}
+
+/**
+ * Print output without disrupting user input
+ * This saves the current input, prints the output, then restores input
+ */
+export function printWithoutDisruption(text, rl, showSeparator = true) {
+  saveInput(rl)
+  process.stdout.write(text + '\n')
+  restoreInput(rl, showSeparator)
 }

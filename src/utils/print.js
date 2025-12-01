@@ -90,7 +90,6 @@ export function printWithBorder(lines, { title = '', titleColor = chalk.white, b
         const padding = Math.max(0, maxLineWidth - plainText.length)
         console.log(borderColor(`│  `) + line + borderColor(' '.repeat(padding) + '  │'))
       }
-      // console.log(borderColor(`│${' '.repeat(boxWidth)}│`))
     } else {
       const wrappedLines = wrapLine(line, maxLineWidth)
 
@@ -99,7 +98,6 @@ export function printWithBorder(lines, { title = '', titleColor = chalk.white, b
         const padding = Math.max(0, maxLineWidth - plainText.length)
         console.log(borderColor(`│  `) + wrappedLine + borderColor(' '.repeat(padding) + '  │'))
       }
-      // console.log(borderColor(`│${' '.repeat(boxWidth)}│`))
     }
   }
 
@@ -108,11 +106,13 @@ export function printWithBorder(lines, { title = '', titleColor = chalk.white, b
 }
 
 export function printWithFormat(lineObj) {
-  if (Array.isArray(lineObj)) {
-    for (const line of lineObj) {
-      console.log(line)
+  if (lineObj) {
+    if (Array.isArray(lineObj)) {
+      for (const line of lineObj) {
+        console.log(line)
+      }
     }
+    else console.log(lineObj)
   }
-  else console.log(lineObj)
   console.log('')
 }
