@@ -124,19 +124,6 @@ if (argv.watch && argv.watch.length === 43) {
   })
 }
 
-
-if (argv['scheduler']) {
-  process.env.SCHEDULER = argv['scheduler']
-}
-
-if (argv['authority']) {
-  process.env.AUTHORITY = argv['authority']
-}
-
-if (argv['url']) {
-  process.env.AO_URL = argv['url']
-}
-
 if (argv['mainnet']) {
   if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
     console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'))
@@ -179,13 +166,18 @@ if (argv['authority']) {
   process.env.AUTHORITY = argv['authority']
 }
 
+if (argv['scheduler']) {
+  process.env.SCHEDULER = argv['scheduler']
+}
+
 if (splashEnabled && !suppressVersionBanner) {
   splash({
     mainnetUrl: argv['mainnet'],
     gatewayUrl: argv['gateway-url'],
     cuUrl: argv['cu-url'],
     muUrl: argv['mu-url'],
-    authority: argv['authority']
+    authority: argv['authority'],
+    scheduler: argv['scheduler'],
   })
 }
 
@@ -252,7 +244,7 @@ async function runProcess() {
           process.exit(0)
         }
 
-        const variantDisplay = variant ? ` ${chalk.gray(`[${variant}]`)}` : ''
+        const variantDisplay = variant ? ` ${chalk.gray(`${variant}`)}` : ''
         printWithFormat(`${chalk.white('Your AOS Process:')} ${chalk.green(id)}${variantDisplay}`)
 
         // Kick start monitor if monitor option
@@ -298,7 +290,8 @@ async function runProcess() {
 
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
-        // Check loading files flag
+        
+          // Check loading files flag
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)

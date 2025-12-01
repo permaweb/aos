@@ -33,7 +33,11 @@ export function splash(options = {}) {
   }
 
   if (options.authority) {
-    lines.push(chalk.white('Using Authority: ') + chalk.green(options.authority.split(',').join(', ')))
+    lines.push(chalk.white('Using Authority: ') + chalk.green(options.authority))
+  }
+  
+  if (options.scheduler) {
+    lines.push(chalk.white('Using Scheduler: ') + chalk.green(options.scheduler))
   }
 
   lines.push('newline')
