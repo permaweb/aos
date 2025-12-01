@@ -41,6 +41,7 @@ export function printWithBorder(lines, { title = '', titleColor = chalk.white, b
   const titleStr = title ? ` ${title} ` : ''
   const border = '─'.repeat(boxWidth - titleStr.length - 1)
 
+  console.log('')
   console.log(borderColor(`╭─`) + titleColor(titleStr) + borderColor(border + `╮`))
   console.log(borderColor(`│${' '.repeat(boxWidth)}│`))
 

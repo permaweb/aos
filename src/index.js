@@ -207,7 +207,7 @@ async function runProcess() {
       }
 
       // Register/find process
-      const id = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
+      const { id, variant } = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
 
       // Continue with the process
       {
@@ -251,8 +251,9 @@ async function runProcess() {
           console.error(chalk.red('Error! Could not find process ID.'))
           process.exit(0)
         }
-        
-        printWithFormat(`${chalk.white('Your AOS Process:')} ${chalk.green(id)}`)
+
+        const variantDisplay = variant ? ` ${chalk.gray(`[${variant}]`)}` : ''
+        printWithFormat(`${chalk.white('Your AOS Process:')} ${chalk.green(id)}${variantDisplay}`)
 
         // Kick start monitor if monitor option
         if (argv.monitor) {

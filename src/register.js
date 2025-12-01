@@ -114,7 +114,7 @@ export async function register(jwk, services) {
         ) {
           process.env.AO_URL = config.urls.DEFAULT_HB_NODE
         }
-        return name
+        return { id: name, variant: variantFromCache }
       }
 
       // Fallback to GraphQL
@@ -137,12 +137,14 @@ export async function register(jwk, services) {
         if (variant === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === 'undefined')) {
           process.env.AO_URL = config.urls.DEFAULT_HB_NODE
         }
+
+        return { id: name, variant }
       }
 
-      return name
+      return { id: name, variant: null }
     } catch (error) {
       // If lookup fails, just return the name
-      return name
+      return { id: name, variant: null }
     }
   }
 
@@ -172,8 +174,8 @@ export async function register(jwk, services) {
 
       if (edges && edges.length > 0) {
         // Process found - handle selection
-        processId = await handleExistingProcess(edges.reverse())
-        return processId
+        const result = await handleExistingProcess(edges.reverse())
+        return result
       }
     } catch (gqlError) {
       // GQL error or no process found - proceed to create new process
@@ -193,7 +195,7 @@ export async function register(jwk, services) {
 
     spinner.stop()
 
-    return processId
+    return { id: processId, variant: null }
   } catch (error) {
     throw error
   }
@@ -202,7 +204,8 @@ export async function register(jwk, services) {
 async function handleExistingProcess(results) {
   if (results.length === 1) {
     // Single process found
-    return results[0].node.id
+    const variant = results[0].node.tags.find(t => t.name.toLowerCase() === 'variant')?.value
+    return { id: results[0].node.id, variant }
   }
 
   // Multiple processes found - prompt user
@@ -212,7 +215,8 @@ async function handleExistingProcess(results) {
 
     return {
       title: `${i + 1} - ${r.node.id} - ${variant} - v${version}`,
-      value: r.node.id
+      value: r.node.id,
+      variant
     }
   })
 
@@ -228,7 +232,8 @@ async function handleExistingProcess(results) {
     throw new Error('No process selected')
   }
 
-  return response.process
+  const selectedProcess = processes.find(p => p.value === response.process)
+  return { id: response.process, variant: selectedProcess?.variant }
 }
 
 async function findModule(services, moduleArg) {
