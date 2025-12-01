@@ -98,8 +98,8 @@ export async function installUpdate(update, rootDir) {
   })
   const line = await rl.question(
     '✨ New AOS client version ' +
-      chalk.green(update.version) +
-      ' available. Would you like to update [Y/n]? '
+    chalk.green(update.version) +
+    ' available. Would you like to update [Y/n]? '
   )
 
   if (!line.toLowerCase().startsWith('y')) {

@@ -1,6 +1,6 @@
 import { map, find } from 'ramda'
 import minimist from 'minimist'
-import * as utils from '../hyper-utils.js'
+import * as utils from '../utils/hyper-utils.js'
 import { getPkg } from './get-pkg.js'
 
 export async function list(jwk, services) {

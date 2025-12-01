@@ -18,6 +18,7 @@ import os from 'os'
 import ora from 'ora'
 import readline from 'readline'
 import { prop, keys } from 'ramda'
+import { config } from '../config.js'
 import Arweave from 'arweave'
 
 const arweave = Arweave.init({})
@@ -30,7 +31,7 @@ const setupMainnet = wallet => {
     signer: createSigner(wallet),
     GATEWAY_URL: process.env.GATEWAY_URL,
     URL: process.env.AO_URL,
-    SCHEDULER: process.env.SCHEDULER
+    SCHEDULER: process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
   }
   return connect(options)
 }
@@ -48,6 +49,14 @@ const handleResults = resBody =>
     ? { Output: resBody.output, Error: resBody.error }
     : parseWasmBody(resBody.json?.body)
 
+const resolveAuthority = async () => {
+  if (process.env.AUTHORITY) return process.env.AUTHORITY;
+  else {
+    const authority = await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text());
+    return authority;
+  }
+}
+
 export async function spawnProcessMainnet({ wallet, src, tags, data }) {
   const { spawn } = setupMainnet(wallet)
   try {
@@ -57,8 +66,7 @@ export async function spawnProcessMainnet({ wallet, src, tags, data }) {
         { name: 'aos-version', value: pkg.version },
         { name: 'process-timestamp', value: Date.now().toString() }
       ],
-      scheduler: process.env.SCHEDULER,
-      authority: 'TODO',
+      authority: await resolveAuthority(),
       module: src,
       data: data
     })
@@ -71,7 +79,10 @@ export async function spawnProcessMainnet({ wallet, src, tags, data }) {
 export async function sendMessageMainnet({ processId, wallet, tags, data }) {
   const { message, result } = setupMainnet(wallet)
   try {
-    const messageId = await message({
+    // Pause cron jobs to prevent race conditions
+    _cronPaused = true
+
+    const slot = await message({
       process: processId,
       tags: [...tags, { name: 'message-timestamp', value: Date.now().toString() }],
       data: data
@@ -79,12 +90,24 @@ export async function sendMessageMainnet({ processId, wallet, tags, data }) {
 
     // Fetch the result
     const resultData = await result({
-      message: messageId,
+      slot: slot,
       process: processId
     })
 
+    // Update cursor file and mark slot as processed to prevent liveMainnet from re-processing this result
+    const cursorFile = path.resolve(os.homedir() + `/.${processId}.txt`)
+    fs.writeFileSync(cursorFile, slot.toString())
+
+    // Mark this slot as already processed
+    _processedSlots.add(parseInt(slot))
+
+    // Resume cron jobs
+    _cronPaused = false
+
     return resultData
   } catch (e) {
+    // Resume cron jobs even on error
+    _cronPaused = false
     throw new Error(e.message ?? 'Error sending message')
   }
 }
@@ -105,11 +128,24 @@ export async function readResultMainnet({ message, process: processId }) {
 }
 
 let _watch = false
+let _processedSlots = new Set()
+let _cronPaused = false
 
 export function printLiveMainnet() {
+  // Don't print if cron is paused (during sendMessageMainnet)
+  if (_cronPaused) return
+
   keys(globalThis.alerts).map(k => {
     if (globalThis.alerts[k] && globalThis.alerts[k].print) {
+      // Double-check we haven't already printed this slot
+      const slotNum = parseInt(k)
+      if (_processedSlots.has(slotNum)) {
+        globalThis.alerts[k].print = false
+        return
+      }
+
       globalThis.alerts[k].print = false
+      _processedSlots.add(slotNum)
 
       if (!_watch) {
         process.stdout.write('\u001b[2K')
@@ -137,52 +173,48 @@ export async function liveMainnet(id, watch) {
   let isJobRunning = false
 
   const checkLive = async () => {
+    // Don't run if cron is paused (during sendMessageMainnet)
+    if (_cronPaused) return
+
     const wallet =
       typeof process.env.WALLET == 'string' ? JSON.parse(process.env.WALLET) : process.env.WALLET
-    const { request } = setupMainnet(wallet)
+
+    const { results } = setupMainnet(wallet)
+
     if (!isJobRunning) {
       try {
         isJobRunning = true
-        // Get the current slot
-        const currentSlotPath = `/${id}/slot/current` // LIVE PARAMS
-        const currentSlotParams = {
-          path: currentSlotPath,
-          method: 'GET'
-        }
-        const currentSlot = await request(currentSlotParams).then(res => Number(res.body || '0'))
 
-        if (isNaN(cursor)) {
-          cursor = currentSlot + 1
-        }
-        // Eval up to the current slot
-        while (cursor <= currentSlot) {
-          const path = `/${id}/compute=${cursor}` // LIVE PARAMS
-          const params = {
-            path,
-            method: 'GET',
-            accept: 'application/json',
-            'accept-bundle': 'true'
-          }
-          const results = await request(params)
-            .then(res => res.body)
-            .then(JSON.parse)
-            .then(prop('results'))
-            .then(handleResults)
-          // .catch(e => ({ Output: {}}))
+        const resultsData = await results({ process: id })
 
-          // If results, add to alerts
-          if (!globalThis.alerts[cursor]) {
-            globalThis.alerts[cursor] = results.Output || results.Error
+        if (resultsData?.edges?.length > 0) {
+          const edge = resultsData.edges[0]
+          const currentSlot = parseInt(edge.cursor)
+          const resultNode = edge.node
+
+          if (isNaN(cursor)) {
+            cursor = currentSlot
           }
 
-          // Update cursor
-          if (results.Output || results.Error) {
-            cursor++
+          // Only process if current slot is greater than our cursor AND hasn't been processed yet
+          // Cursor represents the last slot we've already processed
+          if (currentSlot > cursor && !_processedSlots.has(currentSlot)) {
+            // Add to alerts (will be printed by printLiveMainnet)
+            if (!globalThis.alerts[currentSlot]) {
+              globalThis.alerts[currentSlot] = {
+                data: resultNode.Output?.data?.output || resultNode.Output?.data || '',
+                prompt: resultNode.Output?.data?.prompt || resultNode.Output?.prompt,
+                print: true
+              }
+            }
+
+            // Update cursor (don't add to _processedSlots yet - that happens when printed)
+            cursor = currentSlot
             fs.writeFileSync(cursorFile, cursor.toString())
           }
         }
       } catch (e) {
-        // Surpress error messages #195
+        // Suppress error messages #195
         // console.log(chalk.red('An error occurred with live updates...'), { e })
         // console.log('Message: ', chalk.gray(e.message))
       } finally {
@@ -192,6 +224,7 @@ export async function liveMainnet(id, watch) {
   }
   ct = await cron.schedule('*/2 * * * * *', checkLive)
 
+  // Also print on a schedule to show async messages from other processes
   await cron.schedule('*/2 * * * * *', printLiveMainnet)
   return ct
 }
@@ -256,7 +289,7 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
     console.log(
       chalk.gray(
         'Current balance in wallet: ' +
-          getChalk(`${fromDenominatedAmount(balance)} ${PAYMENT.ticker}`)
+        getChalk(`${fromDenominatedAmount(balance)} ${PAYMENT.ticker}`)
       )
     )
     if (balance <= 0) {
@@ -293,7 +326,7 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
     console.log(
       chalk.gray(
         'Current balance in node: ' +
-          chalk.green(`${fromDenominatedAmount(currentNodeBalance)} ${PAYMENT.ticker}\n`)
+        chalk.green(`${fromDenominatedAmount(currentNodeBalance)} ${PAYMENT.ticker}\n`)
       )
     )
   } catch (e) {
@@ -313,7 +346,7 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
       console.log(
         chalk.gray(
           'Minimum amount required: ' +
-            chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)
+          chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}`)
         )
       )
     const amountAnswer = await ask(
@@ -331,7 +364,7 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
     console.log(
       chalk.gray(
         'Topping up with amount: ' +
-          chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}\n`)
+        chalk.green(`${formatTopupAmount(topupAmount)} ${PAYMENT.ticker}\n`)
       )
     )
 
@@ -423,7 +456,7 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
             console.log(
               chalk.gray(
                 'Updated balance in node: ' +
-                  chalk.green(`${fromDenominatedAmount(updatedNodeBalance)} ${PAYMENT.ticker}`)
+                chalk.green(`${fromDenominatedAmount(updatedNodeBalance)} ${PAYMENT.ticker}`)
               )
             )
           }

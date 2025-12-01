@@ -37,6 +37,8 @@ import { list } from './services/list.js'
 import * as os from './commands/os.js'
 import { readHistory, writeHistory } from './services/history-service.js'
 import { pad } from './commands/pad.js'
+import { config } from './config.js'
+import { printWithFormat } from './utils/print.js'
 
 const argv = minimist(process.argv.slice(2))
 const splashEnabled = shouldShowSplash(argv)
@@ -60,8 +62,6 @@ let {
   spawnProcessMainnet,
   sendMessageMainnet,
   readResultMainnet,
-  monitorProcessMainnet,
-  unmonitorProcessMainnet,
   liveMainnet,
   printLiveMainnet,
   handleNodeTopup
@@ -75,7 +75,6 @@ if (!process.stdin.isTTY) {
 }
 
 globalThis.alerts = {}
-// Make prompt global :(
 globalThis.prompt = 'aos> '
 
 if (argv['get-blueprints']) {
@@ -125,9 +124,6 @@ if (argv.watch && argv.watch.length === 43) {
   })
 }
 
-if (splashEnabled) {
-  splash()
-}
 
 if (argv['scheduler']) {
   process.env.SCHEDULER = argv['scheduler']
@@ -148,21 +144,15 @@ if (argv['mainnet']) {
   }
 
   try {
-    console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
     process.env.AO_URL = argv['mainnet']
 
-    // Get scheduler if in mainnetmode
-    process.env.SCHEDULER =
-      process.env.SCHEDULER ??
-      (await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text()))
-    process.env.AUTHORITY = process.env.SCHEDULER
+    // Get scheduler if in mainnet mode
+    process.env.SCHEDULER = process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
 
     // Replace services to use mainnet service
     sendMessage = sendMessageMainnet
     spawnProcess = spawnProcessMainnet
     readResult = () => null
-    // monitorProcess = monitorProcessMainnet
-    // unmonitorProcess = unmonitorProcessMainnet
     live = liveMainnet
     printLive = printLiveMainnet
     dryrun = () => null
@@ -174,25 +164,29 @@ if (argv['mainnet']) {
 }
 
 if (argv['gateway-url']) {
-  console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
   process.env.GATEWAY_URL = argv['gateway-url']
 }
 
 if (argv['cu-url']) {
-  console.log(chalk.yellow('Using CU: ') + chalk.blue(argv['cu-url']))
   process.env.CU_URL = argv['cu-url']
 }
 
 if (argv['mu-url']) {
-  console.log(chalk.yellow('Using MU: ') + chalk.blue(argv['mu-url']))
   process.env.MU_URL = argv['mu-url']
 }
 
 if (argv['authority']) {
-  console.log(
-    chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', '))
-  )
   process.env.AUTHORITY = argv['authority']
+}
+
+if (splashEnabled && !suppressVersionBanner) {
+  splash({
+    mainnetUrl: argv['mainnet'],
+    gatewayUrl: argv['gateway-url'],
+    cuUrl: argv['cu-url'],
+    muUrl: argv['mu-url'],
+    authority: argv['authority']
+  })
 }
 
 async function runProcess() {
@@ -243,7 +237,7 @@ async function runProcess() {
           })
 
           spinner.start()
-          spinner.suffixText = chalk.gray('[Connecting to process...]')
+          spinner.suffixText = chalk.gray('[Connecting To Process...]')
           const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
 
           spinner.stop()
@@ -258,7 +252,8 @@ async function runProcess() {
           console.error(chalk.red('Error! Could not find process ID.'))
           process.exit(0)
         }
-        version(id, { suppressOutput: suppressVersionBanner })
+        
+        printWithFormat(`${chalk.white('Your AOS Process:')} ${chalk.green(id)}`)
 
         // Kick start monitor if monitor option
         if (argv.monitor) {
@@ -286,7 +281,7 @@ async function runProcess() {
           })
 
           spinner.start()
-          spinner.suffixText = chalk.gray('[Connecting to process...]')
+          spinner.suffixText = chalk.gray('[Connecting To Process...]')
 
           const { ok } = await evaluateAndPrint({
             line: argv.run,
@@ -347,7 +342,9 @@ async function runProcess() {
             return
           }
 
+          // Continue live
           if (!editorMode && line === '.live') {
+            console.log('=== Starting Live Feed ===')
             cron.start()
             rl.prompt(true)
             return
@@ -364,10 +361,10 @@ async function runProcess() {
           if (!editorMode && line === '.dryrun') {
             dryRunMode = !dryRunMode
             if (dryRunMode) {
-              console.log(chalk.green('dryrun mode engaged'))
+              console.log(chalk.green('Dryrun Mode Engaged'))
               rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
             } else {
-              console.log(chalk.red('dryrun mode disengaged'))
+              console.log(chalk.red('Dryrun Mode Disengaged'))
               rl.setPrompt(globalThis.prompt.replace('*', ''))
             }
             rl.prompt(true)
@@ -488,6 +485,7 @@ async function runProcess() {
             cron.stop()
             console.log('Exiting...')
             rl.close()
+            process.exit(0)
             return
           }
 
@@ -545,7 +543,7 @@ async function connect(jwk, id) {
   })
 
   spinner.start()
-  spinner.suffixText = chalk.gray('[Connecting to process...]')
+  spinner.suffixText = chalk.gray('[Connecting To Process...]')
 
   let promptResult = undefined
   let _prompt = undefined
@@ -562,9 +560,9 @@ async function connect(jwk, id) {
   for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
       if (i === 0) {
-        spinner.suffixText = chalk.gray('[Connecting to process...]')
+        spinner.suffixText = chalk.gray('[Connecting To Process...]')
       } else {
-        spinner.suffixText = chalk.red('[Connecting to process...]')
+        spinner.suffixText = chalk.red('[Connecting To Process...]')
       }
       promptResult = await evaluate(
         `require('.process')._version`,
@@ -587,7 +585,7 @@ async function connect(jwk, id) {
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
     // Only prompt for updates if version is not eq to dev
     if (promptResult.Output.data !== 'dev') {
-      console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+      console.log(chalk.green('A new AOS update is available. run [.update] to install.'))
     }
   }
   return _prompt
@@ -604,7 +602,7 @@ async function handleLoadArgs(jwk, id) {
       suffixText: ''
     })
     spinner.start()
-    spinner.suffixText = chalk.gray('[Signing message and sequencing...]')
+    spinner.suffixText = chalk.gray('[Signing Message and Sequencing...]')
     await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner).catch(err => ({
       Output: JSON.stringify({ data: { output: err.message } })
     }))
@@ -624,7 +622,7 @@ async function evaluateAndPrint({
 }) {
   if (spinner) {
     spinner.start()
-    spinner.suffixText = chalk.gray('[Dispatching message...]')
+    spinner.suffixText = chalk.gray('[Dispatching Message...]')
   }
 
   const evaluator = dryRunMode

@@ -9,6 +9,6 @@ export const config = {
     MU_TESTNET: 'https://mu.ao-testnet.xyz'
   },
   addresses: {
-    SCHEDULER_MAINNET: 'NoZH3pueH0Cih6zjSNu_KRAcmg4ZJV1aGHKi0Pi5_Hc'
+    SCHEDULER_MAINNET: 'n_XZJhUnmldNFo4dhajoPZWhBXuJk-OcQr5JQ49c4Zo'
   }
 }

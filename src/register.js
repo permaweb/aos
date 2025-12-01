@@ -7,7 +7,7 @@
  * - Creates AO processes with optional data payloads, cron schedules, and tags.
  */
 
-import * as utils from './hyper-utils.js'
+import * as utils from './utils/hyper-utils.js'
 import prompts from 'prompts'
 import minimist from 'minimist'
 import { getPkg } from './services/get-pkg.js'
@@ -16,6 +16,8 @@ import path from 'path'
 import os from 'os'
 import { resolveProcessTypeFromFlags } from './services/process-type.js'
 import { config } from './config.js'
+import ora from 'ora'
+import { chalk } from './utils/colors.js'
 
 // Local cache for process IDs
 const PROCESS_CACHE_FILE = path.join(os.homedir(), '.aos-process-cache.json')
@@ -83,9 +85,9 @@ export async function register(jwk, services) {
 
   let spawnTags = Array.isArray(argv['tag-name'])
     ? argv['tag-name'].map((name, i) => ({
-        name: String(name || ''),
-        value: String(argv['tag-value'][i] || '')
-      }))
+      name: String(name || ''),
+      value: String(argv['tag-value'][i] || '')
+    }))
     : []
   if (spawnTags.length === 0 && typeof argv['tag-name'] === 'string') {
     spawnTags = [
@@ -152,10 +154,21 @@ export async function register(jwk, services) {
     // Find existing process
     let processId
     try {
+      // No process found - create new one
+      const spinner = ora({
+        spinner: 'dots',
+        suffixText: ''
+      })
+
+      spinner.start()
+      spinner.suffixText = chalk.gray('[Searching For Process...]')
+
       const gqlResult = await services.gql(queryForAOS(name), {
         owners: [address, argv.address || '']
       })
-      const edges = utils.path(['data', 'transactions', 'edges'], gqlResult)
+      const edges = utils.path(['data', 'transactions', 'edges'])(gqlResult)
+
+      spinner.stop()
 
       if (edges && edges.length > 0) {
         // Process found - handle selection
@@ -167,8 +180,19 @@ export async function register(jwk, services) {
     }
 
     // No process found - create new one
+    const spinner = ora({
+      spinner: 'dots',
+      suffixText: ''
+    })
+
+    spinner.start()
+    spinner.suffixText = chalk.gray('[Spawning New Process...]')
+
     const module = await findModule(services, argv.module)
     processId = await createProcess(jwk, name, spawnTags, module, services)
+
+    spinner.stop()
+
     return processId
   } catch (error) {
     throw error
@@ -178,18 +202,16 @@ export async function register(jwk, services) {
 async function handleExistingProcess(results) {
   if (results.length === 1) {
     // Single process found
-    const appName = results[0].node.tags.find(t => t.name == 'App-Name')?.value || 'aos'
-    if (appName === 'hyper-aos' && process.env.AO_URL === 'undefined') {
-      process.env.AO_URL = config.urls.DEFAULT_HB_NODE
-    }
     return results[0].node.id
   }
 
   // Multiple processes found - prompt user
   const processes = results.map((r, i) => {
-    const version = r.node.tags.find(t => t.name == 'aos-Version')?.value
+    const version = r.node.tags.find(t => t.name.toLowerCase() === 'aos-version')?.value
+    const variant = r.node.tags.find(t => t.name.toLowerCase() === 'variant')?.value
+
     return {
-      title: `${i + 1} - ${version} - ${r.node.id}`,
+      title: `${i + 1} - ${r.node.id} - ${variant} - v${version}`,
       value: r.node.id
     }
   })
@@ -197,7 +219,7 @@ async function handleExistingProcess(results) {
   const response = await prompts({
     type: 'select',
     name: 'process',
-    message: 'Please select a process',
+    message: 'Select A Process',
     choices: processes,
     instructions: false
   })
@@ -247,15 +269,11 @@ async function findModule(services, moduleArg) {
 
 async function createProcess(jwk, name, spawnTags, module, services) {
   let appName = 'aos'
-  if (process.env.AO_URL !== 'undefined') {
-    appName = 'hyper-aos'
-  }
 
   let data = ''
   let tags = [
     { name: 'App-Name', value: appName },
     { name: 'Name', value: name },
-    { name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' },
     ...(spawnTags || [])
   ]
 
@@ -300,12 +318,16 @@ async function createProcess(jwk, name, spawnTags, module, services) {
     })
   }
 
-  return await services.spawnProcess({
-    wallet: jwk,
-    src: module,
-    tags,
-    data
-  })
+  else {
+    tags.push({ name: 'Authority', value: 'fcoN_xJeisVsPXA-trzVAuIiqO3ydLQxM-L4XbrQKzY' });
+
+    return await services.spawnProcess({
+      wallet: jwk,
+      src: module,
+      tags,
+      data
+    })
+  }
 }
 
 function queryForAOS(name) {
