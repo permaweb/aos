@@ -23,7 +23,8 @@ export async function list(jwk, services) {
   ], {
     title: 'Your Processes',
     borderColor: chalk.gray,
-    titleColor: chalk.green
+    titleColor: chalk.green,
+    truncate: true
   })
 }
 

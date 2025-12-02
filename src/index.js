@@ -212,15 +212,14 @@ async function runProcess() {
       // Get wallet
       const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
 
-      // Make wallet available to services if relay mode or mainnet mode (default)
-      if (argv['relay'] || argv['mainnet'] || !argv['legacy']) {
-        process.env.WALLET = JSON.stringify(jwk)
-      }
-
-      // Handle list option
       if (argv.list) {
         await list(jwk, { address, gql })
         process.exit(0)
+      }
+
+      // Make wallet available to services if relay mode or mainnet mode (default)
+      if (argv['mainnet'] || !argv['legacy']) {
+        process.env.WALLET = JSON.stringify(jwk)
       }
 
       // Register/find process
@@ -315,8 +314,8 @@ async function runProcess() {
 
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
-        
-          // Check loading files flag
+
+        // Check loading files flag
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)
