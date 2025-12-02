@@ -17,7 +17,7 @@ import path from 'path'
 import os from 'os'
 import ora from 'ora'
 import readline from 'readline'
-import { prop, keys } from 'ramda'
+import { keys } from 'ramda'
 import { config } from '../config.js'
 import Arweave from 'arweave'
 import { printWithoutDisruption } from '../utils/terminal.js'
@@ -73,6 +73,7 @@ export async function spawnProcessMainnet({ wallet, src, tags, data }) {
     })
     return processId
   } catch (e) {
+    console.error(e)
     throw new Error(e.message ?? 'Error spawning process')
   }
 }
@@ -109,6 +110,7 @@ export async function sendMessageMainnet({ processId, wallet, tags, data }) {
   } catch (e) {
     // Resume cron jobs even on error
     _cronPaused = false
+    console.error(e)
     throw new Error(e.message ?? 'Error sending message')
   }
 }

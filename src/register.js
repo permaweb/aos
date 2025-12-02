@@ -19,8 +19,9 @@ import { config } from './config.js'
 import ora from 'ora'
 import { chalk } from './utils/colors.js'
 
-// Local cache for process IDs
+// Local cache for process IDs and transaction data
 const PROCESS_CACHE_FILE = path.join(os.homedir(), '.aos-process-cache.json')
+const TX_CACHE_FILE = path.join(os.homedir(), '.aos-tx-cache.json')
 
 function loadProcessCache() {
   try {
@@ -57,6 +58,40 @@ function cacheProcess(address, name, processId, isMainnet = false) {
     timestamp: Date.now()
   }
   saveProcessCache(cache)
+}
+
+function loadTxCache() {
+  try {
+    if (fs.existsSync(TX_CACHE_FILE)) {
+      const data = fs.readFileSync(TX_CACHE_FILE, 'utf-8')
+      return JSON.parse(data)
+    }
+  } catch (e) {
+    // Ignore cache errors
+  }
+  return {}
+}
+
+function saveTxCache(cache) {
+  try {
+    fs.writeFileSync(TX_CACHE_FILE, JSON.stringify(cache, null, 2))
+  } catch (e) {
+    // Ignore cache errors
+  }
+}
+
+function getCachedTx(txId) {
+  const cache = loadTxCache()
+  return cache[txId]
+}
+
+function cacheTx(txId, tags) {
+  const cache = loadTxCache()
+  cache[txId] = {
+    tags,
+    timestamp: Date.now()
+  }
+  saveTxCache(cache)
 }
 
 const promptUser = results => {
@@ -101,47 +136,45 @@ export async function register(jwk, services) {
   // Handle direct address lookup
   if (services.isAddress(name)) {
     try {
-      // Try cache first
-      const cacheUrl = config.urls.CACHE
-      const variantFromCache = await fetch(`${cacheUrl}/${name}/variant`)
-        .then(res => res.text())
-        .catch(() => null)
+      // Check cache first
+      const cachedTx = getCachedTx(name)
+      let tags
+      let variant
 
-      if (variantFromCache) {
-        if (
-          variantFromCache === 'ao.N.1' &&
-          (!process.env.AO_URL || process.env.AO_URL === 'undefined')
-        ) {
-          process.env.AO_URL = config.urls.DEFAULT_HB_NODE
-        }
-        return { id: name, variant: variantFromCache }
-      }
-
-      // Fallback to GraphQL
-      const gqlUrl = config.urls.GATEWAY
-      const res = await fetch(`${gqlUrl}/graphql`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: `query ($id: ID!) { transaction(id: $id) { tags { name value } } }`,
-          variables: { id: name }
-        })
-      })
-
-      if (res.ok) {
-        const data = await res.json()
-        const tags = data.data.transaction.tags
+      if (cachedTx) {
+        tags = cachedTx.tags
         const variantTag = tags.find(tag => tag.name.toLowerCase() === 'variant')
-        const variant = variantTag?.value
+        variant = variantTag?.value
+      } else {
+        // Fetch from gateway if not cached
+        const gqlUrl = config.urls.GATEWAY
+        const res = await fetch(`${gqlUrl}/graphql`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: `query ($id: ID!) { transaction(id: $id) { tags { name value } } }`,
+            variables: { id: name }
+          })
+        })
 
-        if (variant === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === 'undefined')) {
-          process.env.AO_URL = config.urls.DEFAULT_HB_NODE
+        if (res.ok) {
+          const data = await res.json()
+          tags = data.data.transaction.tags
+          const variantTag = tags.find(tag => tag.name.toLowerCase() === 'variant')
+          variant = variantTag?.value
+
+          // Cache the transaction data
+          cacheTx(name, tags)
+        } else {
+          return { id: name, variant: null }
         }
-
-        return { id: name, variant }
       }
 
-      return { id: name, variant: null }
+      if (variant === 'ao.N.1' && (!process.env.AO_URL || process.env.AO_URL === 'undefined')) {
+        process.env.AO_URL = config.urls.DEFAULT_HB_NODE
+      }
+
+      return { id: name, variant }
     } catch (error) {
       // If lookup fails, just return the name
       return { id: name, variant: null }

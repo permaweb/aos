@@ -17,7 +17,7 @@ export function splash(options = {}) {
   }
 
   if (options.mainnetUrl) {
-    lines.push(chalk.white('Using Mainnet: ') + chalk.green(options.mainnetUrl))
+    lines.push(chalk.white('Using Node: ') + chalk.green(options.mainnetUrl))
   }
 
   if (options.gatewayUrl) {
@@ -38,6 +38,10 @@ export function splash(options = {}) {
   
   if (options.scheduler) {
     lines.push(chalk.white('Using Scheduler: ') + chalk.green(options.scheduler))
+  }
+  
+  if (options.legacy) {
+    lines.push(chalk.gray('* Using Legacynet'))
   }
 
   lines.push('newline')

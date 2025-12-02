@@ -124,6 +124,30 @@ if (argv.watch && argv.watch.length === 43) {
   })
 }
 
+// Mainnet mode is the default behavior unless --legacy flag is used
+if (!argv['legacy']) {
+  try {
+    // Use --url flag if provided, otherwise use DEFAULT_HB_NODE from config
+    process.env.AO_URL = argv['url'] || config.urls.DEFAULT_HB_NODE
+
+    // Get scheduler if in mainnet mode
+    process.env.SCHEDULER = process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
+
+    // Replace services to use mainnet service
+    sendMessage = sendMessageMainnet
+    spawnProcess = spawnProcessMainnet
+    readResult = () => null
+    live = liveMainnet
+    printLive = printLiveMainnet
+    dryrun = () => null
+  } catch (e) {
+    console.error(e)
+    console.error(chalk.red('Error connecting to ' + (argv['url'] || config.urls.DEFAULT_HB_NODE)))
+    process.exit(1)
+  }
+}
+
+// Support --mainnet flag for backwards compatibility
 if (argv['mainnet']) {
   if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
     console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'))
@@ -172,12 +196,13 @@ if (argv['scheduler']) {
 
 if (splashEnabled && !suppressVersionBanner) {
   splash({
-    mainnetUrl: argv['mainnet'],
+    mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
     gatewayUrl: argv['gateway-url'],
     cuUrl: argv['cu-url'],
     muUrl: argv['mu-url'],
     authority: argv['authority'],
-    scheduler: argv['scheduler'],
+    scheduler: argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET,
+    legacy: argv['legacy'],
   })
 }
 
@@ -187,8 +212,8 @@ async function runProcess() {
       // Get wallet
       const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
 
-      // Make wallet available to services if relay mode
-      if (argv['relay'] || argv['mainnet']) {
+      // Make wallet available to services if relay mode or mainnet mode (default)
+      if (argv['relay'] || argv['mainnet'] || !argv['legacy']) {
         process.env.WALLET = JSON.stringify(jwk)
       }
 
@@ -217,7 +242,7 @@ async function runProcess() {
           printLive = printLiveMainnet
         }
 
-        if (argv.mainnet && argv.topup) {
+        if ((argv.mainnet || !argv.legacy) && argv.topup) {
           await handleNodeTopup(jwk, false)
         }
 
@@ -234,7 +259,7 @@ async function runProcess() {
           spinner.stop()
 
           if (result.Output?.data) {
-            console.log(result.Output?.data)
+            printWithFormat(result.Output?.data)
           }
           process.exit(0)
         }
@@ -250,7 +275,7 @@ async function runProcess() {
         // Kick start monitor if monitor option
         if (argv.monitor) {
           const result = await monitor(jwk, id, { monitorProcess })
-          console.log(chalk.green(result))
+          printWithFormat(chalk.green(result))
         }
 
         // Check for update and install if needed
@@ -362,7 +387,7 @@ async function runProcess() {
 
           // Continue live
           if (!editorMode && line === '.live') {
-            console.log('=== Starting Live Feed ===')
+            printWithFormat('=== Starting Live Feed ===')
             cron.start()
             rl.prompt(true)
             return
@@ -370,7 +395,7 @@ async function runProcess() {
 
           // Pause live
           if (!editorMode && line === '.pause') {
-            console.log('=== Pausing Live Feed ===')
+            printWithFormat('=== Pausing Live Feed ===')
             cron.stop()
             rl.prompt(true)
             return
@@ -379,10 +404,10 @@ async function runProcess() {
           if (!editorMode && line === '.dryrun') {
             dryRunMode = !dryRunMode
             if (dryRunMode) {
-              console.log(chalk.green('Dryrun Mode Engaged'))
+              printWithFormat(chalk.green('Dryrun Mode Engaged'))
               rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
             } else {
-              console.log(chalk.red('Dryrun Mode Disengaged'))
+              printWithFormat(chalk.red('Dryrun Mode Disengaged'))
               rl.setPrompt(globalThis.prompt.replace('*', ''))
             }
             rl.prompt(true)
@@ -391,18 +416,18 @@ async function runProcess() {
 
           if (!editorMode && line === '.monitor') {
             const result = await monitor(jwk, id, { monitorProcess }).catch(_ =>
-              chalk.gray('⚡️ could not monitor process!')
+              chalk.gray('Could not monitor process!')
             )
-            console.log(chalk.green(result))
+            printWithFormat(chalk.green(result))
             rl.prompt(true)
             return
           }
 
           if (!editorMode && line === '.unmonitor') {
             const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ =>
-              chalk.gray('⚡️ monitor not found!')
+              chalk.gray('Monitor not found!')
             )
-            console.log(chalk.green(result))
+            printWithFormat(chalk.green(result))
             rl.prompt(true)
             return
           }
@@ -411,7 +436,7 @@ async function runProcess() {
             try {
               line = loadBlueprint(line)
             } catch (e) {
-              console.log(e.message)
+              printWithFormat(e.message)
               rl.prompt(true)
               return
             }
@@ -424,14 +449,14 @@ async function runProcess() {
             try {
               ;[line, loadedModules] = load(line)
             } catch (e) {
-              console.log(e.message)
+              printWithFormat(e.message)
               rl.prompt(true)
               return
             }
           }
 
           if (line === '.editor') {
-            console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+            printWithFormat("<editor mode> use '.done' to submit or '.cancel' to cancel")
             editorMode = true
             rl.setPrompt('')
             rl.prompt(true)
@@ -463,7 +488,7 @@ async function runProcess() {
           }
 
           if (editorMode && line === '.print') {
-            console.log(editorData)
+            printWithFormat(editorData)
             editorData = ''
             editorMode = false
             rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
@@ -501,7 +526,7 @@ async function runProcess() {
 
           if (line === '.exit') {
             cron.stop()
-            console.log('Exiting...')
+            printWithFormat('Exiting...')
             rl.close()
             process.exit(0)
             return
@@ -523,6 +548,10 @@ async function runProcess() {
         })
 
         process.on('SIGINT', function () {
+          // Clear the line to hide ^C
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
+
           // Save the input history when the user exits
           if (id) {
             writeHistory(id, history)
@@ -532,15 +561,15 @@ async function runProcess() {
       }
     } catch (e) {
       if (argv.list) {
-        console.log(e)
+        printWithFormat(e)
       } else {
         if (process.env.DEBUG) {
-          console.log(e)
+          printWithFormat(e)
         }
         if (argv.load) {
-          console.log(e.message)
+          printWithFormat(e.message)
         } else {
-          console.log(
+          printWithFormat(
             chalk.red(
               '\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'
             )
@@ -596,14 +625,14 @@ async function connect(jwk, id) {
   }
   spinner.stop()
   if (_prompt === undefined) {
-    console.log('Could not connect to process! Exiting...')
+    printWithFormat('Could not connect to process! Exiting...')
     process.exit(1)
   }
   const aosVersion = getPkg().aos.version
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
     // Only prompt for updates if version is not eq to dev
     if (promptResult.Output.data !== 'dev') {
-      console.log(chalk.green('A new AOS update is available. run [.update] to install.'))
+      printWithFormat(chalk.green('A new AOS update is available. run [.update] to install.'))
     }
   }
   return _prompt
@@ -676,7 +705,7 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
       const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
       outputError(line, error, errorOrigin)
     } else {
-      console.log(chalk.red(errorPayload))
+      printWithFormat(chalk.red(errorPayload))
     }
 
     return { ok: false }
@@ -684,13 +713,11 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
 
   if (output?.data) {
     if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
-      console.log(output.data.output)
-      console.log('') // Add newline after output
+      printWithFormat(output.data.output)
     } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
-      console.log('')
+      printWithFormat('')
     } else {
-      console.log(output.data)
-      console.log('') // Add newline after data
+      printWithFormat(output.data)
     }
 
     const nextPrompt = Object.prototype.hasOwnProperty.call(output.data, 'prompt')
@@ -708,19 +735,16 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
   }
 
   if (!output) {
-    console.log(chalk.red('An unknown error occurred.'))
-    console.log('') // Add newline after error
+    printWithFormat(chalk.red('An unknown error occurred.'))
     return { ok: false }
   }
 
   if (typeof output === 'string') {
-    console.log(output)
-    console.log('') // Add newline after output
+    printWithFormat(output)
     return { ok: true, prompt: globalThis.prompt }
   }
 
-  console.log(output)
-  console.log('') // Add newline after output
+  printWithFormat(output)
   return { ok: true, prompt: globalThis.prompt }
 }
 
