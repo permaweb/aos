@@ -16,28 +16,30 @@ export function splash(options = {}) {
     lines.push('divider')
   }
 
+  lines.push(chalk.white('Network: ') + chalk.green(options.legacy ? 'Legacynet' : 'Mainnet'))
+
   if (options.mainnetUrl) {
-    lines.push(chalk.white('Using Node: ') + chalk.green(options.mainnetUrl))
+    lines.push(chalk.white('Node: ') + chalk.green(options.mainnetUrl))
   }
 
   if (options.gatewayUrl) {
-    lines.push(chalk.white('Using Gateway: ') + chalk.green(options.gatewayUrl))
+    lines.push(chalk.white('Gateway: ') + chalk.green(options.gatewayUrl))
   }
 
   if (options.cuUrl) {
-    lines.push(chalk.white('Using CU: ') + chalk.green(options.cuUrl))
+    lines.push(chalk.white('CU: ') + chalk.green(options.cuUrl))
   }
 
   if (options.muUrl) {
-    lines.push(chalk.white('Using MU: ') + chalk.green(options.muUrl))
+    lines.push(chalk.white('MU: ') + chalk.green(options.muUrl))
   }
 
   if (options.authority) {
-    lines.push(chalk.white('Using Authority: ') + chalk.green(options.authority))
+    lines.push(chalk.white('Authority: ') + chalk.green(options.authority))
   }
   
   if (options.scheduler) {
-    lines.push(chalk.white('Using Scheduler: ') + chalk.green(options.scheduler))
+    lines.push(chalk.white('Scheduler: ') + chalk.green(options.scheduler))
   }
 
   lines.push('newline')

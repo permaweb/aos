@@ -221,11 +221,7 @@ export async function liveMainnet(id, watch) {
             fs.writeFileSync(cursorFile, cursor.toString())
           }
         }
-      } catch (e) {
-        // Suppress error messages #195
-        // console.log(chalk.red('An error occurred with live updates...'), { e })
-        // console.log('Message: ', chalk.gray(e.message))
-      } finally {
+      } catch (e) {} finally {
         isJobRunning = false
       }
     }
