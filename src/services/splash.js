@@ -39,10 +39,6 @@ export function splash(options = {}) {
   if (options.scheduler) {
     lines.push(chalk.white('Using Scheduler: ') + chalk.green(options.scheduler))
   }
-  
-  if (options.legacy) {
-    lines.push(chalk.gray('* Using Legacynet'))
-  }
 
   lines.push('newline')
 

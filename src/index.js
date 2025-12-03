@@ -201,7 +201,7 @@ if (splashEnabled && !suppressVersionBanner) {
     cuUrl: argv['cu-url'],
     muUrl: argv['mu-url'],
     authority: argv['authority'],
-    scheduler: argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET,
+    scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? config.addresses.SCHEDULER_MAINNET : undefined,
     legacy: argv['legacy'],
   })
 }

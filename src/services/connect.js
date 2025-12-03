@@ -116,7 +116,7 @@ export function printLive() {
       } else {
         process.stdout.write('\n')
       }
-      process.stdout.write('\u001b[0G' + globalThis.alerts[k].data)
+      process.stdout.write('\u001b[0G' + globalThis.alerts[k].data + '\n')
 
       globalThis.prompt = globalThis.alerts[k].prompt || 'aos> '
       globalThis.setPrompt(globalThis.prompt || 'aos> ')
