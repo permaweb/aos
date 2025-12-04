@@ -225,6 +225,37 @@ async function runProcess() {
       // Register/find process
       const { id, variant } = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
 
+      // If variant is ao.TN.1, force legacy mode
+      if (variant === 'ao.TN.1') {
+        sendMessage = connectSvc.sendMessage
+        spawnProcess = connectSvc.spawnProcess
+        readResult = connectSvc.readResult
+        live = connectSvc.live
+        printLive = connectSvc.printLive
+        dryrun = connectSvc.dryrun
+        process.env.AO_URL = 'undefined'
+
+        // Clear and reprint splash if splash was enabled
+        if (splashEnabled && !suppressVersionBanner) {
+          // Clear the previous splash (approximate 15 lines for the splash screen)
+          for (let i = 0; i < 15; i++) {
+            process.stdout.write('\x1b[1A\x1b[2K')
+          }
+          process.stdout.write('\x1b[0G')
+
+          // Reprint splash with legacy mode
+          splash({
+            mainnetUrl: undefined,
+            gatewayUrl: argv['gateway-url'],
+            cuUrl: argv['cu-url'],
+            muUrl: argv['mu-url'],
+            authority: argv['authority'],
+            scheduler: undefined,
+            legacy: true,
+          })
+        }
+      }
+
       // Continue with the process
       {
         let editorMode = false
