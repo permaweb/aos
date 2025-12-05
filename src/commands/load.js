@@ -36,16 +36,12 @@ export function load(line) {
     if (projectStructure.length > 0) {
       console.log(chalk.yellow('\nThe following files will be deployed:'))
       console.log(
-        chalk.dim(
-          createFileTree(
-            projectStructure.map(mod => {
-              if (mod.path === filePath) {
-                mod.path += ' ' + chalk.reset(chalk.bgGreen(' MAIN '))
-              }
-
-              return mod.path
-            })
-          )
+        createFileTree(
+          projectStructure.map(mod => {
+            return mod.path === filePath
+              ? `${mod.path}  MAIN`
+              : mod.path
+          })
         )
       )
     }
