@@ -106,7 +106,7 @@ export function printWithBorder(lines, { title = '', titleColor = chalk.white, b
   console.log('');
 }
 
-export function printWithFormat(lineObj) {
+export function printWithFormat(lineObj, opts) {
   if (lineObj) {
     if (Array.isArray(lineObj)) {
       for (const line of lineObj) {
@@ -115,5 +115,5 @@ export function printWithFormat(lineObj) {
     }
     else console.log(lineObj)
   }
-  console.log('')
+  if (!opts?.lineOnly) console.log('')
 }

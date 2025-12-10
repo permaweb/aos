@@ -2,7 +2,6 @@ import { chalk } from '../utils/colors.js'
 import { printWithBorder } from '../utils/print.js'
 
 export function replHelp() {
-  console.log('')
   printWithBorder([
     chalk.white('AOS Client Functions'),
     'newline',

@@ -45,11 +45,6 @@ const parseWasmBody = body => {
   }
 }
 
-const handleResults = resBody =>
-  resBody.info === 'hyper-aos'
-    ? { Output: resBody.output, Error: resBody.error }
-    : parseWasmBody(resBody.json?.body)
-
 const resolveAuthority = async () => {
   if (process.env.AUTHORITY) return process.env.AUTHORITY;
   else {
@@ -61,13 +56,15 @@ const resolveAuthority = async () => {
 export async function spawnProcessMainnet({ wallet, src, tags, data }) {
   const { spawn } = setupMainnet(wallet)
   try {
+    const authority = await resolveAuthority();
+
     const processId = await spawn({
       tags: [
         ...tags,
         { name: 'aos-version', value: pkg.version },
         { name: 'process-timestamp', value: Date.now().toString() }
       ],
-      authority: await resolveAuthority(),
+      authority: authority,
       module: src,
       data: data
     })

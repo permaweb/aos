@@ -1,4 +1,5 @@
 export function resolveProcessTypeFromFlags(argv = {}) {
+  if (!argv.legacy) return 'mainnet'
   if (argv.hyper) return 'hyper'
   if (argv.run) return 'aos'
   return null

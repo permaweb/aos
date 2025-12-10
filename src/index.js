@@ -124,6 +124,26 @@ if (argv.watch && argv.watch.length === 43) {
   })
 }
 
+if (argv['gateway-url']) {
+  process.env.GATEWAY_URL = argv['gateway-url']
+}
+
+if (argv['cu-url']) {
+  process.env.CU_URL = argv['cu-url']
+}
+
+if (argv['mu-url']) {
+  process.env.MU_URL = argv['mu-url']
+}
+
+if (argv['authority']) {
+  process.env.AUTHORITY = argv['authority']
+}
+
+if (argv['scheduler']) {
+  process.env.SCHEDULER = argv['scheduler']
+}
+
 // Mainnet mode is the default behavior unless --legacy flag is used
 if (!argv['legacy']) {
   try {
@@ -174,26 +194,6 @@ if (argv['mainnet']) {
   }
 }
 
-if (argv['gateway-url']) {
-  process.env.GATEWAY_URL = argv['gateway-url']
-}
-
-if (argv['cu-url']) {
-  process.env.CU_URL = argv['cu-url']
-}
-
-if (argv['mu-url']) {
-  process.env.MU_URL = argv['mu-url']
-}
-
-if (argv['authority']) {
-  process.env.AUTHORITY = argv['authority']
-}
-
-if (argv['scheduler']) {
-  process.env.SCHEDULER = argv['scheduler']
-}
-
 if (splashEnabled && !suppressVersionBanner) {
   splash({
     mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
@@ -201,7 +201,7 @@ if (splashEnabled && !suppressVersionBanner) {
     cuUrl: argv['cu-url'],
     muUrl: argv['mu-url'],
     authority: argv['authority'],
-    scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? config.addresses.SCHEDULER_MAINNET : undefined,
+    scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
     legacy: argv['legacy'],
   })
 }
@@ -384,6 +384,30 @@ async function runProcess() {
           history.concat(e)
         })
 
+        // Handle backspace in editor mode to delete previous line when current line is empty
+        rl.input.on('keypress', (char, key) => {
+          if (editorMode && key && key.name === 'backspace') {
+            const currentLine = rl.line
+            if (currentLine === '' && editorData.length > 0) {
+              // Remove the last line from editorData
+              const lines = editorData.split('\n')
+              lines.pop() // Remove empty string from trailing newline
+              const lastLine = lines.pop() || ''
+              editorData = lines.join('\n') + (lines.length > 0 ? '\n' : '')
+
+              // Move cursor up and clear that line
+              readline.moveCursor(process.stdout, 0, -1)
+              readline.clearLine(process.stdout, 0)
+              readline.cursorTo(process.stdout, 0)
+
+              // Set the current line to the last line content so user can continue editing it
+              rl.line = lastLine
+              rl.cursor = lastLine.length
+              rl._refreshLine()
+            }
+          }
+        })
+
         rl.setPrompt(globalThis.prompt)
         if (!editorMode) rl.prompt(true)
 
@@ -394,20 +418,22 @@ async function runProcess() {
             rl.prompt(true)
             return
           }
+          
+          if (!editorMode) {
+            // Calculate how many lines the prompt + input took (accounting for line wrapping)
+            const terminalWidth = process.stdout.columns || 80
+            const promptLength = rl.getPrompt().replace(/\x1b\[[0-9;]*m/g, '').length
+            const totalLength = promptLength + line.length
+            const linesUsed = Math.ceil(totalLength / terminalWidth)
 
-          // Calculate how many lines the prompt + input took (accounting for line wrapping)
-          const terminalWidth = process.stdout.columns || 80
-          const promptLength = rl.getPrompt().replace(/\x1b\[[0-9;]*m/g, '').length
-          const totalLength = promptLength + line.length
-          const linesUsed = Math.ceil(totalLength / terminalWidth)
+            // Clear all the lines (prompt + wrapped lines)
+            for (let i = 0; i < linesUsed; i++) {
+              process.stdout.write('\x1b[1A\r\x1b[K') // Move up and clear line
+            }
 
-          // Clear all the lines (prompt + wrapped lines)
-          for (let i = 0; i < linesUsed; i++) {
-            process.stdout.write('\x1b[1A\r\x1b[K') // Move up and clear line
+            // Log user input
+            printWithFormat(chalk.gray(line))
           }
-
-          // Log user input
-          printWithFormat(chalk.gray(line))
 
           if (!editorMode && line === '.help') {
             replHelp()
@@ -486,7 +512,7 @@ async function runProcess() {
           }
 
           if (line === '.editor') {
-            printWithFormat("<editor mode> use '.done' to submit or '.cancel' to cancel")
+            printWithFormat(`<editor mode> use '.done' to submit or '.cancel' to cancel`, { lineOnly: true })
             editorMode = true
             rl.setPrompt('')
             rl.prompt(true)
@@ -498,6 +524,7 @@ async function runProcess() {
             line = editorData
             editorData = ''
             editorMode = false
+            printWithFormat('')
             rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           }
 
@@ -556,7 +583,7 @@ async function runProcess() {
 
           if (line === '.exit') {
             cron.stop()
-            printWithFormat('Exiting...')
+            printWithFormat(chalk.white('Exiting...'))
             rl.close()
             process.exit(0)
             return

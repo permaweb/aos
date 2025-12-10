@@ -340,13 +340,7 @@ async function createProcess(jwk, name, spawnTags, module, services) {
   // Use appropriate spawn service
   const processType = resolveProcessTypeFromFlags(argv)
 
-  if (processType === 'mainnet' || process.env.AO_URL !== 'undefined') {
-    if (process.env.AO_URL === 'undefined') {
-      process.env.AO_URL = config.urls.DEFAULT_HB_NODE
-      process.env.SCHEDULER = config.addresses.SCHEDULER_MAINNET
-      process.env.AUTHORITY = 'undefined'
-    }
-
+  if (processType === 'mainnet') {
     return await services.spawnProcessMainnet({
       wallet: jwk,
       src: module,
