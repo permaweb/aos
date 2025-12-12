@@ -11,6 +11,11 @@ export function splash(options = {}) {
     chalk.white(`Client Version: ${pkg.version}. 2025`),
   ]
 
+  if (options.walletAddress) {
+    lines.push('newline')
+    lines.push(chalk.white('Wallet Address: ') + chalk.green(options.walletAddress))
+  }
+
   if (Object.values(options).some(value => value)) {
     lines.push('newline')
     lines.push('divider')

@@ -196,7 +196,7 @@ export async function register(jwk, services) {
       })
 
       spinner.start()
-      spinner.suffixText = chalk.gray('[Searching For Process...]')
+      spinner.suffixText = chalk.gray('[Starting AOS...]')
 
       const gqlResult = await services.gql(queryForAOS(name), {
         owners: [address, argv.address || '']

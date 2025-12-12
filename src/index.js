@@ -176,11 +176,8 @@ if (argv['mainnet']) {
 
   try {
     process.env.AO_URL = argv['mainnet']
-
-    // Get scheduler if in mainnet mode
     process.env.SCHEDULER = process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
 
-    // Replace services to use mainnet service
     sendMessage = sendMessageMainnet
     spawnProcess = spawnProcessMainnet
     readResult = () => null
@@ -194,38 +191,24 @@ if (argv['mainnet']) {
   }
 }
 
-if (splashEnabled && !suppressVersionBanner) {
-  splash({
-    mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
-    gatewayUrl: argv['gateway-url'],
-    cuUrl: argv['cu-url'],
-    muUrl: argv['mu-url'],
-    authority: argv['authority'],
-    scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
-    legacy: argv['legacy'],
-  })
-}
-
 async function runProcess() {
+  const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
+
   if (!argv.watch) {
     try {
-      // Get wallet
-      const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
-
       if (argv.list) {
         await list(jwk, { address, gql })
         process.exit(0)
       }
 
-      // Make wallet available to services if relay mode or mainnet mode (default)
       if (argv['mainnet'] || !argv['legacy']) {
         process.env.WALLET = JSON.stringify(jwk)
       }
 
-      // Register/find process
       const { id, variant } = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
 
-      // If variant is ao.TN.1, force legacy mode
+      let isLegacyMode = argv['legacy'];
+      
       if (variant === 'ao.TN.1') {
         sendMessage = connectSvc.sendMessage
         spawnProcess = connectSvc.spawnProcess
@@ -234,36 +217,29 @@ async function runProcess() {
         printLive = connectSvc.printLive
         dryrun = connectSvc.dryrun
         process.env.AO_URL = 'undefined'
-
-        // Clear and reprint splash if splash was enabled
-        if (splashEnabled && !suppressVersionBanner) {
-          // Clear the previous splash (approximate 15 lines for the splash screen)
-          for (let i = 0; i < 15; i++) {
-            process.stdout.write('\x1b[1A\x1b[2K')
-          }
-          process.stdout.write('\x1b[0G')
-
-          // Reprint splash with legacy mode
-          splash({
-            mainnetUrl: undefined,
-            gatewayUrl: argv['gateway-url'],
-            cuUrl: argv['cu-url'],
-            muUrl: argv['mu-url'],
-            authority: argv['authority'],
-            scheduler: undefined,
-            legacy: true,
-          })
-        }
+        isLegacyMode = true
       }
 
-      // Continue with the process
+      if (splashEnabled && !suppressVersionBanner) {
+        const walletAddress = await address(jwk)
+
+        splash({
+          walletAddress: walletAddress,
+          mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
+          gatewayUrl: argv['gateway-url'],
+          cuUrl: argv['cu-url'],
+          muUrl: argv['mu-url'],
+          authority: argv['authority'],
+          scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
+          legacy: isLegacyMode
+        })
+      }
+
       {
         let editorMode = false
         let editorData = ''
         const history = readHistory(id)
-
-        // This can be improved, but for now if ao-url is set
-        // We will use hyper mode
+        
         if (process.env.AO_URL !== 'undefined') {
           process.env.WALLET = JSON.stringify(jwk)
           sendMessage = sendMessageMainnet
@@ -418,7 +394,7 @@ async function runProcess() {
             rl.prompt(true)
             return
           }
-          
+
           if (!editorMode) {
             // Calculate how many lines the prompt + input took (accounting for line wrapping)
             const terminalWidth = process.stdout.columns || 80
@@ -627,9 +603,7 @@ async function runProcess() {
           printWithFormat(e.message)
         } else {
           printWithFormat(
-            chalk.red(
-              '\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'
-            )
+            chalk.red('An Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.')
           )
           process.exit(1)
         }
