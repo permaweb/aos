@@ -31,7 +31,7 @@ function wrapLine(text, maxWidth) {
   return wrappedLines.length > 0 ? wrappedLines : [plainText.substring(0, maxWidth)]
 }
 
-export function printWithBorder(lines, { title = '', titleColor = chalk.white, borderColor = chalk.white, width, truncate = false } = {}) {
+export function printWithBorder(lines, { title = '', titleColor = chalk.gray, borderColor = chalk.gray, width, truncate = false } = {}) {
   // Use terminal width if not specified
   const terminalWidth = process.stdout.columns || 175
   const defaultWidth = Math.min(175, Math.max(40, terminalWidth - 2))

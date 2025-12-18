@@ -15,7 +15,7 @@ export async function list(jwk, services) {
     const pid = node.id
     const name = find(t => t.name === 'Name', node.tags)?.value
     const version = find(t => t.name.toLowerCase() === 'aos-version', node.tags)?.value
-    return `${chalk.white(`${name}`)} - ${chalk.green(pid)} ${chalk.gray(`(v${version})`)}`
+    return `${`${name}`} - ${chalk.green(pid)} ${chalk.gray(`(v${version})`)}`
   }, edges)
 
   printWithBorder([

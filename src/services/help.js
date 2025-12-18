@@ -3,11 +3,11 @@ import { printWithBorder } from '../utils/print.js'
 
 export function replHelp() {
   printWithBorder([
-    chalk.white('AOS Client Functions'),
+    chalk.gray('AOS Client Functions'),
     'newline',
     chalk.gray('Documentation: ') + chalk.green('https://cookbook_ao.g8way.io'),
     'newline',
-    chalk.white('Client Commands:'),
+    chalk.gray('Client Commands:'),
     'newline',
     chalk.green('.load [file]') + '                  Loads local Lua file into the process',
     chalk.green('.load-blueprint [blueprint]') + '   Loads a blueprint from the blueprints repository',
@@ -28,11 +28,11 @@ export function replHelp() {
 
 export function help() {
   printWithBorder([
-    chalk.white('Welcome to the AOS client! AOS allows you to build and interact with AO processes.'),
+    chalk.gray('Welcome to the AOS client! AOS allows you to build and interact with AO processes.'),
     'newline',
     chalk.gray('Documentation: ') + chalk.green('https://cookbook_ao.g8way.io'),
     'newline',
-    chalk.white('Options:'),
+    chalk.gray('Options:'),
     'newline',
     chalk.green('[name]') + '                             The name of the process you want to spawn or connect to. If you do not specify a name then "default" will be used.',
     'newline',

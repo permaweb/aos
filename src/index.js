@@ -276,7 +276,7 @@ async function runProcess() {
         }
 
         const variantDisplay = variant ? ` ${chalk.gray(`${variant}`)}` : ''
-        printWithFormat(`${chalk.white('Your AOS Process:')} ${chalk.green(id)}${variantDisplay}`)
+        printWithFormat(`Your AOS Process: ${chalk.green(id)}${variantDisplay}`)
 
         // Kick start monitor if monitor option
         if (argv.monitor) {
@@ -408,7 +408,7 @@ async function runProcess() {
             }
 
             // Log user input
-            printWithFormat(chalk.gray(line))
+            printWithFormat((chalk.gray('> ') + chalk.green(line)))
           }
 
           if (!editorMode && line === '.help') {
@@ -559,7 +559,7 @@ async function runProcess() {
 
           if (line === '.exit') {
             cron.stop()
-            printWithFormat(chalk.white('Exiting...'))
+            printWithFormat(chalk.gray('Exiting...'))
             rl.close()
             process.exit(0)
             return
