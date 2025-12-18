@@ -150,7 +150,8 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
     variant: 'ao.N.1',
     ...tags.reduce((a, t) => assoc(t.name.toLowerCase(), t.value, a), {}),
     'aos-version': pkg.version,
-    'signing-format': 'ANS-104'
+    'signing-format': 'ANS-104',
+    accept: 'application/json'
   }
   if (data) {
     params.data = data
@@ -169,8 +170,9 @@ export function spawnProcessMainnet({ wallet, src, tags, data, isHyper }) {
       return p
     })
     .chain(submitRequest)
+    .map(prop('body'))
+    .map(JSON.parse)
     .map(prop('process'))
-    
 
 }
 
@@ -412,8 +414,10 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
       message: transferId
     });
 
+    const maxSubledgerRetries = 150; // 5 minutes at 2s intervals
+    let subledgerBalanceUpdated = false;
     let updatedBetaGZAOBalance;
-    do {
+    for (let attempt = 1; attempt <= maxSubledgerRetries; attempt++) {
       await new Promise((r) => setTimeout(r, 2000));
       updatedBetaGZAOBalance = (await aoLegacy.dryrun({
         process: PAYMENT.subledger,
@@ -422,8 +426,19 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
           { name: 'Recipient', value: walletAddress }
         ]
       })).Messages[0].Data;
+      
+      if (updatedBetaGZAOBalance !== currentBetaGZAOBalance) {
+        subledgerBalanceUpdated = true;
+        break;
+      }
     }
-    while (updatedBetaGZAOBalance === currentBetaGZAOBalance)
+
+    if (!subledgerBalanceUpdated) {
+      spinner.stop();
+      console.error(chalk.red('Subledger balance did not update after transfer.'));
+      console.log(chalk.yellow('The transfer may still be processing. Please check manually.'));
+      process.exit(1);
+    }
 
     const ledgerAddressRes = await fetch(`${process.env.AO_URL}/ledger~node-process@1.0/commitments/keys/1`);
     const ledgerAddress = await ledgerAddressRes.text();
@@ -444,30 +459,38 @@ export async function handleNodeTopup(jwk, insufficientBalance) {
 
     const transferRes = await aoMainnet.request(transferParams);
     if (transferRes.status === '200') {
+      const maxNodeBalanceRetries = 150; // 5 minutes at 2s intervals
+      let nodeBalanceUpdated = false;
       let updatedNodeBalance;
-      do {
+      for (let attempt = 1; attempt <= maxNodeBalanceRetries; attempt++) {
+        await new Promise((r) => setTimeout(r, 2000)); // Add delay before check
         try {
           const balanceRes = await fetch(`${process.env.AO_URL}/ledger~node-process@1.0/now/balance/${walletAddress}`);
 
           if (balanceRes.ok) {
             const balance = await balanceRes.text();
             updatedNodeBalance = Number.isNaN(balance) ? 0 : balance;
-          }
-          else {
+            
+            if (currentNodeBalance !== updatedNodeBalance) {
+              nodeBalanceUpdated = true;
+              spinner.stop();
+              console.log(chalk.gray('Updated balance in node: ' + chalk.green(`${fromDenominatedAmount(updatedNodeBalance)} ${PAYMENT.ticker}`)));
+              break;
+            }
+          } else {
             updatedNodeBalance = 0;
           }
-
-          if (currentNodeBalance !== updatedNodeBalance) {
-            spinner.stop();
-            console.log(chalk.gray('Updated balance in node: ' + chalk.green(`${fromDenominatedAmount(updatedNodeBalance)} ${PAYMENT.ticker}`)));
-          }
-
         } catch (e) {
-          console.error(e);
-          process.exit(1);
+          console.error('Error fetching balance endpoint:', e);
         }
       }
-      while (currentNodeBalance === updatedNodeBalance);
+
+      if (!nodeBalanceUpdated) {
+        spinner.stop();
+        console.error(chalk.red('Node balance did not update after topup.'));
+        console.log(chalk.yellow('The transfer may still be processing. Please check manually.'));
+        process.exit(1);
+      }
 
       return true;
     }
