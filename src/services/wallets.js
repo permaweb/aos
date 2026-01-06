@@ -18,10 +18,10 @@ export async function getWallet() {
 
 export async function getWalletFromArgs(walletPath) {
   try {
-    const jwk = await fs.readFileSync(walletPath, 'utf8');
-    return JSON.parse(jwk);
+    const jwk = await fs.readFileSync(walletPath, 'utf8')
+    return JSON.parse(jwk)
   } catch (error) {
-    console.error(`Error reading wallet file: ${error.message}`);
-    throw error;
+    console.error(`Error reading wallet file: ${error.message}`)
+    throw error
   }
 }

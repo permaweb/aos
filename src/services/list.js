@@ -1,35 +1,31 @@
-import { of } from 'hyper-async'
 import { map, find } from 'ramda'
 import minimist from 'minimist'
-import * as utils from '../hyper-utils.js'
-import { getPkg } from './get-pkg.js'
+import * as utils from '../utils/hyper-utils.js'
+import { printWithBorder } from '../utils/print.js'
+import { chalk } from '../utils/colors.js'
 
-export function list(jwk, services) {
+export async function list(jwk, services) {
   const argv = minimist(process.argv.slice(2))
-  const AOS_MODULE = process.env.AOS_MODULE || argv.module || getPkg().aos.module
 
-  const getAddress = ctx => services.address(ctx.jwk).map(address => ({ address, ...ctx }))
-  const listProcesses = ({ address }) => {
-    return services.gql(queryForAOSs(), { owners: [address] })
-      .map(utils.path(['data', 'transactions', 'edges']))
-    //.map(_ => (console.log(JSON.stringify(_, null, 2)), _))
-  }
-  return of({ jwk })
-    .chain(getAddress)
+  const address = await services.address(jwk)
+  const gqlResult = await services.gql(queryForAOSs(), { owners: [address] })
+  const edges = utils.path(['data', 'transactions', 'edges'])(gqlResult)
 
-    .chain(listProcesses)
+  const processList = map(({ node }) => {
+    const pid = node.id
+    const name = find(t => t.name === 'Name', node.tags)?.value
+    const version = find(t => t.name.toLowerCase() === 'aos-version', node.tags)?.value
+    return `${`${name}`} - ${chalk.green(pid)} ${chalk.gray(`(v${version})`)}`
+  }, edges)
 
-    .map(map(({ node }) => {
-      const pid = node.id
-      const name = find(t => t.name == "Name", node.tags)?.value
-      const version = find(t => t.name == "aos-Version", node.tags)?.value
-      return `${name}:v${version || 'unknown'} - ${pid}`
-    }))
-    .map(list => `
-  Your Processes:
-
-  ${list.join('\n  ')}
-      `)
+  printWithBorder([
+    ...processList
+  ], {
+    title: 'Your Processes',
+    borderColor: chalk.gray,
+    titleColor: chalk.green,
+    truncate: true
+  })
 }
 
 function queryForAOSs() {

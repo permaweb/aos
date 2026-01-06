@@ -3,25 +3,21 @@ import './services/dev.js'
 import readline from 'readline'
 import minimist from 'minimist'
 import ora from 'ora'
-import chalk from 'chalk'
+import { chalk } from './utils/colors.js'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
-import prompts from 'prompts'
-import { resolveProcessTypeFromFlags, shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
+import { shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
 
-import { of, fromPromise, Rejected, Resolved } from 'hyper-async'
-
-// actions
+// Actions
 import { evaluate } from './evaluate.js'
 import { register } from './register.js'
 import { dryEval } from './dry-eval.js'
 
-// services
+// Services
 import { getWallet, getWalletFromArgs } from './services/wallets.js'
 import { address, isAddress } from './services/address.js'
 import * as connectSvc from './services/connect.js'
-import * as relaySvc from './services/relay.js'
 import * as mainnetSvc from './services/mainnet.js'
 import { blueprints } from './services/blueprints.js'
 import { gql } from './services/gql.js'
@@ -30,7 +26,7 @@ import { checkForUpdate, installUpdate, version } from './services/version.js'
 import { getErrorOrigin, outputError, parseError } from './services/errors.js'
 import { getPkg } from './services/get-pkg.js'
 
-// commands
+// Commands
 import { load } from './commands/load.js'
 import { monitor } from './commands/monitor.js'
 import { checkLoadArgs } from './services/loading-files.js'
@@ -41,6 +37,8 @@ import { list } from './services/list.js'
 import * as os from './commands/os.js'
 import { readHistory, writeHistory } from './services/history-service.js'
 import { pad } from './commands/pad.js'
+import { config } from './config.js'
+import { printWithFormat } from './utils/print.js'
 
 const argv = minimist(process.argv.slice(2))
 const splashEnabled = shouldShowSplash(argv)
@@ -48,21 +46,24 @@ const suppressVersionBanner = shouldSuppressVersionBanner(argv)
 
 let dryRunMode = false
 let luaData = ''
-let relayMode = false
 
 let {
-  spawnProcess, sendMessage, readResult, monitorProcess, unmonitorProcess, live, printLive, dryrun
+  spawnProcess,
+  sendMessage,
+  readResult,
+  monitorProcess,
+  unmonitorProcess,
+  live,
+  printLive,
+  dryrun
 } = connectSvc
 
 let {
-  spawnProcessRelay, sendMessageRelay, readResultRelay,
-  monitorProcessRelay, unmonitorProcessRelay, liveRelay, printLiveRelay,
-  dryrunRelay
-} = relaySvc
-
-let {
-  spawnProcessMainnet, sendMessageMainnet,
-  monitorProcessMainnet, unmonitorProcessMainnet, liveMainnet, printLiveMainnet,
+  spawnProcessMainnet,
+  sendMessageMainnet,
+  readResultMainnet,
+  liveMainnet,
+  printLiveMainnet,
   handleNodeTopup
 } = mainnetSvc
 
@@ -71,11 +72,9 @@ if (!process.stdin.isTTY) {
     luaData = luaData + chunk
   }
   process.stdin.on('data', onData)
-  // process.stdin.on('end', onEnd)
 }
 
 globalThis.alerts = {}
-// make prompt global :(
 globalThis.prompt = 'aos> '
 
 if (argv['get-blueprints']) {
@@ -118,123 +117,139 @@ let cron = null
 
 if (argv.watch && argv.watch.length === 43) {
   live(argv.watch, true).then(res => {
-    process.stdout.write('\n' + '\u001b[0G' + chalk.green('Watching: ') + chalk.blue(argv.watch) + '\n')
+    process.stdout.write(
+      '\n' + '\u001b[0G' + chalk.green('Watching: ') + chalk.blue(argv.watch) + '\n'
+    )
     cron = res
   })
 }
 
-if (splashEnabled) {
-  splash()
+if (argv['gateway-url']) {
+  process.env.GATEWAY_URL = argv['gateway-url']
+}
+
+if (argv['cu-url']) {
+  process.env.CU_URL = argv['cu-url']
+}
+
+if (argv['mu-url']) {
+  process.env.MU_URL = argv['mu-url']
+}
+
+if (argv['authority']) {
+  process.env.AUTHORITY = argv['authority']
 }
 
 if (argv['scheduler']) {
   process.env.SCHEDULER = argv['scheduler']
 }
 
-if (argv['authority']) {
-  process.env.AUTHORITY = argv['authority']
-}
-
-if (argv['url']) {
-  process.env.AO_URL = argv['url']
-}
-
-if (argv['mainnet']) {
-  if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
-    console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'));
-    process.exit(1);
-  }
-
+// Mainnet mode is the default behavior unless --legacy flag is used
+if (!argv['legacy']) {
   try {
-    console.log(chalk.magentaBright('Using Mainnet: ') + chalk.magenta(argv['mainnet']))
-    process.env.AO_URL = argv['mainnet']
-    // get scheduler if in mainnetmode
-    // process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~scheduler@1.0/status/address`).then(res => res.text())
-    process.env.SCHEDULER = process.env.SCHEDULER ?? await fetch(`${process.env.AO_URL}/~meta@1.0/info/address`).then(res => res.text())
-    process.env.AUTHORITY = process.env.SCHEDULER
-    //process.env.AUTHORITY = await fetch(`${process.env.AO_URL}/~meta@1.0/info/recommended/authority`).then(res => res.text())
-    // TODO: Need to allow these to be overridden if set via CLI and also need to 
-    // fallback to scheduler@1.0 for both
-    // process.env.EXECUTION_DEVICE = await prompts({
-    //     type: 'select',
-    //     name: 'device',
-    //     message: 'Please select a device',
-    //     choices: [{ title: 'lua@5.3a', value: 'lua@5.3a'}, {title: 'genesis-wasm@1.0', value: 'genesis-wasm@1.0'}],
-    //     instructions: false
-    // }).then(res => res.device).catch(e => "genesis-wasm@1.0")
+    // Use --url flag if provided, otherwise use DEFAULT_HB_NODE from config
+    process.env.AO_URL = argv['url'] || config.urls.DEFAULT_HB_NODE
 
-    // replace services to use mainnet service
+    // Get scheduler if in mainnet mode
+    process.env.SCHEDULER = process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
+
+    // Replace services to use mainnet service
     sendMessage = sendMessageMainnet
     spawnProcess = spawnProcessMainnet
     readResult = () => null
-    // monitorProcess = monitorProcessMainnet
-    // unmonitorProcess = unmonitorProcessMainnet
     live = liveMainnet
     printLive = printLiveMainnet
     dryrun = () => null
-
-    relayMode = true
-  }
-  catch (e) {
-    console.error(chalk.red('Error connecting to ' + argv['mainnet']));
-    process.exit(1);
+  } catch (e) {
+    console.error(e)
+    console.error(chalk.red('Error connecting to ' + (argv['url'] || config.urls.DEFAULT_HB_NODE)))
+    process.exit(1)
   }
 }
-if (argv['gateway-url']) {
-  console.log(chalk.yellow('Using Gateway: ') + chalk.blue(argv['gateway-url']))
-  process.env.GATEWAY_URL = argv['gateway-url']
+
+// Support --mainnet flag for backwards compatibility
+if (argv['mainnet']) {
+  if (typeof argv['mainnet'] !== 'string' || argv['mainnet'].trim() === '') {
+    console.error(chalk.red('The --mainnet flag requires a value, e.g. --mainnet <url>'))
+    process.exit(1)
+  }
+
+  try {
+    process.env.AO_URL = argv['mainnet']
+    process.env.SCHEDULER = process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET
+
+    sendMessage = sendMessageMainnet
+    spawnProcess = spawnProcessMainnet
+    readResult = () => null
+    live = liveMainnet
+    printLive = printLiveMainnet
+    dryrun = () => null
+  } catch (e) {
+    console.error(e)
+    console.error(chalk.red('Error connecting to ' + argv['mainnet']))
+    process.exit(1)
+  }
 }
 
-if (argv['cu-url']) {
-  console.log(chalk.yellow('Using CU: ') + chalk.blue(argv['cu-url']))
-  process.env.CU_URL = argv['cu-url']
-}
-
-if (argv['mu-url']) {
-  console.log(chalk.yellow('Using MU: ') + chalk.blue(argv['mu-url']))
-  process.env.MU_URL = argv['mu-url']
-}
-
-if (argv['authority']) {
-  console.log(chalk.yellow('Using Authority: ') + chalk.blue(argv['authority'].split(',').join(', ')))
-  process.env.AUTHORITY = argv['authority']
-}
 async function runProcess() {
+  const jwk = argv.wallet ? await getWalletFromArgs(argv.wallet) : await getWallet()
+
   if (!argv.watch) {
-    of()
-      .chain(fromPromise(() => argv.wallet ? getWalletFromArgs(argv.wallet) : getWallet()))
-      .chain(jwk => {
-        // make wallet available to services if relay mode
-        if (argv['relay'] || argv['mainnet']) {
-          process.env.WALLET = JSON.stringify(jwk)
-        }
-        // handle list option, need jwk in order to do it.
-        if (argv.list) {
-          return list(jwk, { address, gql }).chain(Rejected)
-        }
-        return Resolved(jwk)
-      })
-      .chain(jwk => register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
-        .map(id => ({ jwk, id }))
-      )
-      .toPromise()
-      .then(async ({ jwk, id }) => {
+    try {
+      if (argv.list) {
+        await list(jwk, { address, gql })
+        process.exit(0)
+      }
+
+      if (argv['mainnet'] || !argv['legacy']) {
+        process.env.WALLET = JSON.stringify(jwk)
+      }
+
+      const { id, variant } = await register(jwk, { address, isAddress, spawnProcess, gql, spawnProcessMainnet })
+
+      let isLegacyMode = argv['legacy'];
+      
+      if (variant === 'ao.TN.1') {
+        sendMessage = connectSvc.sendMessage
+        spawnProcess = connectSvc.spawnProcess
+        readResult = connectSvc.readResult
+        live = connectSvc.live
+        printLive = connectSvc.printLive
+        dryrun = connectSvc.dryrun
+        process.env.AO_URL = 'undefined'
+        isLegacyMode = true
+      }
+
+      if (splashEnabled && !suppressVersionBanner) {
+        const walletAddress = await address(jwk)
+
+        splash({
+          walletAddress: walletAddress,
+          mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
+          gatewayUrl: argv['gateway-url'],
+          cuUrl: argv['cu-url'],
+          muUrl: argv['mu-url'],
+          authority: argv['authority'],
+          scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
+          legacy: isLegacyMode
+        })
+      }
+
+      {
         let editorMode = false
         let editorData = ''
         const history = readHistory(id)
-
-        // this can be improved, but for now if ao-url is set
-        // we will use hyper mode
-        if (process.env.AO_URL !== "undefined") {
+        
+        if (process.env.AO_URL !== 'undefined') {
           process.env.WALLET = JSON.stringify(jwk)
           sendMessage = sendMessageMainnet
-          readResult = () => null
+          readResult = readResultMainnet
           live = liveMainnet
           printLive = printLiveMainnet
         }
 
-        if (argv.mainnet && argv.topup) {
-          await handleNodeTopup(jwk, false);
+        if ((argv.mainnet || !argv.legacy) && argv.topup) {
+          await handleNodeTopup(jwk, false)
         }
 
         if (!argv.run && luaData.length > 0 && argv.load) {
@@ -244,13 +259,13 @@ async function runProcess() {
           })
 
           spinner.start()
-          spinner.suffixText = chalk.gray('[Connecting to process...]')
+          spinner.suffixText = chalk.gray('[Connecting To Process...]')
           const result = await evaluate(luaData, id, jwk, { sendMessage, readResult }, spinner)
 
           spinner.stop()
 
           if (result.Output?.data) {
-            console.log(result.Output?.data)
+            printWithFormat(result.Output?.data)
           }
           process.exit(0)
         }
@@ -259,15 +274,17 @@ async function runProcess() {
           console.error(chalk.red('Error! Could not find process ID.'))
           process.exit(0)
         }
-        version(id, { suppressOutput: suppressVersionBanner })
 
-        // kick start monitor if monitor option
+        const variantDisplay = variant ? ` ${chalk.gray(`${variant}`)}` : ''
+        printWithFormat(`Your AOS Process: ${chalk.green(id)}${variantDisplay}`)
+
+        // Kick start monitor if monitor option
         if (argv.monitor) {
           const result = await monitor(jwk, id, { monitorProcess })
-          console.log(chalk.green(result))
+          printWithFormat(chalk.green(result))
         }
 
-        // check for update and install if needed
+        // Check for update and install if needed
         const update = await checkForUpdate()
         if (update.available && !process.env.DEBUG) {
           const __dirname = url.fileURLToPath(new URL('.', import.meta.url))
@@ -287,7 +304,7 @@ async function runProcess() {
           })
 
           spinner.start()
-          spinner.suffixText = chalk.gray('[Connecting to process...]')
+          spinner.suffixText = chalk.gray('[Connecting To Process...]')
 
           const { ok } = await evaluateAndPrint({
             line: argv.run,
@@ -304,7 +321,8 @@ async function runProcess() {
 
         globalThis.prompt = await connect(jwk, id, luaData)
         if (process.env.DEBUG) console.timeEnd(chalk.gray('Connecting'))
-        // check loading files flag
+
+        // Check loading files flag
         await handleLoadArgs(jwk, id)
 
         cron = await live(id)
@@ -324,55 +342,92 @@ async function runProcess() {
           historySize: 100,
           prompt: globalThis.prompt
         })
-        globalThis.setPrompt = (p) => {
+
+        // Make readline interface globally available for printLiveMainnet
+        globalThis.rl = rl
+
+        globalThis.setPrompt = p => {
           rl.setPrompt(p)
         }
 
-        // async function repl() {
-
-        // process.stdin.on('keypress', (str, key) => {
-        //   if (ct) {
-        //     ct.stop()
-        //   }
-        // })
+        // Override prompt
+        const originalPrompt = rl.prompt.bind(rl)
+        rl.prompt = (preserveCursor) => {
+          originalPrompt(preserveCursor)
+        }
 
         rl.on('history', e => {
           history.concat(e)
         })
 
-        // rl.question(editorMode ? "" : globalThis.prompt, async function (line) {
+        // Handle backspace in editor mode to delete previous line when current line is empty
+        rl.input.on('keypress', (char, key) => {
+          if (editorMode && key && key.name === 'backspace') {
+            const currentLine = rl.line
+            if (currentLine === '' && editorData.length > 0) {
+              // Remove the last line from editorData
+              const lines = editorData.split('\n')
+              lines.pop() // Remove empty string from trailing newline
+              const lastLine = lines.pop() || ''
+              editorData = lines.join('\n') + (lines.length > 0 ? '\n' : '')
+
+              // Move cursor up and clear that line
+              readline.moveCursor(process.stdout, 0, -1)
+              readline.clearLine(process.stdout, 0)
+              readline.cursorTo(process.stdout, 0)
+
+              // Set the current line to the last line content so user can continue editing it
+              rl.line = lastLine
+              rl.cursor = lastLine.length
+              rl._refreshLine()
+            }
+          }
+        })
+
         rl.setPrompt(globalThis.prompt)
         if (!editorMode) rl.prompt(true)
 
         rl.on('line', async line => {
+          // If empty input, just redisplay prompt
           if (!editorMode && line.trim() === '') {
-            console.log(undefined)
-            // rl.close()
-            // repl()
+            printWithFormat()
             rl.prompt(true)
             return
+          }
+
+          if (!editorMode) {
+            // Calculate how many lines the prompt + input took (accounting for line wrapping)
+            const terminalWidth = process.stdout.columns || 80
+            const promptLength = rl.getPrompt().replace(/\x1b\[[0-9;]*m/g, '').length
+            const totalLength = promptLength + line.length
+            const linesUsed = Math.ceil(totalLength / terminalWidth)
+
+            // Clear all the lines (prompt + wrapped lines)
+            for (let i = 0; i < linesUsed; i++) {
+              process.stdout.write('\x1b[1A\r\x1b[K') // Move up and clear line
+            }
+
+            // Log user input
+            printWithFormat((chalk.gray('> ') + chalk.green(line)))
           }
 
           if (!editorMode && line === '.help') {
             replHelp()
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
 
+          // Continue live
           if (!editorMode && line === '.live') {
-            // printLive()
+            printWithFormat('=== Starting Live Feed ===')
             cron.start()
-            // rl.close()
-            // repl()
             rl.prompt(true)
             return
           }
-          // pause live
+
+          // Pause live
           if (!editorMode && line === '.pause') {
-            console.log("=== pausing live feed ===")
-            // pause live feed
+            printWithFormat('=== Pausing Live Feed ===')
             cron.stop()
             rl.prompt(true)
             return
@@ -381,10 +436,10 @@ async function runProcess() {
           if (!editorMode && line === '.dryrun') {
             dryRunMode = !dryRunMode
             if (dryRunMode) {
-              console.log(chalk.green('dryrun mode engaged'))
+              printWithFormat(chalk.green('Dryrun Mode Engaged'))
               rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
             } else {
-              console.log(chalk.red('dryrun mode disengaged'))
+              printWithFormat(chalk.red('Dryrun Mode Disengaged'))
               rl.setPrompt(globalThis.prompt.replace('*', ''))
             }
             rl.prompt(true)
@@ -392,53 +447,50 @@ async function runProcess() {
           }
 
           if (!editorMode && line === '.monitor') {
-            const result = await monitor(jwk, id, { monitorProcess }).catch(_ => chalk.gray('⚡️ could not monitor process!'))
-            console.log(chalk.green(result))
-            // rl.close()
-            // repl()
+            const result = await monitor(jwk, id, { monitorProcess }).catch(_ =>
+              chalk.gray('Could not monitor process!')
+            )
+            printWithFormat(chalk.green(result))
             rl.prompt(true)
             return
           }
 
           if (!editorMode && line === '.unmonitor') {
-            const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ => chalk.gray('⚡️ monitor not found!'))
-            console.log(chalk.green(result))
-            // rl.close()
-            // repl()
+            const result = await unmonitor(jwk, id, { unmonitorProcess }).catch(_ =>
+              chalk.gray('Monitor not found!')
+            )
+            printWithFormat(chalk.green(result))
             rl.prompt(true)
             return
           }
 
           if (/^\.load-blueprint/.test(line)) {
-            try { line = loadBlueprint(line) } catch (e) {
-              console.log(e.message)
-              // rl.close()
-              // repl()
+            try {
+              line = loadBlueprint(line)
+            } catch (e) {
+              printWithFormat(e.message)
               rl.prompt(true)
               return
             }
           }
 
-          // modules loaded
+          // Modules loaded
           /** @type {Module[]} */
           let loadedModules = []
           if (/^\.load/.test(line)) {
-            try { [line, loadedModules] = load(line) } catch (e) {
-              console.log(e.message)
-              // rl.close()
-              // repl()
+            try {
+              ;[line, loadedModules] = load(line)
+            } catch (e) {
+              printWithFormat(e.message)
               rl.prompt(true)
               return
             }
           }
 
           if (line === '.editor') {
-            console.log("<editor mode> use '.done' to submit or '.cancel' to cancel")
+            printWithFormat(`<editor mode> use '.done' to submit or '.cancel' to cancel`, { lineOnly: true })
             editorMode = true
             rl.setPrompt('')
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -448,6 +500,7 @@ async function runProcess() {
             line = editorData
             editorData = ''
             editorMode = false
+            printWithFormat('')
             rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
           }
 
@@ -468,10 +521,9 @@ async function runProcess() {
           }
 
           if (editorMode && line === '.print') {
-            console.log(editorData)
+            printWithFormat(editorData)
             editorData = ''
             editorMode = false
-            // rl.setPrompt(globalThis.prompt)
             rl.setPrompt((dryRunMode ? chalk.red('*') : '') + globalThis.prompt)
             rl.prompt(true)
             return
@@ -480,11 +532,7 @@ async function runProcess() {
           if (editorMode && line === '.cancel') {
             editorData = ''
             editorMode = false
-            // rl.setPrompt(globalThis.prompt)
             rl.setPrompt(dryRunMode ? chalk.red('*') : '' + globalThis.prompt)
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -492,9 +540,6 @@ async function runProcess() {
 
           if (editorMode) {
             editorData += line + '\n'
-
-            // rl.close()
-            // repl()
             rl.prompt(true)
 
             return
@@ -504,7 +549,6 @@ async function runProcess() {
             rl.pause()
             pad(id, async (err, content) => {
               if (!err) {
-                // console.log(content)
                 await doEvaluate(content, id, jwk, spinner, rl, loadedModules, dryRunMode)
               }
               rl.resume()
@@ -515,8 +559,9 @@ async function runProcess() {
 
           if (line === '.exit') {
             cron.stop()
-            console.log('Exiting...')
+            printWithFormat(chalk.gray('Exiting...'))
             rl.close()
+            process.exit(0)
             return
           }
 
@@ -532,63 +577,38 @@ async function runProcess() {
           if (process.env.DEBUG) {
             console.timeEnd(chalk.gray('Elapsed'))
           }
-
-          // if (cron) {
-          //   cron.start()
-          // }
-
-          // rl.close()
-          // repl()
           rl.prompt(true)
         })
 
         process.on('SIGINT', function () {
-          // save the input history when the user exits
+          // Clear the line to hide ^C
+          readline.clearLine(process.stdout, 0)
+          readline.cursorTo(process.stdout, 0)
+
+          // Save the input history when the user exits
           if (id) {
             writeHistory(id, history)
           }
           process.exit(0)
         })
-
-        // }
-
-        // repl()
-      })
-      .catch(async e => {
-        if (argv.list) {
-          console.log(e)
-        } else {
-          if (argv.mainnet) {
-            let jwk;
-            if (process.env.WALLET) {
-              try {
-                jwk = JSON.parse(process.env.WALLET);
-              } catch (err) {
-                console.error('Error parsing WALLET from environment:', err);
-              }
-            }
-
-            try {
-              const topupSuccess = await handleNodeTopup(jwk, true);
-              if (topupSuccess) {
-                return runProcess();
-              }
-            } catch (topupError) {
-              console.error('Error handling node topup:', topupError);
-              process.exit(1);
-            }
-          }
-          if (process.env.DEBUG) {
-            console.log(e)
-          }
-          if (argv.load) {
-            console.log(e.message)
-          } else {
-            console.log(chalk.red('\nAn Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.'))
-            process.exit(1)
-          }
+      }
+    } catch (e) {
+      if (argv.list) {
+        printWithFormat(e)
+      } else {
+        if (process.env.DEBUG) {
+          printWithFormat(e)
         }
-      })
+        if (argv.load) {
+          printWithFormat(e.message)
+        } else {
+          printWithFormat(
+            chalk.red('An Error occurred trying to contact your AOS process. Please check your access points, and if the problem persists contact support.')
+          )
+          process.exit(1)
+        }
+      }
+    }
   }
 }
 
@@ -601,24 +621,34 @@ async function connect(jwk, id) {
   })
 
   spinner.start()
-  spinner.suffixText = chalk.gray('[Connecting to process...]')
+  spinner.suffixText = chalk.gray('[Connecting To Process...]')
 
-  // TODO: remove swallow first error
   let promptResult = undefined
   let _prompt = undefined
-  // need to check if a process is registered or create a process
-  promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner, true)
+  // Need to check if a process is registered or create a process
+  promptResult = await evaluate(
+    `require('.process')._version`,
+    id,
+    jwk,
+    { sendMessage, readResult },
+    spinner,
+    true
+  )
   _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
   for (let i = 0; i < 50; i++) {
     if (_prompt === undefined) {
       if (i === 0) {
-        spinner.suffixText = chalk.gray('[Connecting to process...]')
+        spinner.suffixText = chalk.gray('[Connecting To Process...]')
       } else {
-        spinner.suffixText = chalk.red('[Connecting to process...]')
+        spinner.suffixText = chalk.red('[Connecting To Process...]')
       }
-      // await new Promise(resolve => setTimeout(resolve, 10 * i))
-      promptResult = await evaluate("require('.process')._version", id, jwk, { sendMessage, readResult }, spinner)
-      // console.log({ promptResult })
+      promptResult = await evaluate(
+        `require('.process')._version`,
+        id,
+        jwk,
+        { sendMessage, readResult },
+        spinner
+      )
       _prompt = promptResult?.Output?.prompt || promptResult?.Output?.data?.prompt
     } else {
       break
@@ -626,30 +656,34 @@ async function connect(jwk, id) {
   }
   spinner.stop()
   if (_prompt === undefined) {
-    console.log('Could not connect to process! Exiting...')
+    printWithFormat('Could not connect to process! Exiting...')
     process.exit(1)
   }
   const aosVersion = getPkg().aos.version
   if (promptResult.Output.data?.output !== aosVersion && promptResult.Output.data !== aosVersion) {
-    // only prompt for updates if version is not eq to dev
-    if (promptResult.Output.data !== "dev") {
-      console.log(chalk.blue('A new AOS update is available. run [.update] to install.'))
+    // Only prompt for updates if version is not eq to dev
+    if (promptResult.Output.data !== 'dev') {
+      printWithFormat(chalk.green('A new AOS update is available. run [.update] to install.'))
     }
   }
   return _prompt
 }
 
 async function handleLoadArgs(jwk, id) {
-  const loadCode = checkLoadArgs().map(f => `.load ${f}`).map(line => load(line)[0]).join('\n')
+  const loadCode = checkLoadArgs()
+    .map(f => `.load ${f}`)
+    .map(line => load(line)[0])
+    .join('\n')
   if (loadCode) {
     const spinner = ora({
       spinner: 'dots',
       suffixText: ''
     })
     spinner.start()
-    spinner.suffixText = chalk.gray('[Signing message and sequencing...]')
-    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner)
-      .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+    spinner.suffixText = chalk.gray('[Signing Message and Sequencing...]')
+    await evaluate(loadCode, id, jwk, { sendMessage, readResult }, spinner).catch(err => ({
+      Output: JSON.stringify({ data: { output: err.message } })
+    }))
 
     spinner.stop()
   }
@@ -666,15 +700,16 @@ async function evaluateAndPrint({
 }) {
   if (spinner) {
     spinner.start()
-    spinner.suffixText = chalk.gray('[Dispatching message...]')
+    spinner.suffixText = chalk.gray('[Dispatching Message...]')
   }
 
   const evaluator = dryRunMode
     ? () => dryEval(line, id, jwk, { dryrun }, spinner)
     : () => evaluate(line, id, jwk, { sendMessage, readResult }, spinner)
 
-  const result = await evaluator()
-    .catch(err => ({ Output: JSON.stringify({ data: { output: err.message } }) }))
+  const result = await evaluator().catch(err => ({
+    Output: JSON.stringify({ data: { output: err.message } })
+  }))
 
   if (spinner) {
     spinner.stop()
@@ -701,7 +736,7 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
       const errorOrigin = getErrorOrigin(loadedModules, error.lineNumber)
       outputError(line, error, errorOrigin)
     } else {
-      console.log(chalk.red(errorPayload))
+      printWithFormat(chalk.red(errorPayload))
     }
 
     return { ok: false }
@@ -709,11 +744,11 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
 
   if (output?.data) {
     if (Object.prototype.hasOwnProperty.call(output.data, 'output')) {
-      console.log(output.data.output)
+      printWithFormat(output.data.output)
     } else if (Object.prototype.hasOwnProperty.call(output.data, 'prompt')) {
-      console.log('')
+      printWithFormat('')
     } else {
-      console.log(output.data)
+      printWithFormat(output.data)
     }
 
     const nextPrompt = Object.prototype.hasOwnProperty.call(output.data, 'prompt')
@@ -731,16 +766,16 @@ function handleEvaluationResult({ line, result, loadedModules, dryRunMode, setPr
   }
 
   if (!output) {
-    console.log(chalk.red('An unknown error occurred.'))
+    printWithFormat(chalk.red('An unknown error occurred.'))
     return { ok: false }
   }
 
   if (typeof output === 'string') {
-    console.log(output)
+    printWithFormat(output)
     return { ok: true, prompt: globalThis.prompt }
   }
 
-  console.log(output)
+  printWithFormat(output)
   return { ok: true, prompt: globalThis.prompt }
 }
 
@@ -752,7 +787,7 @@ async function doEvaluate(line, id, jwk, spinner, rl, loadedModules, dryRunMode)
     spinner,
     loadedModules,
     dryRunMode,
-    setPrompt: (prompt) => rl.setPrompt(prompt)
+    setPrompt: prompt => rl.setPrompt(prompt)
   })
   if (dryRunMode) {
     rl.setPrompt(chalk.red('*') + globalThis.prompt)

@@ -10,7 +10,7 @@ const defaultArgs = { _: ['default'] }
 
 mock.method(process, 'exit', () => {})
 
-const captureLogs = (fn) => {
+const captureLogs = fn => {
   const logs = []
   const originalLog = console.log
   console.log = (...args) => logs.push(args.join(' '))
@@ -42,7 +42,7 @@ test('version suppressOutput option prevents logging', () => {
   assert.deepStrictEqual(suppressedLogs, [])
 
   const normalLogs = captureLogs(() => version('process-id', { suppressOutput: false }))
-  assert.ok(normalLogs.some((line) => /Client Version/i.test(line)))
-  assert.ok(normalLogs.some((line) => /Type "Ctrl-C" twice/i.test(line)))
-  assert.ok(normalLogs.some((line) => /Your AOS process:/i.test(line)))
+  assert.ok(normalLogs.some(line => /Client Version/i.test(line)))
+  assert.ok(normalLogs.some(line => /Type "Ctrl-C" twice/i.test(line)))
+  assert.ok(normalLogs.some(line => /Your AOS process:/i.test(line)))
 })

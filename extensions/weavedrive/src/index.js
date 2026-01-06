@@ -6,15 +6,15 @@ const CACHE_SZ = 32 * KB
 const CHUNK_SZ = 128 * MB
 const NOTIFY_SZ = 512 * MB
 
-module.exports = function weaveDrive (mod, FS) {
+module.exports = function weaveDrive(mod, FS) {
   return {
-    reset (fd) {
+    reset(fd) {
       // console.log("WeaveDrive: Resetting fd: ", fd)
       FS.streams[fd].node.position = 0
       FS.streams[fd].node.cache = new Uint8Array(0)
     },
 
-    joinUrl ({ url, path }) {
+    joinUrl({ url, path }) {
       if (!path) return url
       if (path.startsWith('/')) return this.joinUrl({ url, path: path.slice(1) })
 
@@ -23,7 +23,7 @@ module.exports = function weaveDrive (mod, FS) {
       return url.toString()
     },
 
-    async customFetch (path, options) {
+    async customFetch(path, options) {
       /**
        * mod.ARWEAVE may be a comma-delimited list of urls.
        * So we parse it into an array that we sequentially consume
@@ -40,7 +40,7 @@ module.exports = function weaveDrive (mod, FS) {
       let p
       for (const url of urlList) {
         const res = fetch(this.joinUrl({ url, path }), options)
-        if (await res.then((r) => r.ok).catch(() => false)) return res
+        if (await res.then(r => r.ok).catch(() => false)) return res
         if (!p) p = res
       }
 
@@ -51,10 +51,10 @@ module.exports = function weaveDrive (mod, FS) {
       return p
     },
 
-    async create (id) {
+    async create(id) {
       const properties = { isDevice: false, contents: null }
 
-      if (!await this.checkAdmissible(id)) {
+      if (!(await this.checkAdmissible(id))) {
         // console.log("WeaveDrive: Arweave ID is not admissable! ", id)
         return 'HALT'
       }
@@ -71,7 +71,10 @@ module.exports = function weaveDrive (mod, FS) {
       const node = FS.createFile('/', 'data/' + id, properties, true, false)
 
       // Set initial parameters
-      const response = await this.customFetch(`/${id}`, { method: 'HEAD', headers: { 'Accept-Encoding': 'identity' } })
+      const response = await this.customFetch(`/${id}`, {
+        method: 'HEAD',
+        headers: { 'Accept-Encoding': 'identity' }
+      })
       if (!response.ok) {
         return 'HALT'
       }
@@ -81,7 +84,13 @@ module.exports = function weaveDrive (mod, FS) {
       node.position = 0
 
       // Add a function that defers querying the file size until it is asked the first time.
-      Object.defineProperties(node, { usedBytes: { get: function () { return bytesLength } } })
+      Object.defineProperties(node, {
+        usedBytes: {
+          get: function () {
+            return bytesLength
+          }
+        }
+      })
 
       // Now we have created the file in the emscripten FS, we can open it as a stream
       const stream = FS.open('/data/' + id, 'r')
@@ -89,10 +98,10 @@ module.exports = function weaveDrive (mod, FS) {
       // console.log("JS: Created file: ", id, " fd: ", stream.fd);
       return stream
     },
-    async createBlockHeader (id) {
+    async createBlockHeader(id) {
       const customFetch = this.customFetch
       // todo: add a bunch of retries
-      async function retry (x) {
+      async function retry(x) {
         return new Promise(resolve => {
           setTimeout(function () {
             resolve(customFetch(`/block/height/${id}`))
@@ -100,10 +109,10 @@ module.exports = function weaveDrive (mod, FS) {
         })
       }
       const result = await this.customFetch(`/block/height/${id}`)
-        .then(res => !res.ok ? retry(1) : res)
-        .then(res => !res.ok ? retry(2) : res)
-        .then(res => !res.ok ? retry(3) : res)
-        .then(res => !res.ok ? retry(4) : res)
+        .then(res => (!res.ok ? retry(1) : res))
+        .then(res => (!res.ok ? retry(2) : res))
+        .then(res => (!res.ok ? retry(3) : res))
+        .then(res => (!res.ok ? retry(4) : res))
         .then(res => res.text())
 
       FS.createDataFile('/', 'block/' + id, Buffer.from(result, 'utf-8'), true, false)
@@ -111,14 +120,14 @@ module.exports = function weaveDrive (mod, FS) {
       const stream = FS.open('/block/' + id, 'r')
       return stream
     },
-    async createTxHeader (id) {
+    async createTxHeader(id) {
       const customFetch = this.customFetch
-      async function toAddress (owner) {
+      async function toAddress(owner) {
         return Arweave.utils.bufferTob64Url(
           await Arweave.crypto.hash(Arweave.utils.b64UrlToBuffer(owner))
         )
       }
-      async function retry (x) {
+      async function retry(x) {
         return new Promise(resolve => {
           setTimeout(function () {
             resolve(customFetch(`/tx/${id}`))
@@ -127,10 +136,10 @@ module.exports = function weaveDrive (mod, FS) {
       }
       // todo: add a bunch of retries
       const result = await this.customFetch(`/tx/${id}`)
-        .then(res => !res.ok ? retry(1) : res)
-        .then(res => !res.ok ? retry(2) : res)
-        .then(res => !res.ok ? retry(3) : res)
-        .then(res => !res.ok ? retry(4) : res)
+        .then(res => (!res.ok ? retry(1) : res))
+        .then(res => (!res.ok ? retry(2) : res))
+        .then(res => (!res.ok ? retry(3) : res))
+        .then(res => (!res.ok ? retry(4) : res))
         .then(res => res.json())
         .then(async entry => ({ ...entry, ownerAddress: await toAddress(entry.owner) }))
         // .then(x => (console.error(x), x))
@@ -140,7 +149,7 @@ module.exports = function weaveDrive (mod, FS) {
       const stream = FS.open('/tx/' + id, 'r')
       return stream
     },
-    async open (filename) {
+    async open(filename) {
       const pathCategory = filename.split('/')[1]
       const id = filename.split('/')[2]
       if (pathCategory === 'tx') {
@@ -185,7 +194,7 @@ module.exports = function weaveDrive (mod, FS) {
         return 0
       }
     },
-    async read (fd, rawDstPtr, rawLength) {
+    async read(fd, rawDstPtr, rawLength) {
       // Note: The length and dstPtr are 53 bit integers in JS, so this _should_ be ok into a large memspace.
       let toRead = Number(rawLength)
       let dstPtr = Number(rawDstPtr)
@@ -272,7 +281,11 @@ module.exports = function weaveDrive (mod, FS) {
           }
 
           if (bytesUntilNotify <= 0) {
-            console.log('WeaveDrive: Downloaded: ', downloadedBytes / stream.node.total_size * 100, '%')
+            console.log(
+              'WeaveDrive: Downloaded: ',
+              (downloadedBytes / stream.node.total_size) * 100,
+              '%'
+            )
             bytesUntilNotify = NOTIFY_SZ
           }
         }
@@ -289,7 +302,7 @@ module.exports = function weaveDrive (mod, FS) {
       stream.lastReadPosition = stream.position
       return bytesRead
     },
-    close (fd) {
+    close(fd) {
       let stream = 0
       for (let i = 0; i < FS.streams.length; i++) {
         if (FS.streams[i].fd === fd) {
@@ -300,7 +313,7 @@ module.exports = function weaveDrive (mod, FS) {
     },
 
     // Readahead cache functions
-    readFromCache (stream, dstPtr, length) {
+    readFromCache(stream, dstPtr, length) {
       // Check if the cache has been invalidated by a seek
       if (stream.lastReadPosition !== stream.position) {
         // console.log("WeaveDrive: Invalidating cache for fd: ", stream.fd, " Current pos: ", stream.position, " Last read pos: ", stream.lastReadPosition)
@@ -317,9 +330,12 @@ module.exports = function weaveDrive (mod, FS) {
       return cachePartLength
     },
 
-    addChunksToCache (oldCache, chunks) {
+    addChunksToCache(oldCache, chunks) {
       // Make a new cache array of the old cache length + the sum of the chunk lengths, capped by the max cache size
-      const newCacheLength = Math.min(oldCache.length + chunks.reduce((acc, chunk) => acc + chunk.length, 0), CACHE_SZ)
+      const newCacheLength = Math.min(
+        oldCache.length + chunks.reduce((acc, chunk) => acc + chunk.length, 0),
+        CACHE_SZ
+      )
       const newCache = new Uint8Array(newCacheLength)
       // Copy the old cache to the new cache
       newCache.set(oldCache, 0)
@@ -335,7 +351,7 @@ module.exports = function weaveDrive (mod, FS) {
     },
 
     // General helpder functions
-    async checkAdmissible (ID) {
+    async checkAdmissible(ID) {
       if (mod.mode && mod.mode === 'test') {
         // CAUTION: If the module is initiated with `mode = test` we don't check availability.
         return true
@@ -344,7 +360,7 @@ module.exports = function weaveDrive (mod, FS) {
       // Check if we are attempting to load the On-Boot id, if so allow it
       // this was added for AOP 6 Boot loader See: https://github.com/permaweb/aos/issues/342
       const bootTag = this.getTagValue('On-Boot', mod.spawn.tags)
-      if (bootTag && (bootTag === ID)) return true
+      if (bootTag && bootTag === ID) return true
 
       // Check that this module or process set the WeaveDrive tag on spawn
       const blockHeight = mod.blockHeight
@@ -402,7 +418,8 @@ module.exports = function weaveDrive (mod, FS) {
               }
             }
           }
-        }`)
+        }`
+      )
 
       if (assignmentsHaveID) {
         return true
@@ -430,7 +447,8 @@ module.exports = function weaveDrive (mod, FS) {
                 }
               }
             }
-          }`)
+          }`
+        )
 
         if (individualsHaveID) {
           return true
@@ -450,11 +468,11 @@ module.exports = function weaveDrive (mod, FS) {
       return false
     },
 
-    serializeStringArr (arr = []) {
-      return `[${arr.map((s) => `"${s}"`).join(', ')}]`
+    serializeStringArr(arr = []) {
+      return `[${arr.map(s => `"${s}"`).join(', ')}]`
     },
 
-    getTagValues (key, tags) {
+    getTagValues(key, tags) {
       const values = []
       for (let i = 0; i < tags.length; i++) {
         if (tags[i].name === key) {
@@ -464,18 +482,17 @@ module.exports = function weaveDrive (mod, FS) {
       return values
     },
 
-    getTagValue (key, tags) {
+    getTagValue(key, tags) {
       const values = this.getTagValues(key, tags)
       return values.pop()
     },
 
-    async queryHasResult (query, variables) {
-      const json = await this.gqlQuery(query, variables)
-        .then((res) => res.json())
+    async queryHasResult(query, variables) {
+      const json = await this.gqlQuery(query, variables).then(res => res.json())
 
       return !!json?.data?.transactions?.edges?.length
     },
-    async gqlQuery (query, variables) {
+    async gqlQuery(query, variables) {
       const options = {
         method: 'POST',
         body: JSON.stringify({ query, variables }),

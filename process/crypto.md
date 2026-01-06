@@ -5,6 +5,7 @@
 The `crypto` module provides a set of cryptographic primitives like digests, ciphers and other cryptographic algorithms in pure Lua. It offers several functionalities to hash, encrypt and decrypt data, simplifying the development of secure communication and data storage. This document will guide you through the module's functionalities, installation, and usage.
 
 ### Version
+
 0.0.1
 
 ## Installation
@@ -77,7 +78,7 @@ Calculates the MD5 digest of a given message.
   - `asBytes()`: The digest as byte table.
   - `asHex()`: The digest as string in hexadecimal format.
   - `asString()`: The digest as string format.
-  
+
 Example:
 
 ```lua
@@ -112,7 +113,6 @@ Calculates the SHA2-256 digest of a given message.
 
 - **Parameters:**
   - `stream` (Stream): The message in form of stream
-  
 - **Returns:** A table containing functions to get digest in different formats.
   - `asBytes()`: The digest as byte table.
   - `asHex()`: The digest as string in hexadecimal format.
@@ -132,7 +132,6 @@ Calculates the SHA2-512 digest of a given message.
 
 - **Parameters:**
   - `msg` (string): The message to calculate the digest
-  
 - **Returns:** A table containing functions to get digest in different formats.
   - `asBytes()`: The digest as byte table.
   - `asHex()`: The digest as string in hexadecimal format.
@@ -201,6 +200,7 @@ crypto.digest.blake2b(str).asHex() -- 576701fd79a126f2c414ef94adf1117c88943700f3
 crypto.digest.blake2b(str, 32).asHex() -- 7050811afc947ba7190bb3c0a7b79b4fba304a0de61d529c8a35bdcbbb5544f4
 crypto.digest.blake2b(str, 32, "secret_key").asHex() -- 203c101980fdf6cf24d78879f2e3db86d73d91f7d60960b642022cd6f87408f8
 ```
+
 ---
 
 # Ciphers
@@ -240,7 +240,6 @@ Decrypts a given message using the AES algorithm.
   - `asBytes()`: The decrypted data as byte table.
   - `asHex()`: The decrypted data as string in hexadecimal format.
   - `asString()`: The decrypted data as string format.
-
 
 Example:
 
@@ -320,7 +319,6 @@ Example:
 ```lua
 crypto.cipher.issac.random(0, 100) -- 42
 ```
-
 
 ## Morus Cipher
 
@@ -402,7 +400,6 @@ Decrypts a given message using the NORX cipher.
   - `asHex()`: The decrypted data as string in hexadecimal format.
   - `asString()`: The decrypted data as string format.
 
-
 Example:
 
 ```lua
@@ -441,8 +438,6 @@ Example:
 crypto.random.(0, 100, "seed") -- 42
 ```
 
-
-
 ---
 
 # MACs
@@ -471,6 +466,7 @@ local key = crypto.utils.array.fromString("super_secret_key")
 crypto.mac.createHmac(data, key).asHex() -- 3966f45acb53f7a1a493bae15afecb1a204fa32d
 crypto.mac.createHmac(data, key, "sha256").asHex() -- 542da02a324155d688c7689669ff94c6a5f906892aa8eccd7284f210ac66e2a7
 ```
+
 ---
 
 # KDFs
@@ -535,7 +531,7 @@ arr.slice(arr.fromString("ao"), 0, 1) -- Array
 
 Returns the size of the array.
 
-- **Parameters:** 
+- **Parameters:**
   - `arr` (Array): The array to get the size of.
 - **Returns:** The size of the array.
 
@@ -601,7 +597,7 @@ Creates an array from a hexadecimal string.
 
 Converts an array to a hexadecimal string.
 
-- **Parameters:** 
+- **Parameters:**
   - `arr` (Array): The array to convert to a hexadecimal string.
 - **Returns:** The array as a hexadecimal string.
 
@@ -622,7 +618,6 @@ Truncates an array to a given length.
   - `a` (Array): The array to truncate.
   - `newSize` (number): The new size of the array.
 - **Returns:** The truncated array.
-
 
 ### `XOR`
 
@@ -692,7 +687,6 @@ stream.toArray(stream.fromArray(arr)) -- {97, 111}
 stream.fromHex("616f") -- Stream
 stream.toHex(stream.fromHex("616f")) -- 616f
 ```
-
 
 ### `fromString`
 

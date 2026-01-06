@@ -24,22 +24,25 @@ export function checkLoadArgs() {
  */
 
 /**
- * @param {Module[]} project 
+ * @param {Module[]} project
  * @returns {[string, Module[]]}
  */
 export function createExecutableFromProject(project) {
-  const getModFnName = (name) => name.replace(/\.|-/g, '_').replace(/^_/, '')
+  const getModFnName = name => name.replace(/\.|-/g, '_').replace(/^_/, '')
   /** @type {Module[]} */
   const contents = []
 
-  // filter out repeated modules with different import names
+  // Filter out repeated modules with different import names
   // and construct the executable Lua code
   // (the main file content is handled separately)
   for (let i = 0; i < project.length - 1; i++) {
     const mod = project[i]
 
-    const existing = contents.find((m) => m.path === mod.path)
-    const moduleContent = (!existing && `-- module: "${mod.name}"\nlocal function _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`) || ''
+    const existing = contents.find(m => m.path === mod.path)
+    const moduleContent =
+      (!existing &&
+        `-- module: "${mod.name}"\nlocal function _loaded_mod_${getModFnName(mod.name)}()\n${mod.content}\nend\n`) ||
+      ''
     const requireMapper = `\n_G.package.loaded["${mod.name}"] = _loaded_mod_${getModFnName(existing?.name || mod.name)}()`
 
     contents.push({
@@ -48,13 +51,10 @@ export function createExecutableFromProject(project) {
     })
   }
 
-  // finally, add the main file
+  // Finally, add the main file
   contents.push(project[project.length - 1])
 
-  return [
-    contents.reduce((acc, con) => acc + '\n\n' + con.content, ''),
-    contents
-  ]
+  return [contents.reduce((acc, con) => acc + '\n\n' + con.content, ''), contents]
 }
 
 /**
@@ -66,33 +66,28 @@ export function createProjectStructure(mainFile) {
   const sorted = []
   const cwd = path.dirname(mainFile)
 
-  // checks if the sorted module list already includes a node
-  const isSorted = (node) => sorted.find(
-    (sortedNode) => sortedNode.path === node.path
-  )
+  // Checks if the sorted module list already includes a node
+  const isSorted = node => sorted.find(sortedNode => sortedNode.path === node.path)
 
-  // recursive dfs algorithm
+  // Recursive dfs algorithm
   function dfs(currentNode) {
-    const unvisitedChildNodes = exploreNodes(currentNode, cwd).filter(
-      (node) => !isSorted(node)
-    )
+    const unvisitedChildNodes = exploreNodes(currentNode, cwd).filter(node => !isSorted(node))
 
     for (let i = 0; i < unvisitedChildNodes.length; i++) {
       dfs(unvisitedChildNodes[i])
     }
 
-    if (!isSorted(currentNode))
-      sorted.push(currentNode)
+    if (!isSorted(currentNode)) sorted.push(currentNode)
   }
 
-  // run DFS from the main file
+  // Run DFS from the main file
   dfs({ path: mainFile })
 
   return sorted.filter(
-    // modules that were not read don't exist locally
+    // Modules that were not read don't exist locally
     // aos assumes that these modules have already been
     // loaded into the process, or they're default modules
-    (mod) => mod.content !== undefined
+    mod => mod.content !== undefined
   )
 }
 
@@ -105,20 +100,19 @@ export function createProjectStructure(mainFile) {
 function exploreNodes(node, cwd) {
   if (!fs.existsSync(node.path)) return []
 
-  // set content
+  // Set content
   node.content = fs.readFileSync(node.path, 'utf-8')
 
   // Don't include requires that are commented (start with --)
   const requirePattern = /(?<!^.*--.*)(?<=(require( *)(\n*)(\()?( *)("|'))).*(?=("|'))/gm
-  const requiredModules = node.content.match(requirePattern)?.map(
-    (mod) => {
+  const requiredModules =
+    node.content.match(requirePattern)?.map(mod => {
       return {
         name: mod,
         path: path.join(cwd, mod.replace(/\./g, '/') + '.lua'),
         content: undefined
       }
-    }
-  ) || []
+    }) || []
 
   return requiredModules
 }
