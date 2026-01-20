@@ -1,11 +1,13 @@
 # Lua Utils Module Documentation
 
 ## Module Overview
+
 The Lua Utils module provides a collection of utility functions for functional programming in Lua. It includes functions for array manipulation such as concatenation, mapping, reduction, filtering, and finding elements, as well as a property equality checker.
 
 ## Module Functions
 
 ### 1. `concat`
+
 Concatenates two arrays.
 
 - **Syntax:** `utils.concat(a)(b)`
@@ -16,6 +18,7 @@ Concatenates two arrays.
 - **Example:** `utils.concat({1, 2})({3, 4}) -- returns {1, 2, 3, 4}`
 
 ### 2. `map`
+
 Applies a function to each element of an array.
 
 - **Syntax:** `utils.map(fn)(t)`
@@ -26,6 +29,7 @@ Applies a function to each element of an array.
 - **Example:** `utils.map(function(x) return x * 2 end)({1, 2, 3}) -- returns {2, 4, 6}`
 
 ### 3. `reduce`
+
 Reduces an array to a single value by iteratively applying a function.
 
 - **Syntax:** `utils.reduce(fn)(initial)(t)`
@@ -37,6 +41,7 @@ Reduces an array to a single value by iteratively applying a function.
 - **Example:** `utils.reduce(function(acc, x) return acc + x end)(0)({1, 2, 3}) -- returns 6`
 
 ### 4. `filter`
+
 Filters an array based on a predicate function.
 
 - **Syntax:** `utils.filter(fn)(t)`
@@ -47,6 +52,7 @@ Filters an array based on a predicate function.
 - **Example:** `utils.filter(function(x) return x > 1 end)({1, 2, 3}) -- returns {2, 3}`
 
 ### 5. `find`
+
 Finds the first element in an array that satisfies a predicate function.
 
 - **Syntax:** `utils.find(fn)(t)`
@@ -57,6 +63,7 @@ Finds the first element in an array that satisfies a predicate function.
 - **Example:** `utils.find(function(x) return x > 1 end)({1, 2, 3}) -- returns 2`
 
 ### 6. `propEq`
+
 Checks if a specified property of an object equals a given value.
 
 - **Syntax:** `utils.propEq(propName)(value)(object)`
@@ -68,9 +75,11 @@ Checks if a specified property of an object equals a given value.
 - **Example:** `utils.propEq("name")("Lua")({name = "Lua"}) -- returns true`
 
 ## Version
+
 - The module is currently at version 0.0.1.
 
 ## Notes
+
 - This module is designed for functional programming style in Lua.
 - It's important to ensure that inputs to these functions are of correct types as expected by each function.
 - The module does not modify the original arrays but returns new arrays or values.

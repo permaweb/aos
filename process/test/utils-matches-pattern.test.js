@@ -4,48 +4,46 @@ import AoLoader from '@permaweb/ao-loader'
 import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
-const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
+const options = { format: 'wasm64-unknown-emscripten-draft_2024_02_15' }
 
 const env = {
   Process: {
     Id: 'AOS',
     Owner: 'FOOBAR',
-    Tags: [
-      { name: 'Name', value: 'Thomas' }
-    ]
+    Tags: [{ name: 'Name', value: 'Thomas' }]
   }
 }
 
 async function init(handle) {
-  const {Memory} = await handle(null, {
-    Target: 'AOS',
-    From: 'FOOBAR',
-    Owner: 'FOOBAR',
-    'Block-Height': '999',
-    Id: 'AOS',
-    Module: 'WOOPAWOOPA',
-    Tags: [
-      { name: 'Name', value: 'Thomas' }
-    ]
-  }, env)
+  const { Memory } = await handle(
+    null,
+    {
+      Target: 'AOS',
+      From: 'FOOBAR',
+      Owner: 'FOOBAR',
+      'Block-Height': '999',
+      Id: 'AOS',
+      Module: 'WOOPAWOOPA',
+      Tags: [{ name: 'Name', value: 'Thomas' }]
+    },
+    env
+  )
   return Memory
 }
 
 test('case-insensitive action matching', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches Action = "test-action"
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("test-action-handler", 
   { Action = "test-action" },
@@ -55,20 +53,18 @@ Handlers.add("test-action-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with lowercase action
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'action', value: 'test-action' }
-    ],
+    Tags: [{ name: 'action', value: 'test-action' }],
     Data: 'test message'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
   assert.ok(result.Output.data.includes('Handler matched: Action = test-action'))
 })
@@ -76,18 +72,16 @@ Handlers.add("test-action-handler",
 test('case-insensitive data-protocol matching', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches Data-Protocol = "test-protocol"
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("test-protocol-handler",
   { ["Data-Protocol"] = "test-protocol" },
@@ -97,20 +91,18 @@ Handlers.add("test-protocol-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with different case protocol
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'data-protocol', value: 'test-protocol' }
-    ],
+    Tags: [{ name: 'data-protocol', value: 'test-protocol' }],
     Data: 'test message'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
   assert.ok(result.Output.data.includes('Handler matched: Data-Protocol = test-protocol'))
 })
@@ -118,18 +110,16 @@ Handlers.add("test-protocol-handler",
 test('case-insensitive content-type matching', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches Content-Type = "application/json"
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("test-content-type-handler",
   { ["Content-Type"] = "application/json" },
@@ -139,20 +129,18 @@ Handlers.add("test-content-type-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with different case content-type
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'content-type', value: 'application/json' }
-    ],
+    Tags: [{ name: 'content-type', value: 'application/json' }],
     Data: '{"test": "data"}'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
   assert.ok(result.Output.data.includes('Handler matched: Content-Type = application/json'))
 })
@@ -160,18 +148,16 @@ Handlers.add("test-content-type-handler",
 test('comprehensive case variations - ACTION, action, Action', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches Action = "test-action"
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("case-variation-handler", 
   { Action = "test-action" },
@@ -181,62 +167,54 @@ Handlers.add("case-variation-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test 1: lowercase "action"
   const testMsg1 = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'action', value: 'test-action' }
-    ],
+    Tags: [{ name: 'action', value: 'test-action' }],
     Data: 'test message 1'
   }
-  
+
   const result1 = await handle(Memory, testMsg1, env)
   assert.ok(result1.Output.data.includes('Handler matched with Action: test-action'))
-  
+
   // Test 2: uppercase "ACTION"
   const testMsg2 = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'ACTION', value: 'test-action' }
-    ],
+    Tags: [{ name: 'ACTION', value: 'test-action' }],
     Data: 'test message 2'
   }
-  
+
   const result2 = await handle(result1.Memory, testMsg2, env)
   assert.ok(result2.Output.data.includes('Handler matched with Action: test-action'))
-  
+
   // Test 3: title case "Action" (should also work)
   const testMsg3 = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'Action', value: 'test-action' }
-    ],
+    Tags: [{ name: 'Action', value: 'test-action' }],
     Data: 'test message 3'
   }
-  
+
   const result3 = await handle(result2.Memory, testMsg3, env)
   assert.ok(result3.Output.data.includes('Handler matched with Action: test-action'))
-  
+
   // Test 4: mixed case "AcTiOn"
   const testMsg4 = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'AcTiOn', value: 'test-action' }
-    ],
+    Tags: [{ name: 'AcTiOn', value: 'test-action' }],
     Data: 'test message 4'
   }
-  
+
   const result4 = await handle(result3.Memory, testMsg4, env)
   assert.ok(result4.Output.data.includes('Handler matched with Action: test-action'))
 })
@@ -244,18 +222,16 @@ Handlers.add("case-variation-handler",
 test('comprehensive protocol case variations', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches Data-Protocol
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("protocol-case-handler", 
   { ["Data-Protocol"] = "test-protocol" },
@@ -265,37 +241,37 @@ Handlers.add("protocol-case-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test various case patterns for Data-Protocol (including underscores)
   const testCases = [
     'data-protocol',
-    'DATA-PROTOCOL', 
+    'DATA-PROTOCOL',
     'Data-Protocol',
-    'data_protocol',      // underscore should convert to dash
-    'DATA_PROTOCOL',      // underscore should convert to dash
-    'Data_Protocol',      // underscore should convert to dash
-    'data_PROTOCOL',      // mixed case with underscore
-    'DATA-protocol'       // mixed case with dash
+    'data_protocol', // underscore should convert to dash
+    'DATA_PROTOCOL', // underscore should convert to dash
+    'Data_Protocol', // underscore should convert to dash
+    'data_PROTOCOL', // mixed case with underscore
+    'DATA-protocol' // mixed case with dash
   ]
-  
+
   let currentMemory = Memory
-  
+
   for (let i = 0; i < testCases.length; i++) {
     const testMsg = {
       Target: 'AOS',
       From: 'FRED',
       Owner: 'FRED',
-      Tags: [
-        { name: testCases[i], value: 'test-protocol' }
-      ],
+      Tags: [{ name: testCases[i], value: 'test-protocol' }],
       Data: `test message ${i + 1}`
     }
-    
+
     const result = await handle(currentMemory, testMsg, env)
-    assert.ok(result.Output.data.includes('Protocol handler matched: test-protocol'), 
-      `Failed for case variation: ${testCases[i]}`)
+    assert.ok(
+      result.Output.data.includes('Protocol handler matched: test-protocol'),
+      `Failed for case variation: ${testCases[i]}`
+    )
     currentMemory = result.Memory
   }
 })
@@ -303,18 +279,16 @@ Handlers.add("protocol-case-handler",
 test('multiple case-insensitive keys in single handler', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches multiple keys with different cases
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("multi-key-handler",
   { 
@@ -329,9 +303,9 @@ Handlers.add("multi-key-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Send message with various case patterns (simulating legacy vs mainnet differences)
   const migrationMsg = {
     Target: 'AOS',
@@ -343,9 +317,9 @@ Handlers.add("multi-key-handler",
     ],
     Data: '{"migration": "test"}'
   }
-  
+
   const result = await handle(Memory, migrationMsg, env)
-  
+
   // Verify the handler was triggered and normalization worked
   assert.ok(result.Output.data.includes('Migration handler triggered!'))
   assert.ok(result.Output.data.includes('Action: migrate'))
@@ -355,18 +329,16 @@ Handlers.add("multi-key-handler",
 test('backward compatibility - exact key matches still work', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler with exact case matching
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("exact-match-handler",
   { Action = "test-action" },
@@ -376,20 +348,18 @@ Handlers.add("exact-match-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with exact case match
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'Action', value: 'test-action' }
-    ],
+    Tags: [{ name: 'Action', value: 'test-action' }],
     Data: 'test message'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
   assert.ok(result.Output.data.includes('Exact match handler triggered: test-action'))
 })
@@ -397,18 +367,16 @@ Handlers.add("exact-match-handler",
 test('mixed case keys with underscores and dashes', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that matches normalized keys
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("mixed-case-handler",
   { 
@@ -421,22 +389,20 @@ Handlers.add("mixed-case-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with various case patterns
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'x-reference', value: 'test-ref' }
-    ],
+    Tags: [{ name: 'x-reference', value: 'test-ref' }],
     Data: 'test message'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
-  
+
   assert.ok(result.Output.data.includes('Mixed case handler triggered!'))
   assert.ok(result.Output.data.includes('X-Reference: test-ref'))
 })
@@ -444,18 +410,16 @@ Handlers.add("mixed-case-handler",
 test('handler should not match when values differ', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that should NOT match
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("no-match-handler",
   { Action = "expected-action" },
@@ -465,20 +429,18 @@ Handlers.add("no-match-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with different action value
   const testMsg = {
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'action', value: 'different-action' }
-    ],
+    Tags: [{ name: 'action', value: 'different-action' }],
     Data: 'test message'
   }
-  
+
   const result = await handle(Memory, testMsg, env)
   // Should show default inbox message, not our handler
   assert.ok(result.Output.data.includes('New Message From'))
@@ -488,18 +450,16 @@ Handlers.add("no-match-handler",
 test('underscore to dash conversion', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that expects dashes
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("underscore-dash-handler", 
   { 
@@ -516,9 +476,9 @@ Handlers.add("underscore-dash-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test message with underscores that should be converted to dashes
   const testMsg = {
     Target: 'AOS',
@@ -529,11 +489,11 @@ Handlers.add("underscore-dash-handler",
       { name: 'content_type', value: 'application/json' },
       { name: 'reply_to', value: 'test-reply' }
     ],
-    Data: '{"test": "message"}'  // Proper JSON since Content-Type is application/json
+    Data: '{"test": "message"}' // Proper JSON since Content-Type is application/json
   }
-  
+
   const result = await handle(Memory, testMsg, env)
-  
+
   // Verify the handler was triggered (underscores converted to dashes)
   assert.ok(result.Output.data.includes('Underscore conversion handler triggered!'))
   assert.ok(result.Output.data.includes('Data-Protocol: test-protocol'))
@@ -544,18 +504,16 @@ Handlers.add("underscore-dash-handler",
 test('mixed underscores and dashes normalization', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   // Setup handler that expects consistent dash format
   const setupMsg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("mixed-format-handler", 
   { 
@@ -568,37 +526,39 @@ Handlers.add("mixed-format-handler",
 )
     `
   }
-  
+
   const { Memory } = await handle(start, setupMsg, env)
-  
+
   // Test various combinations of underscores and dashes
   const testCases = [
     'x_custom_header',
-    'X_CUSTOM_HEADER', 
+    'X_CUSTOM_HEADER',
     'x-custom-header',
     'X-CUSTOM-HEADER',
     'x_custom-header',
     'X-custom_HEADER'
   ]
-  
+
   let currentMemory = Memory
-  
+
   for (let i = 0; i < testCases.length; i++) {
     const testMsg = {
       Target: 'AOS',
       From: 'FRED',
       Owner: 'FRED',
-      Tags: [
-        { name: testCases[i], value: 'test-value' }
-      ],
+      Tags: [{ name: testCases[i], value: 'test-value' }],
       Data: `test message ${i + 1}`
     }
-    
+
     const result = await handle(currentMemory, testMsg, env)
-    assert.ok(result.Output.data.includes('Mixed format handler triggered!'), 
-      `Failed for case variation: ${testCases[i]}`)
-    assert.ok(result.Output.data.includes('X-Custom-Header: test-value'),
-      `Failed to normalize value for: ${testCases[i]}`)
+    assert.ok(
+      result.Output.data.includes('Mixed format handler triggered!'),
+      `Failed for case variation: ${testCases[i]}`
+    )
+    assert.ok(
+      result.Output.data.includes('X-Custom-Header: test-value'),
+      `Failed to normalize value for: ${testCases[i]}`
+    )
     currentMemory = result.Memory
   }
-}) 
+})

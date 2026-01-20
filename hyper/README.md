@@ -2,11 +2,9 @@
 
 hyper AOS is a hyperBEAM based implementation of AOS, focused to deliver lighting fast performance to the AO network.
 
-
 ## Developer Setup
 
-
-* Install lua
+- Install lua
 
 ```sh
 wget https://www.lua.org/ftp/lua-5.3.6.tar.gz
@@ -30,7 +28,7 @@ make macosx
 sudo make install
 ```
 
-* Install luarocks
+- Install luarocks
 
 ```sh
 wget https://luarocks.org/releases/luarocks-3.9.2.tar.gz
@@ -44,19 +42,19 @@ make
 sudo make install
 ```
 
-* Init lua env
+- Init lua env
 
 ```sh
 luarocks init
 ```
 
-* Install busted testing library 
+- Install busted testing library
 
 ```sh
-luarocks install busted 
+luarocks install busted
 ```
 
-* Setup lua env
+- Setup lua env
 
 ```sh
 eval $(luarocks path)
@@ -64,14 +62,12 @@ eval $(luarocks path)
 
 ## Tests
 
-* Running Tests
+- Running Tests
 
 ```sh
 busted
 ```
 
-* Writing Tests
+- Writing Tests
 
 Add your test in the `spec` folder and name the test ending with `_spec.lua`
-
- 

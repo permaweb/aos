@@ -4,30 +4,30 @@ import AoLoader from '@permaweb/ao-loader'
 import fs from 'fs'
 
 const wasm = fs.readFileSync('./process.wasm')
-const options = { format: "wasm64-unknown-emscripten-draft_2024_02_15" }
+const options = { format: 'wasm64-unknown-emscripten-draft_2024_02_15' }
 
 const env = {
   Process: {
     Id: 'AOS',
     Owner: 'FOOBAR',
-    Tags: [
-      { name: 'Name', value: 'Thomas' }
-    ]
+    Tags: [{ name: 'Name', value: 'Thomas' }]
   }
 }
 
 async function init(handle) {
-  const {Memory} = await handle(null, {
-    Target: 'AOS',
-    From: 'FOOBAR',
-    Owner: 'FOOBAR',
-    'Block-Height': '999',
-    Id: 'AOS',
-    Module: 'WOOPAWOOPA',
-    Tags: [
-      { name: 'Name', value: 'Thomas' }
-    ]
-  }, env)
+  const { Memory } = await handle(
+    null,
+    {
+      Target: 'AOS',
+      From: 'FOOBAR',
+      Owner: 'FOOBAR',
+      'Block-Height': '999',
+      Id: 'AOS',
+      Module: 'WOOPAWOOPA',
+      Tags: [{ name: 'Name', value: 'Thomas' }]
+    },
+    env
+  )
   return Memory
 }
 
@@ -38,12 +38,10 @@ test('handlers receive', async () => {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 local msg = ao.send({Target = ao.id, Data = "Hello"})
 local res = Handlers.receive({From = msg.Target, ['X-Reference'] = msg.Ref_})
@@ -61,9 +59,12 @@ return require('json').encode(res)
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [{
-      name: 'X-Reference', value: '1'
-    }],
+    Tags: [
+      {
+        name: 'X-Reference',
+        value: '1'
+      }
+    ],
     Data: 'test receive'
   }
   const result = await handle(Memory, m, env)
@@ -74,17 +75,15 @@ return require('json').encode(res)
 test('resolvers', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.once("onetime", 
   { 
@@ -104,9 +103,7 @@ Handlers.once("onetime",
     Target: 'AOS',
     From: 'FRED',
     Owner: 'FRED',
-    Tags: [
-      { name: 'Action', value: 'ping' }
-    ],
+    Tags: [{ name: 'Action', value: 'ping' }],
     Data: 'ping'
   }
   const result = await handle(Memory, ping, env)
@@ -117,17 +114,15 @@ Handlers.once("onetime",
 test('handlers once', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.once("onetime", 
   Handlers.utils.hasMatchingData("ping"), 
@@ -159,17 +154,15 @@ Handlers.once("onetime",
 test('ping pong', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("ping", 
   Handlers.utils.hasMatchingData("ping"), 
@@ -197,17 +190,15 @@ Handlers.add("ping",
 test('handler pipeline', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("one", 
   function (Msg)
@@ -247,24 +238,25 @@ Handlers.add("three",
     Data: 'ping'
   }
   const result = await handle(Memory, ping, env)
-  assert.equal(result.Output.data, 'one\ntwo\n\x1B[90mNew Message From \x1B[32mFRE...RED\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m')
+  assert.equal(
+    result.Output.data,
+    'one\ntwo\n\x1B[90mNew Message From \x1B[32mFRE...RED\x1B[90m: \x1B[90mData = \x1B[34mping\x1B[0m'
+  )
   assert.ok(true)
 })
 
 test('timestamp', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("timestamp", 
   Handlers.utils.hasMatchingData("timestamp"), 
@@ -277,7 +269,7 @@ Handlers.add("timestamp",
   // load handler
   const { Memory } = await handle(start, msg, env)
   // ---
-  const currentTimestamp = Date.now();
+  const currentTimestamp = Date.now()
   const timestamp = {
     Target: 'AOS',
     From: 'FRED',
@@ -287,24 +279,22 @@ Handlers.add("timestamp",
     Timestamp: currentTimestamp
   }
   const result = await handle(Memory, timestamp, env)
-  assert.equal(result.Output.data, "\x1B[32m" + currentTimestamp + "\x1B[0m")
+  assert.equal(result.Output.data, '\x1B[32m' + currentTimestamp + '\x1B[0m')
   assert.ok(true)
 })
 
 test('test pattern, fn handler', async () => {
   const handle = await AoLoader(wasm, options)
   const start = await init(handle)
-  
+
   const msg = {
     Target: 'AOS',
     From: 'FOOBAR',
     Owner: 'FOOBAR',
-    ['Block-Height']: "1000",
-    Id: "1234xyxfoo",
-    Module: "WOOPAWOOPA",
-    Tags: [
-      { name: 'Action', value: 'Eval' }
-    ],
+    ['Block-Height']: '1000',
+    Id: '1234xyxfoo',
+    Module: 'WOOPAWOOPA',
+    Tags: [{ name: 'Action', value: 'Eval' }],
     Data: `
 Handlers.add("Balance", 
   function (msg) 
@@ -316,7 +306,7 @@ Handlers.add("Balance",
   // load handler
   const { Memory } = await handle(start, msg, env)
   // ---
-  const currentTimestamp = Date.now();
+  const currentTimestamp = Date.now()
   const balance = {
     Target: 'AOS',
     From: 'FRED',
@@ -326,6 +316,6 @@ Handlers.add("Balance",
     Timestamp: currentTimestamp
   }
   const result = await handle(Memory, balance, env)
-  assert.equal(result.Messages[0].Data, "1000")
+  assert.equal(result.Messages[0].Data, '1000')
   assert.ok(true)
 })

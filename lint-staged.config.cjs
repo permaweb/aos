@@ -1,5 +1,6 @@
 module.exports = {
   '**/*.js': [
+    'prettier --write',
     'standard --fix'
   ],
   '**/*.lua': (allFiles) => {
