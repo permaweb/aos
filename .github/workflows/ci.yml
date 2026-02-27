@@ -40,7 +40,7 @@ jobs:
 
       - name: 🤖 Setup ao dev-cli
         run: |
-          curl -fsSL https://install_ao.g8way.io | bash
+          curl -fsSL https://install_ao.arweave.net | bash
 
       - name: 📥 Download Process deps
         working-directory: process
@@ -102,7 +102,7 @@ jobs:
 
   #     - name: 🤖 Setup ao dev-cli
   #       run: |
-  #         curl -fsSL https://install_ao.g8way.io | bash
+  #         curl -fsSL https://install_ao.arweave.net | bash
 
   #     - name: 📥 Download deps
   #       working-directory: process
@@ -144,7 +144,7 @@ jobs:
 
       - name: 🤖 Setup ao dev-cli
         run: |
-          curl -fsSL https://install_ao.g8way.io | bash
+          curl -fsSL https://install_ao.arweave.net | bash
 
       - name: 👀 Env
         run: |
