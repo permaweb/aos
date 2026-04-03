@@ -225,12 +225,12 @@ async function runProcess() {
 
         splash({
           walletAddress: walletAddress,
-          mainnetUrl: argv['mainnet'] || (!argv['legacy'] ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
+          mainnetUrl: argv['mainnet'] || (!isLegacyMode ? (argv['url'] || config.urls.DEFAULT_HB_NODE) : undefined),
           gatewayUrl: argv['gateway-url'],
           cuUrl: argv['cu-url'],
           muUrl: argv['mu-url'],
           authority: argv['authority'],
-          scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !argv['legacy'] ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
+          scheduler: (argv['scheduler'] ?? config.addresses.SCHEDULER_MAINNET) && !isLegacyMode ? process.env.SCHEDULER ?? config.addresses.SCHEDULER_MAINNET : undefined,
           legacy: isLegacyMode
         })
       }
