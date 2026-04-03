@@ -8,7 +8,7 @@ export function splash(options = {}) {
   const lines = [
     'Welcome to AOS: Your operating system for AO, the decentralized open access supercomputer.',
     'newline',
-    `Client Version: ${pkg.version}. 2025`,
+    `Client Version: ${pkg.version}. ${new Date().getFullYear()}`,
   ]
 
   if (options.walletAddress) {
