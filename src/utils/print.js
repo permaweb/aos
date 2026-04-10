@@ -31,10 +31,10 @@ function wrapLine(text, maxWidth) {
   return wrappedLines.length > 0 ? wrappedLines : [plainText.substring(0, maxWidth)]
 }
 
-export function printWithBorder(lines, { title = '', titleColor = chalk.gray, borderColor = chalk.gray, width, truncate = false } = {}) {
+export function printWithBorder(lines, { title = '', titleColor = chalk.gray, borderColor = chalk.gray, width, maxWidth = 100, truncate = false } = {}) {
   // Use terminal width if not specified
   const terminalWidth = process.stdout.columns || 175
-  const defaultWidth = Math.min(175, Math.max(40, terminalWidth - 2))
+  const defaultWidth = Math.min(maxWidth, Math.min(175, Math.max(40, terminalWidth - 2)))
   const boxWidth = width || defaultWidth
   const maxLineWidth = boxWidth - 4 // Account for "│  " and " │"
 
