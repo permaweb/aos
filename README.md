@@ -14,7 +14,7 @@ AOS Version: 2.0.4
 ## Getting Started
 
 ```sh
-npm i -g https://get_ao.arweave.net && aos
+npm i -g @permaweb/aos && aos
 ```
 
 > NOTE: after the first time you run `aos` it installs it to your local machine, so the next time you want to run `aos`, just type `aos` + [enter]
