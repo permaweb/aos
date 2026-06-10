@@ -53,7 +53,7 @@ function cacheProcess(address, name, processId, isMainnet = false) {
   const cache = loadProcessCache()
   const key = `${address}:${name}`
 
-  if (cache[key]) return cache[key]
+  if (cache[key]?.processId) return cache[key]
 
   cache[key] = {
     processId,
@@ -237,13 +237,21 @@ export async function register(jwk, services) {
       }
 
       const edge = argv.address ? await fetchTransactionEdge(argv.address) : null
-      const edges = edge ? [edge] : []
+      let edges = edge ? [edge] : []
+
+      if (edges.length === 0) {
+        const gqlResult = await services.gql(queryForAOS(name), {
+          owners: [address, argv.address || '']
+        })
+        edges = utils.path(['data', 'transactions', 'edges'])(gqlResult) || []
+      }
 
       spinner.stop()
 
       if (edges && edges.length > 0) {
         // Process found - handle selection
         const result = await handleExistingProcess(edges.reverse())
+        cacheProcess(address, name, result.id)
         return result
       }
     } catch (gqlError) {
@@ -399,6 +407,30 @@ async function createProcess(jwk, name, spawnTags, module, services) {
       data
     })
   }
+}
+
+function queryForAOS (name) {
+  return `query ($owners: [String!]!) {
+    transactions(
+      first: 10,
+      owners: $owners,
+      tags: [
+        { name: "Data-Protocol", values: ["ao"] },
+        { name: "Type", values: ["Process"]},
+        { name: "Name", values: ["${name}"]}
+      ]
+    ) {
+      edges {
+        node {
+          id
+          tags {
+            name
+            value
+          }
+        }
+      }
+    }
+  }`
 }
 
 function findAoModuleByName() {
