@@ -1,7 +1,6 @@
 {
   "name": "@permaweb/aos",
-  "version": "2.0.11",
-  "private": true,
+  "version": "2.0.12",
   "repository": "https://github.com/permaweb/aos.git",
   "license": "MIT",
   "author": "Tom Wilson <tom@hyper.io>",
@@ -13,6 +12,7 @@
     "extensions/*"
   ],
   "scripts": {
+    "build": "node build.js",
     "build-docs": "rm -rf process/docs && ldoc .",
     "clean:install": "rm -rf node_modules package-lock.json || true && npm cache clean --force && npm install",
     "format": "prettier --write \"**/*.{js,json,md}\"",
