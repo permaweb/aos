@@ -52,6 +52,9 @@ function getCachedProcess(address, name) {
 function cacheProcess(address, name, processId, isMainnet = false) {
   const cache = loadProcessCache()
   const key = `${address}:${name}`
+
+  if (cache[key]) return cache[key]
+
   cache[key] = {
     processId,
     isMainnet,
@@ -92,6 +95,48 @@ function cacheTx(txId, tags) {
     timestamp: Date.now()
   }
   saveTxCache(cache)
+}
+
+function decodeTagValue (value) {
+  return Buffer.from(value, 'base64url').toString('utf-8')
+}
+
+function normalizeTransactionTags (tags = []) {
+  return tags.map(tag => ({
+    name: decodeTagValue(tag.name),
+    value: decodeTagValue(tag.value)
+  }))
+}
+
+async function fetchTransactionEdge (id) {
+  const cachedTx = getCachedTx(id)
+
+  if (cachedTx) {
+    return {
+      node: {
+        id,
+        tags: cachedTx.tags,
+        block: cachedTx.block
+      }
+    }
+  }
+
+  const res = await fetch(`https://arweave.net/${id}`)
+
+  if (!res.ok) return null
+
+  const tx = await res.json()
+  const tags = normalizeTransactionTags(tx.tags)
+
+  cacheTx(id, tags)
+
+  return {
+    node: {
+      id,
+      tags,
+      block: tx.block
+    }
+  }
 }
 
 const promptUser = results => {
@@ -147,24 +192,12 @@ export async function register(jwk, services) {
         variant = variantTag?.value
       } else {
         // Fetch from gateway if not cached
-        const gqlUrl = config.urls.GATEWAY
-        const res = await fetch(`${gqlUrl}/graphql`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            query: `query ($id: ID!) { transaction(id: $id) { tags { name value } } }`,
-            variables: { id: name }
-          })
-        })
+        const edge = await fetchTransactionEdge(name)
 
-        if (res.ok) {
-          const data = await res.json()
-          tags = data.data.transaction.tags
+        if (edge) {
+          tags = edge.node.tags
           const variantTag = tags.find(tag => tag.name.toLowerCase() === 'variant')
           variant = variantTag?.value
-
-          // Cache the transaction data
-          cacheTx(name, tags)
         } else {
           return { id: name, variant: null }
         }
@@ -187,7 +220,6 @@ export async function register(jwk, services) {
     const address = await services.address(jwk)
 
     // Find existing process
-    let processId
     try {
       // No process found - create new one
       const spinner = ora({
@@ -198,10 +230,14 @@ export async function register(jwk, services) {
       spinner.start()
       spinner.suffixText = chalk.gray('[Starting AOS...]')
 
-      const gqlResult = await services.gql(queryForAOS(name), {
-        owners: [address, argv.address || '']
-      })
-      const edges = utils.path(['data', 'transactions', 'edges'])(gqlResult)
+      const cachedProcess = getCachedProcess(address, name)
+      if (cachedProcess?.processId) {
+        spinner.stop()
+        return { id: cachedProcess.processId, variant: null }
+      }
+
+      const edge = argv.address ? await fetchTransactionEdge(argv.address) : null
+      const edges = edge ? [edge] : []
 
       spinner.stop()
 
@@ -224,7 +260,10 @@ export async function register(jwk, services) {
     spinner.suffixText = chalk.gray('[Spawning New Process...]')
 
     const module = await findModule(services, argv.module)
-    processId = await createProcess(jwk, name, spawnTags, module, services)
+    const processId = await createProcess(jwk, name, spawnTags, module, services)
+    if (!getCachedProcess(address, name)) {
+      cacheProcess(address, name, processId)
+    }
 
     spinner.stop()
 
@@ -360,30 +399,6 @@ async function createProcess(jwk, name, spawnTags, module, services) {
       data
     })
   }
-}
-
-function queryForAOS(name) {
-  return `query ($owners: [String!]!) {
-    transactions(
-      first: 10,
-      owners: $owners,
-      tags: [
-        { name: "Data-Protocol", values: ["ao"] },
-        { name: "Type", values: ["Process"]},
-        { name: "Name", values: ["${name}"]}
-      ]
-    ) {
-      edges {
-        node {
-          id
-          tags {
-            name
-            value
-          }
-        }
-      }
-    }
-  }`
 }
 
 function findAoModuleByName() {
