@@ -14,14 +14,14 @@ AOS Version: 2.0.4
 ## Getting Started
 
 ```sh
-npm i -g https://get_ao.g8way.io && aos
+npm i -g https://get_ao.arweave.net && aos
 ```
 
 > NOTE: after the first time you run `aos` it installs it to your local machine, so the next time you want to run `aos`, just type `aos` + [enter]
 
 ## User Documentation
 
-Go to [ao Cookbook](https://cookbook_ao.g8way.io)
+Go to [ao Cookbook](https://cookbook_ao.arweave.net)
 
 ## Design Principals
 
@@ -43,7 +43,6 @@ Use npm to build the project and run.
 
 ```sh
 npm install
-npm run build
 npm start
 ```
 
@@ -115,7 +114,7 @@ license, or a traditional OSS license (GPLv3/v2, MIT, etc).
 ### Setup
 
 ```
-curl -L https://install_ao.g8way.io | bash
+curl -L https://install_ao.arweave.net | bash
 ```
 
 > Follow install instructions
