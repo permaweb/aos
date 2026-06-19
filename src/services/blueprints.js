@@ -1,23 +1,17 @@
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
-import * as url from 'url'
+import { packageRoot } from '../package-root.js'
 import { chalk } from '../utils/colors.js'
-
-let __dirname = url.fileURLToPath(new URL('.', import.meta.url))
-if (os.platform() === 'win32') {
-  __dirname = __dirname.replace(/\\/g, '/').replace(/^[A-Za-z]:\//, '/')
-}
 
 export function blueprints(dir) {
   try {
-    const blueprintsDir = __dirname + '../../blueprints'
+    const blueprintsDir = path.join(packageRoot, 'blueprints')
     const outputDir = process.cwd() + '/' + (dir === true ? '' : dir)
 
-    let prints = fs.readdirSync(path.resolve(blueprintsDir))
+    let prints = fs.readdirSync(blueprintsDir)
     prints
       .map(n => {
-        return [n, fs.readFileSync(path.resolve(blueprintsDir + '/' + n), 'utf-8')]
+        return [n, fs.readFileSync(path.join(blueprintsDir, n), 'utf-8')]
       })
       .map(([n, lua]) => {
         fs.writeFileSync(path.resolve(outputDir + '/' + n), lua)

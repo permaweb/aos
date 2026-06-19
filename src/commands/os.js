@@ -7,14 +7,8 @@
  */
 import fs from 'node:fs'
 import path from 'node:path'
-import os from 'node:os'
-import * as url from 'url'
+import { packageRoot } from '../package-root.js'
 import { chalk } from '../utils/colors.js'
-
-let __dirname = url.fileURLToPath(new URL('.', import.meta.url))
-if (os.platform() === 'win32') {
-  __dirname = __dirname.replace(/\\/g, '/').replace(/^[A-Za-z]:\//, '/')
-}
 
 export function dry() {
   console.log('not implemented')
@@ -36,7 +30,7 @@ export function update() {
     'process.lua'
   ]
     .map(name => {
-      const code = fs.readFileSync(__dirname + '../../process/' + name, 'utf-8')
+      const code = fs.readFileSync(path.join(packageRoot, 'process', name), 'utf-8')
       const mod = name.replace(/\.lua$/, '')
       return template(mod, code)
     })
