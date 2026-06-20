@@ -14,11 +14,11 @@ return function (ao)
   return function (msg)
     -- exec expression
     local expr = msg.Data
-    local func, err = load("return " .. expr, 'aos', 't', _G)
+    local func, err = load("return " .. expr, msg.Id, 't', _G)
     local output = ""
     local e = nil
     if err then
-      func, err = load(expr, 'aos', 't', _G)
+      func, err = load(expr, msg.Id, 't', _G)
     end
     if func then
       output, e = func()
@@ -43,6 +43,11 @@ return function (ao)
         prompt = Prompt()
       }
 
+    end
+    -- add ability to keep track of eval source history
+    if _TRACK_EVAL_HISTORY == true then
+      _SOURCES = _SOURCES or {}
+      _SOURCES[msg.Id] = msg.Data
     end
   end
 end
