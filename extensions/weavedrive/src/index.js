@@ -71,14 +71,27 @@ module.exports = function weaveDrive(mod, FS) {
       const node = FS.createFile('/', 'data/' + id, properties, true, false)
 
       // Set initial parameters
-      const response = await this.customFetch(`/${id}`, {
+      let dataPath = `/${id}`
+      let response = await this.customFetch(dataPath, {
         method: 'HEAD',
         headers: { 'Accept-Encoding': 'identity' }
       })
-      if (!response.ok) {
+      let bytesLength = response.ok ? response.headers.get('Content-Length') : null
+
+      if (!response.ok || bytesLength === null || Number.isNaN(Number(bytesLength))) {
+        dataPath = `/raw/${id}`
+        response = await this.customFetch(dataPath, {
+          method: 'HEAD',
+          headers: { 'Accept-Encoding': 'identity' }
+        })
+        bytesLength = response.ok ? response.headers.get('Content-Length') : null
+      }
+
+      if (!response.ok || bytesLength === null || Number.isNaN(Number(bytesLength))) {
         return 'HALT'
       }
-      const bytesLength = response.headers.get('Content-Length')
+
+      node.gatewayPath = dataPath
       node.total_size = Number(bytesLength)
       node.cache = new Uint8Array(0)
       node.position = 0
@@ -234,7 +247,7 @@ module.exports = function weaveDrive(mod, FS) {
       // console.log("WeaveDrive: fd: ", fd, " Read length: ", toRead, " Reading ahead:", to - toRead - stream.position)
 
       // Fetch with streaming
-      const response = await this.customFetch(`/${stream.node.name}`, {
+      const response = await this.customFetch(stream.node.gatewayPath || `/${stream.node.name}`, {
         method: 'GET',
         redirect: 'follow',
         headers: { Range: `bytes=${stream.position}-${to}` }

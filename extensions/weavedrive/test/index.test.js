@@ -477,6 +477,84 @@ test('boot loader set to tx id', async function () {
   assert.equal(result.Output.data, '<TICKER>')
 })
 
+describe('data path selection', () => {
+  function response({ ok = true, contentLength = null, chunks = [] } = {}) {
+    return {
+      ok,
+      headers: {
+        get(name) {
+          return name.toLowerCase() === 'content-length' ? contentLength : null
+        }
+      },
+      body: {
+        getReader() {
+          let index = 0
+          return {
+            async read() {
+              if (index >= chunks.length) return { done: true }
+              return { done: false, value: chunks[index++] }
+            },
+            releaseLock() {}
+          }
+        }
+      }
+    }
+  }
+
+  function fakeFs() {
+    const streams = []
+    let node
+
+    return {
+      streams,
+      analyzePath() {
+        return { exists: false }
+      },
+      mkdir() {},
+      createFile(_root, path, properties) {
+        node = { ...properties, name: path.split('/').pop() }
+        return node
+      },
+      open(path) {
+        const stream = { fd: streams.length, path, node, position: node.position || 0 }
+        streams[stream.fd] = stream
+        return stream
+      }
+    }
+  }
+
+  test('falls back to raw path when id path has no length', async () => {
+    const fetches = []
+    const FS = fakeFs()
+    const mod = { HEAP8: new Uint8Array(8) }
+    const wd = weaveDrive(mod, FS)
+
+    wd.checkAdmissible = async () => true
+    wd.customFetch = async (path, options) => {
+      fetches.push({ path, options })
+      if (options.method === 'HEAD' && path === '/TX') return response()
+      if (options.method === 'HEAD' && path === '/raw/TX') return response({ contentLength: '4' })
+      if (options.method === 'GET' && path === '/raw/TX') {
+        return response({ chunks: [new Uint8Array([1, 2, 3, 4])] })
+      }
+      throw new Error(`unexpected fetch: ${options.method} ${path}`)
+    }
+
+    const stream = await wd.create('TX')
+    assert.equal(stream.node.gatewayPath, '/raw/TX')
+    assert.equal(stream.node.total_size, 4)
+
+    const bytesRead = await wd.read(stream.fd, 0, 4)
+
+    assert.equal(bytesRead, 4)
+    assert.deepEqual(Array.from(mod.HEAP8.slice(0, 4)), [1, 2, 3, 4])
+    assert.deepEqual(
+      fetches.map(({ path, options }) => `${options.method} ${path}`),
+      ['HEAD /TX', 'HEAD /raw/TX', 'GET /raw/TX']
+    )
+  })
+})
+
 describe('joinUrl', () => {
   const wd = weaveDrive()
   const joinUrl = wd.joinUrl.bind(wd)
