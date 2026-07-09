@@ -23,7 +23,9 @@ export async function evaluate(line, processId, wallet, services, spinner, swall
     }
 
     // Update spinner
-    spinner.suffixText = `${chalk.gray('[Computing')} ${chalk.green(messageId)}${chalk.gray('...]')}`
+    if (spinner) {
+      spinner.suffixText = `${chalk.gray('[Computing')} ${chalk.green(messageId)}${chalk.gray('...]')}`
+    }    
 
     // Read result if not already provided
     if (process.env.DEBUG) console.time('Read')
