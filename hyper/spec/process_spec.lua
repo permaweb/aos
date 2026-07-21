@@ -304,6 +304,43 @@ describe("process", function()
   
 end)
 
+describe("default message output", function()
+  local defaultHandler
+  local printed
+  local originalColors
+  local originalJson
+  local originalPrint
+
+  before_each(function()
+    printed = nil
+    originalColors = _G.Colors
+    originalJson = package.loaded['.json']
+    originalPrint = _G.print
+    _G.Colors = { green = "", blue = "", reset = "" }
+    _G.print = function(value) printed = value end
+    package.loaded['.json'] = { encode = function() return "{}" end }
+    package.loaded['src/default'] = nil
+    defaultHandler = require('src/default')(function() end)
+  end)
+
+  after_each(function()
+    _G.Colors = originalColors
+    _G.print = originalPrint
+    package.loaded['.json'] = originalJson
+    package.loaded['src/default'] = nil
+  end)
+
+  it("should show an incoming message action without a boolean result", function()
+    local result = defaultHandler({
+      from = "inHNKIXpul10F-OS2l-d6Zkm4ms5DgIPLye1Q22QH_s",
+      action = "hello"
+    })
+
+    assert.are.equal("New Message From inH...H_s: Action = hello", printed)
+    assert.is_nil(result)
+  end)
+end)
+
 -- Helper function for testing
 local utils = {
   contains = function(tbl, item)

@@ -21,6 +21,7 @@ import { keys } from 'ramda'
 import { config } from '../config.js'
 import Arweave from 'arweave'
 import { printWithoutDisruption } from '../utils/terminal.js'
+import { LUA_EXECUTION_DEVICE } from './process-type.js'
 
 const arweave = Arweave.init({})
 
@@ -53,21 +54,36 @@ const resolveAuthority = async () => {
   }
 }
 
-export async function spawnProcessMainnet({ wallet, src, tags, data }) {
+const selectedExecutionDevice = executionDevice =>
+  executionDevice || process.env.AOS_EXECUTION_DEVICE || LUA_EXECUTION_DEVICE
+
+export const createMainnetSpawnArgs = ({ tags, authority, src, data, executionDevice }) => ({
+  tags: [
+    ...tags,
+    { name: 'aos-version', value: pkg.version },
+    { name: 'process-timestamp', value: Date.now().toString() }
+  ],
+  authority,
+  module: src,
+  data,
+  executionDevice: selectedExecutionDevice(executionDevice)
+})
+
+export const createMainnetMessageArgs = ({ processId, tags, data, executionDevice }) => ({
+  process: processId,
+  tags: [...tags, { name: 'message-timestamp', value: Date.now().toString() }],
+  data,
+  executionDevice: selectedExecutionDevice(executionDevice)
+})
+
+export async function spawnProcessMainnet({ wallet, src, tags, data, executionDevice }) {
   const { spawn } = setupMainnet(wallet)
   try {
     const authority = await resolveAuthority();
 
-    const processId = await spawn({
-      tags: [
-        ...tags,
-        { name: 'aos-version', value: pkg.version },
-        { name: 'process-timestamp', value: Date.now().toString() }
-      ],
-      authority: authority,
-      module: src,
-      data: data
-    })
+    const processId = await spawn(
+      createMainnetSpawnArgs({ tags, authority, src, data, executionDevice })
+    )
     return processId
   } catch (e) {
     console.error(e)
@@ -81,11 +97,7 @@ export async function sendMessageMainnet({ processId, wallet, tags, data }) {
     // Pause cron jobs to prevent race conditions
     _cronPaused = true
 
-    const slot = await message({
-      process: processId,
-      tags: [...tags, { name: 'message-timestamp', value: Date.now().toString() }],
-      data: data
-    })
+    const slot = await message(createMainnetMessageArgs({ processId, tags, data }))
 
     // Fetch the result
     const resultData = await result({

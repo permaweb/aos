@@ -7,7 +7,11 @@ import { chalk } from './utils/colors.js'
 import path from 'path'
 import * as url from 'url'
 import process from 'node:process'
-import { shouldShowSplash, shouldSuppressVersionBanner } from './services/process-type.js'
+import {
+  resolveExecutionDeviceFromFlags,
+  shouldShowSplash,
+  shouldSuppressVersionBanner
+} from './services/process-type.js'
 
 // Actions
 import { evaluate } from './evaluate.js'
@@ -39,6 +43,7 @@ import { readHistory, writeHistory } from './services/history-service.js'
 import { pad } from './commands/pad.js'
 import { config } from './config.js'
 import { printWithFormat } from './utils/print.js'
+import { processVersionExpression } from './services/lua-process-patch.js'
 
 const argv = minimist(process.argv.slice(2))
 const splashEnabled = shouldShowSplash(argv)
@@ -90,6 +95,20 @@ if (argv.help) {
 if (argv.version) {
   version()
   process.exit(0)
+}
+
+if (argv.legacy && argv['execution-device'] !== undefined) {
+  console.error(chalk.red('--execution-device is only supported with HyperBEAM.'))
+  process.exit(1)
+}
+
+if (!argv.legacy) {
+  try {
+    process.env.AOS_EXECUTION_DEVICE = resolveExecutionDeviceFromFlags(argv)
+  } catch (error) {
+    console.error(chalk.red(error.message))
+    process.exit(1)
+  }
 }
 
 if (argv.sqlite) {
@@ -625,9 +644,10 @@ async function connect(jwk, id) {
 
   let promptResult = undefined
   let _prompt = undefined
+  const versionExpression = processVersionExpression(process.env.AOS_EXECUTION_DEVICE)
   // Need to check if a process is registered or create a process
   promptResult = await evaluate(
-    `require('.process')._version`,
+    versionExpression,
     id,
     jwk,
     { sendMessage, readResult },
@@ -643,7 +663,7 @@ async function connect(jwk, id) {
         spinner.suffixText = chalk.red('[Connecting To Process...]')
       }
       promptResult = await evaluate(
-        `require('.process')._version`,
+        versionExpression,
         id,
         jwk,
         { sendMessage, readResult },

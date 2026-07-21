@@ -15,6 +15,7 @@ describe("ao", function()
   
   local ao
   local mockUtils, mockHandlers
+  local originalSend
   
   before_each(function()
     -- Mock dependencies
@@ -56,6 +57,8 @@ describe("ao", function()
     -- Clear any existing global ao and Handlers
     ao = nil
     Handlers = mockHandlers
+    originalSend = _G.send
+    _G.send = nil
     
     -- Require the module after mocking
     ao = require('src/ao')
@@ -67,6 +70,7 @@ describe("ao", function()
     package.loaded['.utils'] = nil
     package.loaded['src/ao'] = nil
     Handlers = nil
+    _G.send = originalSend
     ao = nil
   end)
   
@@ -279,6 +283,15 @@ describe("ao", function()
       
       assert.are.equal(msg, result)
       assert.are.equal("1", result.reference)
+    end)
+
+    it("should expose a lowercase send helper with a concise acknowledgement", function()
+      local msg = { target = "test-target", action = "hello" }
+      local result = send(msg)
+
+      assert.are.equal("Message Sent", result)
+      assert.are.equal(1, #ao.outbox.Messages)
+      assert.are.equal("hello", ao.outbox.Messages[1].action)
     end)
     
   end)

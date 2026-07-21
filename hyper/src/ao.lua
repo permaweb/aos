@@ -239,6 +239,13 @@ function ao.result(result)
   }
 end
 
+-- Keep ao.send's message return value for onReply chaining while giving the
+-- console-friendly lowercase helper a concise acknowledgement.
+send = function(msg)
+  ao.send(msg)
+  return "Message Sent"
+end
+
 -- set global Send and Spawn
 Send = Send or ao.send
 Spawn = Spawn or ao.spawn

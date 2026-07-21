@@ -46,6 +46,7 @@ export function help() {
     chalk.green('--tag-name [name]') + '                  Set a tag name for your process when spawning. Pair with --tag-value.',
     chalk.green('--tag-value [value]') + '                Set a tag value for your process when spawning. Pair with --tag-name.',
     chalk.green('--module=[TXID]') + '                    The module ID to use when spawning a process.',
+    chalk.green('--execution-device <device>') + '        Select lua@5.3 (default) or genesis-wasm.',
     chalk.green('--cron [frequency]-[unit]') + '          Setup automated messages for your process for a given interval. For example: 1-minute, 30-seconds.',
     chalk.green('--monitor') + '                          Monitor and push cron outbox messages and spawns.',
     chalk.green('--get-blueprints [dir]') + '             Download blueprint Lua scripts to your current working directory.',

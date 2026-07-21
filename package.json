@@ -25,7 +25,7 @@
     "test-all": "npm run test --workspaces"
   },
   "dependencies": {
-    "@permaweb/aoconnect": "0.0.97",
+    "@permaweb/aoconnect": "file:../ao/connect",
     "arweave": "1.15.1",
     "http-message-signatures": "1.0.4",
     "minimist": "1.2.8",

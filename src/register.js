@@ -14,7 +14,11 @@ import { getPkg } from './services/get-pkg.js'
 import fs from 'fs'
 import path from 'path'
 import os from 'os'
-import { resolveProcessTypeFromFlags } from './services/process-type.js'
+import {
+  defaultModuleForExecutionDevice,
+  resolveExecutionDeviceFromFlags,
+  resolveProcessTypeFromFlags
+} from './services/process-type.js'
 import { config } from './config.js'
 import ora from 'ora'
 import { chalk } from './utils/colors.js'
@@ -162,6 +166,11 @@ const promptUser = results => {
 export async function register(jwk, services) {
   const argv = minimist(process.argv.slice(2))
   const name = argv._[0] || 'default'
+  const processType = resolveProcessTypeFromFlags(argv)
+  const executionDevice =
+    processType === 'mainnet'
+      ? resolveExecutionDeviceFromFlags(argv)
+      : undefined
 
   let spawnTags = Array.isArray(argv['tag-name'])
     ? argv['tag-name'].map((name, i) => ({
@@ -267,8 +276,16 @@ export async function register(jwk, services) {
     spinner.start()
     spinner.suffixText = chalk.gray('[Spawning New Process...]')
 
-    const module = await findModule(services, argv.module)
-    const processId = await createProcess(jwk, name, spawnTags, module, services)
+    const module = await findModule(services, argv.module, executionDevice)
+    const processId = await createProcess(
+      jwk,
+      name,
+      spawnTags,
+      module,
+      services,
+      processType,
+      executionDevice
+    )
     if (!getCachedProcess(address, name)) {
       cacheProcess(address, name, processId)
     }
@@ -316,13 +333,13 @@ async function handleExistingProcess(results) {
   return { id: response.process, variant: selectedProcess?.variant }
 }
 
-async function findModule(services, moduleArg) {
+async function findModule(services, moduleArg, executionDevice) {
   const AOS_MODULE = process.env.AOS_MODULE
   const AOS_MODULE_NAME = process.env.AOS_MODULE_NAME
 
   // Use default module
   if (!AOS_MODULE && !AOS_MODULE_NAME) {
-    return getPkg().aos.module
+    return defaultModuleForExecutionDevice(getPkg(), executionDevice)
   }
 
   // Use specified module ID
@@ -352,7 +369,15 @@ async function findModule(services, moduleArg) {
   }
 }
 
-async function createProcess(jwk, name, spawnTags, module, services) {
+async function createProcess(
+  jwk,
+  name,
+  spawnTags,
+  module,
+  services,
+  processType,
+  executionDevice
+) {
   let appName = 'aos'
 
   let data = ''
@@ -384,16 +409,13 @@ async function createProcess(jwk, name, spawnTags, module, services) {
     }
   }
 
-  // Use appropriate spawn service
-  const processType = resolveProcessTypeFromFlags(argv)
-
   if (processType === 'mainnet') {
     return await services.spawnProcessMainnet({
       wallet: jwk,
       src: module,
       tags,
       data,
-      isHyper: true
+      executionDevice
     })
   }
 
