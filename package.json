@@ -59,5 +59,8 @@
   "hyper": {
     "module": "wal-fUK-YnB9Kp5mN8dgMsSqPSqiGx-0SvwFUSwpDBI",
     "_version": "0.1.2"
+  },
+  "engines": {
+    "node": "^22.23.4 || ^24.22.1 || ^26.12.1"
   }
 }
