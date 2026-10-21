@@ -43,7 +43,8 @@ local ao = {
         'Pushed-For', 'Read-Only', 'Cron', 'Block-Height', 'Reference', 'Id',
         'Reply-To'
     },
-    Nonce = nil
+    Nonce = nil,
+    unset = "__ao-unset__"
 }
 
 --- Checks if a key exists in a list.
